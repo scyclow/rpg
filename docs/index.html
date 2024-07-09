@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title></title>
+
+
+  <style type="text/css">
+    * {
+      margin: 0;
+      padding: 0;
+      font-family: monospace;
+    }
+
+    body {
+      background: radial-gradient(#aaa, #888);
+    }
+
+    main {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #phone {
+      width: 320px;
+      height: 569px;
+      border: 2px solid;
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+
+    #phoneSectionContent {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid;
+    }
+
+    #phoneInfo {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #dialedNumber {
+      font-size: 4em;
+    }
+
+    #menuNumbers {
+      font-size: 1.5em;
+      height: 1.1em;
+    }
+
+    #menu {
+      list-style: none;
+      display: grid;
+      grid-gap: 0;
+      grid-template-columns: repeat(3, 1fr);
+      border-top:  1px solid;
+      padding: 0.25em;
+    }
+    #menu * {
+      text-align: center;
+    }
+
+    #keypad {
+      display: grid;
+      grid-gap: 0;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid;
+    }
+
+    .key {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      outline: 0.5px solid #888;
+      padding: 0.5em;
+      cursor: pointer;
+    }
+
+    .key:hover {
+      background: #000;
+      outline-color: #000;
+      color: #fff;
+      user-select: none;
+    }
+
+    .key span:first-child {
+      font-size: 2em;
+    }
+    .key span:nth-child(2) {
+    }
+  </style>
+</head>
+<body>
+
+
+  <main>
+    <div id="phone">
+
+      <div id="phoneSectionContent">
+        <div id="phoneInfo">
+          <h1 id="dialedNumber"></h1>
+          <h4 id="menuNumbers"></h4>
+        </div>
+        <div id="keypad">
+          <div id="key-1" class="key">
+            <span>1</span>
+            <span>@</span>
+          </div>
+
+          <div id="key-2" class="key">
+            <span>2</span>
+            <span>ABC</span>
+          </div>
+
+          <div id="key-3" class="key">
+            <span>3</span>
+            <span>DEF</span>
+          </div>
+
+          <div id="key-4" class="key">
+            <span>4</span>
+            <span>GHI</span>
+          </div>
+
+          <div id="key-5" class="key">
+            <span>5</span>
+            <span>JKL</span>
+          </div>
+
+          <div id="key-6" class="key">
+            <span>6</span>
+            <span>MNP</span>
+          </div>
+
+          <div id="key-7" class="key">
+            <span>7</span>
+            <span>PQRS</span>
+          </div>
+
+          <div id="key-8" class="key">
+            <span>8</span>
+            <span>TUV</span>
+          </div>
+
+          <div id="key-9" class="key">
+            <span>9</span>
+            <span>WXYZ</span>
+          </div>
+
+          <div id="key-star" class="key">
+            <span>*</span>
+            <!-- <span>&lt;</span> -->
+          </div>
+
+          <div id="key-0" class="key">
+            <span>0</span>
+            <span>+</span>
+          </div>
+
+          <div id="key-hash" class="key">
+            <span>#</span>
+            <!-- <span>&gt;</span> -->
+          </div>
+        </div>
+
+      </div>
+
+      <ul id="menu">
+        <li>Phone</li>
+        <li>Contacts</li>
+        <li>Voice Mail</li>
+      </ul>
+
+    </div>
+  </main>
+
+
+</body>
+
+
+
+<script src="./utils.js"></script>
+
+<script type="module" src="./nodes.js"></script>
+<script type="module">
+
+  import {$} from './$.js'
+  import {createSource, MAX_VOLUME} from './audio.js'
+  import {voices, say} from './voices.js'
+  import {StateMachine} from './stateMachine.js'
+
+
+
+  class Phone {
+    static keys = [
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      'star',
+      '0',
+      'hash',
+    ]
+    static tones = {
+      1: [697, 1209],
+      2: [697, 1336],
+      3: [697, 1477],
+      4: [770, 1209],
+      5: [770, 1336],
+      6: [770, 1477],
+      7: [852, 1209],
+      8: [852, 1336],
+      9: [852, 1477],
+      star: [941, 1209],
+      0: [941, 1336],
+      hash: [941, 1477],
+      ring: [440, 480],
+    }
+
+    dialed = []
+
+    srcs = {}
+    elems = {}
+    pressTS = 0
+
+    constructor(onclick) {
+      for (let key of Phone.keys) {
+        this.elems[key] = $.id(`key-${key}`)
+
+
+        this.elems[key].onclick = () => {
+          this.dialed.push(key === 'hash' ? '#' : key === 'star' ? '*' : key)
+          onclick(this, key)
+        }
+        this.elems[key].onmousedown = this.startTone.bind(this, key)
+        this.elems[key].onmouseup = this.endTone.bind(this, key)
+        this.elems[key].onmouseleave = this.endTone.bind(this, key)
+      }
+    }
+
+    startTone(key) {
+      if (!this.srcs[key]) {
+        this.srcs[key] = [createSource('sine'), createSource('sine')]
+
+        this.srcs[key][0].smoothFreq(Phone.tones[key][0])
+        this.srcs[key][1].smoothFreq(Phone.tones[key][1])
+      }
+
+      this.pressTS = Date.now()
+
+      if (this.srcs[key][0].gain.gain.value > 0) {
+        this.srcs[key][0].smoothGain(0)
+        this.srcs[key][1].smoothGain(0)
+
+        setTimeout(() => {
+          this.srcs[key][0].smoothGain(MAX_VOLUME)
+          this.srcs[key][1].smoothGain(MAX_VOLUME)
+        }, 25)
+      } else {
+        this.srcs[key][0].smoothGain(MAX_VOLUME)
+        this.srcs[key][1].smoothGain(MAX_VOLUME)
+      }
+    }
+
+    endTone(key) {
+      const diff = Date.now() - this.pressTS
+      if (diff < 200) {
+        setTimeout(() => {
+          this.srcs[key]?.[0]?.smoothGain?.(0)
+          this.srcs[key]?.[1]?.smoothGain?.(0)
+        }, 200 - diff)
+      } else {
+        this.srcs[key]?.[0]?.smoothGain?.(0)
+        this.srcs[key]?.[1]?.smoothGain?.(0)
+      }
+    }
+
+    async ringTone(rings=3) {
+      this.isRinging = true
+      const [src0, src1] = [createSource('sine'), createSource('sine')]
+
+      src0.smoothFreq(Phone.tones.ring[0])
+      src1.smoothFreq(Phone.tones.ring[1])
+
+
+      await waitPromise(500)
+
+      src0.smoothGain(MAX_VOLUME)
+      src1.smoothGain(MAX_VOLUME)
+
+      await waitPromise(3000)
+
+      src0.smoothGain(0)
+      src1.smoothGain(0)
+
+      await waitPromise(3000)
+
+      src0.smoothGain(MAX_VOLUME)
+      src1.smoothGain(MAX_VOLUME)
+
+      await waitPromise(3000)
+
+      src0.smoothGain(0)
+      src1.smoothGain(0)
+
+      await waitPromise(3000)
+
+      src0.smoothGain(MAX_VOLUME)
+      src1.smoothGain(MAX_VOLUME)
+
+      await waitPromise(3000)
+
+      src0.smoothGain(0)
+      src1.smoothGain(0)
+
+      this.isRinging = false
+
+      await waitPromise(1000)
+    }
+  }
+
+
+
+
+
+  const startingCtx = {
+    history: [],
+    state: {}
+  }
+
+  const config = {
+    defaultWait: 1000,
+    async onUpdate(text) {
+      startingCtx.history.push(text)
+      say(await voices.then(vs => vs[0]), text)
+    },
+    start: 'start'
+  }
+
+  const nodes = {
+    start: {
+      handler: 'intro'
+    },
+
+    intro: {
+      text: `You arrive at the gates of hell, unsure of how you got here. Fire rains down beyond the entrance, but you feel no danger from where you stand. Unbounded suffering waits ahead of you, but behind you lies Heaven's Gate, across which is the tantalizing promise of boundless pleasure and never ending bliss. The tepid air around you hangs still, as if time has frozen. You are surrounded by neither lightness nor darkness, but rather a thick twilight. Lost souls move about, but no one seems to make any progress. Press 1 to approach the gates of Hell. Press 2 to approach Heaven's Gate. Press 3 to continue exploring the space you inhabit. Press 0 to speak with a representative. Press star to repeat your options.`,
+      handler: x => ({
+        0: '',
+        1: '',
+        2: '',
+        3: 'continueExploring',
+        star: 'repeatOptions'
+      })[x.ur],
+      wait: 1000,
+    },
+
+    repeatOptions: {
+      text: x => `Press 1 to approach the gates of Hell. Press 2 to approach Heaven's Gate. Press 3 to continue exploring the space you inhabit. ${x.ctx.state.abyss ? 'Press 4 to walk towards the abyss.' : ''} Press 0 to speak with a representative. Press star to repeat your options.`,
+      handler: x => ({
+        0: '',
+        1: '',
+        2: '',
+        3: 'continueExploring',
+        4: 'walkTowardsAbyss',
+        star: 'repeatOptions'
+      })[x.ur],
+      wait: 1000,
+    },
+
+    continueExploring: {
+      text: `You continue exploring this unfamiliar space. Barren ground. The faint smell of rotting. Oppressive humidity. You feel simultaneously claustrophobic and exposed. As you stare into the abyss an abstract terror slowly builds inside you, growing from imperceptible to un ignorable. You have to find a way out of this place. `,
+      after: x => x.ctx.state.abyss = true,
+      handler: x => {
+        console.log(x)
+        return ({
+        0: '',
+        1: '',
+        2: '',
+        3: 'continueExploring',
+        4: 'walkTowardsAbyss',
+        star: 'repeatOptions'
+      })[x.ur]},
+      follow: 'repeatOptions'
+    }
+  }
+
+
+
+  const stateMachine = new StateMachine(startingCtx, config, nodes)
+
+
+
+
+
+
+
+
+
+
+
+
+  function formatPhoneNumber(num) {
+    return num.length < 4
+      ? num.slice(0, 3).join('')
+      : `${num.slice(0, 3).join('')}-${num.slice(3, 7).join('')}`
+  }
+
+
+  let phoneAnswered
+  window.phone = new Phone(async (phone, key) => {
+    $.id('dialedNumber').innerHTML = formatPhoneNumber(phone.dialed.slice(0, 7))
+    $.id('menuNumbers').innerHTML = phone.dialed.slice(7).join('')
+
+    // if (!phone.isRinging) {
+      window.speechSynthesis.cancel()
+    // }
+
+    if (phoneAnswered) stateMachine.next(key)
+
+
+    if (phone.dialed.length === 7) {
+      await phone.ringTone()
+      stateMachine.next('')
+
+      phoneAnswered = true
+    }
+
+  })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+
+</html>
