@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title></title>
+
+  <link rel="stylesheet" type="text/css" href="./styles.css">
+</head>
+<body>
+  <main id="currentDisplay">
+    <section id="mainConsole">
+      <header>Bedroom -- <date>??/??</date> -- <time>??:??</time></header>
+      <section id="mainConsolePrimary">
+        <section id="mainConsoleContent">
+<!--           <p>You wake up</p>
+          <p>A vague sense of dread lingers from a dream you no longer remember</p>
+          <p>The weight of your existence sinks in</p>
+          <p>Your first conscious inclination is to reach for your phone</p> -->
+
+        </section>
+
+        <aside id="nextActions">
+<!--           <button>Phone</button>
+          <button>Blinds</button>
+          <button>Lamp</button>
+          <button>Alarm Clock</button>
+          <button>Hallway</button> -->
+        </aside>
+      </section>
+    </section>
+  </main>
+
+  <trapped-modal id="phoneModal" blur="true">
+    <mobile-phone id="phoneDevice" slot="content"></mobile-phone>
+  </trapped-modal>
+</body>
+
+<script src="./utils.js"></script>
+<script type="module" src="./modal.js"></script>
+<script type="module" src="./mobilePhone.js"></script>
+
+
+<script type="module">
+  import {$} from './$.js'
+  import {StateMachine, CTX} from './stateMachine.js'
+  import {persist} from './persist.js'
+
+
+
+  // const Spaces = {
+  //   bed: {
+  //     type: 'primary'
+  //     buttons: [
+  //       { text: 'Phone', node: 'openPhone'},
+  //       { text: 'Alarm Clock', node: 'inspectAlarmClock'},
+  //       { text: 'Stand', node: 'bedroom'}
+  //     ]
+  //   },
+
+  //   bedroom: {
+  //     type: 'primary'
+  //     buttons: [
+  //       { text: 'Phone', node: 'openPhone'},
+  //       { text: 'Alarm Clock', node: 'inspectAlarmClock'},
+  //       { text: 'Bed', node: 'bed'},
+  //       { text: 'Blinds', node: 'blinds'},
+  //       { text: 'Lamp', node: 'lamp'},
+  //       { text: 'Hallway', node: 'hallway'},
+  //     ]
+  //   },
+  // }
+
+  const $phoneModal = $.id('phoneModal')
+  const $phoneDevice = $.id('phoneDevice')
+
+
+  const group = (nodesInput, props) => Object.keys(nodesInput).reduce((nodesOutput, nodeName) => ({
+    ...nodesOutput,
+    [nodeName]: { ...props, ...nodesInput[nodeName]}
+  }), {})
+
+  const options = mapping => ({ur}) => mapping[ur]
+
+  setTimeout(() => {
+    $.id('mainConsoleContent').classList.add('smoothScroll')
+  }, 200)
+
+
+  const primaryStartingCtx = persist('__PRIMARY_SM_CTX', new CTX({
+    currentActions: [],
+    state: {
+      location: 'bedroom',
+      router: {
+        pluggedIn: true
+      }
+    }
+    // state: {
+    //   apartment: {
+    //     lastNode: 'bed',
+
+    //     bedActions: [
+    //       { text: 'Phone', value: '1'},
+    //       { text: 'Alarm Clock', value: '2'},
+    //       { text: 'Stand Up', value: '3'},
+    //     ],
+
+    //     bedroomActions: [
+    //       { text: 'Phone', value: '1'},
+    //       { text: 'Alarm Clock', value: '2'},
+    //       { text: 'Bed', value: '3'},
+    //       { text: 'Blinds', value: '4'},
+    //       { text: 'Lamp', value: '5'},
+    //       { text: 'Hallway', value: '6'},
+    //     ]
+    //   },
+
+    //   phone: {
+
+    //   }
+    // }
+  }))
+
+
+
+  const primaryConfig = {
+    // defaultWait: 2000,
+    defaultWait: 400,
+    async onUpdate({ text, actions }, sm) {
+      sm.ctx.history.push(text)
+      const $content = $.id('mainConsoleContent')
+      $content.innerHTML += `<p>${text}</p>`
+
+      $content.scrollTop = $content.scrollHeight
+
+      $phoneDevice.setLocation(sm.ctx.location)
+
+
+      if (actions instanceof Function) {
+        actions = await sm.evaluate(actions)
+      }
+
+      if (actions) {
+        $.id('nextActions').innerHTML = actions.map(a => `<button id="${sm.currentNodeKey}-${a.value}">${a.text}</button>`).join('')
+        actions.forEach(a => $.id(`${sm.currentNodeKey}-${a.value}`).onclick = () => {
+          if (a.onClick) a.onClick()
+          sm.next(a.value)
+        })
+        sm.ctx.currentActions = actions
+      }
+    },
+    start: 'start'
+  }
+
+  const primaryNodes = {
+    start: {
+      handler: 'intro'
+    },
+    intro: [
+      { text: 'You wake up'},
+      { text: 'A vague sense of dread lingers from a dream you no longer remember', },
+      { text: 'Your first conscious inclination is to reach for your phone', follow: 'bedFresh' },
+    ],
+
+    ...group({
+      bedFresh: {
+        text: '',
+      },
+
+      bed: {
+        text: 'You get into bed'
+      },
+
+      bedAlarm: {
+        text: 'You look at the alarm clock. It flashes 88:88. It does not seem to have any buttons'
+      },
+    }, {
+      actions: [
+        { text: 'Phone', value: 'openPhone'},
+        { text: 'Alarm Clock', value: 'bedAlarm'},
+        { text: 'Stand Up', value: 'standUpBed'},
+      ],
+      handler: ({ur}) => ur
+
+    }),
+
+    openPhone: {
+      before({ ctx, enqueue }) {
+        ctx.stack.push(ctx.lastNode)
+        $phoneModal.open()
+        if (!$phoneDevice.state.started) {
+          $phoneDevice.start()
+        }
+        $phoneModal.onClose(() => {
+          enqueue('closePhone')
+        })
+      },
+      text: 'You open your phone',
+    },
+
+    closePhone: {
+      text: 'You close your phone',
+      follow({ ctx, redirect }) {
+        redirect(ctx.stack.pop())
+      }
+    },
+
+    ...group({
+      standUpBed: {
+        text: 'You get out of bed',
+      },
+      bedroom: {
+        before({ ctx }) {
+          ctx.state.location = 'bedroom'
+        },
+        text: 'You enter the bedroom',
+      },
+      bedroomAlarm: {
+        text: 'You look at the alarm clock. It flashes 88:88. It does not seem to have any buttons',
+      },
+      bedroomBlinds: {
+        text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shade</em> App!"`
+      },
+      bedroomLamp: {
+        text: `You inspect the lamp. You don't see a light switch, but you do see a QR code sticker pasted to the side.`
+      }
+    }, {
+      actions: [
+        { text: 'Phone', value: 'openPhone'},
+        { text: 'Alarm Clock', value: 'bedroomAlarm'},
+        { text: 'Bed', value: 'bed'},
+        { text: 'Blinds', value: 'bedroomBlinds'},
+        { text: 'Lamp', value: 'bedroomLamp'},
+        { text: 'Hallway', value: 'hallway'},
+      ],
+      handler: ({ur}) => ur
+    }),
+
+    ...group({
+      hallway: {
+        before({ ctx }) {
+          ctx.state.location = 'hallway'
+        },
+        text: `You enter the hallway`,
+      },
+
+      frontDoor: {
+        text: `You try opening the front door, but it appears to be locked`
+      },
+      thermostat: {
+        text: 'todo'
+      },
+
+      intercom: {
+        text: 'todo'
+      },
+
+      bathroom: {
+        text: 'todo'
+      },
+
+    }, {
+      actions: [
+        { text: 'Phone', value: 'openPhone'},
+        { text: 'Thermostat', value: 'thermostat'},
+        { text: 'Intercom', value: 'intercom'},
+        { text: 'Bedroom', value: 'bedroom'},
+        { text: 'Bathroom', value: 'bathroom'},
+        { text: 'Living Room', value: 'livingRoom'},
+        { text: 'Front Door', value: 'frontDoor'},
+      ],
+      handler: ({ur}) => ur
+    }),
+
+
+    ...group({
+      livingRoom: {
+        before({ ctx }) {
+          ctx.state.location = 'livingRoom'
+        },
+        text: 'You enter the living room',
+      },
+
+      livingRoomVisited: {
+        text: ''
+      },
+
+      planter: {
+        text: `You check your plants. The leaves sag from a lack of light and water. On the side of the pot you read: "SmartPlanter (TM) - The quick and easy way to conveniently water your plants! Download our app in the AppMarket"`
+      },
+
+      livingRoomBlinds: {
+        text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shade</em> App!"`
+      },
+
+      kitchen: {
+        text: 'todo'
+      }
+    }, {
+      actions: [
+        { text: 'Phone', value: 'openPhone'},
+        { text: 'SmartPlanter', value: 'planter'},
+        { text: 'Blinds', value: 'livingRoomBlinds'},
+        { text: 'Router', value: 'router'},
+        { text: 'TV', value: 'tv'},
+        { text: 'ebook', value: 'ebook'},
+        { text: 'Hallway', value: 'hallway'},
+        { text: 'Kitchen', value: 'kitchen'},
+      ],
+      handler: ({ur}) => ur
+
+    }),
+
+    ...group({
+      router: {
+        text: ({ctx}) => ctx.state.router.pluggedIn
+          ? `You inspect the router, which appears to have a reset button and three lights:
+          <div>Power (on)</div>
+          <div>Internet (blinking)</div>
+          <div>WiFi (off)</div>
+          `
+          : `You inspect the router. The Power, Internet, and WiFi lights are all off`
+      },
+
+      resetRouter: {
+        text: `You push the router's reset button. All three lights turn off for one second, turn back on for one second, and blink for three seconds, before returning to their original states`
+      },
+
+      resetRouterNothing: {
+        text: `You push the router's reset button, but all three lights remain off`
+      },
+
+      bottomRouter: {
+        text: `You pick up the router and look at the bottom. A sticker says:
+          <div>
+            <h3>WiFi Network Name: InpatientRehabilitationServices</h3>
+            <h3>WiFi Password: StompLookListen123</h3>
+            <h3>Model Name: UBC-9283</h3>
+            <h3>Customer Support: 1-800-555-2093</h3>
+          </div>
+        `
+      }
+    }, {
+      actions: ({ctx}) => [
+        { text: 'Back', value: 'livingRoomVisited'},
+        { text: 'Push Reset Button', value: ctx.state.router.pluggedIn ? 'resetRouter' : 'resetRouterNothing'},
+        { text: 'Look At Bottom of Router', value: 'bottomRouter'},
+        { text: 'Check Power', value: 'checkWifiPower'},
+      ],
+      handler: ({ur}) => ur
+    }),
+
+    ...group({
+      checkWifiPower: {
+        text: ({ctx}) => `You follow the router's power chord to a socket in the wall. It is ${ctx.state.router.pluggedIn ? 'plugged in' : 'unplugged'}`
+      },
+      unplugRouter: {
+        text: `You unplug the router. The Power, Internet, and WiFi lights immediately turn off`,
+        wait: 0
+      },
+
+      plugInRouter: {
+        text: `You plug the router back in. The Power, Internet, and WiFi lights all turn off for one second, turn back on for one second, and blink for three seconds, before returning to their original states`,
+        wait: 0
+      },
+
+    }, {
+      handler: ({ur}) => ur,
+      actions({ctx}) {
+        return [
+          { text: 'Back', value: 'router'},
+          ctx.state.router.pluggedIn
+            ? { text: 'Unplug Router', value: 'unplugRouter', onClick: () => ctx.state.router.pluggedIn = false}
+            : { text: 'Plug In Router', value: 'plugInRouter', onClick: () => ctx.state.router.pluggedIn = true},
+        ]
+      }
+    }),
+
+
+
+
+
+  }
+
+  window.primarySM = new StateMachine(primaryStartingCtx, primaryConfig, primaryNodes)
+
+
+
+  // const phoneStartingCtx = new CTX()
+  // const phoneConfig = {
+  //   defaultWait: 1500,
+  //   async onUpdate({ text, actions }) {
+  //     phoneStartingCtx.history.push(text)
+  //     $.id('mainConsoleContent').innerHTML += `<p>${text}</p>`
+  //     if (actions) {
+  //       phoneStartingCtx.state.currentActions = actions
+  //     }
+
+  //     $.id('nextActions').innerHTML = JSON.stringify(primaryStartingCtx.state.currentActions)
+  //   },
+  //   start: 'start'
+  // }
+
+  // window.phoneSM = new StateMachine(phoneStartingCtx, phoneConfig, phoneNodes)
+
+
+
+
+
+
+  primarySM.next('')
+
+</script>
+</html>
