@@ -123,8 +123,7 @@
 
 
   const primaryConfig = {
-    // defaultWait: 2000,
-    defaultWait: 400,
+    defaultWait: 1000,
     async onUpdate({ text, actions }, sm) {
       sm.ctx.history.push(text)
       const $content = $.id('mainConsoleContent')

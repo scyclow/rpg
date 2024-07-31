@@ -42,6 +42,8 @@ export class StateMachine {
 
     await this.evaluate(currentNode.after, ur)
 
+    console.log(currentNode.wait)
+
     const wait = currentNode.wait || this.defaultWait
     this.enqueue(nextNodeKey, ur, wait, fn === 'follow')
   }

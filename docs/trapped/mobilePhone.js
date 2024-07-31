@@ -450,7 +450,7 @@ const customerSupportStateMachine = new StateMachine(
     // TODO: input router model number
 
     internetOuttageFail: {
-      text: `I don't see an internet outtage in your area. you may need to reboot your router manually. I can walk you through the steps. First, unplug the power chord from the back of your router. When you've unplugged your router, press 1`,
+      text: `I don't see an internet outtage in your area. You may need to reboot your router manually. I can walk you through the steps. First, unplug the power chord from the back of your router. When you've unplugged your router, press 1`,
       handler: options({ 1: 'routerUnplugged' })
     },
 
@@ -460,8 +460,8 @@ const customerSupportStateMachine = new StateMachine(
     },
 
     routerLightsOff: {
-      text: `i'll let you know when you can plug it back in. in the meantime, please make sure that all of the other cables are pluged in`,
-      wait: 7000,
+      text: `i'll let you know when you can plug it back in. In the meantime, please make sure that all of the other cables are pluged in`,
+      wait: 12000, // this is a little fucky since the timer starts when the voice starts talking
       follow: 'routerPlugIn'
     },
 
@@ -703,7 +703,6 @@ createComponent(
   },
   (oldState, newState) => {
     Object.assign(state, newState)
-    console.log(state)
   }
 )
 
