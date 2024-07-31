@@ -32,9 +32,9 @@ class PhoneCall {
     7: [852, 1209],
     8: [852, 1336],
     9: [852, 1477],
-    star: [941, 1209],
+    '*': [941, 1209],
     0: [941, 1336],
-    hash: [941, 1477],
+    '#': [941, 1477],
     ring: [440, 480],
   }
 
@@ -70,7 +70,9 @@ class PhoneCall {
         { class: 'key' }
       )
 
+
       elem.onclick = () => {
+        this.active = true
         this.dialed.push(key === 'hash' ? '#' : key === 'star' ? '*' : key)
         onclick(this, key)
       }
@@ -128,6 +130,7 @@ class PhoneCall {
 
 
     await waitPromise(500)
+    if (!this.active) return
 
     src0.smoothGain(MAX_VOLUME)
     src1.smoothGain(MAX_VOLUME)
@@ -136,8 +139,10 @@ class PhoneCall {
 
     src0.smoothGain(0)
     src1.smoothGain(0)
+    if (!this.active) return
 
     await waitPromise(3000)
+    if (!this.active) return
 
     src0.smoothGain(MAX_VOLUME)
     src1.smoothGain(MAX_VOLUME)
@@ -146,8 +151,10 @@ class PhoneCall {
 
     src0.smoothGain(0)
     src1.smoothGain(0)
+    if (!this.active) return
 
     await waitPromise(3000)
+    if (!this.active) return
 
     src0.smoothGain(MAX_VOLUME)
     src1.smoothGain(MAX_VOLUME)
@@ -156,6 +163,7 @@ class PhoneCall {
 
     src0.smoothGain(0)
     src1.smoothGain(0)
+    if (!this.active) return
 
     this.isRinging = false
 
@@ -165,6 +173,9 @@ class PhoneCall {
   hangup() {
     this.phoneAnswered = false
     this.dialed = []
+    this.isRinging = false
+    this.active = false
+
     PhoneCall.active = null
   }
 
@@ -272,7 +283,7 @@ function phoneMarkup() {
       </ul>
       <div>
         <button id="home">Back</button>
-        <button>Hangup</button>
+        <button id="hangup">Hangup</button>
       </div>
     </div>
   `
@@ -306,8 +317,11 @@ function phoneBehavior(ctx) {
 
       const dialed = phone.dialed.join('')
 
+
+
       if (dialed === '18005552093') {
         await phone.ringTone()
+        if (!phone.active) return
         customerSupportStateMachine.next('')
         phone.answer()
       }
@@ -321,6 +335,12 @@ function phoneBehavior(ctx) {
   window.pc = phoneCall
 }
 
+
+const group = (nodesInput, props) => Object.keys(nodesInput).reduce((nodesOutput, nodeName) => ({
+  ...nodesOutput,
+  [nodeName]: { ...props, ...nodesInput[nodeName]}
+}), {})
+const options = mapping => ({ur}) => mapping[ur]
 
 const customerSupportStateMachine = new StateMachine(
   new CTX(),
@@ -336,14 +356,120 @@ const customerSupportStateMachine = new StateMachine(
       handler: 'intro'
     },
 
-    intro: {
-      text: `Hello, and welcome to internet customer support`,
-      handler: '1'
+    ...group({
+      intro: {
+        text: `Hello, and welcome to internet customer support. This call may be recorded for quality and security purposes. If you're calling about becoming a new customer, press 1. To add service to an existing account, press 2. If you'd like to ask about a recent order, press 3. For all other inquiries, press 4. To hear these options again, press star`,
+      },
+      mainMenu: {
+        text: `If you're calling about becoming a new customer, press 1. To add service to an existing account, press 2. If you'd like to ask about a recent order, press 3. For all other inquiries, press 4. to hear these options again, press star`,
+      }
+    }, {
+      handler: options({
+        0: 'representative',
+        1: 'newCustomer',
+        2: 'existingAccount',
+        3: 'recentOrder',
+        4: 'somethingElse',
+      })
+    }),
+
+
+    representative: {
+      text: 'a representative is not available at this time',
+      follow: 'mainMenu'
     },
 
-    1: {
-      text: 'one'
+    newCustomer: {
+      text: 'Please enter your credit card number, followed by the pound key',
+      handler: ({ur}) => {
+        if (ur === '#') return 'newCustomerPending'
+        else return 'newCustomerEntry'
+      }
+    },
+    newCustomerEntry: {
+      text: '',
+      handler: ({ur}) => {
+        if (ur === '#') return 'newCustomerPending'
+        else return 'newCustomerEntry'
+      }
+    },
+
+    newCustomerPending: {
+      text: `One moment please`,
+      wait: 3000,
+      follow: 'newCustomerFail'
+    },
+
+    newCustomerFail: {
+      text: `I'm sorry. The card number you have entered is incorrect`,
+      follow: 'mainMenu'
+    },
+
+    recentOrder: {
+      text: 'Error: This option does not exist',
+      follow: 'mainMenu'
+    },
+
+    existingAccount: {
+      text: 'Error: This option does not exist',
+      follow: 'mainMenu'
+    },
+
+
+    somethingElse: {
+      text: `To report an internet outtage in your area, press 1. To talk to a representative, press 0. To return to the main menu, press 9.`,
+      handler: options({
+        0: 'representative',
+        1: 'internetOuttage',
+        9: 'mainMenu',
+      })
+    },
+
+    internetOuttage: {
+      text: `You'd like to report an internet outtage. Please enter your zip code, followed by the pound key`,
+      handler: ({ur}) => {
+        if (ur === '#') return 'internetOuttagePending'
+        else return 'internetOuttageEntry'
+      }
+    },
+
+    internetOuttageEntry: {
+      text: '',
+      handler: ({ur}) => {
+        if (ur === '#') return 'internetOuttagePending'
+        else return 'internetOuttageEntry'
+      }
+    },
+
+    internetOuttagePending: {
+      text: `One moment please`,
+      wait: 3000,
+      follow: 'internetOuttageFail'
+    },
+
+    // TODO: input router model number
+
+    internetOuttageFail: {
+      text: `I don't see an internet outtage in your area. you may need to reboot your router manually. I can walk you through the steps. First, unplug the power chord from the back of your router. When you've unplugged your router, press 1`,
+      handler: options({ 1: 'routerUnplugged' })
+    },
+
+    routerUnplugged: {
+      text: 'when all the lights are off press 1',
+      handler: options({ 1: 'routerLightsOff' })
+    },
+
+    routerLightsOff: {
+      text: `i'll let you know when you can plug it back in. in the meantime, please make sure that all of the other cables are pluged in`,
+      wait: 7000,
+      follow: 'routerPlugIn'
+    },
+
+    routerPlugIn: {
+      text: `You can plug it back in now. It may take up to 5 minutes for your router to reboot. Is there anything else I can help you with?`,
+      handler: 'mainMenu'
     }
+
   }
 )
 
@@ -564,11 +690,12 @@ createComponent(
 
 
 
-      ctx.$('hangup').onclick = () => {
-        ctx.$('dialedNumber').innerHTML = ''
-        ctx.$('menuNumbers').innerHTML = ''
+      ctx.$('#hangup').onclick = () => {
+        ctx.$('#dialedNumber').innerHTML = ''
+        ctx.$('#menuNumbers').innerHTML = ''
         window.speechSynthesis.cancel()
-        PhoneCall.active.hangup()
+        if (PhoneCall.active) PhoneCall.active.hangup()
+        customerSupportStateMachine.goto('start')
       }
 
     }
