@@ -42,6 +42,7 @@ $.create = elType => (children, attrs={}) => {
   return e
 }
 
+$.p = $.create('p')
 $.a = $.create('a')
 $.li = $.create('li')
 $.div = $.create('div')

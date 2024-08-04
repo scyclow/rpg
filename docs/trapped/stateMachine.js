@@ -4,7 +4,6 @@ export class StateMachine {
     this.nodes = nodes
     this.defaultWait = config.defaultWait ?? 1000
     this.onUpdate = config.onUpdate || (() => {})
-    this.currentNodeKey = config.start
     this.queue = []
   }
 
@@ -29,20 +28,20 @@ export class StateMachine {
   }
 
   redirect(newNode) {
-    this.currentNodeKey = newNode
+    this.ctx.currentNode = newNode
   }
 
   async run(ur, fn) {
-    const currentNode = this.getNode(this.currentNodeKey)
+    const currentNode = this.getNode(this.ctx.currentNode)
 
-    const nextNodeKey = await this.getNextNodeKey(fn, this.currentNodeKey, ur)
+    const nextNodeKey = await this.getNextNodeKey(fn, this.ctx.currentNode, ur)
 
-    this.ctx.lastNode = this.currentNodeKey
-    this.ctx.currentNode = nextNodeKey
+    if (nextNodeKey) {
+      this.ctx.lastNode = this.ctx.currentNode
+      this.ctx.currentNode = nextNodeKey
+    }
 
     await this.evaluate(currentNode.after, ur)
-
-    console.log(currentNode.wait)
 
     const wait = currentNode.wait || this.defaultWait
     this.enqueue(nextNodeKey, ur, wait, fn === 'follow')
@@ -117,7 +116,7 @@ export class StateMachine {
     const event = this.queue.shift()
     this.scheduleQueueShift(1)
 
-    this.currentNodeKey = event.nodeKey
+    this.ctx.currentNode = event.nodeKey
     const currentNode = this.getNode(event.nodeKey)
     await this.evaluate(currentNode.before, event.ur)
 
@@ -127,8 +126,8 @@ export class StateMachine {
     )
 
     if (currentNode.follow) this.run(event.ur, 'follow')
-    if (this.nodeIsArray(this.currentNodeKey)) {
-      const [base, ix] = this.splitNodeKeys(this.currentNodeKey)
+    if (this.nodeIsArray(this.ctx.currentNode)) {
+      const [base, ix] = this.splitNodeKeys(this.ctx.currentNode)
       if (ix + 1 < this.nodes[base].length) {
         this.run(event.ur, 'follow')
       }

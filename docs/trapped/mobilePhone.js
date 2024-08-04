@@ -186,13 +186,6 @@ class PhoneCall {
 
 
 
-const state = persist('__MOBILE_STATE', {
-  started: false,
-  screen: 'loading',
-  location: 'bedroom'
-})
-
-
 
 function phoneMarkup() {
   return `
@@ -343,14 +336,15 @@ const group = (nodesInput, props) => Object.keys(nodesInput).reduce((nodesOutput
 const options = mapping => ({ur}) => mapping[ur]
 
 const customerSupportStateMachine = new StateMachine(
-  new CTX(),
+  new CTX({
+    currentNode: 'start'
+  }),
   {
     defaultWait: 1000,
     async onUpdate({text}, sm) {
       sm.ctx.history.push(text)
       say(await voices.then(vs => vs[0]), text)
     },
-    start: 'start'
   }, {
     start: {
       handler: 'intro'
@@ -473,6 +467,13 @@ const customerSupportStateMachine = new StateMachine(
   }
 )
 
+
+
+const state = persist('__MOBILE_STATE', {
+  started: false,
+  screen: 'loading',
+  location: 'bedroom'
+})
 
 
 
@@ -661,14 +662,17 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
+          <button id="data">Switch to Data</button>
           <h3>WiFi Status: Unconnected</h3>
           <h3>Network Name:
             <select>
               <option></option>
               <option>CapitalC</option>
+              <option>ClickToAddNetwork</option>
               <option>ElectricLadyLand</option>
               <option>MyWiFi-9238d9</option>
-              <option>XXX No Entry</option>
+              <option>NewNetwork</option>
+              <option>XXX-No-Entry</option>
             </select>
           </h3>
           <input placeholder="password" type="password">
@@ -678,6 +682,10 @@ createComponent(
       `
 
       ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+      ctx.$('#data').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
 
@@ -705,66 +713,3 @@ createComponent(
     Object.assign(state, newState)
   }
 )
-
-
-        // <div id="keypad" style="display:none">
-        //   <div id="key-1" class="key">
-        //     <span>1</span>
-        //     <span>@</span>
-        //   </div>
-
-        //   <div id="key-2" class="key">
-        //     <span>2</span>
-        //     <span>ABC</span>
-        //   </div>
-
-        //   <div id="key-3" class="key">
-        //     <span>3</span>
-        //     <span>DEF</span>
-        //   </div>
-
-        //   <div id="key-4" class="key">
-        //     <span>4</span>
-        //     <span>GHI</span>
-        //   </div>
-
-        //   <div id="key-5" class="key">
-        //     <span>5</span>
-        //     <span>JKL</span>
-        //   </div>
-
-        //   <div id="key-6" class="key">
-        //     <span>6</span>
-        //     <span>MNP</span>
-        //   </div>
-
-        //   <div id="key-7" class="key">
-        //     <span>7</span>
-        //     <span>PQRS</span>
-        //   </div>
-
-        //   <div id="key-8" class="key">
-        //     <span>8</span>
-        //     <span>TUV</span>
-        //   </div>
-
-        //   <div id="key-9" class="key">
-        //     <span>9</span>
-        //     <span>WXYZ</span>
-        //   </div>
-
-        //   <div id="key-star" class="key">
-        //     <span>*</span>
-        //     <!-- <span>&lt;</span> -->
-        //   </div>
-
-        //   <div id="key-0" class="key">
-        //     <span>0</span>
-        //     <span>+</span>
-        //   </div>
-
-        //   <div id="key-hash" class="key">
-        //     <span>#</span>
-        //     <!-- <span>&gt;</span> -->
-        //   </div>
-        // </div>

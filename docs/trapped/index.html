@@ -44,6 +44,7 @@
   import {$} from './$.js'
   import {StateMachine, CTX} from './stateMachine.js'
   import {persist} from './persist.js'
+  import {globalState} from './global.js'
 
 
 
@@ -87,6 +88,7 @@
 
 
   const primaryStartingCtx = persist('__PRIMARY_SM_CTX', new CTX({
+    currentNode: 'start',
     currentActions: [],
     state: {
       location: 'bedroom',
@@ -122,14 +124,22 @@
 
 
 
+
   const primaryConfig = {
-    defaultWait: 1000,
+    defaultWait: 300,
     async onUpdate({ text, actions }, sm) {
       sm.ctx.history.push(text)
       const $content = $.id('mainConsoleContent')
-      $content.innerHTML += `<p>${text}</p>`
 
-      $content.scrollTop = $content.scrollHeight
+      if (text) {
+        const p = $.p(text, {class: 'preVisible'})
+        $content.insertBefore(p, $content.firstChild)
+        // setTimeout(() => p.classList.remove('preVisible'), 30)
+      }
+
+      // $content.innerHTML += `<p>${text}</p>`
+
+      // $content.scrollTop = $content.scrollHeight
 
       $phoneDevice.setLocation(sm.ctx.location)
 
@@ -139,15 +149,14 @@
       }
 
       if (actions) {
-        $.id('nextActions').innerHTML = actions.map(a => `<button id="${sm.currentNodeKey}-${a.value}">${a.text}</button>`).join('')
-        actions.forEach(a => $.id(`${sm.currentNodeKey}-${a.value}`).onclick = () => {
+        $.id('nextActions').innerHTML = actions.map(a => `<button id="${sm.ctx.currentNode}-${a.value}">${a.text}</button>`).join('')
+        actions.forEach(a => $.id(`${sm.ctx.currentNode}-${a.value}`).onclick = () => {
           if (a.onClick) a.onClick()
           sm.next(a.value)
         })
         sm.ctx.currentActions = actions
       }
     },
-    start: 'start'
   }
 
   const primaryNodes = {
@@ -155,8 +164,8 @@
       handler: 'intro'
     },
     intro: [
-      { text: 'You wake up'},
-      { text: 'A vague sense of dread lingers from a dream you no longer remember', },
+      { text: 'You wake up', wait: 1000},
+      { text: 'A vague sense of dread lingers from a dream you no longer remember', wait: 1000},
       { text: 'Your first conscious inclination is to reach for your phone', follow: 'bedFresh' },
     ],
 
@@ -194,6 +203,7 @@
         })
       },
       text: 'You open your phone',
+      wait: 0
     },
 
     closePhone: {
@@ -216,8 +226,8 @@
       bedroomAlarm: {
         text: 'You look at the alarm clock. It flashes 88:88. It does not seem to have any buttons',
       },
-      bedroomBlinds: {
-        text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shade</em> App!"`
+      bedroomWindow: {
+        text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
       },
       bedroomLamp: {
         text: `You inspect the lamp. You don't see a light switch, but you do see a QR code sticker pasted to the side.`
@@ -225,11 +235,11 @@
     }, {
       actions: [
         { text: 'Phone', value: 'openPhone'},
+        { text: 'Hallway', value: 'hallway'},
         { text: 'Alarm Clock', value: 'bedroomAlarm'},
         { text: 'Bed', value: 'bed'},
-        { text: 'Blinds', value: 'bedroomBlinds'},
+        { text: 'Window', value: 'bedroomWindow'},
         { text: 'Lamp', value: 'bedroomLamp'},
-        { text: 'Hallway', value: 'hallway'},
       ],
       handler: ({ur}) => ur
     }),
@@ -239,12 +249,32 @@
         before({ ctx }) {
           ctx.state.location = 'hallway'
         },
-        text: `You enter the hallway`,
+        text: ({ctx}) => `You enter the hallway${ctx.state.hallwayVisited ? '' : `. A motion sensor picks up your movement and the camera above the front door comes to life`}`,
+        after({ ctx }) {
+          ctx.state.hallwayVisited = true
+        }
       },
 
-      frontDoor: {
-        text: `You try opening the front door, but it appears to be locked`
+      hallwayCurrent: {
+        text: ''
       },
+
+      camera: {
+        text: `The small camera looks down at you. Whenever you move, it moves along with you. You make out some tiny print on its side: "SmartPro Security Camera: Keeping you safe since 2010. Download our App in the AppMarket!"`
+      },
+
+      pickupEnvelopes: {
+        before({ctx}) {
+          ctx.state.envelopesPickedUp = true
+        },
+        text: `You pick up both envelopes. The first is from your landlord, Landlock Realty LLC. You owe them $6,437.98. The second is from HealthyLiving Inc. You owe them $14,038.71. You can pay this online. At the bottom of the letter is says: "Your health is priceless!"`
+      },
+
+
+      frontDoor: {
+        text: `You try opening the front door. It appears to be locked, possibly from the outside.`,
+      },
+
       thermostat: {
         text: 'todo'
       },
@@ -258,28 +288,43 @@
       },
 
     }, {
-      actions: [
+      actions: ({ctx}) =>  [
         { text: 'Phone', value: 'openPhone'},
+        { text: 'Bathroom', value: 'bathroom'},
+        { text: 'Living Room', value: 'livingRoom'},
+        { text: 'Front Door', value: ctx.state.envelopesPickedUp ? 'frontDoor' : 'frontDoorEnvelopes' },
         { text: 'Thermostat', value: 'thermostat'},
         { text: 'Intercom', value: 'intercom'},
         { text: 'Bedroom', value: 'bedroom'},
-        { text: 'Bathroom', value: 'bathroom'},
-        { text: 'Living Room', value: 'livingRoom'},
-        { text: 'Front Door', value: 'frontDoor'},
+        { text: 'Camera', value: 'camera'},
       ],
       handler: ({ur}) => ur
     }),
+
+
+    frontDoorEnvelopes: {
+      text: ({ctx}) => `You try opening the front door. It appears to be locked, possibly from the outside. You notice two envelopes at your feet`,
+      handler: ({ur}) => ur,
+      actions: [
+        {text: 'Back', value: 'hallwayCurrent'},
+        {text: 'Pick Up Envelopes', value: 'pickupEnvelopes'}
+      ]
+    },
 
 
     ...group({
       livingRoom: {
         before({ ctx }) {
           ctx.state.location = 'livingRoom'
+          ctx.state.livingRoomVisited = true
         },
-        text: 'You enter the living room',
+        text: ({ctx}) => `You enter the living room${ctx.state.livingRoomVisited ? '' : '. You wonder how your plants are doing'}`,
+        after({ ctx }) {
+          ctx.state.livingRoomVisited = true
+        }
       },
 
-      livingRoomVisited: {
+      livingRoomCurrent: {
         text: ''
       },
 
@@ -287,23 +332,30 @@
         text: `You check your plants. The leaves sag from a lack of light and water. On the side of the pot you read: "SmartPlanter (TM) - The quick and easy way to conveniently water your plants! Download our app in the AppMarket"`
       },
 
-      livingRoomBlinds: {
-        text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shade</em> App!"`
+      livingRoomWindow: {
+        text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
       },
 
       kitchen: {
+        text: 'todo'
+      },
+
+      ebook: {
+        text: 'todo'
+      },
+      tv: {
         text: 'todo'
       }
     }, {
       actions: [
         { text: 'Phone', value: 'openPhone'},
+        { text: 'Hallway', value: 'hallway'},
+        { text: 'Kitchen', value: 'kitchen'},
         { text: 'SmartPlanter', value: 'planter'},
-        { text: 'Blinds', value: 'livingRoomBlinds'},
+        { text: 'Window', value: 'livingRoomWindow'},
         { text: 'Router', value: 'router'},
         { text: 'TV', value: 'tv'},
         { text: 'ebook', value: 'ebook'},
-        { text: 'Hallway', value: 'hallway'},
-        { text: 'Kitchen', value: 'kitchen'},
       ],
       handler: ({ur}) => ur
 
@@ -340,7 +392,7 @@
       }
     }, {
       actions: ({ctx}) => [
-        { text: 'Back', value: 'livingRoomVisited'},
+        { text: 'Back', value: 'livingRoomCurrent'},
         { text: 'Push Reset Button', value: ctx.state.router.pluggedIn ? 'resetRouter' : 'resetRouterNothing'},
         { text: 'Look At Bottom of Router', value: 'bottomRouter'},
         { text: 'Check Power', value: 'checkWifiPower'},
@@ -373,14 +425,32 @@
         ]
       }
     }),
-
-
-
-
-
   }
 
   window.primarySM = new StateMachine(primaryStartingCtx, primaryConfig, primaryNodes)
+
+
+  function rehydrate(ctx, sm) {
+    const $content = $.id('mainConsoleContent')
+    const $nextActions = $.id('nextActions')
+
+    // todo: if last action is opening phone, push "you close your phone"
+    if (ctx.currentNode === 'openPhone') {
+      sm.goto('closePhone')
+    }
+
+    $content.innerHTML = ctx.history.filter(t => t).map(t => `<p>${t}</p>`).reverse().join('')
+
+    const actions = ctx.currentActions || []
+
+    $nextActions.innerHTML = actions.map(a => `<button id="${ctx.currentNode}-${a.value}">${a.text}</button>`).join('')
+    actions.forEach(a => $.id(`${ctx.currentNode}-${a.value}`).onclick = () => {
+      if (a.onClick) a.onClick()
+      sm.next(a.value)
+    })
+  }
+
+  rehydrate(primaryStartingCtx, primarySM)
 
 
 
@@ -406,7 +476,9 @@
 
 
 
-  primarySM.next('')
+  if (!primarySM.ctx.history.length) {
+    primarySM.next('')
+  }
 
 </script>
 </html>

@@ -7,9 +7,11 @@
   margin: 0;
   font-family: monospace;
   color: var(--primary-color);
-  background: var(--bg-color);
 }
 
+body {
+  background: var(--bg-color);
+}
 
 header, aside {
   padding: 0.5em;
@@ -74,7 +76,31 @@ p {
   padding: 1em;
   overflow: scroll;
 }
+#mainConsoleContent > * {
+  opacity: 0.85;
+}
+
+#mainConsoleContent > *:first-child{
+  opacity: 1;
+}
+
+
+p.preVisible {
+  animation: Intro 0.5s linear;
+}
 
 .smoothScroll {
   scroll-behavior: smooth;
+}
+
+@keyframes Intro {
+  0% {
+    max-height: 0px;
+    opacity: 0;
+  }
+
+  100% {
+    max-height: 500px;
+    opacity: 1;
+  }
 }
