@@ -88,6 +88,14 @@ function waitPromise(ms) {
   return new Promise(res => setTimeout(res, ms))
 }
 
+
+const group = (nodesInput, props) => Object.keys(nodesInput).reduce((nodesOutput, nodeName) => ({
+  ...nodesOutput,
+  [nodeName]: { ...props, ...nodesInput[nodeName]}
+}), {})
+const options = mapping => ({ur}) => mapping[ur]
+
+
 // const lineStats = (x1, y1, x2, y2) => ({
 //   d: dist(x1, y1, x2, y2),
 //   angle: atan2(x2 - x1, y2 - y1)

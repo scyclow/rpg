@@ -3,8 +3,11 @@ import {createSource, MAX_VOLUME} from './audio.js'
 import {voices, say} from './voices.js'
 import {StateMachine, CTX} from './stateMachine.js'
 import {persist} from './persist.js'
+import {ispCSNodes} from './cs/isp.js'
+import {billingCSNodes} from './cs/billing.js'
 
-
+// probably a better way to inject this
+// import {globalState} from './global.js'
 
 
 class PhoneCall {
@@ -72,7 +75,7 @@ class PhoneCall {
 
 
       elem.onclick = () => {
-        this.active = true
+        this.live = true
         this.dialed.push(key === 'hash' ? '#' : key === 'star' ? '*' : key)
         onclick(this, key)
       }
@@ -130,57 +133,37 @@ class PhoneCall {
 
 
     await waitPromise(500)
-    if (!this.active) return
+    for (let i = 0; i < rings; i++) {
+      if (!this.live) return
 
-    src0.smoothGain(MAX_VOLUME)
-    src1.smoothGain(MAX_VOLUME)
+      src0.smoothGain(MAX_VOLUME)
+      src1.smoothGain(MAX_VOLUME)
 
-    await waitPromise(3000)
+      await waitPromise(3000)
 
-    src0.smoothGain(0)
-    src1.smoothGain(0)
-    if (!this.active) return
+      src0.smoothGain(0)
+      src1.smoothGain(0)
 
-    await waitPromise(3000)
-    if (!this.active) return
-
-    src0.smoothGain(MAX_VOLUME)
-    src1.smoothGain(MAX_VOLUME)
-
-    await waitPromise(3000)
-
-    src0.smoothGain(0)
-    src1.smoothGain(0)
-    if (!this.active) return
-
-    await waitPromise(3000)
-    if (!this.active) return
-
-    src0.smoothGain(MAX_VOLUME)
-    src1.smoothGain(MAX_VOLUME)
-
-    await waitPromise(3000)
-
-    src0.smoothGain(0)
-    src1.smoothGain(0)
-    if (!this.active) return
+      if (!this.live) return
+      await waitPromise(i === rings - 1 ? 1000 : 3000)
+    }
 
     this.isRinging = false
-
-    await waitPromise(1000)
   }
 
   hangup() {
     this.phoneAnswered = false
     this.dialed = []
     this.isRinging = false
-    this.active = false
+    this.live = false
 
-    PhoneCall.active = null
+    // PhoneCall.active = null
   }
 
-  answer() {
+  answer(stateMachine) {
     this.phoneAnswered = true
+    this.stateMachine = stateMachine
+    // PhoneCall.active = this
   }
 }
 
@@ -211,7 +194,7 @@ function phoneMarkup() {
 
 
       #dialedNumber {
-        font-size: 4em;
+        font-size: 2.7em;
       }
 
       #menuNumbers {
@@ -282,10 +265,24 @@ function phoneMarkup() {
   `
 }
 
+
+
+export const CSConfig = {
+  defaultWait: 1000,
+  async onUpdate({text}, sm) {
+    sm.ctx.history.push(text)
+    say(await voices.then(vs => vs[0]), text)
+  },
+}
+
+
+
 function formatPhoneNumber(num) {
-  return num.length < 4
-    ? num.slice(0, 3).join('')
-    : `${num.slice(0, 3).join('')}-${num.slice(3, 7).join('')}`
+  if (num.length < 4) return num.slice(0, 3).join('')
+  if (num.length < 8) return `${num.slice(0, 3).join('')}-${num.slice(3, 7).join('')}`
+  if (num.length < 11) return `${num.slice(0, 3).join('')}-${num.slice(3, 6).join('')}-${num.slice(6, 10).join('')}`
+  else return `${num[0]}-${num.slice(1, 4).join('')}-${num.slice(4, 7).join('')}-${num.slice(7, 11).join('')}`
+
 }
 
 
@@ -298,25 +295,54 @@ function phoneBehavior(ctx) {
 
   const phoneCall = PhoneCall.active || new PhoneCall(
     async (phone, key) => {
-      ctx.$('#dialedNumber').innerHTML = formatPhoneNumber(phone.dialed.slice(0, 7))
-      ctx.$('#menuNumbers').innerHTML = phone.dialed.slice(7).join('')
+      ctx.$('#dialedNumber').innerHTML = formatPhoneNumber(phone.dialed.slice(0, 11))
+      ctx.$('#menuNumbers').innerHTML = phone.dialed.slice(11).join('')
 
 
-      // if (!phone.isRinging) {
       window.speechSynthesis.cancel()
-      // }
 
-      if (phone.phoneAnswered) customerSupportStateMachine.next(key)
+      if (phone.phoneAnswered) phone.stateMachine.next(key)
 
       const dialed = phone.dialed.join('')
 
-
-
       if (dialed === '18005552093') {
-        await phone.ringTone()
-        if (!phone.active) return
-        customerSupportStateMachine.next('')
-        phone.answer()
+        await phone.ringTone(3)
+
+        if (!phone.live) return
+
+        const stateMachine = new StateMachine(
+          new CTX({
+            currentNode: 'start',
+            paymentCode: [],
+            routerIdentifier: []
+          }),
+          CSConfig,
+          ispCSNodes
+        )
+        phone.answer(stateMachine)
+
+        stateMachine.next('')
+
+      }
+
+      if (dialed === '18885559483') {
+        await phone.ringTone(1)
+
+        if (!phone.live) return
+
+        const stateMachine = new StateMachine(
+          new CTX({
+            currentNode: 'start',
+            paymentCode: [],
+            routerIdentifier: []
+          }),
+          CSConfig,
+          billingCSNodes
+        )
+        phone.answer(stateMachine)
+
+        stateMachine.next('')
+
       }
     },
     (id) => ctx.$(`#${id}`)
@@ -329,150 +355,26 @@ function phoneBehavior(ctx) {
 }
 
 
-const group = (nodesInput, props) => Object.keys(nodesInput).reduce((nodesOutput, nodeName) => ({
-  ...nodesOutput,
-  [nodeName]: { ...props, ...nodesInput[nodeName]}
-}), {})
-const options = mapping => ({ur}) => mapping[ur]
-
-const customerSupportStateMachine = new StateMachine(
-  new CTX({
-    currentNode: 'start'
-  }),
-  {
-    defaultWait: 1000,
-    async onUpdate({text}, sm) {
-      sm.ctx.history.push(text)
-      say(await voices.then(vs => vs[0]), text)
-    },
-  }, {
-    start: {
-      handler: 'intro'
-    },
-
-    ...group({
-      intro: {
-        text: `Hello, and welcome to internet customer support. This call may be recorded for quality and security purposes. If you're calling about becoming a new customer, press 1. To add service to an existing account, press 2. If you'd like to ask about a recent order, press 3. For all other inquiries, press 4. To hear these options again, press star`,
-      },
-      mainMenu: {
-        text: `If you're calling about becoming a new customer, press 1. To add service to an existing account, press 2. If you'd like to ask about a recent order, press 3. For all other inquiries, press 4. to hear these options again, press star`,
-      }
-    }, {
-      handler: options({
-        0: 'representative',
-        1: 'newCustomer',
-        2: 'existingAccount',
-        3: 'recentOrder',
-        4: 'somethingElse',
-      })
-    }),
 
 
-    representative: {
-      text: 'a representative is not available at this time',
-      follow: 'mainMenu'
-    },
-
-    newCustomer: {
-      text: 'Please enter your credit card number, followed by the pound key',
-      handler: ({ur}) => {
-        if (ur === '#') return 'newCustomerPending'
-        else return 'newCustomerEntry'
-      }
-    },
-    newCustomerEntry: {
-      text: '',
-      handler: ({ur}) => {
-        if (ur === '#') return 'newCustomerPending'
-        else return 'newCustomerEntry'
-      }
-    },
-
-    newCustomerPending: {
-      text: `One moment please`,
-      wait: 3000,
-      follow: 'newCustomerFail'
-    },
-
-    newCustomerFail: {
-      text: `I'm sorry. The card number you have entered is incorrect`,
-      follow: 'mainMenu'
-    },
-
-    recentOrder: {
-      text: 'Error: This option does not exist',
-      follow: 'mainMenu'
-    },
-
-    existingAccount: {
-      text: 'Error: This option does not exist',
-      follow: 'mainMenu'
-    },
-
-
-    somethingElse: {
-      text: `To report an internet outtage in your area, press 1. To talk to a representative, press 0. To return to the main menu, press 9.`,
-      handler: options({
-        0: 'representative',
-        1: 'internetOuttage',
-        9: 'mainMenu',
-      })
-    },
-
-    internetOuttage: {
-      text: `You'd like to report an internet outtage. Please enter your zip code, followed by the pound key`,
-      handler: ({ur}) => {
-        if (ur === '#') return 'internetOuttagePending'
-        else return 'internetOuttageEntry'
-      }
-    },
-
-    internetOuttageEntry: {
-      text: '',
-      handler: ({ur}) => {
-        if (ur === '#') return 'internetOuttagePending'
-        else return 'internetOuttageEntry'
-      }
-    },
-
-    internetOuttagePending: {
-      text: `One moment please`,
-      wait: 3000,
-      follow: 'internetOuttageFail'
-    },
-
-    // TODO: input router model number
-
-    internetOuttageFail: {
-      text: `I don't see an internet outtage in your area. You may need to reboot your router manually. I can walk you through the steps. First, unplug the power chord from the back of your router. When you've unplugged your router, press 1`,
-      handler: options({ 1: 'routerUnplugged' })
-    },
-
-    routerUnplugged: {
-      text: 'when all the lights are off press 1',
-      handler: options({ 1: 'routerLightsOff' })
-    },
-
-    routerLightsOff: {
-      text: `i'll let you know when you can plug it back in. In the meantime, please make sure that all of the other cables are pluged in`,
-      wait: 12000, // this is a little fucky since the timer starts when the voice starts talking
-      follow: 'routerPlugIn'
-    },
-
-    routerPlugIn: {
-      text: `You can plug it back in now. It may take up to 5 minutes for your router to reboot. Is there anything else I can help you with?`,
-      handler: 'mainMenu'
-    }
-
-  }
-)
-
+const APPS = [
+  { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
+  { name: 'Shayd', key: 'shayd', size: 128, price: 1 },
+  { name: 'Alarm', key: 'alarm', size: 128, price: 1 },
+  { name: 'Lumin', key: 'lumin', size: 128, price: 1 },
+  { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: 1 },
+  { name: 'SmartLock', key: 'lock', size: 128, price: 1 },
+  { name: 'SmartPlanter', key: 'planter', size: 256, price: 1 },
+]
 
 
 const state = persist('__MOBILE_STATE', {
   started: false,
   screen: 'loading',
-  location: 'bedroom'
+  internet: 'wifi',
+  dataPlanActivated: false,
+  appsInstalled: [],
+  payAppBalance: 0
 })
 
 
@@ -482,6 +384,10 @@ createComponent(
   'mobile-phone',
   `
     <style>
+      * {
+        padding: 0;
+        margin: 0
+      }
 
       header {
         height: 1em;
@@ -496,6 +402,16 @@ createComponent(
 
       button, select {
         cursor: pointer;
+      }
+
+      button {
+        margin-bottom: 0.5em;
+        padding: 0.1em 0.5em;
+      }
+
+      h1 {
+        font-size: 1.9em;
+        margin: 0.7em 0;
       }
 
       #phone {
@@ -528,11 +444,63 @@ createComponent(
         border-top: 1px solid;
       }
 
+      .hidden {
+        display: none;
+      }
+
+      .loadingScreen {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #222;
+        color: #fff;
+      }
+      .loadingAnimation * {
+        opacity: 0;
+        animation: Flashing 2s ease-in-out infinite;
+      }
+
+      table {
+        border-spacing: 0;
+      }
+
+      td, th {
+        padding: 0.25em
+      }
+      td {
+        text-align: right;
+      }
+      td:first-child {
+        text-align: left;
+      }
+
+      @keyframes Flashing {
+        0%, 100% {
+          opacity: 0;
+        }
+
+        50% {
+          opacity: 1;
+        }
+      }
+
+
+      .blink {
+        animation: Blink 1.5s steps(2, start) infinite;
+      }
+
+      @keyframes Blink {
+        to {
+          visibility: hidden;
+        }
+      }
+
     </style>
     <div id="phone">
-      <header>
+      <header id="header">
         <div>Smart Phone</div>
-        <div>WiFi: unconnected</div>
+        <div id="internetType">WiFi: unconnected</div>
       </header>
       <main id="phoneContent">
 
@@ -541,43 +509,53 @@ createComponent(
             <h1 id="dialedNumber"></h1>
             <h4 id="menuNumbers"></h4>
           </div>
-          <div>blah blah blah</div>
 
 
         </div>
-
-  <!--       <ul id="menu">
-          <li>Phone</li>
-          <li>Contacts</li>
-          <li>Voice Mail</li>
-        </ul> -->
-
       </main>
     </div>
   `,
   state,
   ctx => {
-    // if (!ctx.state.started) {
-      ctx.start = () => {
-        ctx.setState({ screen: 'loading', started: true})
-        setTimeout(() => {
-          ctx.setState({ screen: 'login' })
-        }, 3000)
-      }
-    // }
 
-    ctx.setLocation = location => {
-      ctx.setState({ location })
+    ctx.start = () => {
+      ctx.setState({ screen: 'loading', started: true})
+      setTimeout(() => {
+        ctx.setState({ screen: 'login' })
+      }, 8000)
     }
+
 
   },
   ctx => {
     ctx.$phoneContent = ctx.$('#phoneContent')
+    ctx.$header = ctx.$('#header')
+    ctx.$internetType = ctx.$('#internetType')
 
+    const hasInternet = (ctx.state.internet === 'data' && ctx.state.dataPlanActivated) || (ctx.state.internet === 'wifi' && ctx.state.wifiActivated)
+
+    ctx.$internetType.innerHTML = `
+      ${ctx.state.internet === 'wifi' ? 'WiFi' : 'Data'}: ${
+        hasInternet
+          ? 'connected'
+          : 'unconnected'
+      }
+    `
+
+    ctx.$header.classList.remove('hidden')
     ctx.$phoneContent.innerHTML = ''
 
+
     if (ctx.state.screen === 'loading') {
-      ctx.$phoneContent.innerHTML = 'Loading...'
+      ctx.$header.classList.add('hidden')
+      ctx.$phoneContent.innerHTML = `
+        <div class="loadingScreen">
+          <h2 class="loadingAnimation">
+            <span>Loading</span><span style="animation-delay: .11s">.</span><span style="animation-delay: .22s">.</span><span style="animation-delay: .33s">.</span>
+          </h2>
+        </div>
+      `
+
     } else if (ctx.state.screen === 'login') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -590,6 +568,7 @@ createComponent(
       ctx.$('#newProfile').onclick = () => {
         ctx.setState({ screen: 'newProfile' })
       }
+
     } else if (ctx.state.screen === 'newProfile') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -624,6 +603,8 @@ createComponent(
           <button id="qrScanner">QR Scanner</button>
           <button id="settings" disabled>Settings</button>
           <button id="network">Network & Internet</button>
+          ${ctx.state.appsInstalled.map(a => `<button id="${a.key}">${a.name}</button>`).join('')}
+          <button id="logOut">Log Out</button>
         </div>
       `
 
@@ -639,6 +620,19 @@ createComponent(
         ctx.setState({ screen: 'network' })
       }
 
+      ctx.state.appsInstalled.forEach(a => {
+        ctx.$(`#${a.key}`).onclick = () => {
+          ctx.setState({ screen: a.key })
+        }
+      })
+
+      ctx.$('#logOut').onclick = () => {
+        ctx.setState({ screen: 'loading' })
+        setTimeout(() => {
+          ctx.setState({ screen: 'login' })
+        }, 4000)
+      }
+
     } else if (ctx.state.screen === 'appMarket') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -646,7 +640,12 @@ createComponent(
 
           <div>
             <input placeholder="search" id="appSearch">
+            <table id="matchingApps"></table>
             <h3 id="searchError"></h3>
+            ${hasInternet ? `
+              <h3>Credits Balance: 0</h3>
+              <button disabled>Purchase Credits</button>
+            ` : ''}
           </div>
         </div>
       `
@@ -655,57 +654,194 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
-      ctx.$('#appSearch').onkeydown = () => {
-        ctx.$('#searchError').innerHTML = 'Cannot connect to AppMarket. Please check your internet connection.'
+      const appSearch = ctx.$('#appSearch')
+
+      const clean = txt => txt.toLowerCase().replaceAll(' ', '').replaceAll(':', '')
+
+      appSearch.onkeyup = () => {
+        if (hasInternet) {
+          const searchTerm = clean(appSearch.value)
+
+          ctx.$('#matchingApps').innerHTML = `
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Size</th>
+                <th>Credits</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${searchTerm && APPS
+                .filter(a => clean(a.name).includes(searchTerm))
+                .map(a => `<tr>
+                  <td>${a.name}</td>
+                  <td>${a.size}</td>
+                  <td>${a.price}</td>
+                  <td>${
+                    ctx.state.appsInstalled.some(_a => a.name === a.name)
+                      ? `Downloaded`
+                      : `<button id="${clean(a.name)}-download">Download</button></td>`
+
+                  }
+                  </tr>`).join('')
+              }
+            </tbody>
+          `
+
+          APPS.forEach(a => {
+            const app = ctx.$(`#${clean(a.name)}-download`)
+            if (app) app.onclick = () => {
+              ctx.setState({ appsInstalled: [...ctx.state.appsInstalled, a]})
+            }
+          })
+
+        } else {
+          ctx.$('#searchError').innerHTML = 'Cannot connect to AppMarket. Please check your internet connection.'
+        }
       }
+
     } else if (ctx.state.screen === 'network') {
-      ctx.$phoneContent.innerHTML = `
-        <div class="phoneScreen">
-          <button id="home">Back</button>
-          <button id="data">Switch to Data</button>
-          <h3>WiFi Status: Unconnected</h3>
-          <h3>Network Name:
-            <select>
-              <option></option>
-              <option>CapitalC</option>
-              <option>ClickToAddNetwork</option>
-              <option>ElectricLadyLand</option>
-              <option>MyWiFi-9238d9</option>
-              <option>NewNetwork</option>
-              <option>XXX-No-Entry</option>
-            </select>
-          </h3>
-          <input placeholder="password" type="password">
-          <button id="connect">Connect</button>
-          <h3 id="error"></h3>
-        </div>
-      `
+      if (ctx.state.internet === 'wifi') {
+        ctx.$phoneContent.innerHTML = `
+          <div class="phoneScreen">
+            <button id="home">Back</button>
+            <button id="data">Switch to Data</button>
+            <h3>WiFi Status: Unconnected</h3>
+            <h3>Network Name:
+              <select>
+                <option></option>
+                <option>CapitalC</option>
+                <option>ClickToAddNetwork</option>
+                <option>ElectricLadyLand</option>
+                <option>MyWiFi-9238d9</option>
+                <option>NewNetwork</option>
+                <option>XXX-No-Entry</option>
+              </select>
+            </h3>
+            <input placeholder="password" type="password">
+            <button id="connect">Connect</button>
+            <h3 id="error"></h3>
+          </div>
+        `
+        ctx.$('#data').onclick = () => {
+          ctx.setState({ internet: 'data' })
+        }
+
+        ctx.$('#connect').onclick = () => {
+          ctx.$('#error').innerHTML = 'Incorrect Password'
+        }
+      } else {
+        // TODO add dropdowns for district ix
+        ctx.$phoneContent.innerHTML = `
+          <div class="phoneScreen">
+            <button id="home">Back</button>
+            <button id="wifi">Switch to Wifi</button>
+            <h3>Data Plan: ${ctx.state.dataPlanActivated ? 'TurboConnect' : 'unknown'}</h3>
+            <div id="connectForm">
+              <input id="spc" placeholder="SPC">
+              <input id="districtIndex" placeholder="District Index">
+              <input id="unlockCode" placeholder="Unlock Code">
+              <button id="connectData">Connect</button>
+            </div>
+            <h3 id="error"></h3>
+          </div>
+        `
+        ctx.$('#connectData').onclick = () => {
+          ctx.$('#error').innerHTML = '<span class="blink">Connecting...</span>'
+
+          setTimeout(() => {
+            const spc = ctx.$('#spc').value
+            const districtIndex = ctx.$('#districtIndex').value
+            const unlockCode = ctx.$('#unlockCode').value
+
+            if (spc === '00010-032991' && districtIndex === 'B47' && unlockCode === 'Qz8!9g97tR$f29') {
+              ctx.$('#error').innerHTML = 'Success!'
+              setTimeout(() => ctx.setState({ dataPlanActivated: true }), 2000)
+
+            } else {
+              ctx.$('#error').innerHTML = 'Invalid Credentials: service refused'
+
+            }
+
+          }, 3000)
+        }
+
+        ctx.$('#wifi').onclick = () => {
+          ctx.setState({ internet: 'wifi' })
+        }
+      }
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
 
-      ctx.$('#data').onclick = () => {
-        ctx.setState({ screen: 'home' })
-      }
-
-      ctx.$('#connect').onclick = () => {
-        ctx.$('#error').innerHTML = 'Incorrect Password'
-      }
     } else if (ctx.state.screen === 'phoneApp') {
       ctx.$phoneContent.innerHTML = phoneMarkup()
       phoneBehavior(ctx)
-
-
 
       ctx.$('#hangup').onclick = () => {
         ctx.$('#dialedNumber').innerHTML = ''
         ctx.$('#menuNumbers').innerHTML = ''
         window.speechSynthesis.cancel()
         if (PhoneCall.active) PhoneCall.active.hangup()
-        customerSupportStateMachine.goto('start')
+        // PhoneCall.active.stateMachine.goto('start')
       }
 
+      if (!ctx.state.dataPlanActivated) {
+        setTimeout(() => {
+          ctx.$('#keypad').innerHTML = '<div style="font-size:4em; margin: 0.75em; text-align: center">Cannot connect to service provider</div>'
+        }, 400)
+      }
+
+    } else if (ctx.state.screen === 'payApp') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2 style="margin-bottom: 0.25em">PayApp: Making Payment as easy as 1-2-3!</h2>
+          <h3 style="margin: 0.5em 0">Current Balance: $${ctx.state.payAppBalance.toFixed(2)}</h3>
+
+          <div style="margin-bottom: 0.4em">
+            <h3>PayApp Address: </h3>
+            <span style="font-size: 0.9em">0x308199aE4A5e94FE954D5B24B21B221476Dc90E9</span>
+          </div>
+          <div style="margin-bottom: 0.4em">
+            <h3>Private Payment Key (PPK):</h3>
+            <span style="font-size: 0.9em"><em>hidden</em></span>
+            <div>(Don't share this with anyone! Including PayApp employees)</div>
+          </div>
+
+          <ol>
+            <li><input id="recipient" placeholder="Recipient"></li>
+            <li><input id="amount" placeholder="Amount" type="number"></li>
+            <li><button id="sign">Sign Transaction</li>
+          </ol>
+
+          <div id="sptx"></div>
+        </div>
+      `
+      // ff33083322f66413ea6fb21e7b6451d9922b14c1622ebff8da71a61a36de0cc8
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+      ctx.$('#sign').onclick = () => {
+        const amount = ctx.$('#amount').value
+        const recipient = ctx.$('#recipient').value
+        const $sptx = ctx.$('#sptx')
+
+        $sptx.innerHTML = ''
+
+        console.log(recipient, !recipient)
+        if (!recipient) {
+          $sptx.innerHTML = `Please input a valid recipient`
+        }
+        if (amount === 0) {
+          $sptx.innerHTML = `Please input a value greater than 0`
+        }
+        if (amount > ctx.state.payAppBalance) {
+          $sptx.innerHTML = `INVALID AMOUNT`
+        }
+      }
     }
 
   },

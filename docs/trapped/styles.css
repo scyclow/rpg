@@ -1,6 +1,11 @@
 :root {
-  --bg-color: #19120b;
-  --primary-color: #c1bf9f;
+
+  --dark-color: #19120b;
+  --light-color: #c1bf9f;
+  --bg-color: var(--dark-color);
+  --primary-color: var(--light-color);
+  /*--primary-color: #19120b;*/
+  /*--bg-color: #c1bf9f;*/
 }
 * {
   padding: 0;
@@ -31,7 +36,7 @@ aside button {
 }
 
 button {
-  padding: 0.25em;
+  padding: 0.25em 0.5em;
   cursor: pointer;
   background: color-mix(in srgb, var(--bg-color) 93%, var(--primary-color));
   border: 1px solid;
@@ -46,6 +51,10 @@ button:hover {
 button:active {
   background: color-mix(in srgb, var(--bg-color) 96%, var(--primary-color));
   box-shadow: 0 0 0;
+}
+
+h3 {
+  margin: 0.1em 0;
 }
 
 p {
@@ -89,6 +98,10 @@ p.preVisible {
   animation: Intro 0.5s linear;
 }
 
+.letterText {
+  font-family: serif;
+}
+
 .smoothScroll {
   scroll-behavior: smooth;
 }
@@ -103,4 +116,9 @@ p.preVisible {
     max-height: 500px;
     opacity: 1;
   }
+}
+
+::selection {
+  background: var(--primary-color);
+  color: var(--bg-color);
 }

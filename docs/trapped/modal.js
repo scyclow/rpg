@@ -50,21 +50,43 @@ createComponent(
         left: 0;
       }
 
+      #x {
+        cursor: pointer;
+        position: absolute;
+        display: inline-block;
+        padding: 1em;
+        color: #fff;
+        top:0;
+        right: 0;
+        z-index:501;
+        font-size:1.2em;
+        opacity:0.75;
+        transition: 0.3s;
+      }
+      #x:hover {
+        opacity: 1
+      }
+
 
 
     </style>
 
 
-    <article id="modelParent" class="hidden">
-      <div id="bg" ></div>
-      <div id="modal" >
-        <slot name="content"></slot>
-      </div>
-    </article>
+    <div id="modelParent" class="hidden">
+      <article>
+        <div id="bg" ></div>
+        <div id="modal" >
+          <slot name="content"></slot>
+        </div>
+
+      </article>
+      <div id="x">close</div>
+    </div>
   `,
   {display: false},
   (ctx) => {
     ctx.$bg = ctx.$('#bg')
+    ctx.$x = ctx.$('#x')
     ctx.$modal = ctx.$('#modal')
     ctx.$modelParent = ctx.$('#modelParent')
 
@@ -92,6 +114,7 @@ createComponent(
     }
 
     ctx.$bg.onclick = ctx.close
+    ctx.$x.onclick = ctx.close
 
   },
   (ctx) => {

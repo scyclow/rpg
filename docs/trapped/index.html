@@ -9,7 +9,7 @@
 <body>
   <main id="currentDisplay">
     <section id="mainConsole">
-      <header>Bedroom -- <date>??/??</date> -- <time>??:??</time></header>
+      <header><span id="consoleLocation"></span> -- <date>??/??</date> -- <time>??:??</time></header>
       <section id="mainConsolePrimary">
         <section id="mainConsoleContent">
 <!--           <p>You wake up</p>
@@ -73,6 +73,7 @@
 
   const $phoneModal = $.id('phoneModal')
   const $phoneDevice = $.id('phoneDevice')
+  const $consoleLocation = $.id('consoleLocation')
 
 
   const group = (nodesInput, props) => Object.keys(nodesInput).reduce((nodesOutput, nodeName) => ({
@@ -91,7 +92,6 @@
     currentNode: 'start',
     currentActions: [],
     state: {
-      location: 'bedroom',
       router: {
         pluggedIn: true
       }
@@ -124,6 +124,12 @@
 
 
 
+  const niceLocation = {
+    bed: 'Bedroom',
+    bedroom: 'Bedroom',
+    hallway: 'Hallway',
+    livingRoom: 'Living Room',
+  }
 
   const primaryConfig = {
     defaultWait: 300,
@@ -139,9 +145,9 @@
 
       // $content.innerHTML += `<p>${text}</p>`
 
-      // $content.scrollTop = $content.scrollHeight
+      $content.scrollTop = 0//$content.scrollHeight
 
-      $phoneDevice.setLocation(sm.ctx.location)
+      $consoleLocation.innerHTML = niceLocation[globalState.location]
 
 
       if (actions instanceof Function) {
@@ -166,7 +172,8 @@
     intro: [
       { text: 'You wake up', wait: 1000},
       { text: 'A vague sense of dread lingers from a dream you no longer remember', wait: 1000},
-      { text: 'Your first conscious inclination is to reach for your phone', follow: 'bedFresh' },
+      { text: 'Your first conscious thought is to reach for your phone', follow: 'bedFresh' },
+      // { text: 'Your first conscious inclination is to reach for your phone', follow: 'bedFresh' },
     ],
 
     ...group({
@@ -219,7 +226,7 @@
       },
       bedroom: {
         before({ ctx }) {
-          ctx.state.location = 'bedroom'
+          globalState.location = 'bedroom'
         },
         text: 'You enter the bedroom',
       },
@@ -247,7 +254,7 @@
     ...group({
       hallway: {
         before({ ctx }) {
-          ctx.state.location = 'hallway'
+          globalState.location = 'hallway'
         },
         text: ({ctx}) => `You enter the hallway${ctx.state.hallwayVisited ? '' : `. A motion sensor picks up your movement and the camera above the front door comes to life`}`,
         after({ ctx }) {
@@ -267,7 +274,16 @@
         before({ctx}) {
           ctx.state.envelopesPickedUp = true
         },
-        text: `You pick up both envelopes. The first is from your landlord, Landlock Realty LLC. You owe them $6,437.98. The second is from HealthyLiving Inc. You owe them $14,038.71. You can pay this online. At the bottom of the letter is says: "Your health is priceless!"`
+        text: `You pick up both envelopes. The first is from your landlord, Landlock Realty LLC. You owe them $6,437.98. The second is from HealthyLiving Inc. You owe them $14,038.71. You can pay this online. At the bottom of the letter it says: "Your health is priceless!" The third is junk mail. It says:
+        <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em;"">
+          <p class="letterText">Dear NEIGHBOR,</p>
+          <p class="letterText">Special Promotion for LIMITED TIME only FREE trial for MOBILE + DATA Plan</p>
+          <p class="letterText">Service Provider Code (SPC): 00010-032991</p>
+          <p class="letterText">District Index: B47</p>
+          <p class="letterText">Unlock Code: Qz8!9g97tR$f29</p>
+        </div>
+
+        `
       },
 
 
@@ -303,7 +319,7 @@
 
 
     frontDoorEnvelopes: {
-      text: ({ctx}) => `You try opening the front door. It appears to be locked, possibly from the outside. You notice two envelopes at your feet`,
+      text: ({ctx}) => `You try opening the front door. It appears to be locked, possibly from the outside. You notice three envelopes at your feet`,
       handler: ({ur}) => ur,
       actions: [
         {text: 'Back', value: 'hallwayCurrent'},
@@ -315,7 +331,7 @@
     ...group({
       livingRoom: {
         before({ ctx }) {
-          ctx.state.location = 'livingRoom'
+          globalState.location = 'livingRoom'
           ctx.state.livingRoomVisited = true
         },
         text: ({ctx}) => `You enter the living room${ctx.state.livingRoomVisited ? '' : '. You wonder how your plants are doing'}`,
@@ -341,7 +357,7 @@
       },
 
       ebook: {
-        text: 'todo'
+        text: 'You pick up the ebook. It presents a message to you: "Cannot access Library"'
       },
       tv: {
         text: 'todo'
@@ -382,12 +398,15 @@
 
       bottomRouter: {
         text: `You pick up the router and look at the bottom. A sticker says:
-          <div>
+        <div>
+          <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em; border-radius: 8px">
             <h3>WiFi Network Name: InpatientRehabilitationServices</h3>
             <h3>WiFi Password: StompLookListen123</h3>
             <h3>Model Name: UBC-9283</h3>
+            <h3>Device Identifier: 5879234963378</h3>
             <h3>Customer Support: 1-800-555-2093</h3>
           </div>
+        </div>
         `
       }
     }, {
@@ -433,6 +452,10 @@
   function rehydrate(ctx, sm) {
     const $content = $.id('mainConsoleContent')
     const $nextActions = $.id('nextActions')
+
+
+    $consoleLocation.innerHTML = niceLocation[globalState.location]
+
 
     // todo: if last action is opening phone, push "you close your phone"
     if (ctx.currentNode === 'openPhone') {
