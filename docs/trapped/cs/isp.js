@@ -9,7 +9,7 @@ export const ispCSNodes = {
 
   ...group({
     intro: {
-      text: `Hello, and welcome to internet customer support. This call may be recorded for quality and security purposes. If you're calling about becoming a new customer, press 1. To add service to an existing account, press 2. If you'd like to ask about a recent order, press 3. For all other inquiries, press 4. To hear these options again, press star`,
+      text: `Hello, and welcome to I S P customer support. This call may be recorded for quality and security purposes. If you're calling about becoming a new customer, press 1. To add service to an existing account, press 2. If you'd like to ask about a recent order, press 3. For all other inquiries, press 4. To hear these options again, press star`,
     },
     mainMenu: {
       text: `If you're calling about becoming a new customer, press 1. To add service to an existing account, press 2. If you'd like to pay an outstanding bill, press 3. For all other inquiries, press 4. to hear these options again, press star`,
@@ -27,8 +27,8 @@ export const ispCSNodes = {
 
 
   representative: {
-    text: 'a representative is not available at this time',
-    follow: 'mainMenu'
+    text: 'The current estimated wait time to speak with a representative is N A N hours, N A N minutes, and N A N seconds. Please stay on the line to speak with a representative, or press 1 to return to the main menu.',
+    handler: x => x.ur === '1' ? 'mainMenu' : 'representative'
   },
 
   newCustomer: {
@@ -158,6 +158,8 @@ export const ispCSNodes = {
     text: `I've found an account associated with your device`,
     follow: 'verifyIdentity'
   },
+
+  // TODO mention that account belongs to default
 
   verifyIdentity: {
     text: 'Service to this account has been suspended due to an unpaid balance of. zero. dollars. and. thirty. seven. cents... Service will be restored to this account upon payment of this balance. If you would like to be transferred to our billing department, press 1. To return to the main menut, press star',

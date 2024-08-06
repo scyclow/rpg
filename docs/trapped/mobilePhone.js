@@ -5,9 +5,8 @@ import {StateMachine, CTX} from './stateMachine.js'
 import {persist} from './persist.js'
 import {ispCSNodes} from './cs/isp.js'
 import {billingCSNodes} from './cs/billing.js'
-
-// probably a better way to inject this
-// import {globalState} from './global.js'
+import {disputeResolutionNodes} from './cs/dispute.js'
+import {globalState, calcIdVerifyCode, setColor} from './global.js'
 
 
 class PhoneCall {
@@ -156,12 +155,14 @@ class PhoneCall {
     this.dialed = []
     this.isRinging = false
     this.live = false
+    this.answerTime = 0
 
     // PhoneCall.active = null
   }
 
   answer(stateMachine) {
     this.phoneAnswered = true
+    this.answerTime = Date.now()
     this.stateMachine = stateMachine
     // PhoneCall.active = this
   }
@@ -190,6 +191,13 @@ function phoneMarkup() {
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      h4 {
+        height: 1em;
+        font-size: 1.5em;
       }
 
 
@@ -199,7 +207,12 @@ function phoneMarkup() {
 
       #menuNumbers {
         font-size: 1.5em;
-        height: 1.1em;
+        min-height: 1.1em;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0 0.5em;
+        pointer-events: none;
+        text-align: center;
       }
 
 
@@ -247,6 +260,7 @@ function phoneMarkup() {
     </style>
     <div id="phoneAppContent">
       <div id="phoneAppInfo">
+        <h4 id="callTime"></h4>
         <h1 id="dialedNumber"></h1>
         <h4 id="menuNumbers"></h4>
       </div>
@@ -267,13 +281,6 @@ function phoneMarkup() {
 
 
 
-export const CSConfig = {
-  defaultWait: 1000,
-  async onUpdate({text}, sm) {
-    sm.ctx.history.push(text)
-    say(await voices.then(vs => vs[0]), text)
-  },
-}
 
 
 
@@ -287,11 +294,34 @@ function formatPhoneNumber(num) {
 
 
 
+const padZero = n => n < 10 ? '0' + n : '' +  n
+function setCallTime(ctx, phone) {
+  if (!phone.answerTime) return
+  const $time = ctx.$('#callTime')
+
+
+  ctx.interval = setRunInterval(() => {
+    if (phone.phoneAnswered) {
+      const totalSecondsElapsed = Math.floor((Date.now() - phone.answerTime) / 1000)
+      const secondsElapsed = totalSecondsElapsed % 60
+      const minutesElapsed = Math.floor(totalSecondsElapsed / 60)
+
+      $time.innerHTML = `${padZero(minutesElapsed)}:${padZero(secondsElapsed)}`
+    } else {
+      $time.innerHTML = ``
+    }
+
+  }, 1000)
+}
+
+
+
 let ACTIVE_PHONECALL
 function phoneBehavior(ctx) {
   ctx.$('#home').onclick = () => {
     ctx.setState({ screen: 'home' })
   }
+
 
   const phoneCall = PhoneCall.active || new PhoneCall(
     async (phone, key) => {
@@ -305,6 +335,7 @@ function phoneBehavior(ctx) {
 
       const dialed = phone.dialed.join('')
 
+      // ISP
       if (dialed === '18005552093') {
         await phone.ringTone(3)
 
@@ -316,15 +347,23 @@ function phoneBehavior(ctx) {
             paymentCode: [],
             routerIdentifier: []
           }),
-          CSConfig,
+          {
+            defaultWait: 1000,
+            async onUpdate({text}, sm) {
+              sm.ctx.history.push(text)
+              say(await voices.then(vs => vs[0]), text)
+            },
+          },
           ispCSNodes
         )
         phone.answer(stateMachine)
+        setCallTime(ctx, phone)
 
         stateMachine.next('')
 
       }
 
+      // ISP Billing
       if (dialed === '18885559483') {
         await phone.ringTone(1)
 
@@ -333,23 +372,90 @@ function phoneBehavior(ctx) {
         const stateMachine = new StateMachine(
           new CTX({
             currentNode: 'start',
-            paymentCode: [],
-            routerIdentifier: []
           }),
-          CSConfig,
+          {
+            defaultWait: 1000,
+            async onUpdate({text}, sm) {
+              sm.ctx.history.push(text)
+              // TODO different voice
+              say(await voices.then(vs => vs[0]), text)
+            },
+          },
           billingCSNodes
         )
         phone.answer(stateMachine)
+        setCallTime(ctx, phone)
 
         stateMachine.next('')
+      }
 
+      // Billing dispute resolution administrator
+      if (dialed === '18007770836') {
+        await phone.ringTone(4)
+
+        if (!phone.live) return
+
+        const stateMachine = new StateMachine(
+          new CTX({
+            currentNode: 'start',
+          }),
+          {
+            defaultWait: 1000,
+            async onUpdate({text}, sm) {
+              sm.ctx.history.push(text)
+              // TODO different voice
+              const vs = await voices
+              const voice = vs.find(v.voiceURI.includes('Daniel') && v.lang === 'en-GB') || vs[0]
+              say(voice, text)
+            },
+          },
+          disputeResolutionNodes
+        )
+        phone.answer(stateMachine)
+        setCallTime(ctx, phone)
+
+        stateMachine.next('')
+      }
+
+
+      // SSO
+      if (dialed === '18182225379') {
+        await phone.ringTone(40)
+
+        // if (!phone.live) return
+
+        // const stateMachine = new StateMachine(
+        //   new CTX({
+        //     currentNode: 'start',
+        //   }),
+        //   {
+        //     defaultWait: 1000,
+        //     async onUpdate({text}, sm) {
+        //       sm.ctx.history.push(text)
+        //       // TODO different voice
+        //       const vs = await voices
+        //       const voice = vs.find(v.voiceURI.includes('Daniel') && v.lang === 'en-GB') || vs[0]
+        //       say(voice, text)
+        //     },
+        //   },
+        //   disputeResolutionNodes
+        // )
+        // phone.answer(stateMachine)
+        // setCallTime(ctx, phone)
+
+        stateMachine.next('')
       }
     },
     (id) => ctx.$(`#${id}`)
   )
 
 
+  ctx.$('#dialedNumber').innerHTML = formatPhoneNumber(phoneCall.dialed.slice(0, 11))
+  ctx.$('#menuNumbers').innerHTML = phoneCall.dialed.slice(11).join('')
+
   ctx.$('#keypad').append(...phoneCall.$keypad)
+
+  setCallTime(ctx, phoneCall)
 
   window.pc = phoneCall
 }
@@ -358,13 +464,15 @@ function phoneBehavior(ctx) {
 
 
 const APPS = [
+  { name: 'Alarm', key: 'alarm', size: 128, price: 1 },
+  { name: 'Identity Verfier', key: 'idVerifier', size: 128, price: 0 },
+  { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
+  { name: 'MakeFastCashNow', key: 'fastcash', size: 128, price: 1 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
   { name: 'Shayd', key: 'shayd', size: 128, price: 1 },
-  { name: 'Alarm', key: 'alarm', size: 128, price: 1 },
-  { name: 'Lumin', key: 'lumin', size: 128, price: 1 },
-  { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: 1 },
   { name: 'SmartLock', key: 'lock', size: 128, price: 1 },
   { name: 'SmartPlanter', key: 'planter', size: 256, price: 1 },
+  { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: 1 },
 ]
 
 
@@ -373,8 +481,13 @@ const state = persist('__MOBILE_STATE', {
   screen: 'loading',
   internet: 'wifi',
   dataPlanActivated: false,
-  appsInstalled: [],
-  payAppBalance: 0
+  appsInstalled: {0: []},
+  payAppBalance: {0: 0},
+  userNames: {0: 'default'},
+  newUsers: 0,
+  currentUser: 0,
+  lampOn: false,
+  luminPaired: false,
 })
 
 
@@ -407,6 +520,11 @@ createComponent(
       button {
         margin-bottom: 0.5em;
         padding: 0.1em 0.5em;
+      }
+
+      button:disabled {
+        user-select: none;
+        cursor: no-drop;
       }
 
       h1 {
@@ -502,16 +620,8 @@ createComponent(
         <div>Smart Phone</div>
         <div id="internetType">WiFi: unconnected</div>
       </header>
+
       <main id="phoneContent">
-
-        <div id="phoneSectionContent">
-          <div id="phoneInfo">
-            <h1 id="dialedNumber"></h1>
-            <h4 id="menuNumbers"></h4>
-          </div>
-
-
-        </div>
       </main>
     </div>
   `,
@@ -528,11 +638,15 @@ createComponent(
 
   },
   ctx => {
+    clearInterval(ctx.interval)
+
     ctx.$phoneContent = ctx.$('#phoneContent')
     ctx.$header = ctx.$('#header')
     ctx.$internetType = ctx.$('#internetType')
 
     const hasInternet = (ctx.state.internet === 'data' && ctx.state.dataPlanActivated) || (ctx.state.internet === 'wifi' && ctx.state.wifiActivated)
+
+    const { currentUser, appsInstalled, payAppBalance } = ctx.state
 
     ctx.$internetType.innerHTML = `
       ${ctx.state.internet === 'wifi' ? 'WiFi' : 'Data'}: ${
@@ -560,10 +674,26 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <h1>Select User Profile:</h1>
-          <button onclick="alert('This profile has been indefinitely suspended for violating our terms of service')">default</button>
+          ${
+            Object.keys(ctx.state.userNames).sort().map(u => `<button id="user-${u}">${ctx.state.userNames[u]}</button>`).join('')
+          }
           <button id="newProfile">Create New Profile</button>
         </div>
       `
+
+      ctx.$('#user-0').onclick = () => {
+        alert('This profile has been indefinitely suspended for violating our terms of service. Please contact us at 1-818-222-5379 if you believe there has been a mistake')
+      }
+
+      Object.keys(ctx.state.userNames).sort().forEach(id => {
+        if (id === '0') return
+        ctx.$(`#user-${id}`).onclick = () => {
+          ctx.setState({
+            currentUser: id,
+            screen: 'home'
+          })
+        }
+      })
 
       ctx.$('#newProfile').onclick = () => {
         ctx.setState({ screen: 'newProfile' })
@@ -573,7 +703,7 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="back">back</button>
-          <div><input placeholder="first name"/></div>
+          <div><input placeholder="first name" id="firstName" /></div>
           <div><input placeholder="last name"/></div>
           <div><input placeholder="birthday"/></div>
           <div><input placeholder="gender"/></div>
@@ -581,6 +711,7 @@ createComponent(
           <div><input placeholder="height"/></div>
           <div><input placeholder="weight"/></div>
           <button id="submit">submit</button>
+          <h3 id="error"></h3>
         </div>
       `
 
@@ -589,21 +720,47 @@ createComponent(
       }
 
       ctx.$('#submit').onclick = () => {
-        ctx.setState({ screen: 'loading' })
+        const firstName = ctx.$('#firstName').value
+        if (!firstName) {
+          ctx.$('#error').innerHTML = 'Please provide a first name'
+          return
+        } else {
+          ctx.$('#error').innerHTML = ''
+        }
+        const id = ctx.state.newUsers + 1
+
+        ctx.setState({
+          screen: 'loading',
+          currentUser: id,
+          newUsers: id,
+          appsInstalled: {
+            ...appsInstalled,
+            [id]: []
+          },
+          payAppBalance: {
+            ...payAppBalance,
+            [id]: 0
+          },
+          userNames: {
+            ...ctx.state.userNames,
+            [id]: firstName
+          }
+        })
         setTimeout(() => {
           ctx.setState({ screen: 'home' })
         }, 4000)
       }
 
     } else if (ctx.state.screen === 'home') {
+      const appsInstalled = ctx.state.appsInstalled[currentUser] || []
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="appMarket">App Market</button>
           <button id="phoneApp">Phone App</button>
           <button id="qrScanner">QR Scanner</button>
-          <button id="settings" disabled>Settings</button>
+          <button id="settings">Settings</button>
           <button id="network">Network & Internet</button>
-          ${ctx.state.appsInstalled.map(a => `<button id="${a.key}">${a.name}</button>`).join('')}
+          ${appsInstalled.map(a => `<button id="${a.key}">${a.name}</button>`).join('')}
           <button id="logOut">Log Out</button>
         </div>
       `
@@ -615,12 +772,16 @@ createComponent(
         ctx.setState({ screen: 'phoneApp' })
       }
 
+      ctx.$('#settings').onclick = () => {
+        ctx.setState({ screen: 'settings' })
+      }
+
 
       ctx.$('#network').onclick = () => {
         ctx.setState({ screen: 'network' })
       }
 
-      ctx.state.appsInstalled.forEach(a => {
+      appsInstalled.forEach(a => {
         ctx.$(`#${a.key}`).onclick = () => {
           ctx.setState({ screen: a.key })
         }
@@ -662,6 +823,7 @@ createComponent(
         if (hasInternet) {
           const searchTerm = clean(appSearch.value)
 
+
           ctx.$('#matchingApps').innerHTML = `
             <thead>
               <tr>
@@ -679,9 +841,9 @@ createComponent(
                   <td>${a.size}</td>
                   <td>${a.price}</td>
                   <td>${
-                    ctx.state.appsInstalled.some(_a => a.name === a.name)
+                    appsInstalled[currentUser].some(_a => _a.name === a.name)
                       ? `Downloaded`
-                      : `<button id="${clean(a.name)}-download">Download</button></td>`
+                      : `<button id="${clean(a.name)}-download" ${a.price > 0 ? 'disabled' : ''}>Download</button></td>`
 
                   }
                   </tr>`).join('')
@@ -692,7 +854,12 @@ createComponent(
           APPS.forEach(a => {
             const app = ctx.$(`#${clean(a.name)}-download`)
             if (app) app.onclick = () => {
-              ctx.setState({ appsInstalled: [...ctx.state.appsInstalled, a]})
+              ctx.setState({
+                appsInstalled: {
+                  ...appsInstalled,
+                  [currentUser]: [...appsInstalled[currentUser], a]
+                }
+              })
             }
           })
 
@@ -708,19 +875,26 @@ createComponent(
             <button id="home">Back</button>
             <button id="data">Switch to Data</button>
             <h3>WiFi Status: Unconnected</h3>
-            <h3>Network Name:
-              <select>
-                <option></option>
-                <option>CapitalC</option>
-                <option>ClickToAddNetwork</option>
-                <option>ElectricLadyLand</option>
-                <option>MyWiFi-9238d9</option>
-                <option>NewNetwork</option>
-                <option>XXX-No-Entry</option>
-              </select>
-            </h3>
-            <input placeholder="password" type="password">
-            <button id="connect">Connect</button>
+            ${
+              ctx.state.bluetoothEnabled
+                ? `
+                  <h3>Network Name:
+                    <select>
+                      <option></option>
+                      <option>CapitalC</option>
+                      <option>ClickToAddNetwork</option>
+                      <option>ElectricLadyLand</option>
+                      <option>MyWiFi-9238d9</option>
+                      <option>NewNetwork</option>
+                      <option>XXX-No-Entry</option>
+                    </select>
+                  </h3>
+                  <input placeholder="password" type="password">
+                  <button id="connect">Connect</button>
+                `
+                : `<h3>Please enable Bluetooth in your device Settings to view available networks</h3>`
+            }
+
             <h3 id="error"></h3>
           </div>
         `
@@ -728,7 +902,7 @@ createComponent(
           ctx.setState({ internet: 'data' })
         }
 
-        ctx.$('#connect').onclick = () => {
+        if (ctx.$('#connect')) ctx.$('#connect').onclick = () => {
           ctx.$('#error').innerHTML = 'Incorrect Password'
         }
       } else {
@@ -795,11 +969,13 @@ createComponent(
       }
 
     } else if (ctx.state.screen === 'payApp') {
+      const payAppBalance = ctx.state.payAppBalance[currentUser]
+
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2 style="margin-bottom: 0.25em">PayApp: Making Payment as easy as 1-2-3!</h2>
-          <h3 style="margin: 0.5em 0">Current Balance: $${ctx.state.payAppBalance.toFixed(2)}</h3>
+          <h3 style="margin: 0.5em 0">Current Balance: $${payAppBalance.toFixed(2)}</h3>
 
           <div style="margin-bottom: 0.4em">
             <h3>PayApp Address: </h3>
@@ -831,16 +1007,113 @@ createComponent(
 
         $sptx.innerHTML = ''
 
-        console.log(recipient, !recipient)
         if (!recipient) {
           $sptx.innerHTML = `Please input a valid recipient`
+          return
         }
-        if (amount === 0) {
+        if (amount === 0 || !amount) {
           $sptx.innerHTML = `Please input a value greater than 0`
+          return
         }
-        if (amount > ctx.state.payAppBalance) {
+        if (amount > payAppBalance) {
           $sptx.innerHTML = `INVALID AMOUNT`
+          return
         }
+
+      }
+
+    } else if (ctx.state.screen === 'settings') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <button id="bluetooth">${ctx.state.bluetoothEnabled ? 'Disable' : 'Enable'} Bluetooth</button>
+        </div>
+
+      `
+
+      ctx.$('#bluetooth').onclick = () => {
+        ctx.setState({ bluetoothEnabled: !ctx.state.bluetoothEnabled })
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (ctx.state.screen === 'lumin') {
+      // const localDevices = {
+      //   livingRoom: 'Lumin Lamp A32',
+      //   livingRoom: 'Lumin Lamp A32',
+      // }[globalState.location]
+
+      // TODO pair by room
+
+      const mainInterface = `
+        <button id="offOn">${ctx.state.lampOn ? 'Turn Off' : 'Turn On'}</button>
+
+      `
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          ${
+            ctx.state.bluetoothEnabled
+              ? ctx.state.luminPaired
+                ? mainInterface
+                : `<button id="pairLumin">Pair Device</button>`
+              : `<h3>Please enable blue tooth to pair local devices</h3>`
+          }
+        </div>
+
+      `
+
+      if (ctx.$('#pairLumin')) ctx.$('#pairLumin').onclick = () => {
+        ctx.setState({ luminPaired: true })
+      }
+
+      if (ctx.$('#offOn')) ctx.$('#offOn').onclick = () => {
+
+        const lampStatus = !ctx.state.lampOn
+
+        if (lampStatus) {
+          setColor('--bg-color', '#fff')
+          setColor('--primary-color', '#000')
+        } else {
+          setColor('--bg-color', 'var(--dark-color)')
+          setColor('--primary-color', 'var(--light-color)')
+        }
+        globalState.lightsOn = lampStatus
+        ctx.setState({ lampOn: lampStatus })
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (ctx.state.screen === 'idVerifier') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h3>WARNING: This device already has another Identity Verifier App installed. This may affect performance</h3>
+
+          <h1>Identity Verifier Code (IVC): <span id="idCode"></span></h1>
+          <h2 id="timeRemaining"></h2>
+
+        </div>
+
+      `
+
+      ctx.interval = setRunInterval(() => {
+        const msSinceUpdate = Date.now() - globalState.idVerifierUpdate
+        const secondsSinceUpdate = msSinceUpdate / 1000
+
+
+        ctx.$('#timeRemaining').innerHTML = 60 - (Math.floor(secondsSinceUpdate))
+        ctx.$('#idCode').innerHTML = calcIdVerifyCode(ctx.state.currentUser)
+
+      }, 1000)
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
       }
     }
 

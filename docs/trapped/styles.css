@@ -16,6 +16,7 @@
 
 body {
   background: var(--bg-color);
+  transition: 0.3s;
 }
 
 header, aside {
@@ -42,7 +43,7 @@ button {
   border: 1px solid;
   border-radius: 2px;
   border-color: color-mix(in srgb, var(--primary-color) 55%, var(--bg-color));
-  box-shadow: 0 0 0.1em var(--primary-color);
+  /*box-shadow: 0 0 0.1em var(--primary-color);*/
 }
 button:hover {
   background: color-mix(in srgb, var(--bg-color) 75%, var(--primary-color));

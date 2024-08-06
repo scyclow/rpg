@@ -145,7 +145,10 @@
 
       // $content.innerHTML += `<p>${text}</p>`
 
-      $content.scrollTop = 0//$content.scrollHeight
+      if (!['openPhone', 'closePhone'].includes(sm.ctx.currentNode)) {
+        $content.scrollTop = 0
+      }
+
 
       $consoleLocation.innerHTML = niceLocation[globalState.location]
 
@@ -237,7 +240,7 @@
         text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
       },
       bedroomLamp: {
-        text: `You inspect the lamp. You don't see a light switch, but you do see a QR code sticker pasted to the side.`
+        text: `You inspect the lamp. You don't see a light switch, but you do see a QR code pasted to its side with no label.`
       }
     }, {
       actions: [
@@ -306,13 +309,13 @@
     }, {
       actions: ({ctx}) =>  [
         { text: 'Phone', value: 'openPhone'},
-        { text: 'Bathroom', value: 'bathroom'},
+        { text: 'Bedroom', value: 'bedroom'},
         { text: 'Living Room', value: 'livingRoom'},
+        { text: 'Bathroom', value: 'bathroom'},
         { text: 'Front Door', value: ctx.state.envelopesPickedUp ? 'frontDoor' : 'frontDoorEnvelopes' },
+        { text: 'Camera', value: 'camera'},
         { text: 'Thermostat', value: 'thermostat'},
         { text: 'Intercom', value: 'intercom'},
-        { text: 'Bedroom', value: 'bedroom'},
-        { text: 'Camera', value: 'camera'},
       ],
       handler: ({ur}) => ur
     }),
@@ -357,7 +360,7 @@
       },
 
       ebook: {
-        text: 'You pick up the ebook. It presents a message to you: "Cannot access Library"'
+        text: 'You pick up the ebook. You read: "Cannot access Library"'
       },
       tv: {
         text: 'todo'
@@ -429,8 +432,12 @@
       },
 
       plugInRouter: {
+
         text: `You plug the router back in. The Power, Internet, and WiFi lights all turn off for one second, turn back on for one second, and blink for three seconds, before returning to their original states`,
-        wait: 0
+        wait: 0,
+        follow() {
+          globalState.routerReset = true
+        }
       },
 
     }, {
