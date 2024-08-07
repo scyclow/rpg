@@ -351,7 +351,7 @@ function phoneBehavior(ctx) {
             defaultWait: 1000,
             async onUpdate({text}, sm) {
               sm.ctx.history.push(text)
-              say(await voices.then(vs => vs[0]), text)
+              say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
             },
           },
           ispCSNodes
@@ -378,7 +378,7 @@ function phoneBehavior(ctx) {
             async onUpdate({text}, sm) {
               sm.ctx.history.push(text)
               // TODO different voice
-              say(await voices.then(vs => vs[0]), text)
+              say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
             },
           },
           billingCSNodes
@@ -405,7 +405,7 @@ function phoneBehavior(ctx) {
               sm.ctx.history.push(text)
               // TODO different voice
               const vs = await voices
-              const voice = vs.find(v.voiceURI.includes('Daniel') && v.lang === 'en-GB') || vs[0]
+              const voice = vs.find(v.voiceURI.includes('Daniel') && v.lang === 'en-GB') || vs.filter(v => v.lang === 'en-US')[0]
               say(voice, text)
             },
           },
@@ -434,7 +434,7 @@ function phoneBehavior(ctx) {
         //       sm.ctx.history.push(text)
         //       // TODO different voice
         //       const vs = await voices
-        //       const voice = vs.find(v.voiceURI.includes('Daniel') && v.lang === 'en-GB') || vs[0]
+        //       const voice = vs.find(v.voiceURI.includes('Daniel') && v.lang === 'en-GB') || vs.filter(v => v.lang === 'en-US')[0]
         //       say(voice, text)
         //     },
         //   },
