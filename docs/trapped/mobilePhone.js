@@ -465,14 +465,19 @@ function phoneBehavior(ctx) {
 
 const APPS = [
   { name: 'Alarm', key: 'alarm', size: 128, price: 1 },
+  { name: 'Bathe', key: 'bathe', size: 128, price: 1 },
+  { name: 'Clock', key: 'alarm', size: 128, price: 1 },
   { name: 'Identity Verfier', key: 'idVerifier', size: 128, price: 0 },
   { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
-  { name: 'MakeFastCashNow', key: 'fastcash', size: 128, price: 1 },
+  { name: 'MakeFastCashNow', key: 'fastcash', size: 128, price: 2 },
+  { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
+  { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
   { name: 'Shayd', key: 'shayd', size: 128, price: 1 },
   { name: 'SmartLock', key: 'lock', size: 128, price: 1 },
   { name: 'SmartPlanter', key: 'planter', size: 256, price: 1 },
   { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: 1 },
+  { name: 'Toastr', key: 'camera', size: 128, price: 1 },
 ]
 
 
@@ -488,6 +493,8 @@ const state = persist('__MOBILE_STATE', {
   currentUser: 0,
   lampOn: false,
   luminPaired: false,
+  messageViewerMessage: '',
+  availableActions: []
 })
 
 
@@ -757,7 +764,6 @@ createComponent(
         <div class="phoneScreen">
           <button id="appMarket">App Market</button>
           <button id="phoneApp">Phone App</button>
-          <button id="qrScanner">QR Scanner</button>
           <button id="settings">Settings</button>
           <button id="network">Network & Internet</button>
           ${appsInstalled.map(a => `<button id="${a.key}">${a.name}</button>`).join('')}
@@ -819,10 +825,9 @@ createComponent(
 
       const clean = txt => txt.toLowerCase().replaceAll(' ', '').replaceAll(':', '')
 
-      appSearch.onkeyup = () => {
+      const search = () => {
         if (hasInternet) {
           const searchTerm = clean(appSearch.value)
-
 
           ctx.$('#matchingApps').innerHTML = `
             <thead>
@@ -855,6 +860,7 @@ createComponent(
             const app = ctx.$(`#${clean(a.name)}-download`)
             if (app) app.onclick = () => {
               ctx.setState({
+                appMarketPreSearch: '',
                 appsInstalled: {
                   ...appsInstalled,
                   [currentUser]: [...appsInstalled[currentUser], a]
@@ -866,6 +872,17 @@ createComponent(
         } else {
           ctx.$('#searchError').innerHTML = 'Cannot connect to AppMarket. Please check your internet connection.'
         }
+      }
+
+      appSearch.onkeyup = () => {
+        ctx.state.appMarketPreSearch = ''
+        search()
+
+      }
+
+      if (ctx.state.appMarketPreSearch) {
+        appSearch.value = ctx.state.appMarketPreSearch
+        search()
       }
 
     } else if (ctx.state.screen === 'network') {
@@ -1034,6 +1051,51 @@ createComponent(
       ctx.$('#bluetooth').onclick = () => {
         ctx.setState({ bluetoothEnabled: !ctx.state.bluetoothEnabled })
       }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (ctx.state.screen === 'messageViewer') {
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2>Message Viewer</h2>
+          <h4>MESSAGE:</h4>
+          <p id="message">${ctx.state.messageViewerMessage}</p>
+        </div>
+      `
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (ctx.state.screen === 'qrScanner') {
+
+      const objects = ctx.state.availableActions.map(a => `<button id="qr-${a.value}" style="margin-right: 0.25em">${a.text}</button>`).join('')
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2>QR SCANNER</h2>
+          <h4 id="error"></h4>
+          <div style="border: 1px solid; padding: 0.5em; filter: invert(0.9)">${objects}</div>
+        </div>
+      `
+
+      ctx.state.availableActions.forEach(a => {
+        ctx.$('#qr-'+a.value).onclick = () => {
+          if (a.qr) {
+            if (a.qr.screen === 'messageViewer' && !appsInstalled[ctx.state.currentUser].some(a => a.key === 'messageViewer')) {
+              alert('Please download the Message Viewer app from the AppMarket to view this message')
+            } else {
+              ctx.setState(a.qr)
+            }
+          } else {
+            ctx.$('#error').innerHTML = 'This item does not have a qr code'
+          }
+        }
+      })
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
