@@ -508,7 +508,7 @@ const APPS = [
   { name: 'Clock', key: 'alarm', size: 128, price: 1 },
   { name: 'Identity Verfier', key: 'idVerifier', size: 128, price: 0 },
   { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
-  { name: 'MakeFastCashNow', key: 'fastcash', size: 128, price: 2 },
+  { name: 'MoneyMinter', key: 'fastcash', size: 128, price: 0 },
   { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
   { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
@@ -525,16 +525,29 @@ const state = persist('__MOBILE_STATE', {
   screen: 'loading',
   internet: 'wifi',
   dataPlanActivated: false,
-  appsInstalled: {0: []},
-  payAppBalance: {0: 0},
   userNames: {0: 'default'},
-  textMessages: {0: []},
+  // appsInstalled: {0: []},
+  // payAppBalance: {0: 0},
+  // textMessages: {0: []},
+  // moneyMinerBalance: {0: 0},
+  // exchangeCryptoBalance: {0: 0},
+  // exchangeUSDBalance: {0: 0},
   newUsers: 0,
   currentUser: 0,
   lampOn: false,
   luminPaired: false,
   messageViewerMessage: '',
-  availableActions: []
+  availableActions: [],
+  userData: {
+    0: {
+      appsInstalled: [],
+      payAppBalance: 0,
+      textMessages: [],
+      moneyMinerBalance: 0,
+      exchangeCryptoBalance: 0,
+      exchangeUSDBalance: 0
+    }
+  }
 })
 
 
@@ -643,7 +656,7 @@ createComponent(
       .tm {
         cursor: pointer;
         border-top: 1px dashed;
-        padding: 0.25em;
+        padding: 0.5em;
       }
 
       .tm:first-child {
@@ -661,6 +674,7 @@ createComponent(
 
       .unread {
         font-weight: bolder;
+        background: #ccc;
       }
 
       @keyframes Flashing {
@@ -705,16 +719,19 @@ createComponent(
       }, 8000)
     }
 
-    ctx.phoneNotifications = () => ctx.state.textMessages[ctx.state.currentUser].reduce((a, c) => c.read ? a : a + 1, 0)
+    ctx.phoneNotifications = () => ctx.state.userData[ctx.state.currentUser].textMessages.reduce((a, c) => c.read ? a : a + 1, 0)
 
     ctx.newText = (txt) => {
       ctx.setState({
-        textMessages: {
-          ...ctx.state.textMessages,
-          [ctx.state.currentUser]: [...ctx.state.textMessages[ctx.state.currentUser], {
-            ...txt,
-            read: false
-          }]
+        userData: {
+          ...ctx.state.userData,
+          [ctx.state.currentUser]: {
+            ...ctx.state.userData[ctx.state.currentUser],
+            textMessages: [...ctx.state.userData[ctx.state.currentUser].textMessages, {
+              ...txt,
+              read: false
+            }]
+          }
         }
       })
     }
@@ -727,11 +744,28 @@ createComponent(
     ctx.$header = ctx.$('#header')
     ctx.$internetType = ctx.$('#internetType')
 
-    const { currentUser, appsInstalled, payAppBalance, textMessages, dataPlanActivated, wifiActivated, internet, activeTextMessage } = ctx.state
+    const {
+      currentUser,
+      dataPlanActivated,
+      wifiActivated,
+      internet,
+      userData,
+      userNames
+    } = ctx.state
+
+    const currentUserData = userData[currentUser]
+
+    const {
+      appsInstalled,
+      payAppBalance,
+      textMessages,
+      moneyMinerBalance,
+      exchangeCryptoBalance,
+      exchangeUSDBalance,
+    } = currentUserData
 
     const hasInternet = (internet === 'data' && dataPlanActivated) || (internet === 'wifi' && wifiActivated)
 
-    const allTextMessages = textMessages[currentUser]
 
     ctx.$internetType.innerHTML = `
       ${ctx.state.internet === 'wifi' ? 'WiFi' : 'Data'}: ${
@@ -744,7 +778,7 @@ createComponent(
     ctx.$header.classList.remove('hidden')
     ctx.$phoneContent.innerHTML = ''
 
-    const unreadTextCount = allTextMessages.reduce((a, c) => c.read ? a : a + 1, 0)
+    const unreadTextCount = textMessages.reduce((a, c) => c.read ? a : a + 1, 0)
 
 
     if (ctx.state.screen === 'loading') {
@@ -820,21 +854,20 @@ createComponent(
           screen: 'loading',
           currentUser: id,
           newUsers: id,
-          appsInstalled: {
-            ...appsInstalled,
-            [id]: []
-          },
-          payAppBalance: {
-            ...payAppBalance,
-            [id]: 0
-          },
           userNames: {
-            ...ctx.state.userNames,
+            ...userNames,
             [id]: firstName
           },
-          textMessages: {
-            ...textMessages,
-            [id]: []
+          userData: {
+            ...userData,
+            [id]: {
+              appsInstalled: [],
+              textMessages: [],
+              payAppBalance: 0,
+              moneyMinerBalance: 0,
+              exchangeCryptoBalance: 0,
+              exchangeUSDBalance: 0
+            }
           }
         })
         setTimeout(() => {
@@ -843,7 +876,6 @@ createComponent(
       }
 
     } else if (ctx.state.screen === 'home') {
-      const appsInstalled = ctx.state.appsInstalled[currentUser] || []
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen" style="flex: 1; display: flex">
           <div style="display: flex; flex-direction: column; justify-content: space-between; flex: 1">
@@ -947,7 +979,7 @@ createComponent(
                   <td>${a.size}</td>
                   <td>${a.price}</td>
                   <td>${
-                    appsInstalled[currentUser].some(_a => _a.name === a.name)
+                    appsInstalled.some(_a => _a.name === a.name)
                       ? `Downloaded`
                       : `<button id="${clean(a.name)}-download" ${a.price > 0 ? 'disabled' : ''}>Download</button></td>`
 
@@ -962,9 +994,12 @@ createComponent(
             if (app) app.onclick = () => {
               ctx.setState({
                 appMarketPreSearch: '',
-                appsInstalled: {
-                  ...appsInstalled,
-                  [currentUser]: [...appsInstalled[currentUser], a]
+                userData: {
+                  ...userData,
+                  [currentUser]: {
+                    ...userData[currentUser],
+                    appsInstalled: [...appsInstalled, a]
+                  }
                 }
               })
             }
@@ -1100,7 +1135,6 @@ createComponent(
       }
 
     } else if (ctx.state.screen === 'payApp') {
-      const payAppBalance = ctx.state.payAppBalance[currentUser]
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -1190,7 +1224,7 @@ createComponent(
       // dataPlanActivated
 
 
-      const messageList = `<ul>${allTextMessages.map((m, ix) => `
+      const messageList = `<ul>${textMessages.map((m, ix) => `
         <li id="tm-${ix}" class="tm ${!m.read ? 'unread' : ''}">
           <div class="tm-from">${m.from || 'unknown'}</div>
           <div>${m.value.slice(0, 19) + '...'}</div>
@@ -1208,20 +1242,24 @@ createComponent(
         </div>
       `
 
-      allTextMessages.forEach((m, ix) => {
+      textMessages.forEach((m, ix) => {
         ctx.$(`#tm-${ix}`).onclick = () => {
           ctx.setState({
             activeTextMessage: ix,
             screen: 'textMessageIndividual',
-            textMessages: {
-              ...textMessages,
-              [currentUser]: textMessages[currentUser].map((_m, _ix) => _ix === ix
-                ? {
-                  ..._m,
-                  read: true
-                }
-                : _m
-              )
+            userData: {
+              ...userData,
+              [currentUser]: {
+                ...currentUserData,
+                textMessages: textMessages.map((_m, _ix) => _ix === ix
+                  ? {
+                    ..._m,
+                    read: true
+                  }
+                  : _m
+                )
+
+              }
             }
           })
         }
@@ -1236,7 +1274,7 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="textMessage">Back</button>
-          <p>${textMessages[currentUser][activeTextMessage].value}</p>
+          <p>${textMessages[ctx.state.activeTextMessage].value}</p>
         </div>
       `
 
@@ -1259,7 +1297,7 @@ createComponent(
       ctx.state.availableActions.forEach(a => {
         ctx.$('#qr-'+a.value).onclick = () => {
           if (a.qr) {
-            if (a.qr.screen === 'messageViewer' && !appsInstalled[currentUser].some(a => a.key === 'messageViewer')) {
+            if (a.qr.screen === 'messageViewer' && !appsInstalled.some(a => a.key === 'messageViewer')) {
               alert('Please download the Message Viewer app from the AppMarket to view this message')
             } else {
               ctx.setState(a.qr)
