@@ -6,6 +6,7 @@ import {persist} from './persist.js'
 import {ispCSNodes} from './cs/isp.js'
 import {billingCSNodes} from './cs/billing.js'
 import {disputeResolutionNodes} from './cs/dispute.js'
+import {turboConnectNodes} from './cs/turboConnect.js'
 import {globalState, calcIdVerifyCode, setColor} from './global.js'
 
 
@@ -405,7 +406,7 @@ function phoneBehavior(ctx) {
               sm.ctx.history.push(text)
               // TODO different voice
               const vs = await voices
-              const voice = vs.find(v.voiceURI.includes('Daniel') && v.lang === 'en-GB') || vs.filter(v => v.lang === 'en-US')[0]
+              const voice = vs.find(v => v.voiceURI.includes('Daniel') && v.lang === 'en-GB') || vs.filter(v => v.lang === 'en-US')[0]
               say(voice, text)
             },
           },
@@ -434,7 +435,7 @@ function phoneBehavior(ctx) {
         //       sm.ctx.history.push(text)
         //       // TODO different voice
         //       const vs = await voices
-        //       const voice = vs.find(v.voiceURI.includes('Daniel') && v.lang === 'en-GB') || vs.filter(v => v.lang === 'en-US')[0]
+        //       const voice = vs.find(v => v.voiceURI.includes('Daniel') && v.lang === 'en-GB') || vs.filter(v => v.lang === 'en-US')[0]
         //       say(voice, text)
         //     },
         //   },
@@ -444,6 +445,44 @@ function phoneBehavior(ctx) {
         // setCallTime(ctx, phone)
 
         stateMachine.next('')
+      }
+
+      // TurboConnect
+      if (dialed === '18004443830') {
+        await phone.ringTone(2)
+
+        if (!phone.live) return
+
+        const stateMachine = new StateMachine(
+          new CTX({
+            currentNode: 'start',
+          }),
+          {
+            defaultWait: 1000,
+            async onUpdate({text}, sm) {
+              sm.ctx.history.push(text)
+              // TODO different voice
+              const vs = await voices
+              const voice = vs.find(v => (
+                  v.voiceURI.includes('Reed') && (
+                    v.lang === 'fi-FI'
+                    || v.lang === 'de-DE'
+                  )
+                ) || v.voiceURI.includes('Reed')
+              ) || vs.filter(v => v.lang === 'en-US')[0]
+              say(voice, text)
+            },
+          },
+          turboConnectNodes
+        )
+        phone.answer(stateMachine)
+        setCallTime(ctx, phone)
+
+        stateMachine.next('')
+      }
+
+      if (dialed.length === 11) {
+        await phone.ringTone(40)
       }
     },
     (id) => ctx.$(`#${id}`)
@@ -489,6 +528,7 @@ const state = persist('__MOBILE_STATE', {
   appsInstalled: {0: []},
   payAppBalance: {0: 0},
   userNames: {0: 'default'},
+  textMessages: {0: []},
   newUsers: 0,
   currentUser: 0,
   lampOn: false,
@@ -600,6 +640,29 @@ createComponent(
         text-align: left;
       }
 
+      .tm {
+        cursor: pointer;
+        border-top: 1px dashed;
+        padding: 0.25em;
+      }
+
+      .tm:first-child {
+        border-top: 0;
+      }
+
+      .tm:hover {
+        text-decoration: underline
+      }
+
+      .tm-from {
+        font-size: 0.75em;
+        font-weight: bolder;
+      }
+
+      .unread {
+        font-weight: bolder;
+      }
+
       @keyframes Flashing {
         0%, 100% {
           opacity: 0;
@@ -642,6 +705,19 @@ createComponent(
       }, 8000)
     }
 
+    ctx.phoneNotifications = () => ctx.state.textMessages[ctx.state.currentUser].reduce((a, c) => c.read ? a : a + 1, 0)
+
+    ctx.newText = (txt) => {
+      ctx.setState({
+        textMessages: {
+          ...ctx.state.textMessages,
+          [ctx.state.currentUser]: [...ctx.state.textMessages[ctx.state.currentUser], {
+            ...txt,
+            read: false
+          }]
+        }
+      })
+    }
 
   },
   ctx => {
@@ -651,9 +727,11 @@ createComponent(
     ctx.$header = ctx.$('#header')
     ctx.$internetType = ctx.$('#internetType')
 
-    const hasInternet = (ctx.state.internet === 'data' && ctx.state.dataPlanActivated) || (ctx.state.internet === 'wifi' && ctx.state.wifiActivated)
+    const { currentUser, appsInstalled, payAppBalance, textMessages, dataPlanActivated, wifiActivated, internet, activeTextMessage } = ctx.state
 
-    const { currentUser, appsInstalled, payAppBalance } = ctx.state
+    const hasInternet = (internet === 'data' && dataPlanActivated) || (internet === 'wifi' && wifiActivated)
+
+    const allTextMessages = textMessages[currentUser]
 
     ctx.$internetType.innerHTML = `
       ${ctx.state.internet === 'wifi' ? 'WiFi' : 'Data'}: ${
@@ -665,6 +743,8 @@ createComponent(
 
     ctx.$header.classList.remove('hidden')
     ctx.$phoneContent.innerHTML = ''
+
+    const unreadTextCount = allTextMessages.reduce((a, c) => c.read ? a : a + 1, 0)
 
 
     if (ctx.state.screen === 'loading') {
@@ -751,6 +831,10 @@ createComponent(
           userNames: {
             ...ctx.state.userNames,
             [id]: firstName
+          },
+          textMessages: {
+            ...textMessages,
+            [id]: []
           }
         })
         setTimeout(() => {
@@ -761,13 +845,22 @@ createComponent(
     } else if (ctx.state.screen === 'home') {
       const appsInstalled = ctx.state.appsInstalled[currentUser] || []
       ctx.$phoneContent.innerHTML = `
-        <div class="phoneScreen">
-          <button id="appMarket">App Market</button>
-          <button id="phoneApp">Phone App</button>
-          <button id="settings">Settings</button>
-          <button id="network">Network & Internet</button>
-          ${appsInstalled.map(a => `<button id="${a.key}">${a.name}</button>`).join('')}
-          <button id="logOut">Log Out</button>
+        <div class="phoneScreen" style="flex: 1; display: flex">
+          <div style="display: flex; flex-direction: column; justify-content: space-between; flex: 1">
+            <div>
+              <button id="appMarket">App Market</button>
+              <button id="phoneApp">Phone App</button>
+              <button id="textMessage">Text Messages${unreadTextCount ? ` (${unreadTextCount})` : ''}</button>
+              <button id="settings">Settings</button>
+              <button id="network">Network & Internet</button>
+              ${appsInstalled.map(a => `<button id="${a.key}">${a.name}</button>`).join('')}
+              <button id="logOut">Log Out</button>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end">
+              <button id="close" style="font-size: 1.25em">Close</button>
+            </div>
+          </div>
         </div>
       `
 
@@ -778,8 +871,16 @@ createComponent(
         ctx.setState({ screen: 'phoneApp' })
       }
 
+      ctx.$('#textMessage').onclick = () => {
+        ctx.setState({ screen: 'textMessage' })
+      }
+
       ctx.$('#settings').onclick = () => {
         ctx.setState({ screen: 'settings' })
+      }
+
+      ctx.$('#close').onclick = () => {
+        ctx.parentElement.close()
       }
 
 
@@ -928,7 +1029,7 @@ createComponent(
           <div class="phoneScreen">
             <button id="home">Back</button>
             <button id="wifi">Switch to Wifi</button>
-            <h3>Data Plan: ${ctx.state.dataPlanActivated ? 'TurboConnect' : 'unknown'}</h3>
+            <h3>Data Plan: ${dataPlanActivated ? 'TurboConnect FREE TRIAL for MOBILE + DATA Plan' : 'unknown'}</h3>
             <div id="connectForm">
               <input id="spc" placeholder="SPC">
               <input id="districtIndex" placeholder="District Index">
@@ -948,7 +1049,20 @@ createComponent(
 
             if (spc === '00010-032991' && districtIndex === 'B47' && unlockCode === 'Qz8!9g97tR$f29') {
               ctx.$('#error').innerHTML = 'Success!'
-              setTimeout(() => ctx.setState({ dataPlanActivated: true }), 2000)
+              setTimeout(() => {
+                ctx.setState({ dataPlanActivated: true })
+                ctx.newText({
+                  from: '1-800-444-3830',
+                  value: 'You have subscribed: TurboConnect FREE TRIAL for MOBILE + DATA Plan! Please Dial 1-800-444-3830 on *PhoneApp* for all question',
+                })
+              }, 2000)
+
+              setTimeout(() => {
+                ctx.newText({
+                  from: '1-800-777-0836',
+                  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods. Simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask. `,
+                })
+              }, 60000)
 
             } else {
               ctx.$('#error').innerHTML = 'Invalid Credentials: service refused'
@@ -979,7 +1093,7 @@ createComponent(
         // PhoneCall.active.stateMachine.goto('start')
       }
 
-      if (!ctx.state.dataPlanActivated) {
+      if (!dataPlanActivated) {
         setTimeout(() => {
           ctx.$('#keypad').innerHTML = '<div style="font-size:4em; margin: 0.75em; text-align: center">Cannot connect to service provider</div>'
         }, 400)
@@ -1071,6 +1185,65 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
+    } else if (ctx.state.screen === 'textMessage') {
+
+      // dataPlanActivated
+
+
+      const messageList = `<ul>${allTextMessages.map((m, ix) => `
+        <li id="tm-${ix}" class="tm ${!m.read ? 'unread' : ''}">
+          <div class="tm-from">${m.from || 'unknown'}</div>
+          <div>${m.value.slice(0, 19) + '...'}</div>
+        </li>
+      `).join('')}</ul`
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2>Text Messages</h2>
+
+          ${
+            dataPlanActivated ? messageList : '<h3>Cannot retrieve text messages</h3>'
+          }
+        </div>
+      `
+
+      allTextMessages.forEach((m, ix) => {
+        ctx.$(`#tm-${ix}`).onclick = () => {
+          ctx.setState({
+            activeTextMessage: ix,
+            screen: 'textMessageIndividual',
+            textMessages: {
+              ...textMessages,
+              [currentUser]: textMessages[currentUser].map((_m, _ix) => _ix === ix
+                ? {
+                  ..._m,
+                  read: true
+                }
+                : _m
+              )
+            }
+          })
+        }
+      })
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (ctx.state.screen === 'textMessageIndividual') {
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="textMessage">Back</button>
+          <p>${textMessages[currentUser][activeTextMessage].value}</p>
+        </div>
+      `
+
+      ctx.$('#textMessage').onclick = () => {
+        ctx.setState({ screen: 'textMessage' })
+      }
+
     } else if (ctx.state.screen === 'qrScanner') {
 
       const objects = ctx.state.availableActions.map(a => `<button id="qr-${a.value}" style="margin-right: 0.25em">${a.text}</button>`).join('')
@@ -1086,7 +1259,7 @@ createComponent(
       ctx.state.availableActions.forEach(a => {
         ctx.$('#qr-'+a.value).onclick = () => {
           if (a.qr) {
-            if (a.qr.screen === 'messageViewer' && !appsInstalled[ctx.state.currentUser].some(a => a.key === 'messageViewer')) {
+            if (a.qr.screen === 'messageViewer' && !appsInstalled[currentUser].some(a => a.key === 'messageViewer')) {
               alert('Please download the Message Viewer app from the AppMarket to view this message')
             } else {
               ctx.setState(a.qr)
@@ -1170,7 +1343,7 @@ createComponent(
 
 
         ctx.$('#timeRemaining').innerHTML = 60 - (Math.floor(secondsSinceUpdate))
-        ctx.$('#idCode').innerHTML = calcIdVerifyCode(ctx.state.currentUser)
+        ctx.$('#idCode').innerHTML = calcIdVerifyCode(currentUser)
 
       }, 1000)
 
