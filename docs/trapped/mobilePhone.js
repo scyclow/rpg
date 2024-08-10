@@ -7,7 +7,7 @@ import {ispCSNodes} from './cs/isp.js'
 import {billingCSNodes} from './cs/billing.js'
 import {disputeResolutionNodes} from './cs/dispute.js'
 import {turboConnectNodes} from './cs/turboConnect.js'
-import {globalState, calcIdVerifyCode, setColor} from './global.js'
+import {globalState, calcIdVerifyCode, calcExchangeRecipientAddr, calcCryptoUSDExchangeRate, setColor} from './global.js'
 
 
 class PhoneCall {
@@ -506,10 +506,12 @@ const APPS = [
   { name: 'Alarm', key: 'alarm', size: 128, price: 1 },
   { name: 'Bathe', key: 'bathe', size: 128, price: 1 },
   { name: 'Clock', key: 'alarm', size: 128, price: 1 },
+  { name: 'CryptoMinerPlus', key: 'alarm', size: 128, price: 1 },
+  { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
   { name: 'Identity Verfier', key: 'idVerifier', size: 128, price: 0 },
   { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
-  { name: 'MoneyMinter', key: 'fastcash', size: 128, price: 0 },
   { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
+  { name: 'MoneyMiner', key: 'moneyMiner', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
   { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
   { name: 'Shayd', key: 'shayd', size: 128, price: 1 },
@@ -731,6 +733,18 @@ createComponent(
               ...txt,
               read: false
             }]
+          }
+        }
+      })
+    }
+
+    ctx.setUserData = (userData) => {
+      ctx.setState({
+        userData: {
+          ...ctx.state.userData,
+          [ctx.state.currentUser]: {
+            ...ctx.state.userData[ctx.state.currentUser],
+            ...userData
           }
         }
       })
@@ -1095,7 +1109,7 @@ createComponent(
               setTimeout(() => {
                 ctx.newText({
                   from: '1-800-777-0836',
-                  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods. Simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask. `,
+                  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods. Simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask?. First you download the MoneyMiner application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine crypto. Third you can optionally transfer your crypto `,
                 })
               }, 60000)
 
@@ -1176,7 +1190,7 @@ createComponent(
           $sptx.innerHTML = `Please input a valid recipient`
           return
         }
-        if (amount === 0 || !amount) {
+        if (amount <= 0 || !amount) {
           $sptx.innerHTML = `Please input a value greater than 0`
           return
         }
@@ -1384,6 +1398,240 @@ createComponent(
         ctx.$('#idCode').innerHTML = calcIdVerifyCode(currentUser)
 
       }, 1000)
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (ctx.state.screen === 'moneyMiner') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2>Welcome to  $ Money Miner $</h2>
+          <h4>My Address:</h4>
+          <h4 style="word-wrap: break-word; margin-bottom: 0.4em">0x5f9fc040c204724c833a777516a06ffe88b81819</h4>
+          <h4>To mine crypto, click the button below →</h4>
+          <button id="mine">Mine Crypto</button>
+
+          <h4>Balance: <span id="cryptoBalance">${moneyMinerBalance}</span></h4>
+
+          <h3>Send</h3>
+          <input id="recipient" placeholder="recipient">
+          <input id="amount" placeholder="amount" type="number">
+          <button id="send">Send</button>
+
+          <h4 id="error"></h4>
+
+          <h4>FAQ</h4>
+          <p>Q: How do I mine Crypto?</p>
+          <p>A: In order to mine crypto, all you need to do is click the "Mine Crypto" button in the Money Miner interface. Each click will mine a new Crypto Coin.</p>
+
+          <p>Q: How can I convert crypto to USD?</p>
+          <p>A: Exchanging crypto for dollars is easy! Just download the Currenc Xchange App, create an account, and send your crypto to your new address! </p>
+
+          <p>Q: Can other Smart Devices mine Crypto for me?</p>
+          <p>A: Yes! Select smart devices can be configured to mine Crypto in order to create a passive income stream. In order to configure these devices, please download the CryptoMinerPlus App!</p>
+
+        </div>
+
+      `
+
+      ctx.$('#mine').onclick = () => {
+        ctx.setUserData({
+          moneyMinerBalance: moneyMinerBalance + 1
+        })
+      }
+
+      ctx.$('#send').onclick = () => {
+        const amount = Number(ctx.$('#amount').value)
+        const recipient = ctx.$('#recipient').value.trim()
+
+        if (amount > moneyMinerBalance || amount < 0 || !amount) {
+          ctx.$('#error').innerHTML = 'Error: invalid amount'
+          return
+        } else {
+          ctx.$('#error').innerHTML = ''
+        }
+
+        ctx.setUserData({
+          moneyMinerBalance: moneyMinerBalance - amount,
+          exchangeCryptoBalance: exchangeCryptoBalance + (
+            recipient === calcExchangeRecipientAddr(currentUser)
+              ? amount
+              : 0
+          )
+        })
+
+
+        ctx.$('#amount').value = ''
+        ctx.$('#recipient').value = ''
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (ctx.state.screen === 'exchange') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2>Currency Xchange</h2>
+          <h3 style="margin-bottom: 0.4em">Temporary Recipient Address: <div id="tempAddr" style="word-wrap: break-word; border: 1px dotted; padding: 0.2em; margin: 0.2em 0"></div> (Valid for <span id="timeRemaining"></span> more seconds)</h3>
+          <em>Recipient addresses are cycled every 60 seconds for security purposes. Any funds sent to an expired recipient address will be lost</em>
+          <div style="margin: 1em 0">
+            <h3>Crypto Balance: ${exchangeCryptoBalance.toFixed(6)}</h3>
+            <h3>USD Balance: $${exchangeUSDBalance.toFixed(6)}</h3>
+
+            <h4 style="margin: 0.4em 0">Send Funds</h4>
+            <input id="sendRecipient" placeholder="Recipient Address" style="width: 90%; margin-bottom: 0.4em">
+            <input id="sendCryptoAmount" placeholder="Send Crypto (val)" type="number"> <button id="sendCrypto">SEND</button>
+            <input id="sendUSDAmount" placeholder="Send USD (val)" type="number"> <button id="sendUSD">SEND</button>
+            <h4 id="sendError"></h4>
+          </div>
+
+          <div style="margin: 1em 0">
+            <h3>Exchange Rates (<em>Live!</em>)</h3>
+            <table style="border: 1px solid; margin-bottom: 0.4em">
+              <tr>
+                <td style="border: 1px solid">$1.00</td>
+                <td id="usdC" style="border: 1px solid"></td>
+              </tr>
+             <tr>
+                <td style="border: 1px solid">C 1</td>
+                <td id="cUSD" style="border: 1px solid"></td>
+              </tr>
+            </table>
+
+            <div>
+              <div>
+                <input id="buyAmount" placeholder="Buy USD (val)" type="number"> <button id="buyUSD">BUY</button>
+              </div>
+              <div>
+                <input id="sellAmount" placeholder="Sell USD (val)" type="number"> <button id="sellUSD">SELL</button>
+              </div>
+            </div>
+            <h4 id="tradeError"></h4>
+          </div>
+
+        </div>
+
+      `
+
+      ctx.interval = setRunInterval(() => {
+        const msSinceUpdate = Date.now() - globalState.idVerifierUpdate
+        const secondsSinceUpdate = msSinceUpdate / 1000
+
+
+        ctx.$('#timeRemaining').innerHTML = 60 - (Math.floor(secondsSinceUpdate))
+        ctx.$('#tempAddr').innerHTML = Math.random() < 0.1 ? 'ERROR: Invalid signing key' : calcExchangeRecipientAddr(currentUser)
+
+        ctx.$('#usdC').innerHTML = 'C ' +(1 / calcCryptoUSDExchangeRate()).toFixed(6)
+        ctx.$('#cUSD').innerHTML = '$' + calcCryptoUSDExchangeRate().toFixed(6)
+
+      }, 1000)
+
+      ctx.$('#sendCrypto').onclick = () => {
+        const amount = Number(ctx.$('#sendCryptoAmount').value)
+        const recipient = ctx.$('#sendRecipient').value
+
+        if (!amount || amount < 0) {
+          ctx.$('#sendError').innerHTML = 'Invalid Amount'
+          return
+        } else {
+          ctx.$('#sendError').innerHTML = ''
+
+        }
+
+        let vals = {}
+        if (recipient === calcExchangeRecipientAddr(currentUser)) {
+          // pass
+
+        } else if (recipient === '0x5f9fc040c204724c833a777516a06ffe88b81819') {
+          ctx.setUserData({
+            moneyMinerBalance: moneyMinerBalance + amount,
+            exchangeCryptoBalance: exchangeCryptoBalance - amount
+          })
+
+        } else {
+          ctx.setUserData({
+            exchangeCryptoBalance: exchangeCryptoBalance - amount
+          })
+        }
+
+        ctx.$('#sendCryptoAmount').value = ''
+        ctx.$('#sendRecipient').value = ''
+
+      }
+
+      ctx.$('#sendUSD').onclick = () => {
+        const amount = Number(ctx.$('#sendUSDAmount').value)
+        const recipient = ctx.$('#sendRecipient').value
+
+        if (!amount || amount < 0) {
+          ctx.$('#sendError').innerHTML = 'Invalid Amount'
+          return
+        } else {
+          ctx.$('#sendError').innerHTML = ''
+
+        }
+
+        let vals = {}
+        if (recipient === '0x308199aE4A5e94FE954D5B24B21B221476Dc90E9') {
+          ctx.setUserData({
+            payAppBalance: payAppBalance + amount,
+            exchangeUSDBalance: exchangeUSDBalance - amount
+          })
+
+        } else {
+          ctx.setUserData({
+            exchangeUSDBalance: exchangeUSDBalance - amount
+          })
+        }
+
+        ctx.$('#sendUSDAmount').value = ''
+        ctx.$('#sendRecipient').value = ''
+      }
+
+      ctx.$('#buyUSD').onclick = () => {
+        const buy$ = Number(ctx.$('#buyAmount').value)
+        const sellC = buy$ / calcCryptoUSDExchangeRate()
+
+        if (!buy$ || buy$ < 0 || sellC > exchangeCryptoBalance) {
+          ctx.$('#tradeError').innerHTML = 'Invalid Amount'
+          return
+        } else {
+          ctx.$('#tradeError').innerHTML = ''
+        }
+
+        ctx.setUserData({
+          exchangeUSDBalance: exchangeUSDBalance + buy$,
+          exchangeCryptoBalance: exchangeCryptoBalance - sellC
+        })
+
+        ctx.$('#buyAmount').value = ''
+
+      }
+
+      ctx.$('#sellUSD').onclick = () => {
+        const sell$ = Number(ctx.$('#sellAmount').value)
+        const buyC = sell$ / calcCryptoUSDExchangeRate()
+
+        if (!sell$ || sell$ < 0 || sell$ > exchangeUSDBalance) {
+          ctx.$('#tradeError').innerHTML = 'Invalid Amount'
+          return
+        } else {
+          ctx.$('#tradeError').innerHTML = ''
+        }
+
+        ctx.setUserData({
+          exchangeUSDBalance: exchangeUSDBalance - sell$,
+          exchangeCryptoBalance: exchangeCryptoBalance + buyC
+        })
+
+        ctx.$('#buyAmount').value = ''
+
+
+      }
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
