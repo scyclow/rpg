@@ -10,7 +10,7 @@ export function createDeepProxy(target, cb) {
       return Reflect.set(...arguments)
     },
     get(obj, key) {
-      return typeof obj[key] === 'object'
+      return obj[key] && typeof obj[key] === 'object'
         ? createDeepProxy(obj[key], cb)
         : obj[key]
     },

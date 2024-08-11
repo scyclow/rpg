@@ -5,6 +5,7 @@ export class StateMachine {
     this.defaultWait = config.defaultWait ?? 1000
     this.onUpdate = config.onUpdate || (() => {})
     this.queue = []
+    this.start = this.ctx.currentNode
   }
 
   getNode(nodeKey) {
@@ -28,6 +29,7 @@ export class StateMachine {
   }
 
   redirect(newNode) {
+    this.lastNode = this.ctx.currentNode
     this.ctx.currentNode = newNode
   }
 
@@ -108,6 +110,11 @@ export class StateMachine {
         this.scheduleQueueShift(Date.now() - event.timestamp)
       }
     }, wait)
+  }
+
+  kill() {
+    this.queue.forEach(() => this.queue.pop())
+    this.redirect(this.start)
   }
 
   async shiftQueue() {

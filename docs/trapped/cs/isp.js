@@ -1,4 +1,7 @@
+import {createSource, MAX_VOLUME} from '../audio.js'
+import { globalState } from '../global.js'
 
+let SOURCE1, SOURCE2
 
 
 
@@ -25,11 +28,81 @@ export const ispCSNodes = {
     })
   }),
 
-
   representative: {
-    text: 'The current estimated wait time to speak with a representative is N A N hours, N A N minutes, and N A N seconds. Please stay on the line to speak with a representative, or press 1 to return to the main menu.',
-    handler: x => x.ur === '1' ? 'mainMenu' : 'representative'
+    text: 'The current estimated wait time to speak with a representative is N A N hours, N A N minutes, and N A N seconds. Please stay on the line to speak with a representative.',
+    handler: x => 'representative',
+    wait: 8000,
+    follow: () => {
+      SOURCE1 = createSource('sine')
+      SOURCE2 = createSource('sine')
+      SOURCE1.smoothFreq(300)
+      SOURCE1.smoothFreq(600)
+      return 'representativeRing'
+    }
   },
+
+  representativeRing: {
+    before() {
+      SOURCE1.smoothGain(MAX_VOLUME)
+      SOURCE2.smoothGain(MAX_VOLUME)
+
+      setTimeout(() => {
+        SOURCE1.smoothGain(0)
+        SOURCE2.smoothGain(0)
+      }, 80)
+    },
+    text: '',
+    wait: 1000,
+    follow: 'representativeRing',
+    handler: 'representative',
+  },
+
+  //// TODO fix this shit
+
+  // representative: {
+  //   text: 'The current estimated wait time to speak with a representative is N A N hours, N A N minutes, and N A N seconds. Please stay on the line to speak with a representative, or press 1 to return to the main menu.',
+  //   handler: x => {
+  //     if (x.ur === 1) {
+  //       SOURCE1.stop()
+  //       SOURCE2.stop()
+  //       return 'mainMenu'
+  //     } else {
+  //       return 'representative'
+  //     }
+  //   },
+  //   wait: 8000,
+  //   follow: () => {
+  //     SOURCE1 = createSource('sine')
+  //     SOURCE2 = createSource('sine')
+  //     SOURCE1.smoothFreq(300)
+  //     SOURCE1.smoothFreq(600)
+  //     return 'representativeRing'
+  //   }
+  // },
+
+  // representativeRing: {
+  //   before() {
+  //     SOURCE1.smoothGain(MAX_VOLUME)
+  //     SOURCE2.smoothGain(MAX_VOLUME)
+
+  //     setTimeout(() => {
+  //       SOURCE1.smoothGain(0)
+  //       SOURCE2.smoothGain(0)
+  //     }, 80)
+  //   },
+  //   text: '',
+  //   wait: 1000,
+  //   follow: 'representativeRing',
+  //   handler: x => {
+  //     if (x.ur === 1) {
+  //       SOURCE1.stop()
+  //       SOURCE2.stop()
+  //       return 'mainMenu'
+  //     } else {
+  //       return 'representative'
+  //     }
+  //   },
+  // },
 
   newCustomer: {
     text: 'Please enter your zip code, followed by the pound key',
@@ -110,7 +183,6 @@ export const ispCSNodes = {
       1: 'internetOuttage',
       2: 'issueWithAccount',
       9: 'mainMenu',
-      '*': 'somethingElse'
     })
   },
 
@@ -162,7 +234,7 @@ export const ispCSNodes = {
   // TODO mention that account belongs to default
 
   verifyIdentity: {
-    text: 'Service to this account has been suspended due to an unpaid balance of. zero. dollars. and. thirty. seven. cents... Service will be restored to this account upon payment of this balance. If you would like to be transferred to our billing department, press 1. To return to the main menut, press star',
+    text: () => `Service to this account has been suspended due to an unpaid balance. Service will be restored to this account upon payment of this balance. If you would like to be transferred to our billing department, press 1. To return to the main menu, press star`,
     handler: options({
       1: 'outstandingBill',
       '*': 'mainMenu'

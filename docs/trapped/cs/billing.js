@@ -9,19 +9,25 @@ export const billingCSNodes = {
   },
 
   mainMenu: {
-    text: `To pay an outstanding bill, press 1. To check on your account's balance, press 2. To dispute an outstanding balance, press 3. To speak with a representative, press 0. To hear this options again press star.`,
+    text: `To pay an outstanding bill, press 1., To check on your account's balance, press 2., To dispute an outstanding balance, press 3., To reactivate your account, press 4., To speak with a representative, press 0. To hear this options again press star.`,
     handler: options({
-      1: 'payBalance',
+      1: 'payOutstandingBalance',
       2: 'checkBalance',
       3: 'disputeBalance',
+      4: 'reactivateAccount',
       0: 'representative',
       '*': 'mainMenu'
     })
   },
 
   checkBalance: {
-    text: 'TODO',
-    follow: 'mainMenu'
+    text: `You'd like to check your outstanding balance. Is that correct? If that is correct, press 1. If that is incorrect, press 2`,
+    handler: x => x.ur === 1 ? 'payBalanceContinue' : 'mainMenu'
+  },
+
+  reactivateAccount: {
+    text: `You'd like to reactivate your account. Is that correct? If that is correct, press 1. If that is incorrect, press 2`,
+    handler: x => x.ur === 1 ? 'payBalanceContinue' : 'mainMenu'
   },
 
   disputeBalance: {
@@ -29,13 +35,13 @@ export const billingCSNodes = {
     handler: 'mainMenu'
   },
 
-  payBalance: {
+  payOutstandingBalance: {
     text: `You'd like to pay an outstanding balance. Is that correct? If that is correct, press 1. If that is incorrect, press 2`,
     handler: x => x.ur === 1 ? 'payBalanceContinue' : 'mainMenu'
   },
 
   payBalanceContinue: {
-    text: 'Please enter your ISP customer identification number, followed by the pound key',
+    text: 'Please enter your I S P customer identification number, followed by the pound key',
     follow({ctx}) {
       ctx.state.idNumber = []
       return 'idNumberEnter'
@@ -99,47 +105,159 @@ export const billingCSNodes = {
   },
 
   routerIdSuccess: {
-    text: `I've found an account associate with your router.`,
-    follow: 'identityVerifier'
+    text: `I've found an account associated with your router.`,
+    follow: () => globalState.ispBalance === 0 && !globalState.wifiActive ? 'serviceIsSuspended' : 'readBalance'
   },
 
-  identityVerifier: {
-    text: `Please download the Identity Verifier Application on your Device's App Market, and provide a valid I V C, followed by the pound key`,
+  readBalance: {
+    text: () => `You have an unpaid balance of, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., To pay this balance, press 1. To return to the main menu, press 2.`,
+    handler: options({
+      1: 'payBalance',
+      2: 'mainMenu'
+    })
+  },
+
+  payBalance: {
+    text: () => `To pay your unpaid balance of, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., Download the Pay App application from the AppMarket. Enter the following pay app address into the recipient box: 0, x, 4, b, 2, 5, 8, 6, 0, 3, 2, 5, 7, 4, 6, 0, d, 4, 8, 0, c, 9, 2, 9, a, f, 5, f, 7, b, 8, 3, e, 8, c, 4, 2, 7, 9, b, 7, b.,,, Then enter ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., into the amount box. Then press the sign transaction button. Finally, provide us with the resulting S P T X. identifier , To repeat this message press 1. , To enter a Pay App S P T X identifier press 2`,
+    handler: options({
+      1: 'payBalance',
+      2: 'enterSPTX'
+    })
+  },
+
+  enterSPTX: {
+    text: `Please enter your Pay App S P T X identifier followed by the pound key`,
     follow({ctx}) {
-      ctx.state.ivc = []
-      return 'ivcEnter'
+      ctx.state.sptx = []
+      return 'sptxEntry'
     }
   },
 
-
-  ivcEnter: {
+  sptxEntry: {
     text: '',
     handler({ur, ctx}) {
-      if (ur === '#') return 'ivcCheck'
+      if (ur === '#') return 'sptxCheck'
       else {
-        ctx.state.ivc.push(ur)
-        return 'ivcEnter'
+        ctx.state.sptx.push(ur)
+        return 'sptxEntry'
       }
     }
   },
 
-  ivcCheck: {
+  sptxCheck: {
     text: 'One moment, please',
-    wait: 2000,
-    follow({ctx}) {
-      if (ctx.state.ivc.join('')  === 'TODO') return 'ivcSuccess'
-      else return 'ivcFail'
+    async follow({ctx}) {
+      await waitPromise(5000)
+      const sptxInput = ctx.state.sptx.join('')
+      const payment = globalState.payments[sptxInput]
+
+      if (!payment || payment.recipient !== '0x4b258603257460d480c929af5f7b83e8c4279b7b') return 'sptxFail1'
+      else if (payment.received) return 'sptxFail2'
+
+      payment.received = true
+
+      globalState.ispBalance = Math.max(0, globalState.ispBalance - payment.amount)
+
+
+      return 'sptxSuccess'
+
+// TODO: if you'd like to reactivate your service, call this number:
     }
   },
 
-  ivcSuccess: {
-    text: 'TODO'
+  sptxSuccess: {
+    text: () => `Thank you. Your payment has been received. Your current balance is, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents.`,
+    follow: () => globalState.ispBalance === 0 ? 'reactivateQuestion' : 'payBalance'
   },
 
-  ivcFail: {
-    text: `I'm sorry, but the I V C you provided was invalid`,
-    follow: 'identityVerifier'
+  reactivateQuestion: {
+    text: `If you would like to reactivate your account, press 1., If you would like to return to the main menu, press 2.`,
+    handler: options({
+      1: 'payBalanceContinue',
+      2: 'mainMenu'
+    })
   },
+
+  sptxFail1: {
+    text: `I'm sorry, but the S P T X identifier you provided was invalid. `,
+    follow: 'sptxFailMessage'
+  },
+
+  sptxFail2: {
+    text: `I'm sorry, but the S P T X identifier you provided has already been processed. `,
+    follow: 'sptxFailMessage'
+  },
+
+  sptxFailMessage: {
+    text: `To repeat payment instructions press 1., To input another S P T X identifier press 2`,
+    handler: options({
+      1: 'payBalance',
+      2: 'enterSPTX'
+    })
+  },
+
+  serviceIsSuspended: {
+    text: `Your current account was suspended due to an unpaid balance. To resume service press 1., To return to the main menu press 2`,
+    handler: options({
+      1: 'resumeServiceWait',
+      2: 'mainMenu'
+    })
+  },
+
+  resumeServiceWait: {
+    text: `One moment please`,
+    async follow() {
+      await waitPromise(7000)
+      globalState.wifiActive = true
+      return 'serviceResumed'
+    }
+  },
+
+  serviceResumed: {
+    text: `Service to your account has been resumed`,
+    follow: 'mainMenu'
+  },
+
+
+
+
+  // identityVerifier: {
+  //   text: `Please download the Identity Verifier Application on your Device's App Market, and provide a valid I V C, followed by the pound key`,
+  //   follow({ctx}) {
+  //     ctx.state.ivc = []
+  //     return 'ivcEnter'
+  //   }
+  // },
+
+
+  // ivcEnter: {
+  //   text: '',
+  //   handler({ur, ctx}) {
+  //     if (ur === '#') return 'ivcCheck'
+  //     else {
+  //       ctx.state.ivc.push(ur)
+  //       return 'ivcEnter'
+  //     }
+  //   }
+  // },
+
+  // ivcCheck: {
+  //   text: 'One moment, please',
+  //   wait: 2000,
+  //   follow({ctx}) {
+  //     if (ctx.state.ivc.join('')  === 'TODO') return 'ivcSuccess'
+  //     else return 'ivcFail'
+  //   }
+  // },
+
+  // ivcSuccess: {
+  //   text: 'TODO'
+  // },
+
+  // ivcFail: {
+  //   text: `I'm sorry, but the I V C you provided was invalid`,
+  //   follow: 'identityVerifier'
+  // },
 
 
 

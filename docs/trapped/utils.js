@@ -38,6 +38,7 @@ const posOrNeg = () => prb(0.5) ? 1 : -1
 const exists = x => !!x
 const last = a => a[a.length-1]
 const noop = () => {}
+const iden = x => x
 
 const deepEquals = (a, b) => (
   Object.keys(a).length === Object.keys(b).length

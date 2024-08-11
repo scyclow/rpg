@@ -166,7 +166,7 @@ export const createComponent = (tag, templateStr, initialState, onInit, onRender
     }
 
     // Define a method to set the component state
-    setState(newState) {
+    setState(newState, force=false) {
       this.oldState = this.state
       this.state = { ...this.state, ...newState };
 

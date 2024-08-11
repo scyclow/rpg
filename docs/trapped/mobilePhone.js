@@ -148,6 +148,9 @@ class PhoneCall {
       await waitPromise(i === rings - 1 ? 1000 : 3000)
     }
 
+    src0.stop()
+    src1.stop()
+
     this.isRinging = false
   }
 
@@ -157,6 +160,7 @@ class PhoneCall {
     this.isRinging = false
     this.live = false
     this.answerTime = 0
+    this.stateMachine?.kill?.()
 
     // PhoneCall.active = null
   }
@@ -165,10 +169,10 @@ class PhoneCall {
     this.phoneAnswered = true
     this.answerTime = Date.now()
     this.stateMachine = stateMachine
+    window.sm = stateMachine
     // PhoneCall.active = this
   }
 }
-
 
 
 
@@ -214,6 +218,7 @@ function phoneMarkup() {
         padding: 0 0.5em;
         pointer-events: none;
         text-align: center;
+        word-wrap: break-word;
       }
 
 
@@ -365,7 +370,7 @@ function phoneBehavior(ctx) {
       }
 
       // ISP Billing
-      if (dialed === '18885559483') {
+      else if (dialed === '18885559483') {
         await phone.ringTone(1)
 
         if (!phone.live) return
@@ -391,7 +396,7 @@ function phoneBehavior(ctx) {
       }
 
       // Billing dispute resolution administrator
-      if (dialed === '18007770836') {
+      else if (dialed === '18007770836') {
         await phone.ringTone(4)
 
         if (!phone.live) return
@@ -420,7 +425,7 @@ function phoneBehavior(ctx) {
 
 
       // SSO
-      if (dialed === '18182225379') {
+      else if (dialed === '18182225379') {
         await phone.ringTone(40)
 
         // if (!phone.live) return
@@ -448,7 +453,7 @@ function phoneBehavior(ctx) {
       }
 
       // TurboConnect
-      if (dialed === '18004443830') {
+      else if (dialed === '18004443830') {
         await phone.ringTone(2)
 
         if (!phone.live) return
@@ -481,7 +486,7 @@ function phoneBehavior(ctx) {
         stateMachine.next('')
       }
 
-      if (dialed.length === 11) {
+      else if (dialed.length === 11) {
         await phone.ringTone(40)
       }
     },
@@ -508,14 +513,16 @@ const APPS = [
   { name: 'Clock', key: 'alarm', size: 128, price: 1 },
   { name: 'CryptoMinerPlus', key: 'alarm', size: 128, price: 1 },
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
+  { name: 'Elevate', key: 'elevate', size: 128, price: 1 },
   { name: 'Identity Verfier', key: 'idVerifier', size: 128, price: 0 },
+  { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
   { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
   { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
   { name: 'MoneyMiner', key: 'moneyMiner', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
   { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
   { name: 'Shayd', key: 'shayd', size: 128, price: 1 },
-  { name: 'SmartLock', key: 'lock', size: 128, price: 1 },
+  { name: 'SmartLock', key: 'lock', size: 128, price: 0 },
   { name: 'SmartPlanter', key: 'planter', size: 256, price: 1 },
   { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: 1 },
   { name: 'Toastr', key: 'camera', size: 128, price: 1 },
@@ -527,6 +534,7 @@ const state = persist('__MOBILE_STATE', {
   screen: 'loading',
   internet: 'wifi',
   dataPlanActivated: false,
+  wifiNetwork: '',
   userNames: {0: 'default'},
   // appsInstalled: {0: []},
   // payAppBalance: {0: 0},
@@ -538,6 +546,8 @@ const state = persist('__MOBILE_STATE', {
   currentUser: 0,
   lampOn: false,
   luminPaired: false,
+  smartLockPaired: false,
+  smartLockOpen: false,
   messageViewerMessage: '',
   availableActions: [],
   userData: {
@@ -759,12 +769,16 @@ createComponent(
     ctx.$internetType = ctx.$('#internetType')
 
     const {
+      screen,
       currentUser,
       dataPlanActivated,
-      wifiActivated,
+      wifiNetwork,
       internet,
       userData,
-      userNames
+      userNames,
+      bluetoothEnabled,
+      luminPaired,
+      lampOn
     } = ctx.state
 
     const currentUserData = userData[currentUser]
@@ -778,11 +792,15 @@ createComponent(
       exchangeUSDBalance,
     } = currentUserData
 
-    const hasInternet = (internet === 'data' && dataPlanActivated) || (internet === 'wifi' && wifiActivated)
+    const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
+    const wifiConnected = internet === 'wifi' && wifiNetwork && inInternetLocation
+    const dataConnected = internet === 'data' && dataPlanActivated && inInternetLocation
+    const hasInternet = dataConnected || wifiConnected
+
 
 
     ctx.$internetType.innerHTML = `
-      ${ctx.state.internet === 'wifi' ? 'WiFi' : 'Data'}: ${
+      ${internet === 'wifi' ? 'WiFi' : 'Data'}: ${
         hasInternet
           ? 'connected'
           : 'unconnected'
@@ -794,8 +812,9 @@ createComponent(
 
     const unreadTextCount = textMessages.reduce((a, c) => c.read ? a : a + 1, 0)
 
+// TODO: none of the apps should work if you're outside the apartment
 
-    if (ctx.state.screen === 'loading') {
+    if (screen === 'loading') {
       ctx.$header.classList.add('hidden')
       ctx.$phoneContent.innerHTML = `
         <div class="loadingScreen">
@@ -805,12 +824,12 @@ createComponent(
         </div>
       `
 
-    } else if (ctx.state.screen === 'login') {
+    } else if (screen === 'login') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <h1>Select User Profile:</h1>
           ${
-            Object.keys(ctx.state.userNames).sort().map(u => `<button id="user-${u}">${ctx.state.userNames[u]}</button>`).join('')
+            Object.keys(userNames).sort().map(u => `<button id="user-${u}">${userNames[u]}</button>`).join('')
           }
           <button id="newProfile">Create New Profile</button>
         </div>
@@ -820,7 +839,7 @@ createComponent(
         alert('This profile has been indefinitely suspended for violating our terms of service. Please contact us at 1-818-222-5379 if you believe there has been a mistake')
       }
 
-      Object.keys(ctx.state.userNames).sort().forEach(id => {
+      Object.keys(userNames).sort().forEach(id => {
         if (id === '0') return
         ctx.$(`#user-${id}`).onclick = () => {
           ctx.setState({
@@ -834,7 +853,7 @@ createComponent(
         ctx.setState({ screen: 'newProfile' })
       }
 
-    } else if (ctx.state.screen === 'newProfile') {
+    } else if (screen === 'newProfile') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="back">back</button>
@@ -889,7 +908,7 @@ createComponent(
         }, 4000)
       }
 
-    } else if (ctx.state.screen === 'home') {
+    } else if (screen === 'home') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen" style="flex: 1; display: flex">
           <div style="display: flex; flex-direction: column; justify-content: space-between; flex: 1">
@@ -947,7 +966,7 @@ createComponent(
         }, 4000)
       }
 
-    } else if (ctx.state.screen === 'appMarket') {
+    } else if (screen === 'appMarket') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
@@ -1035,28 +1054,28 @@ createComponent(
         search()
       }
 
-    } else if (ctx.state.screen === 'network') {
+    } else if (screen === 'network') {
       if (ctx.state.internet === 'wifi') {
         ctx.$phoneContent.innerHTML = `
           <div class="phoneScreen">
             <button id="home">Back</button>
             <button id="data">Switch to Data</button>
-            <h3>WiFi Status: Unconnected</h3>
+            <h3>Current Network: ${wifiNetwork ? 'InpatientRehabilitationServices' : 'null'}</h3>
             ${
-              ctx.state.bluetoothEnabled
+              bluetoothEnabled
                 ? `
-                  <h3>Network Name:
-                    <select>
-                      <option></option>
-                      <option>CapitalC</option>
-                      <option>ClickToAddNetwork</option>
-                      <option>ElectricLadyLand</option>
-                      <option>MyWiFi-9238d9</option>
-                      <option>NewNetwork</option>
-                      <option>XXX-No-Entry</option>
-                    </select>
-                  </h3>
-                  <input placeholder="password" type="password">
+                  <h3 style="margin-top: 0.4em">Network Name:</h3>
+                  <select id="networkName" style="margin: 0.25em 0">
+                    <option></option>
+                    <option value="CapitalC">CapitalC</option>
+                    <option value="ClickToAddNetwork">ClickToAddNetwork</option>
+                    <option value="ElectricLadyLand" ${inInternetLocation && wifiNetwork === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
+                    ${globalState.routerReset ? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetwork === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
+                    <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
+                    <option value="NewNetwork">NewNetwork</option>
+                    <option value="XXX-No-Entry">XXX-No-Entry</option>
+                  </select>
+                  <input id="networkPassword" placeholder="password" type="password">
                   <button id="connect">Connect</button>
                 `
                 : `<h3>Please enable Bluetooth in your device Settings to view available networks</h3>`
@@ -1070,7 +1089,32 @@ createComponent(
         }
 
         if (ctx.$('#connect')) ctx.$('#connect').onclick = () => {
-          ctx.$('#error').innerHTML = 'Incorrect Password'
+          const networkName = ctx.$('#networkName').value
+          const networkPassword = ctx.$('#networkPassword').value
+
+          if (
+            (networkName === 'InpatientRehabilitationServices' && networkPassword === 'StompLookAndListen123')
+            || (networkName === 'ElectricLadyLand' && networkPassword === 'CrosstownTraffic007')
+          ) {
+            ctx.$('#error').innerHTML = 'Connecting...'
+
+            setTimeout(() => {
+              if (globalState.wifiActive) {
+                ctx.$('#error').innerHTML = 'Success!'
+                setTimeout(() => {
+                  ctx.setState({ wifiNetwork: networkName })
+                }, 2000)
+              } else {
+                ctx.$('#error').innerHTML = 'ServiceError: No signal detected'
+              }
+            }, 3000)
+
+          } else {
+            ctx.$('#error').innerHTML = 'Connecting...'
+            setTimeout(() => {
+              ctx.$('#error').innerHTML = 'Incorrect Password'
+            }, 500)
+          }
         }
       } else {
         // TODO add dropdowns for district ix
@@ -1130,7 +1174,7 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
-    } else if (ctx.state.screen === 'phoneApp') {
+    } else if (screen === 'phoneApp') {
       ctx.$phoneContent.innerHTML = phoneMarkup()
       phoneBehavior(ctx)
 
@@ -1148,7 +1192,7 @@ createComponent(
         }, 400)
       }
 
-    } else if (ctx.state.screen === 'payApp') {
+    } else if (screen === 'payApp') {
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -1157,7 +1201,7 @@ createComponent(
           <h3 style="margin: 0.5em 0">Current Balance: $${payAppBalance.toFixed(2)}</h3>
 
           <div style="margin-bottom: 0.4em">
-            <h3>PayApp Address: </h3>
+            <h3>My PayApp Address: </h3>
             <span style="font-size: 0.9em">0x308199aE4A5e94FE954D5B24B21B221476Dc90E9</span>
           </div>
           <div style="margin-bottom: 0.4em">
@@ -1167,7 +1211,7 @@ createComponent(
           </div>
 
           <ol>
-            <li><input id="recipient" placeholder="Recipient"></li>
+            <li><input id="recipient" placeholder="Recipient Address"></li>
             <li><input id="amount" placeholder="Amount" type="number"></li>
             <li><button id="sign">Sign Transaction</li>
           </ol>
@@ -1180,8 +1224,9 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
       ctx.$('#sign').onclick = () => {
-        const amount = ctx.$('#amount').value
-        const recipient = ctx.$('#recipient').value
+        const amount = Number(ctx.$('#amount').value)
+        const recipient = ctx.$('#recipient').value.toLowerCase().trim()
+
         const $sptx = ctx.$('#sptx')
 
         $sptx.innerHTML = ''
@@ -1199,26 +1244,46 @@ createComponent(
           return
         }
 
+        // globalState.payments = {}
+
+        const sptx = Math.floor(Math.random()*100000000000000000)
+
+        globalState.payments[sptx] = {
+          sptx,
+          recipient,
+          amount,
+          timestamp: Date.now(),
+          received: false
+        }
+
+        ctx.setUserData({
+          payAppBalance: payAppBalance - amount
+        })
+
+
+        setTimeout(() => {
+          ctx.$('#sptx').innerHTML = `Secure Payment Transaction (SPTX) identifier: ${sptx}`
+        }, 2000)
+
       }
 
-    } else if (ctx.state.screen === 'settings') {
+    } else if (screen === 'settings') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <button id="bluetooth">${ctx.state.bluetoothEnabled ? 'Disable' : 'Enable'} Bluetooth</button>
+          <button id="bluetooth">${bluetoothEnabled ? 'Disable' : 'Enable'} Bluetooth</button>
         </div>
-
       `
 
       ctx.$('#bluetooth').onclick = () => {
-        ctx.setState({ bluetoothEnabled: !ctx.state.bluetoothEnabled })
+        ctx.setState({ bluetoothEnabled: !bluetoothEnabled })
       }
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
 
-    } else if (ctx.state.screen === 'messageViewer') {
+    } else if (screen === 'messageViewer') {
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -1233,7 +1298,7 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
-    } else if (ctx.state.screen === 'textMessage') {
+    } else if (screen === 'textMessage') {
 
       // dataPlanActivated
 
@@ -1283,7 +1348,7 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
-    } else if (ctx.state.screen === 'textMessageIndividual') {
+    } else if (screen === 'textMessageIndividual') {
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -1296,15 +1361,15 @@ createComponent(
         ctx.setState({ screen: 'textMessage' })
       }
 
-    } else if (ctx.state.screen === 'qrScanner') {
+    } else if (screen === 'qrScanner') {
 
       const objects = ctx.state.availableActions.map(a => `<button id="qr-${a.value}" style="margin-right: 0.25em">${a.text}</button>`).join('')
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2>QR SCANNER</h2>
+          <div style="padding: 0.5em">${objects}</div>
           <h4 id="error"></h4>
-          <div style="border: 1px solid; padding: 0.5em; filter: invert(0.9)">${objects}</div>
         </div>
       `
 
@@ -1326,7 +1391,7 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
-    } else if (ctx.state.screen === 'lumin') {
+    } else if (screen === 'lumin') {
       // const localDevices = {
       //   livingRoom: 'Lumin Lamp A32',
       //   livingRoom: 'Lumin Lamp A32',
@@ -1335,7 +1400,7 @@ createComponent(
       // TODO pair by room
 
       const mainInterface = `
-        <button id="offOn">${ctx.state.lampOn ? 'Turn Off' : 'Turn On'}</button>
+        <button id="offOn">${lampOn ? 'Turn Off' : 'Turn On'}</button>
 
       `
 
@@ -1343,8 +1408,8 @@ createComponent(
         <div class="phoneScreen">
           <button id="home">Back</button>
           ${
-            ctx.state.bluetoothEnabled
-              ? ctx.state.luminPaired
+            bluetoothEnabled
+              ? luminPaired
                 ? mainInterface
                 : `<button id="pairLumin">Pair Device</button>`
               : `<h3>Please enable blue tooth to pair local devices</h3>`
@@ -1359,7 +1424,7 @@ createComponent(
 
       if (ctx.$('#offOn')) ctx.$('#offOn').onclick = () => {
 
-        const lampStatus = !ctx.state.lampOn
+        const lampStatus = !lampOn
 
         if (lampStatus) {
           setColor('--bg-color', '#fff')
@@ -1376,7 +1441,7 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
-    } else if (ctx.state.screen === 'idVerifier') {
+    } else if (screen === 'idVerifier') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
@@ -1403,7 +1468,7 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
-    } else if (ctx.state.screen === 'moneyMiner') {
+    } else if (screen === 'moneyMiner') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
@@ -1471,25 +1536,26 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
-    } else if (ctx.state.screen === 'exchange') {
+    } else if (screen === 'exchange') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2>Currency Xchange</h2>
-          <h3 style="margin-bottom: 0.4em">Temporary Recipient Address: <div id="tempAddr" style="word-wrap: break-word; border: 1px dotted; padding: 0.2em; margin: 0.2em 0"></div> (Valid for <span id="timeRemaining"></span> more seconds)</h3>
+          <h3 style="margin-bottom: 0.4em">Temporary Recipient Address: <div id="tempAddr" style="word-wrap: break-word; border: 1px dotted; padding: 0.2em; margin: 0.2em 0">${calcExchangeRecipientAddr(currentUser)}</div> (Valid for <span id="timeRemaining"></span> more seconds)</h3>
           <em>Recipient addresses are cycled every 60 seconds for security purposes. Any funds sent to an expired recipient address will be lost</em>
-          <div style="margin: 1em 0">
+          <div style="margin: 0.6em 0">
             <h3>Crypto Balance: ${exchangeCryptoBalance.toFixed(6)}</h3>
             <h3>USD Balance: $${exchangeUSDBalance.toFixed(6)}</h3>
 
             <h4 style="margin: 0.4em 0">Send Funds</h4>
-            <input id="sendRecipient" placeholder="Recipient Address" style="width: 90%; margin-bottom: 0.4em">
+            <input id="sendCryptoAddress" placeholder="Send Crypto Address" style="width: 90%; margin-bottom: 0.4em">
             <input id="sendCryptoAmount" placeholder="Send Crypto (val)" type="number"> <button id="sendCrypto">SEND</button>
+            <input id="sendUSDAddress" placeholder="Send USD Address" style="width: 90%; margin-bottom: 0.4em">
             <input id="sendUSDAmount" placeholder="Send USD (val)" type="number"> <button id="sendUSD">SEND</button>
             <h4 id="sendError"></h4>
           </div>
 
-          <div style="margin: 1em 0">
+          <div style="margin: 0.6em 0">
             <h3>Exchange Rates (<em>Live!</em>)</h3>
             <table style="border: 1px solid; margin-bottom: 0.4em">
               <tr>
@@ -1523,7 +1589,11 @@ createComponent(
 
 
         ctx.$('#timeRemaining').innerHTML = 60 - (Math.floor(secondsSinceUpdate))
-        ctx.$('#tempAddr').innerHTML = Math.random() < 0.1 ? 'ERROR: Invalid signing key' : calcExchangeRecipientAddr(currentUser)
+        if (Math.random() < 0.1)  {
+          ctx.$('#tempAddr').innerHTML = 'ERROR: Invalid signing key'
+        } else if (ctx.$('#tempAddr').innerHTML.includes('ERROR')) {
+          ctx.$('#tempAddr').innerHTML = calcExchangeRecipientAddr(currentUser)
+        }
 
         ctx.$('#usdC').innerHTML = 'C ' +(1 / calcCryptoUSDExchangeRate()).toFixed(6)
         ctx.$('#cUSD').innerHTML = '$' + calcCryptoUSDExchangeRate().toFixed(6)
@@ -1532,7 +1602,7 @@ createComponent(
 
       ctx.$('#sendCrypto').onclick = () => {
         const amount = Number(ctx.$('#sendCryptoAmount').value)
-        const recipient = ctx.$('#sendRecipient').value
+        const recipient = ctx.$('#sendCryptoAddress').value
 
         if (!amount || amount < 0) {
           ctx.$('#sendError').innerHTML = 'Invalid Amount'
@@ -1559,13 +1629,13 @@ createComponent(
         }
 
         ctx.$('#sendCryptoAmount').value = ''
-        ctx.$('#sendRecipient').value = ''
+        ctx.$('#sendCryptoAddress').value = ''
 
       }
 
       ctx.$('#sendUSD').onclick = () => {
         const amount = Number(ctx.$('#sendUSDAmount').value)
-        const recipient = ctx.$('#sendRecipient').value
+        const recipient = ctx.$('#sendUSDAddress').value
 
         if (!amount || amount < 0) {
           ctx.$('#sendError').innerHTML = 'Invalid Amount'
@@ -1589,7 +1659,7 @@ createComponent(
         }
 
         ctx.$('#sendUSDAmount').value = ''
-        ctx.$('#sendRecipient').value = ''
+        ctx.$('#sendUSDAddress').value = ''
       }
 
       ctx.$('#buyUSD').onclick = () => {
@@ -1630,6 +1700,139 @@ createComponent(
 
         ctx.$('#buyAmount').value = ''
 
+
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (screen === 'lock') {
+      // todo: make it so you can pair with other smartlocks
+      const mainContent = ctx.state.smartLockPaired
+        ? `
+          <h3>Lock Status: ${globalState.smartLockOpen ? 'Unlocked' : 'Locked'}</h3>
+          <button id="toggleSmartLock">${globalState.smartLockOpen ? 'Lock' : 'Unlock'}</button>
+        `
+        : `<button id="pairSmartLock">Pair Device</button>`
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2>SmartLock 🔒</h2>
+          <p>SmartLock Technology<sup>TM</sup> keeps you safe</p>
+          ${bluetoothEnabled
+            ? inInternetLocation ? mainContent : '<h3>Cannot find device</h3>'
+            : `
+              <h3>Cannot pair device: Please Enable Bluetooth</h3>
+            `
+          }
+          <h3 id="error"></h3>
+        </div>
+      `
+
+      if (ctx.$('#pairSmartLock')) ctx.$('#pairSmartLock').onclick = () => {
+        ctx.$('#error').innerHTML = 'Please wait while device pairs'
+        setTimeout(() => {
+          ctx.setState({ smartLockPaired: true })
+        }, 200)
+      }
+
+      if (ctx.$('#toggleSmartLock')) ctx.$('#toggleSmartLock').onclick = () => {
+        ctx.$('#error').innerHTML = 'Proccessing'
+
+        setTimeout(() => {
+          if (!wifiConnected || !globalState.wifiActive) {
+            ctx.$('#error').innerHTML = `
+              ${!wifiConnected ? 'Network Error: No Internet Detected <br>' : ''}
+              ${!globalState.wifiActive ? 'Device Error: Wifi Connection Error <br>Device Error: Cannot Connect To Server' : ''}
+            `
+
+          } else if (globalState.rentBalance <= 0) {
+            globalState.smartLockOpen = !globalState.smartLockOpen
+            ctx.setState({}, true)
+            window.primarySM.enqueue('smartLockShift')
+
+          } else {
+            ctx.$('#error').innerHTML = `Error: Device Failed With Message: "PLEASE TAKE NOTICE that you are hereby required to pay to Landlock Realty, LLC landlord of the premisis, the sum of $${globalState.rentBalance.toFixed(2)} for rent of the premises (Unit #948921). You are required to pay within <strong>-3 days</strong> from the day of service of this notice. All payments shall be made through the official Landlock Realty Rental App"`
+
+          }
+          ctx.setState({ smartLockPaired: true })
+        }, 150 + Math.random() * 100)
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (screen === 'landlock') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2>Landlock Realty Rental App</h2>
+          <div>
+            <input id="unit" placeholder="Unit #" type="number">
+            <button id="search">Search</button>
+          </div>
+
+          <div id="unitStatus"></div>
+          <div id="payNow" style="margin: 0.4em 0; word-break: break-word"></div>
+        </div>
+      `
+
+      ctx.$('#search').onclick = () => {
+        const unit = Number(ctx.$('#unit').value)
+
+        if (unit === 948921) {
+          ctx.$('#unitStatus').innerHTML = `
+            <h3>Unit #${unit}</h3>
+            <h3 id="status">Status: ${globalState.rentBalance === 0 ? 'Paid' : 'Delinquent'}</h3>
+            <h3 id="balance">Balance: $${globalState.rentBalance.toFixed(2)}</h3>
+          `
+
+        } else {
+          ctx.$('#unitStatus').innerHTML = `
+            <h3>Unit #${unit}</h3>
+            <h3 id="status">Status: Paid</h3>
+            <h3 id="balance">Balance: $0.00</h3>
+          `
+        }
+        ctx.$('#payNow').innerHTML = `
+          <p>Please use the following PayApp recipient address to generate a SPTX: 0xef301fb6c54b7cf2cecac63c9243b507a8695f4d</p>
+          <input id="sptx" placeholder="SPTX identifier" type="number">
+          <button id="pay">Pay Now</button>
+          <h4 id="error"></h4>
+        `
+
+        ctx.$('#pay').onclick = () => {
+          const sptx = ctx.$('#sptx').value
+          const payment = globalState.payments[sptx]
+
+          if (!payment || payment.recipient !== '0xef301fb6c54b7cf2cecac63c9243b507a8695f4d') {
+            ctx.$('#error').innerHTML = 'Invalid SPTX'
+          } else if (payment.received) {
+            ctx.$('#error').innerHTML = 'SPTX already processed'
+          } else {
+
+            setTimeout(() => {
+              ctx.$('#error').innerHTML = 'Processing Payment. Do not refresh this page!'
+              payment.received = true
+            }, 2000)
+
+            setTimeout(() => {
+              ctx.$('#error').innerHTML = 'SPTX processed!'
+
+              if (unit === 948921) {
+                globalState.rentBalance = Math.max(0, globalState.rentBalance - payment.amount)
+                ctx.$('#balance').innerHTML = `Balance: $${globalState.rentBalance.toFixed(2)}`
+                if (globalState.rentBalance === 0) {
+                  ctx.$('#status').innerHTML = 'Status: Paid'
+                }
+              }
+            }, 11000)
+          }
+
+        }
 
       }
 

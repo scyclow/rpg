@@ -39,37 +39,26 @@
 <script type="module" src="./modal.js"></script>
 <script type="module" src="./mobilePhone.js"></script>
 
+<script type="module">
+  import {ls} from './$.js'
+
+  const GAME_VERSION = 0.1
+
+  const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
+  if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {
+    localStorage.clear()
+  }
+  ls.set('__GAME_VERSION', GAME_VERSION)
+</script>
+
 
 <script type="module">
   import {$} from './$.js'
   import {StateMachine, CTX} from './stateMachine.js'
   import {persist} from './persist.js'
-  import {globalState} from './global.js'
+  import {globalState, setColor} from './global.js'
 
 
-
-  // const Spaces = {
-  //   bed: {
-  //     type: 'primary'
-  //     buttons: [
-  //       { text: 'Phone', node: 'openPhone'},
-  //       { text: 'Alarm Clock', node: 'inspectAlarmClock'},
-  //       { text: 'Stand', node: 'bedroom'}
-  //     ]
-  //   },
-
-  //   bedroom: {
-  //     type: 'primary'
-  //     buttons: [
-  //       { text: 'Phone', node: 'openPhone'},
-  //       { text: 'Alarm Clock', node: 'inspectAlarmClock'},
-  //       { text: 'Bed', node: 'bed'},
-  //       { text: 'Blinds', node: 'blinds'},
-  //       { text: 'Lamp', node: 'lamp'},
-  //       { text: 'Hallway', node: 'hallway'},
-  //     ]
-  //   },
-  // }
 
   const $phoneModal = $.id('phoneModal')
   const $phoneDevice = $.id('phoneDevice')
@@ -94,9 +83,11 @@
     currentNode: 'start',
     currentActions: [],
     state: {
+      // TODO: wifi shouldn't work if unplugged
       router: {
         pluggedIn: true
-      }
+      },
+      stairwayLevel: 0
     }
     // state: {
     //   apartment: {
@@ -129,6 +120,8 @@
   const niceLocation = {
     bed: 'Bedroom',
     bedroom: 'Bedroom',
+    externalHallway: '???',
+    stairway: '???',
     hallway: 'Hallway',
     livingRoom: 'Living Room',
     kitchen: 'Kitchen',
@@ -293,26 +286,6 @@
         text: `The small camera looks down at you. Whenever you move, it moves along with you. You make out some tiny print on its side: "SmartPro Security Camera: Keeping you safe since 2010. Download our App in the AppMarket!"`
       },
 
-      pickupEnvelopes: {
-        before({ctx}) {
-          ctx.state.envelopesPickedUp = true
-        },
-        text: `You pick up both envelopes. The first is from your landlord, Landlock Realty LLC. You owe them $6,437.98. The second is from HealthyLiving Inc. You owe them $14,038.71. You can pay this online. At the bottom of the letter it says: "Your health is priceless!" The third is junk mail. It says:
-        <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em;"">
-          <p class="letterText">Dear NEIGHBOR,</p>
-          <p class="letterText">Special Promotion for LIMITED TIME only FREE TRIAL for MOBILE + DATA Plan</p>
-          <p class="letterText">Service Provider Code (SPC): 00010-032991</p>
-          <p class="letterText">District Index: B47</p>
-          <p class="letterText">Unlock Code: Qz8!9g97tR$f29</p>
-        </div>
-
-        `
-      },
-
-
-      frontDoor: {
-        text: `You try opening the front door. It appears to be locked, possibly from the outside.`,
-      },
 
       thermostat: {
         text: `You check the thermostat. Every light is on, and it reads: 88˚. You're not sure if it's broken or accurate, but for the first time you realize how uncomfortably warm it is.`,
@@ -332,7 +305,7 @@
         { text: 'Bedroom', value: 'bedroom'},
         { text: 'Living Room', value: 'livingRoom'},
         { text: 'Bathroom', value: 'bathroom'},
-        { text: 'Front Door', value: ctx.state.envelopesPickedUp ? 'frontDoor' : 'frontDoorEnvelopes' },
+        { text: 'Front Door', value: 'frontDoor' },
         { text: 'Camera', value: 'camera'},
         { text: 'Thermostat', value: 'thermostat'},
         { text: 'Intercom', value: 'intercom'},
@@ -340,16 +313,74 @@
       handler: ({ur}) => ur
     }),
 
-
-    frontDoorEnvelopes: {
-      text: ({ctx}) => `You try opening the front door. It appears to be locked, possibly from the outside. You notice three envelopes at your feet.`,
-      handler: ({ur}) => ur,
-      actions: [
-        {text: 'Back', value: 'hallwayCurrent'},
-        {text: 'Pick Up Envelopes', value: 'pickupEnvelopes'}
-      ]
+    smartLockShift: {
+      text: 'You hear a motor turn, followd by a click',
+      after({ ctx, redirect }) {
+        redirect(ctx.lastNode)
+      },
     },
 
+
+    ...group({
+      frontDoor: {
+        text: ({ctx}) => `The front door is closed. Above the doorknob you read: Powered by SmartLock Technology<sup>TM</sup>.${ctx.state.envelopesPickedUp ? '': ' You notice three envelopes at your feet.'}`,
+      },
+
+      pickupEnvelopes: {
+        before({ctx}) {
+          ctx.state.envelopesPickedUp = true
+        },
+        text: `You pick up both envelopes. The first is from your landlord, Landlock Realty LLC. You owe them $6,437.98. The second is from HealthyLiving Inc. You owe them $14,038.71. You can pay this online. At the bottom of the letter it says: "Your health is priceless!" The third is junk mail. It says:
+        <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em;"">
+          <p class="letterText">Dear NEIGHBOR,</p>
+          <p class="letterText">Special Promotion for LIMITED TIME only FREE TRIAL for MOBILE + DATA Plan</p>
+          <p class="letterText">Service Provider Code (SPC): 00010-032991</p>
+          <p class="letterText">District Index: B47</p>
+          <p class="letterText">Unlock Code: Qz8!9g97tR$f29</p>
+        </div>
+
+        `
+      },
+
+      openDoorLocked: {
+        text: `You try turning the doorknob. It appears to be locked, possibly from the outside.`
+      },
+
+      closeDoor: {
+        before() {
+          if (globalState.lightsOn) {
+            setColor('--bg-color', '#fff')
+            setColor('--primary-color', '#000')
+          } else {
+            setColor('--bg-color', 'var(--dark-color)')
+            setColor('--primary-color', 'var(--light-color)')
+          }
+        },
+        text: `You close the door.`
+      },
+
+      reenterApartment: {
+        before({ ctx }) {
+          globalState.location = 'hallway'
+          if (globalState.lightsOn) {
+            setColor('--bg-color', '#fff')
+            setColor('--primary-color', '#000')
+          } else {
+            setColor('--bg-color', 'var(--dark-color)')
+            setColor('--primary-color', 'var(--light-color)')
+          }
+        },
+        text: `You reenter your apartment and close the door.`
+      }
+
+    }, {
+      handler: ({ur}) => ur,
+      actions: ({ctx}) => [
+        {text: 'Back', value: 'hallwayCurrent'},
+        {text: 'Open Door', value: globalState.smartLockOpen ? 'openDoorUnlocked' : 'openDoorLocked'},
+        ctx.state.envelopesPickedUp ? null : {text: 'Pick Up Envelopes', value: 'pickupEnvelopes'}
+      ].filter(exists)
+    }),
 
     ...group({
       livingRoom: {
@@ -368,7 +399,7 @@
       },
 
       planter: {
-        text: `You check your plants. The leaves sag from a lack of light and water. On the side of the pot you read: "SmartPlanter (TM) - The quick and easy way to conveniently water your plants! Download our app in the AppMarket. DEVICE CODE: F938920O3249B48"`
+        text: `You check your plants. The leaves sag from a lack of light and water. On the side of the pot you read: "SmartPlanter<sup>TM</sup> - The quick and easy way to conveniently water your plants! Download our app in the AppMarket. DEVICE CODE: F938920O3249B48"`
       },
 
       livingRoomWindow: {
@@ -401,8 +432,8 @@
         text: ({ctx}) => ctx.state.router.pluggedIn
           ? `You inspect the router, which appears to have a reset button and three lights:
           <div>Power (on)</div>
-          <div>Internet (blinking)</div>
-          <div>WiFi (off)</div>
+          <div>Internet (${globalState.wifiActive ? 'on' : 'off'})</div>
+          <div>WiFi (${globalState.routerReset ? 'on' : 'blinking'})</div>
           `
           : `You inspect the router. The Power, Internet, and WiFi lights are all off`
       },
@@ -420,7 +451,7 @@
         <div>
           <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em; border-radius: 8px">
             <h3>WiFi Network Name: InpatientRehabilitationServices</h3>
-            <h3>WiFi Password: StompLookListen123</h3>
+            <h3>WiFi Password: StompLookAndListen123</h3>
             <h3>Model Name: UBC-9283</h3>
             <h3>Device Identifier: 5879234963378</h3>
             <h3>Customer Support: 1-800-555-2093</h3>
@@ -558,6 +589,144 @@
     }),
 
 
+    openDoorUnlocked: {
+      before() {
+        setColor('--bg-color', '#000')
+        setColor('--primary-color', '#fff')
+      },
+      text: `You turn the doorknob and slowly pull the door open. You stare into darkness.`,
+      handler: ({ur}) => ur,
+      actions: ({ctx}) => [
+        {text: 'Leave apartment', value: 'externalHallway'},
+        {text: 'Close Door', value: 'closeDoor'},
+      ]
+    },
+
+    ...group({
+      externalHallway: {
+        before({ ctx }) {
+          globalState.location = 'externalHallway'
+
+          setTimeout(() => {
+            setColor('--bg-color', '#fff')
+            setColor('--primary-color', '#000')
+
+            // TODO rumbling noise, shuts off when you enter apartment
+          }, 2000)
+        },
+        text: 'You exit your apartment and enter a hallway. A series of LED lights flicker on and glare overhead. Pipes jut out from the ceiling and recede into the narrow, white walls.'
+      },
+
+      externalHallwayBack: {
+        text: 'You walk back towards the apartment door.'
+      },
+
+
+
+      stairway: {
+        text: ''
+      }
+    }, {
+      handler: ({ur}) => ur,
+      actions: [
+        { text: 'Reenter Apartment', value: 'reenterApartment'},
+        { text: 'Stairway', value: 'stairway'},
+        { text: 'Elevator', value: 'elevator'},
+        { text: 'Phone', value: 'openPhone'},
+      ]
+    }),
+
+    ...group({
+      elevator: {
+        text: `You approach the elevator, noticing two buttons`,
+      },
+      elevatorButtons: {
+        text: `You try pressing both metalic buttons, but nothing seems to happen.`
+        // TODO: app
+      },
+
+    }, {
+      handler: ({ur}) => ur,
+      actions: [
+        { text: 'Back', value: 'externalHallwayBack'},
+        { text: 'Buttons', value: 'elevatorButtons', },
+        { text: 'Phone', value: 'openPhone'},
+      ]
+    }),
+
+    // TODO break up into two actions
+    stairway: {
+      text: `You approach the stairway door. Standing in front of it, you read a sticker at eye level: "<strong style="font-size: 1.2em; text-decoration: underline">NO RE-ENTRY</strong>"`,
+      handler: ({ur}) => ur,
+      actions: [
+        { text: 'Back', value: 'externalHallwayBack'},
+        { text: 'Enter Stairway', value: 'enterStairway'},
+        { text: 'Phone', value: 'openPhone'},
+      ]
+    },
+
+    ...group({
+      enterStairway: {
+        before({ ctx }) {
+          globalState.location = 'stairway'
+          setColor('--bg-color', '#000')
+          setColor('--primary-color', '#fff')
+        },
+        text: `You enter the stairway and hear the door slam shut behind you.`,
+        wait: 1500,
+        follow: 'enterStairway1'
+      },
+      enterStairway1: {
+        text: `The sound echos off the cement walls, spiraling around the staircase in both directions.`,
+        wait: 1500,
+        follow: 'enterStairway2'
+      },
+      enterStairway2: {
+        text: `You turn around and see a QR code on the door behind you.`
+      },
+      insideStairwayDoorPrimary: {
+        text: `You try opening the door, but it's locked.`
+      },
+
+      stairsUp: {
+        before({ctx}) {
+          ctx.state.stairwayLevel += 1
+        },
+        text: `You walk up a flight of stairs.`
+      },
+
+      stairsDown: {
+        before({ctx}) {
+          ctx.state.stairwayLevel -= 1
+        },
+        text: `You walk down a flight of stairs.`
+      },
+
+    }, {
+      handler: ({ur}) => ur,
+      actions: ({ctx}) => {
+        return [
+        {
+          text: 'Door',
+          value: 'insideStairwayDoorPrimary',
+          // qr: ctx.state.stairwayLevel === 0
+          qr: {
+            screen: 'messageViewer',
+            messageViewerMessage: `
+              <div style="display: flex; flex-direction: column; justify-content: center; height: 370px">
+                <h1 style="text-align: center; margin-bottom: 0.4em"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h1>
+                <h2 style="text-align: center">2024</h2>
+                <button onclick="localStorage.clear(); location.reload()" style="align-self:center; margin-top: 1.4em">Play Again?</button>
+              </div>
+            `
+          }
+        },
+        { text: 'Stairs (up)', value: 'stairsUp', },
+        { text: 'Stairs (down)', value: 'stairsDown', },
+        { text: 'Phone', value: 'openPhone'},
+      ]}
+    }),
+
   }
 
   window.primarySM = new StateMachine(primaryStartingCtx, primaryConfig, primaryNodes)
@@ -566,6 +735,21 @@
   function rehydrate(ctx, sm) {
     const $content = $.id('mainConsoleContent')
     const $nextActions = $.id('nextActions')
+
+    if (globalState.location === 'externalHallway') {
+      setColor('--bg-color', '#fff')
+      setColor('--primary-color', '#000')
+
+    } else if (globalState.location === 'stairway') {
+      setColor('--bg-color', '#000')
+      setColor('--primary-color', '#fff')
+    } else if (globalState.lightsOn) {
+      setColor('--bg-color', '#fff')
+      setColor('--primary-color', '#000')
+    } else {
+      setColor('--bg-color', 'var(--dark-color)')
+      setColor('--primary-color', 'var(--light-color)')
+    }
 
 
     $consoleLocation.innerHTML = niceLocation[globalState.location]

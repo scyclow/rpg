@@ -6,9 +6,12 @@ export const globalState = persist('__GLOBAL_STATE', {
   idVerifierUpdate: Date.now(),
   routerReset: false,
   lightsOn: false,
-  rand: Math.random()
-
-
+  rand: Math.random(),
+  wifiActive: false,
+  smartLockOpen: false,
+  rentBalance: 6437.98,
+  ispBalance: 0.37,
+  payments: {}
 })
 
 window.globalState = globalState

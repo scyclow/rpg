@@ -167,14 +167,14 @@ export const createComponent = (tag, templateStr, initialState, onInit, onRender
     }
 
     // Define a method to set the component state
-    setState(stateUpdate) {
+    setState(stateUpdate, force=false) {
       this.oldState = this.state
       this.state = { ...this.state, ...stateUpdate }
 
       onSetState(this.oldState, this.state)
 
 
-      if (deepEquals(this.state, this.oldState)) return
+      if (deepEquals(this.state, this.oldState) && !force) return
       this.render()
     }
 
