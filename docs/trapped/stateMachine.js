@@ -9,7 +9,7 @@ export class StateMachine {
   }
 
   getNode(nodeKey) {
-    const [baseKey, keyIx] = this.splitNodeKeys(nodeKey)
+    const [baseKey, keyIx] = this.splitNodeKeys(nodeKey || this.ctx.fallbackNode)
     return Array.isArray(this.nodes[baseKey])
       ? this.nodes[baseKey][keyIx]
       : this.nodes[baseKey]

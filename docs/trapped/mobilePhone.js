@@ -227,6 +227,7 @@ function phoneMarkup() {
         grid-gap: 0;
         grid-template-columns: repeat(3, 1fr);
         border-top: 1px solid;
+        border-bottom: 1px solid;
       }
 
       .key {
@@ -272,12 +273,14 @@ function phoneMarkup() {
       </div>
       <div id="keypad"></div>
 
+<!--
       <ul id="menu">
         <li>Phone</li>
         <li>Contacts</li>
         <li>Voice Mail</li>
       </ul>
-      <div>
+      -->
+      <div style="padding-top: 0.5em; display: flex; justify-content: space-evenly">
         <button id="home">Back</button>
         <button id="hangup">Hangup</button>
       </div>
@@ -356,6 +359,8 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text}, sm) {
+              globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'isp', text } }})
+
               sm.ctx.history.push(text)
               say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
             },
@@ -382,6 +387,8 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text}, sm) {
+              globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'billing', text } }})
+
               sm.ctx.history.push(text)
               // TODO different voice
               say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
@@ -408,6 +415,8 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text}, sm) {
+              globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'billingDispute', text } }})
+
               sm.ctx.history.push(text)
               // TODO different voice
               const vs = await voices
@@ -465,6 +474,8 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text}, sm) {
+              globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'turboConnect', text } }})
+
               sm.ctx.history.push(text)
               // TODO different voice
               const vs = await voices
@@ -519,6 +530,7 @@ const APPS = [
   { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
   { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
   { name: 'MoneyMiner', key: 'moneyMiner', size: 128, price: 0 },
+  { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
   { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
   { name: 'Shayd', key: 'shayd', size: 128, price: 1 },
@@ -557,7 +569,8 @@ const state = persist('__MOBILE_STATE', {
       textMessages: [],
       moneyMinerBalance: 0,
       exchangeCryptoBalance: 0,
-      exchangeUSDBalance: 0
+      exchangeUSDBalance: 0,
+      notePadValue: ''
     }
   }
 })
@@ -602,6 +615,15 @@ createComponent(
       h1 {
         font-size: 1.9em;
         margin: 0.7em 0;
+      }
+
+      textarea {
+        padding: 0.25em;
+        resize: none;
+      }
+
+      textarea:focus {
+        outline: 0;
       }
 
       #phone {
@@ -760,6 +782,7 @@ createComponent(
       })
     }
 
+
   },
   ctx => {
     clearInterval(ctx.interval)
@@ -790,6 +813,7 @@ createComponent(
       moneyMinerBalance,
       exchangeCryptoBalance,
       exchangeUSDBalance,
+      notePadValue
     } = currentUserData
 
     const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
@@ -812,7 +836,7 @@ createComponent(
 
     const unreadTextCount = textMessages.reduce((a, c) => c.read ? a : a + 1, 0)
 
-// TODO: none of the apps should work if you're outside the apartment
+    // TODO: none of the apps should work if you're outside the apartment
 
     if (screen === 'loading') {
       ctx.$header.classList.add('hidden')
@@ -834,6 +858,9 @@ createComponent(
           <button id="newProfile">Create New Profile</button>
         </div>
       `
+
+      window.speechSynthesis.cancel()
+      if (PhoneCall.active) PhoneCall.active.hangup()
 
       ctx.$('#user-0').onclick = () => {
         alert('This profile has been indefinitely suspended for violating our terms of service. Please contact us at 1-818-222-5379 if you believe there has been a mistake')
@@ -899,7 +926,8 @@ createComponent(
               payAppBalance: 0,
               moneyMinerBalance: 0,
               exchangeCryptoBalance: 0,
-              exchangeUSDBalance: 0
+              exchangeUSDBalance: 0,
+              notePadValue: ''
             }
           }
         })
@@ -929,35 +957,18 @@ createComponent(
         </div>
       `
 
-      ctx.$('#appMarket').onclick = () => {
-        ctx.setState({ screen: 'appMarket' })
-      }
-      ctx.$('#phoneApp').onclick = () => {
-        ctx.setState({ screen: 'phoneApp' })
+      const appScreens = ['appMarket', 'phoneApp', 'textMessage', 'settings', 'network', ...appsInstalled.map(a => a.key)]
+
+      for (let screen of appScreens) {
+        ctx.$('#' + screen).onclick = () => {
+          ctx.setState({ screen })
+        }
       }
 
-      ctx.$('#textMessage').onclick = () => {
-        ctx.setState({ screen: 'textMessage' })
-      }
-
-      ctx.$('#settings').onclick = () => {
-        ctx.setState({ screen: 'settings' })
-      }
 
       ctx.$('#close').onclick = () => {
         ctx.parentElement.close()
       }
-
-
-      ctx.$('#network').onclick = () => {
-        ctx.setState({ screen: 'network' })
-      }
-
-      appsInstalled.forEach(a => {
-        ctx.$(`#${a.key}`).onclick = () => {
-          ctx.setState({ screen: a.key })
-        }
-      })
 
       ctx.$('#logOut').onclick = () => {
         ctx.setState({ screen: 'loading' })
@@ -1200,19 +1211,22 @@ createComponent(
           <h2 style="margin-bottom: 0.25em">PayApp: Making Payment as easy as 1-2-3!</h2>
           <h3 style="margin: 0.5em 0">Current Balance: $${payAppBalance.toFixed(2)}</h3>
 
-          <div style="margin-bottom: 0.4em">
-            <h3>My PayApp Address: </h3>
+          <div style="margin-bottom: 0.6em">
+            <h3>My PayApp Address <em style="font-size: 0.5em">(Send USD here!)</em>: </h3>
             <span style="font-size: 0.9em">0x308199aE4A5e94FE954D5B24B21B221476Dc90E9</span>
           </div>
-          <div style="margin-bottom: 0.4em">
-            <h3>Private Payment Key (PPK):</h3>
-            <span style="font-size: 0.9em"><em>hidden</em></span>
-            <div>(Don't share this with anyone! Including PayApp employees)</div>
-          </div>
+          <!--
+            <div style="margin-bottom: 0.6em">
+              <h3>Private Payment Key (PPK):</h3>
+              <span style="font-size: 0.9em"><em>hidden</em></span>
+              <div>(Don't share this with anyone! Including PayApp employees)</div>
+            </div>
+          -->
 
+          <h3>Send USD</h3>
           <ol>
             <li><input id="recipient" placeholder="Recipient Address"></li>
-            <li><input id="amount" placeholder="Amount" type="number"></li>
+            <li style="margin:0.25em 0"><input id="amount" placeholder="Amount" type="number"></li>
             <li><button id="sign">Sign Transaction</li>
           </ol>
 
@@ -1306,7 +1320,7 @@ createComponent(
       const messageList = `<ul>${textMessages.map((m, ix) => `
         <li id="tm-${ix}" class="tm ${!m.read ? 'unread' : ''}">
           <div class="tm-from">${m.from || 'unknown'}</div>
-          <div>${m.value.slice(0, 19) + '...'}</div>
+          <div>${(!m.read ? '<em>(unread!)</em> ' : '') + m.value.slice(0, 19) + '...'}</div>
         </li>
       `).join('')}</ul`
 
@@ -1492,7 +1506,7 @@ createComponent(
           <p>A: In order to mine crypto, all you need to do is click the "Mine Crypto" button in the Money Miner interface. Each click will mine a new Crypto Coin.</p>
 
           <p>Q: How can I convert crypto to USD?</p>
-          <p>A: Exchanging crypto for dollars is easy! Just download the Currenc Xchange App, create an account, and send your crypto to your new address! </p>
+          <p>A: Exchanging crypto for dollars is easy! Just download the Currency Xchange App, create an account, and send your crypto to your new address! </p>
 
           <p>Q: Can other Smart Devices mine Crypto for me?</p>
           <p>A: Yes! Select smart devices can be configured to mine Crypto in order to create a passive income stream. In order to configure these devices, please download the CryptoMinerPlus App!</p>
@@ -1587,11 +1601,13 @@ createComponent(
         const msSinceUpdate = Date.now() - globalState.idVerifierUpdate
         const secondsSinceUpdate = msSinceUpdate / 1000
 
+        const seconds = (Math.floor(secondsSinceUpdate))
 
-        ctx.$('#timeRemaining').innerHTML = 60 - (Math.floor(secondsSinceUpdate))
+
+        ctx.$('#timeRemaining').innerHTML = 60 - seconds
         if (Math.random() < 0.1)  {
           ctx.$('#tempAddr').innerHTML = 'ERROR: Invalid signing key'
-        } else if (ctx.$('#tempAddr').innerHTML.includes('ERROR')) {
+        } else if (ctx.$('#tempAddr').innerHTML.includes('ERROR') || seconds < 2) {
           ctx.$('#tempAddr').innerHTML = calcExchangeRecipientAddr(currentUser)
         }
 
@@ -1839,10 +1855,27 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+    } else if (screen === 'notePad') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen" style="flex: 1; display: flex; flex-direction: column">
+          <div><button id="home">Back</button></div>
+          <h4>NotePad</h4>
+          <textarea id="pad" style="flex: 1">${notePadValue || ''}</textarea>
+        </div>
+      `
+
+      ctx.$('#pad').onkeyup = (...args) => {
+        ctx.state.userData[currentUser].notePadValue = ctx.$('#pad').value
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
     }
 
   },
-  (oldState, newState) => {
+  (oldState, newState, stateUpdate) => {
     Object.assign(state, newState)
+    globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phone', payload: stateUpdate }})
   }
 )

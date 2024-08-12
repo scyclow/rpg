@@ -171,7 +171,7 @@ export const createComponent = (tag, templateStr, initialState, onInit, onRender
       this.oldState = this.state
       this.state = { ...this.state, ...stateUpdate }
 
-      onSetState(this.oldState, this.state)
+      onSetState(this.oldState, this.state, stateUpdate)
 
 
       if (deepEquals(this.state, this.oldState) && !force) return

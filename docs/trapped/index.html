@@ -81,6 +81,7 @@
 
   const primaryStartingCtx = persist('__PRIMARY_SM_CTX', new CTX({
     currentNode: 'start',
+    fallbackNode: 'bedroom',
     currentActions: [],
     state: {
       // TODO: wifi shouldn't work if unplugged
@@ -132,6 +133,7 @@
     defaultWait: 300,
     async onUpdate({ text, actions }, sm) {
       sm.ctx.history.push(text)
+      globalState.eventLog.push({timestamp: Date.now(), event: { type: 'mainConsole', payload: text}})
       const $content = $.id('mainConsoleContent')
 
       if (text) {
@@ -178,8 +180,8 @@
       handler: 'intro'
     },
     intro: [
-      { text: 'You wake up', wait: 1000},
-      { text: 'A vague sense of dread lingers from a dream you no longer remember', wait: 1000},
+      { text: 'You wake up', wait: 2000},
+      { text: 'A vague sense of dread lingers from a dream you no longer remember', wait: 2000},
       { text: 'Your first conscious thought is to reach for your phone', follow: 'bedFresh' },
       // { text: 'Your first conscious inclination is to reach for your phone', follow: 'bedFresh' },
     ],
@@ -331,12 +333,14 @@
           ctx.state.envelopesPickedUp = true
         },
         text: `You pick up both envelopes. The first is from your landlord, Landlock Realty LLC. You owe them $6,437.98. The second is from HealthyLiving Inc. You owe them $14,038.71. You can pay this online. At the bottom of the letter it says: "Your health is priceless!" The third is junk mail. It says:
-        <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em;"">
-          <p class="letterText">Dear NEIGHBOR,</p>
-          <p class="letterText">Special Promotion for LIMITED TIME only FREE TRIAL for MOBILE + DATA Plan</p>
-          <p class="letterText">Service Provider Code (SPC): 00010-032991</p>
-          <p class="letterText">District Index: B47</p>
-          <p class="letterText">Unlock Code: Qz8!9g97tR$f29</p>
+        <div>
+          <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em;"">
+            <p class="letterText">Dear NEIGHBOR,</p>
+            <p class="letterText">Special Promotion for LIMITED TIME only FREE TRIAL for MOBILE + DATA Plan</p>
+            <p class="letterText">Service Provider Code (SPC): 00010-032991</p>
+            <p class="letterText">District Index: B47</p>
+            <p class="letterText">Unlock Code: Qz8!9g97tR$f29</p>
+          </div>
         </div>
 
         `
@@ -480,7 +484,7 @@
 
       plugInRouter: {
 
-        text: `You plug the router back in. The Power, Internet, and WiFi lights all turn off for one second, turn back on for one second, and blink for three seconds, before returning to their original states`,
+        text: ({ctx}) => `You plug the router back in. The Power, Internet, and WiFi lights all turn off for one second, turn back on for one second, and blink for three seconds${globalState.routerReset ? 'before returning to their original states.' : '. The WiFi light is now on.'}`,
         wait: 0,
         follow() {
           globalState.routerReset = true
@@ -517,7 +521,7 @@
 
       toilet: {
         // allow player to use toilet, but need an app to flush. if you use without flushing, it starts to smell
-        text: `Staring at the toilet, you're reminded of a need to urinate, but you're afraid that the auto-flusher won't work`
+        text: `Staring at the toilet, you're reminded of a need to urinate, but you're afraid that the auto-flusher won't work.`
       },
       bathroomSink: {
         text: 'You wave your hands in front of the sink, but nothing happens. A small red light blinks on its side.'

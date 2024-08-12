@@ -1,3 +1,10 @@
+/*@font-face {
+  font-family: "ServoMono";
+  src: url("./ServoMono.woff") format('woff');
+}*/
+
+/*@import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap');*/
+
 :root {
 
   --dark-color: #19120b;
@@ -12,6 +19,7 @@
   margin: 0;
   font-family: monospace;
   color: var(--primary-color);
+  /*font-size: 0.97em;*/
 }
 
 body {

@@ -11,7 +11,8 @@ export const globalState = persist('__GLOBAL_STATE', {
   smartLockOpen: false,
   rentBalance: 6437.98,
   ispBalance: 0.37,
-  payments: {}
+  payments: {},
+  eventLog: []
 })
 
 window.globalState = globalState

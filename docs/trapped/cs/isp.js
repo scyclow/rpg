@@ -35,8 +35,10 @@ export const ispCSNodes = {
     follow: () => {
       SOURCE1 = createSource('sine')
       SOURCE2 = createSource('sine')
-      SOURCE1.smoothFreq(300)
-      SOURCE1.smoothFreq(600)
+
+      const note = 300 * sample([1, 1.122, 1.189, 1.334, 1.498, 1.588, 1.782])
+      SOURCE1.smoothFreq(note)
+      SOURCE1.smoothFreq(note*2)
       return 'representativeRing'
     }
   },
