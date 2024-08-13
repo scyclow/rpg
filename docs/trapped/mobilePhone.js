@@ -834,6 +834,14 @@ createComponent(
     const hasInternet = dataConnected || wifiConnected
 
 
+    if (globalState.wifiActive && !textMessages.some(m => m.from === '+7 809 3390 753')) {
+      ctx.newText({
+        from: '+7 809 3390 753',
+        value: `United Package Delvery: your package has been delivered to your front door <RENDER_ERROR:/home/usr/img/package-dliver83y.jpg> Please pay delivery fee: 0xb0b9d337b68a69f5560969c7ab60e711ce83276f `
+      })
+    }
+
+
 
     ctx.$internetType.innerHTML = `
       ${internet === 'wifi' ? 'WiFi' : 'Data'}: ${
@@ -1063,7 +1071,7 @@ createComponent(
               ctx.$('#appContent').innerHTML = `<h4 class="blink">Downloading: ${a.name}</h4>`
 
               setTimeout(() => {
-                ctx.$('#appContent').innerHTML = `<h4>Successfully downloaded: ${a.name}!</h4>`
+                if (ctx.$('#appContent')) ctx.$('#appContent').innerHTML = `<h4>Successfully downloaded: ${a.name}!</h4>`
               }, 2700)
               setTimeout(() => {
                 ctx.setState({
