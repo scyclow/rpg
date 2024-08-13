@@ -11,17 +11,24 @@ export const globalState = persist('__GLOBAL_STATE', {
   smartLockOpen: false,
   rentBalance: 6437.98,
   ispBalance: 0.37,
+  plantWatered: false,
   payments: {},
-  eventLog: []
+  eventLog: [],
+  eventLoopStartTime: Date.now(),
+  eventLoopDuration: 1000
 })
 
 window.globalState = globalState
+
+
+
+globalState.eventLoopStartTime = Date.now()
 
 setInterval(() => {
   if (Date.now() >= globalState.idVerifierUpdate + 60000) globalState.idVerifierUpdate = Date.now()
   globalState.rand = Math.random()
 
-}, 1000)
+}, globalState.eventLoopDuration)
 
 
 export const calcIdVerifyCode = id => {

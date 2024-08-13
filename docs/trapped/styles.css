@@ -27,7 +27,7 @@ body {
   transition: 0.7s;
 }
 
-header, aside {
+header {
   padding: 0.5em;
 }
 
@@ -37,6 +37,7 @@ header {
 
 aside {
   border-left: 1px solid;
+  padding: 1em
 }
 
 aside button {
@@ -67,7 +68,7 @@ h3 {
 }
 
 p {
-  margin: 0.5em 0;
+  margin: 0.75em 0;
 }
 
 #mainConsole {
@@ -87,7 +88,7 @@ p {
 
 }
 #mainConsolePrimary aside {
-  max-width: 320px;
+  max-width: 400px;
 }
 
 #mainConsoleContent {

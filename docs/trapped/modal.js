@@ -80,7 +80,7 @@ createComponent(
         </div>
 
       </article>
-      <div id="x" style="display: none">close</div>
+      <div id="x" style="display:">close</div>
     </div>
   `,
   {display: false},

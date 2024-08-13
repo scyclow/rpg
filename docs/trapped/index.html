@@ -42,7 +42,7 @@
 <script type="module">
   import {ls} from './$.js'
 
-  const GAME_VERSION = 0.1
+  const GAME_VERSION = 0.2
 
   const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
   if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {
@@ -57,6 +57,8 @@
   import {StateMachine, CTX} from './stateMachine.js'
   import {persist} from './persist.js'
   import {globalState, setColor} from './global.js'
+  import {createSource, MAX_VOLUME} from './audio.js'
+
 
 
 
@@ -115,6 +117,17 @@
     //   }
     // }
   }))
+
+
+  /*
+
+    TODO
+
+
+
+  */
+
+  const tmp = {}
 
 
 
@@ -180,8 +193,8 @@
       handler: 'intro'
     },
     intro: [
-      { text: 'You wake up', wait: 2000},
-      { text: 'A vague sense of dread lingers from a dream you no longer remember', wait: 2000},
+      { text: 'You wake up', wait: 1800},
+      { text: 'A vague sense of dread lingers from a dream you no longer remember', wait: 1800},
       { text: 'Your first conscious thought is to reach for your phone', follow: 'bedFresh' },
       // { text: 'Your first conscious inclination is to reach for your phone', follow: 'bedFresh' },
     ],
@@ -274,10 +287,28 @@
         before({ ctx }) {
           globalState.location = 'hallway'
         },
-        text: ({ctx}) => `You enter the hallway${ctx.state.hallwayVisited ? '' : `. A motion sensor picks up your movement and the camera above the front door comes to life.`}`,
+        text: ({ctx}) => `You enter the hallway`,
+        follow: async ({ctx}) => {
+          await waitPromise(1500)
+          if (!ctx.state.hallwayVisited) {
+            return 'motionSensor'
+          }
+        },
         after({ ctx }) {
           ctx.state.hallwayVisited = true
         }
+      },
+
+      motionSensor: {
+        text: 'A motion sensor picks up your movement and the camera above the front door comes to life',
+        follow: async () => {
+          await waitPromise(3000)
+          return 'weirdHum'
+        }
+      },
+
+      weirdHum: {
+        text: `You hear a noise, but can't place its location`
       },
 
       hallwayCurrent: {
@@ -290,7 +321,7 @@
 
 
       thermostat: {
-        text: `You check the thermostat. Every light is on, and it reads: 88˚. You're not sure if it's broken or accurate, but for the first time you realize how uncomfortably warm it is.`,
+        text: `You check the thermostat. Every light is on, and it reads: 88˚. You're not sure if it's accurate, but for the first time you realize how uncomfortably warm it is`,
         follow({ctx}) {
           ctx.state.checkedThermostat = true
           $consoleTemperature.innerHTML = ' — 88˚'
@@ -298,7 +329,7 @@
       },
 
       intercom: {
-        text: `You look at the intercom. It hasn't worked in years. "Talk" and "Door" do nothing. "Listen" only produces static.`
+        text: `You look at the intercom. It hasn't worked in years. "Talk" and "Door" do nothing. "Listen" only produces static`
       },
 
     }, {
@@ -307,7 +338,7 @@
         { text: 'Bedroom', value: 'bedroom'},
         { text: 'Living Room', value: 'livingRoom'},
         { text: 'Bathroom', value: 'bathroom'},
-        { text: 'Front Door', value: 'frontDoor' },
+        { text: 'Front Door', value: 'frontDoor',  qr: {screen: 'messageViewer', messageViewerMessage: 'Powered by SmartLock Technology<sup>TM</sup> Download the Official App today!'} },
         { text: 'Camera', value: 'camera'},
         { text: 'Thermostat', value: 'thermostat'},
         { text: 'Intercom', value: 'intercom'},
@@ -325,16 +356,16 @@
 
     ...group({
       frontDoor: {
-        text: ({ctx}) => `The front door is closed. Above the doorknob you read: Powered by SmartLock Technology<sup>TM</sup>.${ctx.state.envelopesPickedUp ? '': ' You notice three envelopes at your feet.'}`,
+        text: ({ctx}) => `The front door is closed. Above the doorknob is a QR code${ctx.state.envelopesPickedUp ? '': '. You notice three envelopes at your feet'}`,
       },
 
       pickupEnvelopes: {
         before({ctx}) {
           ctx.state.envelopesPickedUp = true
         },
-        text: `You pick up both envelopes. The first is from your landlord, Landlock Realty LLC. You owe them $6,437.98. The second is from HealthyLiving Inc. You owe them $14,038.71. You can pay this online. At the bottom of the letter it says: "Your health is priceless!" The third is junk mail. It says:
+        text: `You pick up all three envelopes. The first is from your landlord, Landlock Realty LLC. You owe them $6,437.98. The second is from HealthyLiving Inc. You owe them $14,038.71. You can pay this online. At the bottom of the letter it says: "Your health is priceless!" The third is junk mail. It says:
         <div>
-          <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em;"">
+          <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em;">
             <p class="letterText">Dear NEIGHBOR,</p>
             <p class="letterText">Special Promotion for LIMITED TIME only FREE TRIAL for MOBILE + DATA Plan</p>
             <p class="letterText">Service Provider Code (SPC): 00010-032991</p>
@@ -375,6 +406,24 @@
           }
         },
         text: `You reenter your apartment and close the door.`
+      },
+
+      frontDoorListen: {
+        before() {
+          try {
+            tmp.src1 = createSource('sine')
+            tmp.src2 = createSource('sine')
+
+            tmp.src1.smoothFreq(100)
+            tmp.src2.smoothFreq(100.1)
+
+            tmp.src1.smoothGain(MAX_VOLUME/2, 2)
+            tmp.src2.smoothGain(MAX_VOLUME/2, 2)
+          } catch (e) {
+            console.log(e)
+          }
+        },
+        text: `You put your ear to the door. All you hear is a faint hum.`,
       }
 
     }, {
@@ -382,20 +431,44 @@
       actions: ({ctx}) => [
         {text: 'Back', value: 'hallwayCurrent'},
         {text: 'Open Door', value: globalState.smartLockOpen ? 'openDoorUnlocked' : 'openDoorLocked'},
+        {text: 'Listen Closely', value: 'frontDoorListen'},
         ctx.state.envelopesPickedUp ? null : {text: 'Pick Up Envelopes', value: 'pickupEnvelopes'}
-      ].filter(exists)
+      ].filter(exists),
+      after() {
+        if (tmp.src1 && tmp.src2) {
+          tmp.src1.smoothGain(0.000001, 1)
+          tmp.src2.smoothGain(0.000001, 1)
+
+          setTimeout(() => {
+            tmp.src1.stop()
+            tmp.src2.stop()
+          }, 10000)
+        }
+      }
     }),
 
     ...group({
       livingRoom: {
-        before({ ctx }) {
-          globalState.location = 'livingRoom'
-          ctx.state.livingRoomVisited = true
+        text: `You enter the living room`,
+        async follow({ ctx }) {
+          await waitPromise(1500)
+          if (!ctx.state.livingRoomVisited) {
+            ctx.state.livingRoomVisited = true
+            globalState.location = 'livingRoom'
+            return 'wonderPlants'
+          } else if (globalState.location === 'kitchen' && !ctx.state.envelopesPickedUp) {
+            globalState.location = 'livingRoom'
+            return 'hearSomething'
+          }
         },
-        text: ({ctx}) => `You enter the living room${ctx.state.livingRoomVisited ? '' : '. You wonder how your plants are doing'}`,
-        after({ ctx }) {
-          ctx.state.livingRoomVisited = true
-        }
+      },
+
+      wonderPlants: {
+        text: 'You wonder how your plants are doing'
+      },
+
+      hearSomething: {
+        text: 'You hear a something in the hallway'
       },
 
       livingRoomCurrent: {
@@ -403,7 +476,7 @@
       },
 
       planter: {
-        text: `You check your plants. The leaves sag from a lack of light and water. On the side of the pot you read: "SmartPlanter<sup>TM</sup> - The quick and easy way to conveniently water your plants! Download our app in the AppMarket. DEVICE CODE: F938920O3249B48"`
+        text: `You check your plants. The leaves sag from a lack of light${globalState.plantWatered ? '' : ' and water'}. On the side of the pot you read: "SmartPlanter<sup>TM</sup> - The quick and easy way to conveniently water your plants! Download our app in the AppMarket. DEVICE CODE: F93892O30249B48"`
       },
 
       livingRoomWindow: {
@@ -483,7 +556,6 @@
       },
 
       plugInRouter: {
-
         text: ({ctx}) => `You plug the router back in. The Power, Internet, and WiFi lights all turn off for one second, turn back on for one second, and blink for three seconds${globalState.routerReset ? 'before returning to their original states.' : '. The WiFi light is now on.'}`,
         wait: 0,
         follow() {
@@ -559,8 +631,12 @@
       kitchenWindow: {
         text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
       },
-      refrigerator: {
+      refrigeratorLocked: {
         text: `You try the door to the refrigerator, but it won't open. A small LED screen on its front says: "LOCKED ||| LOCAL NETWORK INVALID"`
+      },
+
+      refrigeratorOpen: {
+        text: `You open the refrigerator. It's empty. The air is only slightly cooler than room temperature`
       },
       kitchenSink: {
         text: 'You wave your hands in front of the sink, but nothing happens. A small red light blinks on its side.'
@@ -569,22 +645,22 @@
       //   text: 'todo'
       // },
       toaster: {
-        text: `You're not quite sure how the toaster works, but you see a QR code on one side. On the other side is an LED screen:
+        text: () => `You're not quite sure how the toaster works, but you see a QR code on one side. On the other side is an LED screen:
           <div style="margin-top: 0.5em">
             <div style="display: inline-block;border: 1px dashed; padding: 0.5em; background: #79ffec; text-align: center; color: #4b0d5d">
               <h3 style="color: #4b0d5d">User: ToastBaby69</h3>
-              <h3 style="color: #4b0d5d">Last toast: NaN days ago</h3>
-              <h3 style="color: #4b0d5d">Total toasts: ERROR: Cannot connect to server.</h3>
+              <h3 style="color: #4b0d5d">Last toast: ${globalState.wifiActive ?  '52' : 'NaN'} days ago</h3>
+              <h3 style="color: #4b0d5d">Total toasts: ${globalState.wifiActive ?  '11' : 'ERROR: Cannot connect to server.'}</h3>
             </div>
           </div>
         `
       },
     }, {
-      actions: [
+      actions: () => [
         { text: 'Phone', value: 'openPhone'},
         { text: 'Living Room', value: 'livingRoom'},
         { text: 'Window', value: 'kitchenWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'}},
-        { text: 'Refrigerator', value: 'refrigerator'},
+        { text: 'Refrigerator', value: globalState.wifiActive ? 'refrigeratorOpen' : 'refrigeratorLocked'},
         { text: 'Kitchen Sink', value: 'kitchenSink'},
         // { text: 'Oven', value: 'oven'},
         { text: 'Toaster', value: 'toaster', qr: { screen: 'messageViewer', messageViewerMessage: 'Introducing <em>Toastr</em>: the social way to toast! Download our App today!'}},
@@ -599,6 +675,20 @@
         setColor('--primary-color', '#fff')
       },
       text: `You turn the doorknob and slowly pull the door open. You stare into darkness.`,
+        before() {
+          try {
+            tmp.src1 = createSource('sine')
+            tmp.src2 = createSource('sine')
+
+            tmp.src1.smoothFreq(100)
+            tmp.src2.smoothFreq(100.1)
+
+            tmp.src1.smoothGain(MAX_VOLUME, 2)
+            tmp.src2.smoothGain(MAX_VOLUME, 2)
+          } catch (e) {
+            console.log(e)
+          }
+        },
       handler: ({ur}) => ur,
       actions: ({ctx}) => [
         {text: 'Leave apartment', value: 'externalHallway'},
@@ -624,12 +714,6 @@
       externalHallwayBack: {
         text: 'You walk back towards the apartment door.'
       },
-
-
-
-      stairway: {
-        text: ''
-      }
     }, {
       handler: ({ur}) => ur,
       actions: [
@@ -675,35 +759,46 @@
           globalState.location = 'stairway'
           setColor('--bg-color', '#000')
           setColor('--primary-color', '#fff')
+
+          if (tmp.src1 && tmp.src2) {
+            tmp.src1.smoothGain(0.000001, 1)
+            tmp.src2.smoothGain(0.000001, 1)
+
+            setTimeout(() => {
+              tmp.src1.stop()
+              tmp.src2.stop()
+            }, 10000)
+          }
+
         },
-        text: `You enter the stairway and hear the door slam shut behind you.`,
+        text: `You enter the stairway and hear the door slam shut behind you`,
         wait: 1500,
         follow: 'enterStairway1'
       },
       enterStairway1: {
-        text: `The sound echos off the cement walls, spiraling around the staircase in both directions.`,
+        text: `The sound echos off the cement walls, spiraling around the staircase in both directions`,
         wait: 1500,
         follow: 'enterStairway2'
       },
       enterStairway2: {
-        text: `You turn around and see a QR code on the door behind you.`
+        text: `You turn around and see a QR code on the door behind you`
       },
       insideStairwayDoorPrimary: {
-        text: `You try opening the door, but it's locked.`
+        text: `You try opening the door, but it's locked`
       },
 
       stairsUp: {
         before({ctx}) {
           ctx.state.stairwayLevel += 1
         },
-        text: `You walk up a flight of stairs.`
+        text: `You walk up a flight of stairs`
       },
 
       stairsDown: {
         before({ctx}) {
           ctx.state.stairwayLevel -= 1
         },
-        text: `You walk down a flight of stairs.`
+        text: `You walk down a flight of stairs`
       },
 
     }, {

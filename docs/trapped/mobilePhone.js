@@ -309,7 +309,7 @@ function setCallTime(ctx, phone) {
   const $time = ctx.$('#callTime')
 
 
-  ctx.interval = setRunInterval(() => {
+  ctx.setInterval(() => {
     if (phone.phoneAnswered) {
       const totalSecondsElapsed = Math.floor((Date.now() - phone.answerTime) / 1000)
       const secondsElapsed = totalSecondsElapsed % 60
@@ -320,7 +320,7 @@ function setCallTime(ctx, phone) {
       $time.innerHTML = ``
     }
 
-  }, 1000)
+  })
 }
 
 
@@ -521,7 +521,6 @@ function phoneBehavior(ctx) {
 const APPS = [
   { name: 'Alarm', key: 'alarm', size: 128, price: 1 },
   { name: 'Bathe', key: 'bathe', size: 128, price: 1 },
-  { name: 'Clock', key: 'alarm', size: 128, price: 1 },
   { name: 'CryptoMinerPlus', key: 'alarm', size: 128, price: 1 },
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
   { name: 'Elevate', key: 'elevate', size: 128, price: 1 },
@@ -535,9 +534,9 @@ const APPS = [
   { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
   { name: 'Shayd', key: 'shayd', size: 128, price: 1 },
   { name: 'SmartLock', key: 'lock', size: 128, price: 0 },
-  { name: 'SmartPlanter', key: 'planter', size: 256, price: 1 },
+  { name: 'SmartPlanter', key: 'planter', size: 256, price: 0 },
   { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: 1 },
-  { name: 'Toastr', key: 'camera', size: 128, price: 1 },
+  { name: 'Toastr', key: 'toastr', size: 128, price: 0 },
 ]
 
 
@@ -558,6 +557,9 @@ const state = persist('__MOBILE_STATE', {
   currentUser: 0,
   lampOn: false,
   luminPaired: false,
+  toasterPaired: false,
+  planterPaired: false,
+  plantStatus: 'Poor',
   smartLockPaired: false,
   smartLockOpen: false,
   messageViewerMessage: '',
@@ -782,7 +784,15 @@ createComponent(
       })
     }
 
+    ctx.setInterval = cb => {
+      clearInterval(ctx.interval)
+      const wait = globalState.eventLoopDuration - (Date.now() - globalState.eventLoopStartTime) % globalState.eventLoopDuration
 
+      cb()
+      setTimeout(() => {
+        ctx.interval = setRunInterval(cb, globalState.eventLoopDuration)
+      }, wait)
+    }
   },
   ctx => {
     clearInterval(ctx.interval)
@@ -801,6 +811,8 @@ createComponent(
       userNames,
       bluetoothEnabled,
       luminPaired,
+      toasterPaired,
+      planterPaired,
       lampOn
     } = ctx.state
 
@@ -870,9 +882,15 @@ createComponent(
         if (id === '0') return
         ctx.$(`#user-${id}`).onclick = () => {
           ctx.setState({
-            currentUser: id,
-            screen: 'home'
+            screen: 'loading'
           })
+
+          setTimeout(() => {
+            ctx.setState({
+              currentUser: id,
+              screen: 'home'
+            })
+          }, 1000)
         }
       })
 
@@ -982,13 +1000,14 @@ createComponent(
         <div class="phoneScreen">
           <button id="home">Back</button>
 
-          <div>
+          <div id="appContent">
             <input placeholder="search" id="appSearch">
             <table id="matchingApps"></table>
             <h3 id="searchError"></h3>
             ${hasInternet ? `
-              <h3>Credits Balance: 0</h3>
-              <button disabled>Purchase Credits</button>
+              <h3 style="margin-top: 0.5em; margin-bottom: 0.25em">Credits Balance: 0</h3>
+              <button id="purchase">Purchase Credits</button>
+              <h4 id="error"></h4>
             ` : ''}
           </div>
         </div>
@@ -996,6 +1015,10 @@ createComponent(
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
+      }
+
+      if (ctx.$('#purchase')) ctx.$('#purchase').onclick = () => {
+        ctx.$('#error').innerHTML = 'Error: Cannot purchase Credits at this time'
       }
 
       const appSearch = ctx.$('#appSearch')
@@ -1036,16 +1059,24 @@ createComponent(
           APPS.forEach(a => {
             const app = ctx.$(`#${clean(a.name)}-download`)
             if (app) app.onclick = () => {
-              ctx.setState({
-                appMarketPreSearch: '',
-                userData: {
-                  ...userData,
-                  [currentUser]: {
-                    ...userData[currentUser],
-                    appsInstalled: [...appsInstalled, a]
+
+              ctx.$('#appContent').innerHTML = `<h4 class="blink">Downloading: ${a.name}</h4>`
+
+              setTimeout(() => {
+                ctx.$('#appContent').innerHTML = `<h4>Successfully downloaded: ${a.name}!</h4>`
+              }, 2700)
+              setTimeout(() => {
+                ctx.setState({
+                  appMarketPreSearch: '',
+                  userData: {
+                    ...userData,
+                    [currentUser]: {
+                      ...userData[currentUser],
+                      appsInstalled: [...appsInstalled, a]
+                    }
                   }
-                }
-              })
+                })
+              }, 3300)
             }
           })
 
@@ -1057,7 +1088,6 @@ createComponent(
       appSearch.onkeyup = () => {
         ctx.state.appMarketPreSearch = ''
         search()
-
       }
 
       if (ctx.state.appMarketPreSearch) {
@@ -1164,7 +1194,7 @@ createComponent(
               setTimeout(() => {
                 ctx.newText({
                   from: '1-800-777-0836',
-                  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods. Simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask?. First you download the MoneyMiner application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine crypto. Third you can optionally transfer your crypto `,
+                  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods. Simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask?. First you download the <strong>MoneyMiner</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine crypto. Third you can optionally transfer your crypto to participating exchanges such as <strong>Currency Xchange</strong> to exchange your crypto for fiat currencies such as United States Dollar. This opportunity is once in your life time. `,
                 })
               }, 60000)
 
@@ -1367,7 +1397,7 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="textMessage">Back</button>
-          <p>${textMessages[ctx.state.activeTextMessage].value}</p>
+          <p style="word-wrap: break-word">${textMessages[ctx.state.activeTextMessage].value}</p>
         </div>
       `
 
@@ -1391,7 +1421,7 @@ createComponent(
         ctx.$('#qr-'+a.value).onclick = () => {
           if (a.qr) {
             if (a.qr.screen === 'messageViewer' && !appsInstalled.some(a => a.key === 'messageViewer')) {
-              alert('Please download the Message Viewer app from the AppMarket to view this message')
+              ctx.$('#error').innerHTML = 'Please download the Message Viewer app from the AppMarket to view this message'
             } else {
               ctx.setState(a.qr)
             }
@@ -1415,7 +1445,6 @@ createComponent(
 
       const mainInterface = `
         <button id="offOn">${lampOn ? 'Turn Off' : 'Turn On'}</button>
-
       `
 
       ctx.$phoneContent.innerHTML = `
@@ -1429,7 +1458,6 @@ createComponent(
               : `<h3>Please enable blue tooth to pair local devices</h3>`
           }
         </div>
-
       `
 
       if (ctx.$('#pairLumin')) ctx.$('#pairLumin').onclick = () => {
@@ -1468,14 +1496,12 @@ createComponent(
 
       `
 
-      ctx.interval = setRunInterval(() => {
+      ctx.setInterval(() => {
         const msSinceUpdate = Date.now() - globalState.idVerifierUpdate
         const secondsSinceUpdate = msSinceUpdate / 1000
 
-
         ctx.$('#timeRemaining').innerHTML = 60 - (Math.floor(secondsSinceUpdate))
         ctx.$('#idCode').innerHTML = calcIdVerifyCode(currentUser)
-
       }, 1000)
 
       ctx.$('#home').onclick = () => {
@@ -1557,17 +1583,6 @@ createComponent(
           <h2>Currency Xchange</h2>
           <h3 style="margin-bottom: 0.4em">Temporary Recipient Address: <div id="tempAddr" style="word-wrap: break-word; border: 1px dotted; padding: 0.2em; margin: 0.2em 0">${calcExchangeRecipientAddr(currentUser)}</div> (Valid for <span id="timeRemaining"></span> more seconds)</h3>
           <em>Recipient addresses are cycled every 60 seconds for security purposes. Any funds sent to an expired recipient address will be lost</em>
-          <div style="margin: 0.6em 0">
-            <h3>Crypto Balance: ${exchangeCryptoBalance.toFixed(6)}</h3>
-            <h3>USD Balance: $${exchangeUSDBalance.toFixed(6)}</h3>
-
-            <h4 style="margin: 0.4em 0">Send Funds</h4>
-            <input id="sendCryptoAddress" placeholder="Send Crypto Address" style="width: 90%; margin-bottom: 0.4em">
-            <input id="sendCryptoAmount" placeholder="Send Crypto (val)" type="number"> <button id="sendCrypto">SEND</button>
-            <input id="sendUSDAddress" placeholder="Send USD Address" style="width: 90%; margin-bottom: 0.4em">
-            <input id="sendUSDAmount" placeholder="Send USD (val)" type="number"> <button id="sendUSD">SEND</button>
-            <h4 id="sendError"></h4>
-          </div>
 
           <div style="margin: 0.6em 0">
             <h3>Exchange Rates (<em>Live!</em>)</h3>
@@ -1593,11 +1608,23 @@ createComponent(
             <h4 id="tradeError"></h4>
           </div>
 
+          <div style="margin: 0.6em 0">
+            <h3>Crypto Balance: ${exchangeCryptoBalance.toFixed(6)}</h3>
+            <h3>USD Balance: $${exchangeUSDBalance.toFixed(6)}</h3>
+
+            <h4 style="margin: 0.4em 0">Send Funds</h4>
+            <input id="sendCryptoAddress" placeholder="Send Crypto Address" style="width: 90%; margin-bottom: 0.4em">
+            <input id="sendCryptoAmount" placeholder="Send Crypto (val)" type="number"> <button id="sendCrypto">SEND</button>
+            <input id="sendUSDAddress" placeholder="Send USD Address" style="width: 90%; margin-bottom: 0.4em">
+            <input id="sendUSDAmount" placeholder="Send USD (val)" type="number"> <button id="sendUSD">SEND</button>
+            <h4 id="sendError"></h4>
+          </div>
+
         </div>
 
       `
 
-      ctx.interval = setRunInterval(() => {
+      ctx.setInterval(() => {
         const msSinceUpdate = Date.now() - globalState.idVerifierUpdate
         const secondsSinceUpdate = msSinceUpdate / 1000
 
@@ -1614,7 +1641,7 @@ createComponent(
         ctx.$('#usdC').innerHTML = 'C ' +(1 / calcCryptoUSDExchangeRate()).toFixed(6)
         ctx.$('#cUSD').innerHTML = '$' + calcCryptoUSDExchangeRate().toFixed(6)
 
-      }, 1000)
+      })
 
       ctx.$('#sendCrypto').onclick = () => {
         const amount = Number(ctx.$('#sendCryptoAmount').value)
@@ -1667,6 +1694,14 @@ createComponent(
             payAppBalance: payAppBalance + amount,
             exchangeUSDBalance: exchangeUSDBalance - amount
           })
+
+
+          if (payAppBalance === 0 && !textMessages.some(m => m.from === '1-800-333-7777')) {
+            ctx.newText({
+              from: '1-800-333-7777',
+              value: 'Triple your $$$ !!! → → → 0x3335d32187a49be186c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be186c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be186c88d41c610538b412f333 ← ← ←',
+            })
+          }
 
         } else {
           ctx.setUserData({
@@ -1855,6 +1890,7 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+
     } else if (screen === 'notePad') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen" style="flex: 1; display: flex; flex-direction: column">
@@ -1871,7 +1907,91 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+
+    } else if (screen === 'toastr') {
+
+      const mainInterface = globalState.wifiActive
+        ? `<h3 class="blink">Loading Interface</h3>`
+        : `<h3>Device Error: ERROR: Cannot connect to server.</h3>`
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2>Toastr</h2>
+          ${
+            bluetoothEnabled
+              ? toasterPaired ? mainInterface : `<button id="pairToaster">Pair Device</button>`
+              : `<h3>Must enable bluetooth permissions in Home/Settings</h3>`
+          }
+        </div>
+      `
+
+      if (ctx.$('#pairToaster')) ctx.$('#pairToaster').onclick = () => {
+        ctx.setState({ toasterPaired: true })
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (screen === 'planter') {
+
+      const mainInterface = globalState.wifiActive
+        ? `<h3 class="blink">Loading Interface</h3>`
+        : `<h3>Device Error: ERROR: Cannot connect to server.</h3>`
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2>SmartPlanter</h2>
+          ${planterPaired
+            ? `
+              <h3>Plant Status: ${ctx.state.plantStatus}</h3>
+              <button id="water" ${globalState.plantWatered ? 'disabled' : ''}>Water</button>
+            `
+            : `
+              <input id="planterDeviceCode" placeholder="Device Code"><button id="pairPlanter" style="margin-left: 0.25em">Pair Device</button>
+            `
+          }
+          <h4 id="error"><h4>
+        </div>
+      `
+
+      if (ctx.$('#water')) ctx.$('#water').onclick = () => {
+        globalState.plantWatered = true
+
+        setTimeout(() => {
+          ctx.setState({ plantStatus: 'Okay' })
+        }, 2000)
+      }
+
+      if (ctx.$('#pairPlanter')) ctx.$('#pairPlanter').onclick = () => {
+
+        if (ctx.$('#planterDeviceCode').value !== 'F93892O30249B48') {
+          ctx.$('#error').innerHTML = 'Pairing device...'
+          setTimeout(() => {
+            ctx.$('#error').innerHTML = 'Unregistered Device: Please check that you have input a valid Device Code'
+          }, 800)
+
+        } else if (globalState.wifiActive) {
+          ctx.$('#error').innerHTML = 'Pairing device...'
+          setTimeout(() => {
+            ctx.setState({ planterPaired: true })
+          }, 3000)
+
+        } else {
+          ctx.$('#error').innerHTML = 'Pairing device...'
+          setTimeout(() => {
+            ctx.$('#error').innerHTML = `Cannot find device. Please check your SmartPlanter<sup>TM</sup>'s internet connection and try again`
+          }, 2000)
+        }
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
     }
+
 
   },
   (oldState, newState, stateUpdate) => {
