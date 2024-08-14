@@ -118,11 +118,81 @@ export const billingCSNodes = {
   },
 
   payBalance: {
-    text: () => `To pay your unpaid balance of, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., Download the Pay App application from the AppMarket. Enter the following pay app address into the recipient box: 0, x, 4, b, 2, 5, 8, 6, 0, 3, 2, 5, 7, 4, 6, 0, d, 4, 8, 0, c, 9, 2, 9, a, f, 5, f, 7, b, 8, 3, e, 8, c, 4, 2, 7, 9, b, 7, b.,,, Then enter ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., into the amount box. Then press the sign transaction button. Finally, provide us with the resulting S P T X. identifier , To repeat this message press 1. , To enter a Pay App S P T X identifier press 2,. To return to the main menu press 3`,
+    // text: () => `To pay your unpaid balance of, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., Download the Pay App application from the AppMarket. Enter the following pay app address into the recipient box: 0, x, 4, b, 2, 5, 8, 6, 0, 3, 2, 5, 7, 4, 6, 0, d, 4, 8, 0, c, 9, 2, 9, a, f, 5, f, 7, b, 8, 3, e, 8, c, 4, 2, 7, 9, b, 7, b.,,, Then enter ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., into the amount box. Then press the sign transaction button. Finally, provide us with the resulting S P T X. identifier , To repeat this message press 1. , To enter a Pay App S P T X identifier press 2,. To dispute this balance press 3., To return to the main menu press 4`,
+    text: () => `To pay your unpaid balance of, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., Download the Pay App application from the AppMarket, generate a valid S P T X identifier and provide us with the resulting S P T X identifier., To enter a Pay App S P T X identifier press 1,. For instructions on how to generate a valid Pay App S P T X identifier press 2., To dispute your balance of, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., press 3., To return to the main menu press 4., To repeat this message press 5`,
     handler: options({
-      1: 'payBalance',
-      2: 'enterSPTX',
-      3: 'mainMenu',
+      1: 'enterSPTX',
+      2: 'sptxInstructions1',
+      3: 'disputeBalance',
+      4: 'mainMenu',
+      5: 'payBalance',
+    })
+  },
+
+  sptxInstructions1: {
+    text: `Please download the Pay App application from your device's App Market. When you have downloaded the Pay App application from your device's App Market press 1., To repeat this message press 2., To go back press 3., To dispute your unpaid balance press 4., To go back to the main menu press 5`,
+    handler: options({
+      1: 'sptxInstructions2',
+      2: 'sptxInstructions1',
+      3: 'payBalance',
+      4: 'disputeBalance',
+      5: 'mainMenu'
+    })
+  },
+
+  sptxInstructions2: {
+    text: `Once you have downloaded the Pay App application from your device's App Market, fund your Pay App balance. Once you have funded your Pay App balance press 1., To repeat this message press 2., To go back press 3., To dispute your unpaid balance press 4., To go back to the main menu press 5`,
+    handler: options({
+      1: 'sptxInstructions3',
+      2: 'sptxInstructions2',
+      3: 'sptxInstructions1',
+      4: 'disputeBalance',
+      5: 'mainMenu'
+    })
+  },
+
+
+  sptxInstructions3: {
+    text: `Once you have funded your Pay App balance, please enter, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., into the send amount input box. Once you have entered, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., into the send amount input box press 1., To repeat this message press 2., To go back press 3., To dispute your unpaid balance press 4., To go back to the main menu press 5`,
+    handler: options({
+      1: 'sptxInstructions4',
+      2: 'sptxInstructions3',
+      3: 'sptxInstructions2',
+      4: 'disputeBalance',
+      5: 'mainMenu'
+    })
+  },
+
+  sptxInstructions4: {
+    text: `Once you have entered, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., into the send amount input box, please enter 0, x, 4, b, 2, 5, 8, 6, 0, 3, 2, 5, 7, 4, 6, 0, d, 4, 8, 0, c, 9, 2, 9, a, f, 5, f, 7, b, 8, 3, e, 8, c, 4, 2, 7, 9, b, 7, b.,,, into the recipient address input box. Once you have entered 0, x, 4, b, 2, 5, 8, 6, 0, 3, 2, 5, 7, 4, 6, 0, d, 4, 8, 0, c, 9, 2, 9, a, f, 5, f, 7, b, 8, 3, e, 8, c, 4, 2, 7, 9, b, 7, b.,,, into the recipient address input box press 1., To repeat this message press 2., To go back press 3., To dispute your unpaid balance press 4., To go back to the main menu press 5`,
+    handler: options({
+      1: 'sptxInstructions5',
+      2: 'sptxInstructions4',
+      3: 'sptxInstructions3',
+      4: 'disputeBalance',
+      5: 'mainMenu'
+    })
+  },
+
+  sptxInstructions5: {
+    text: `Once you have entered 0, x, 4, b, 2, 5, 8, 6, 0, 3, 2, 5, 7, 4, 6, 0, d, 4, 8, 0, c, 9, 2, 9, a, f, 5, f, 7, b, 8, 3, e, 8, c, 4, 2, 7, 9, b, 7, b.,,, into the recipient address input box. Please click the sign transaction button. Once you have clicked the sign transaction button press 1., To repeat this message press 2., To go back press 3., To dispute your unpaid balance press 4., To go back to the main menu press 5`,
+    handler: options({
+      1: 'sptxInstructions6',
+      2: 'sptxInstructions5',
+      3: 'sptxInstructions4',
+      4: 'disputeBalance',
+      5: 'mainMenu'
+    })
+  },
+
+  sptxInstructions6: {
+    text: `Clicking the sign transaction button will generate a S P T X identifier. Please write down the resulting S P T X identifier. Press 1 to enter your S P T X identifier., To repeat this message press 2., To go back press 3., To dispute your unpaid balance press 4., To go back to the main menu press 5`,
+    handler: options({
+      1: 'enterSPTX',
+      2: 'sptxInstructions6',
+      3: 'sptxInstructions5',
+      4: 'disputeBalance',
+      5: 'mainMenu'
     })
   },
 
@@ -190,9 +260,9 @@ export const billingCSNodes = {
   },
 
   sptxFailMessage: {
-    text: `To repeat payment instructions press 1., To input another S P T X identifier press 2., To return to the main menu press 3`,
+    text: `For instructions on how to generate a valid S P T X identifier press 1., To input another S P T X identifier press 2., To return to the main menu press 3`,
     handler: options({
-      1: 'payBalance',
+      1: 'sptxInstructions1',
       2: 'enterSPTX',
       3: 'mainMenu'
     })

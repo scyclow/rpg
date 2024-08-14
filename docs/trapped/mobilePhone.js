@@ -1116,10 +1116,12 @@ createComponent(
                   <h3 style="margin-top: 0.4em">Network Name:</h3>
                   <select id="networkName" style="margin: 0.25em 0">
                     <option></option>
+                    <option value="Alien Nation">Alien Nation</option>
                     <option value="CapitalC">CapitalC</option>
                     <option value="ClickToAddNetwork">ClickToAddNetwork</option>
                     <option value="ElectricLadyLand" ${inInternetLocation && wifiNetwork === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
                     ${globalState.routerReset ? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetwork === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
+                    <option value="ISP-Default-89s22D">ISP-Default-89s22D</option>
                     <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
                     <option value="NewNetwork">NewNetwork</option>
                     <option value="XXX-No-Entry">XXX-No-Entry</option>
@@ -1171,7 +1173,7 @@ createComponent(
           <div class="phoneScreen">
             <button id="home">Back</button>
             <button id="wifi">Switch to Wifi</button>
-            <h3>Data Plan: ${dataPlanActivated ? 'TurboConnect FREE TRIAL for MOBILE + DATA Plan' : 'unknown'}</h3>
+            <h3>Data Plan: ${dataPlanActivated ? 'TurboConnect FREE TRIAL for MOBILE + DATA Plan' : 'null'}</h3>
             <div id="connectForm">
               <input id="spc" placeholder="SPC">
               <input id="districtIndex" placeholder="District Index">
@@ -1195,14 +1197,14 @@ createComponent(
                 ctx.setState({ dataPlanActivated: true })
                 ctx.newText({
                   from: '1-800-444-3830',
-                  value: 'You have subscribed: TurboConnect FREE TRIAL for MOBILE + DATA Plan! Please Dial 1-800-444-3830 on *PhoneApp* for all question',
+                  value: 'You have subscribed: TurboConnect FREE TRIAL for MOBILE + DATA Plan! Please Dial 1-800-444-3830 on <strong>*PhoneApp*</strong> for all question',
                 })
               }, 2000)
 
               setTimeout(() => {
                 ctx.newText({
                   from: '1-800-777-0836',
-                  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods. Simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask?. First you download the <strong>MoneyMiner</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine crypto. Third you can optionally transfer your crypto to participating exchanges such as <strong>Currency Xchange</strong> to exchange your crypto for fiat currencies such as United States Dollar. This opportunity is once in your life time. `,
+                  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask?. First you download the <strong>MoneyMiner</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine crypto. Third you can optionally transfer your crypto to participating exchanges such as <strong>Currency Xchange</strong> to exchange your crypto for fiat currencies such as United States Dollars. This opportunity is once in your life time. `,
                 })
               }, 60000)
 
@@ -1247,10 +1249,10 @@ createComponent(
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2 style="margin-bottom: 0.25em">PayApp: Making Payment as easy as 1-2-3!</h2>
-          <h3 style="margin: 0.5em 0">Current Balance: $${payAppBalance.toFixed(2)}</h3>
+          <h3 style="margin: 0.5em 0">Current $ Balance: $${payAppBalance.toFixed(2)}</h3>
 
           <div style="margin-bottom: 0.6em">
-            <h3>My PayApp Address <em style="font-size: 0.5em">(Send USD here!)</em>: </h3>
+            <h3>My PayApp Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h3>
             <span style="font-size: 0.9em">0x308199aE4A5e94FE954D5B24B21B221476Dc90E9</span>
           </div>
           <!--
@@ -1261,7 +1263,7 @@ createComponent(
             </div>
           -->
 
-          <h3>Send USD</h3>
+          <h3>Send $</h3>
           <ol>
             <li><input id="recipient" placeholder="Recipient Address"></li>
             <li style="margin:0.25em 0"><input id="amount" placeholder="Amount" type="number"></li>
@@ -1355,7 +1357,7 @@ createComponent(
       // dataPlanActivated
 
 
-      const messageList = `<ul>${textMessages.map((m, ix) => `
+      const messageList = `<ul style="list-style: none; border: 1px dashed; margin-top: 0.4em">${textMessages.map((m, ix) => `
         <li id="tm-${ix}" class="tm ${!m.read ? 'unread' : ''}">
           <div class="tm-from">${m.from || 'unknown'}</div>
           <div>${(!m.read ? '<em>(unread!)</em> ' : '') + m.value.slice(0, 19) + '...'}</div>
@@ -1523,10 +1525,10 @@ createComponent(
           <h2>Welcome to  $ Money Miner $</h2>
           <h4>My Address:</h4>
           <h4 style="word-wrap: break-word; margin-bottom: 0.4em">0x5f9fc040c204724c833a777516a06ffe88b81819</h4>
-          <h4>To mine crypto, click the button below →</h4>
+          <h4>To mine crypto, click the button below ⬇</h4>
           <button id="mine">Mine Crypto</button>
 
-          <h4>Balance: <span id="cryptoBalance">${moneyMinerBalance}</span></h4>
+          <h4>Crypto Balance: <span id="cryptoBalance">${moneyMinerBalance}</span></h4>
 
           <h3>Send</h3>
           <input id="recipient" placeholder="recipient">
@@ -1536,14 +1538,14 @@ createComponent(
           <h4 id="error"></h4>
 
           <h4>FAQ</h4>
-          <p>Q: How do I mine Crypto?</p>
-          <p>A: In order to mine crypto, all you need to do is click the "Mine Crypto" button in the Money Miner interface. Each click will mine a new Crypto Coin.</p>
+          <p><strong>Q:</strong> How do I mine Crypto?</p>
+          <p><strong>A:</strong> In order to mine crypto, all you need to do is click the <strong>"Mine Crypto"</strong> button in the Money Miner interface. Each click will mine a new Crypto Coin.</p>
 
-          <p>Q: How can I convert crypto to USD?</p>
-          <p>A: Exchanging crypto for dollars is easy! Just download the Currency Xchange App, create an account, and send your crypto to your new address! </p>
+          <p><strong>Q:</strong> How can I convert crypto to $?</p>
+          <p><strong>A:</strong> Exchanging crypto is easy! Just download the <strong>Currency Xchange App</strong>, create an account, and send your crypto to your new address! </p>
 
-          <p>Q: Can other Smart Devices mine Crypto for me?</p>
-          <p>A: Yes! Select smart devices can be configured to mine Crypto in order to create a passive income stream. In order to configure these devices, please download the CryptoMinerPlus App!</p>
+          <p><strong>Q:</strong> Can other Smart Devices mine Crypto for me?</p>
+          <p><strong>A:</strong> Yes! Select smart devices can be configured to mine Crypto in order to create a passive income stream. In order to configure these devices, please download the <strong>CryptoMinerPlus App!</strong></p>
 
         </div>
 
@@ -1607,10 +1609,10 @@ createComponent(
 
             <div>
               <div>
-                <input id="buyAmount" placeholder="Buy USD (val)" type="number"> <button id="buyUSD">BUY</button>
+                <input id="buyAmount" placeholder="Buy $ (val)" type="number"> <button id="buyUSD">BUY</button>
               </div>
               <div>
-                <input id="sellAmount" placeholder="Sell USD (val)" type="number"> <button id="sellUSD">SELL</button>
+                <input id="sellAmount" placeholder="Sell $ (val)" type="number"> <button id="sellUSD">SELL</button>
               </div>
             </div>
             <h4 id="tradeError"></h4>
@@ -1618,13 +1620,13 @@ createComponent(
 
           <div style="margin: 0.6em 0">
             <h3>Crypto Balance: ${exchangeCryptoBalance.toFixed(6)}</h3>
-            <h3>USD Balance: $${exchangeUSDBalance.toFixed(6)}</h3>
+            <h3>$ Balance: $${exchangeUSDBalance.toFixed(6)}</h3>
 
             <h4 style="margin: 0.4em 0">Send Funds</h4>
             <input id="sendCryptoAddress" placeholder="Send Crypto Address" style="width: 90%; margin-bottom: 0.4em">
             <input id="sendCryptoAmount" placeholder="Send Crypto (val)" type="number"> <button id="sendCrypto">SEND</button>
-            <input id="sendUSDAddress" placeholder="Send USD Address" style="width: 90%; margin-bottom: 0.4em">
-            <input id="sendUSDAmount" placeholder="Send USD (val)" type="number"> <button id="sendUSD">SEND</button>
+            <input id="sendUSDAddress" placeholder="Send $ Address" style="width: 90%; margin-bottom: 0.4em">
+            <input id="sendUSDAmount" placeholder="Send $ (val)" type="number"> <button id="sendUSD">SEND</button>
             <h4 id="sendError"></h4>
           </div>
 

@@ -9,7 +9,7 @@
 <body>
   <main id="currentDisplay">
     <section id="mainConsole">
-      <header><span id="consoleLocation"></span> — <time id="consoleTime">??:??:??</time><span id="consoleTemperature"></span></header>
+      <header><span id="consoleLocation"></span><time id="consoleTime"></time><span id="consoleTemperature"></span></header>
       <section id="mainConsolePrimary">
         <section id="mainConsoleContent">
 <!--           <p>You wake up</p>
@@ -129,6 +129,8 @@
 
   const tmp = {}
 
+  window.tmp = tmp
+
 
 
   const niceLocation = {
@@ -140,6 +142,7 @@
     livingRoom: 'Living Room',
     kitchen: 'Kitchen',
     bathroom: 'Bathroom',
+    nothing: ''
   }
 
   const primaryConfig = {
@@ -169,7 +172,7 @@
         actions = await sm.evaluate(actions)
       }
 
-      if (actions) {
+      if (actions && !deepEquals(actions.map(a => a.value), sm.ctx.currentActions.map(a => a.value))) {
         const phoneNotifications = $phoneDevice.phoneNotifications()
         $.id('nextActions').innerHTML = actions.map(a => `<button id="${sm.ctx.currentNode}-${a.value}">${
           a.text + (
@@ -178,10 +181,12 @@
               : ''
           )
         }</button>`).join('')
+
         actions.forEach(a => $.id(`${sm.ctx.currentNode}-${a.value}`).onclick = () => {
           if (a.onClick) a.onClick()
           sm.next(a.value)
         })
+
         sm.ctx.currentActions = actions
         $phoneDevice.setState({ availableActions: actions.filter(a => a.text !== 'Phone')})
       }
@@ -195,7 +200,14 @@
     intro: [
       { text: 'You wake up', wait: 1800},
       { text: 'A vague sense of dread lingers from a dream you no longer remember', wait: 1800},
-      { text: 'Your first conscious thought is to reach for your phone', follow: 'bedFresh' },
+      {
+        before() {
+          globalState.location = 'bed'
+          $consoleLocation.innerHTML = niceLocation[globalState.location]
+        },
+        text: 'Your first conscious thought is to reach for your phone',
+        follow: 'bedFresh'
+      },
       // { text: 'Your first conscious inclination is to reach for your phone', follow: 'bedFresh' },
     ],
 
@@ -205,6 +217,9 @@
       },
 
       bed: {
+        before({ ctx }) {
+          globalState.location = 'bed'
+        },
         text: 'You get into bed'
       },
 
@@ -212,7 +227,7 @@
         text: 'You look at the alarm clock. It flashes 88:88:88. It does not seem to have any buttons',
         follow({ctx}) {
           ctx.state.checkedAlarmClock = true
-          $consoleTime.innerHTML = '88:88:88'
+          $consoleTime.innerHTML = ' — 88:88:88'
         }
       },
     }, {
@@ -261,14 +276,14 @@
         text: 'You look at the alarm clock. It flashes 88:88:88. It does not seem to have any buttons',
         follow({ctx}) {
           ctx.state.checkedAlarmClock = true
-          $consoleTime.innerHTML = '88:88:88'
+          $consoleTime.innerHTML = ' — 88:88:88'
         }
       },
       bedroomWindow: {
         text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
       },
       bedroomLamp: {
-        text: `You inspect the lamp. You don't see a light switch, but you do see a QR code pasted to its side with no label.`
+        text: `You inspect the lamp. You don't see a light switch, but you do see a QR code pasted to its side with no label`
       }
     }, {
       actions: [
@@ -316,7 +331,7 @@
       },
 
       camera: {
-        text: `The small camera looks down at you. Whenever you move, it moves along with you. You make out some tiny print on its side: "SmartPro Security Camera: Keeping you safe since 2010. Download our App in the AppMarket!"`
+        text: `The small camera looks down at you. Whenever you move it moves along with you. You make out some tiny print on its side: "SmartPro Security Camera: Keeping you safe since 2010. Download our App in the AppMarket!"`
       },
 
 
@@ -335,9 +350,9 @@
     }, {
       actions: ({ctx}) =>  [
         { text: 'Phone', value: 'openPhone'},
-        { text: 'Bedroom', value: 'bedroom'},
         { text: 'Living Room', value: 'livingRoom'},
         { text: 'Bathroom', value: 'bathroom'},
+        { text: 'Bedroom', value: 'bedroom'},
         { text: 'Front Door', value: 'frontDoor',  qr: {screen: 'messageViewer', messageViewerMessage: 'Powered by SmartLock Technology<sup>TM</sup> Download the Official App today!'} },
         { text: 'Camera', value: 'camera'},
         { text: 'Thermostat', value: 'thermostat'},
@@ -378,7 +393,7 @@
       },
 
       openDoorLocked: {
-        text: `You try turning the doorknob. It appears to be locked, possibly from the outside.`
+        text: `You try turning the doorknob. It appears to be locked`
       },
 
       closeDoor: {
@@ -423,7 +438,7 @@
             console.log(e)
           }
         },
-        text: `You put your ear to the door. All you hear is a faint hum.`,
+        text: `You put your ear to the door. All you hear is a low hum`,
       }
 
     }, {
@@ -516,11 +531,7 @@
       },
 
       resetRouter: {
-        text: `You push the router's reset button. All three lights turn off for one second, turn back on for one second, and blink for three seconds, before returning to their original states`
-      },
-
-      resetRouterNothing: {
-        text: `You push the router's reset button, but all three lights remain off`
+        text: `You push the router's reset button. Nothing happens`
       },
 
       bottomRouter: {
@@ -539,7 +550,7 @@
     }, {
       actions: ({ctx}) => [
         { text: 'Back', value: 'livingRoomCurrent'},
-        { text: 'Push Reset Button', value: ctx.state.router.pluggedIn ? 'resetRouter' : 'resetRouterNothing'},
+        { text: 'Push Reset Button', value: 'resetRouter'},
         { text: 'Look At Bottom of Router', value: 'bottomRouter'},
         { text: 'Check Power', value: 'checkWifiPower'},
       ],
@@ -581,7 +592,7 @@
         before({ ctx }) {
           globalState.location = 'bathroom'
         },
-        text: ({ctx}) => `You enter the bathroom`,
+        text: ({ctx}) => `You enter the bathroom${ctx.state.usedToilet ? '. You pick up the faint smell of stale urine' : ''}`,
         after({ ctx }) {
           ctx.state.bathroomVisited = true
         }
@@ -593,13 +604,18 @@
 
       toilet: {
         // allow player to use toilet, but need an app to flush. if you use without flushing, it starts to smell
-        text: `Staring at the toilet, you're reminded of a need to urinate, but you're afraid that the auto-flusher won't work.`
+        text: ({ctx}) => ctx.state.usedToilet
+          ? `You wave your hand in front of the toilet, but the auto-flusher does not activate`
+          : `You use the toilet, but the auto-flusher does not activate`,
+        after({ctx}) {
+          ctx.state.usedToilet = true
+        }
       },
       bathroomSink: {
-        text: 'You wave your hands in front of the sink, but nothing happens. A small red light blinks on its side.'
+        text: 'You wave your hands in front of the sink, but nothing happens. A small red light blinks at its base'
       },
       shower: {
-        text: 'You look inside the shower. A showerhead juts out from the wall with a QR code printed on its side.'
+        text: 'You look inside the shower. A showerhead sticks out of the wall with a QR code printed on its side'
       },
     }, {
       actions: [
@@ -674,7 +690,7 @@
         setColor('--bg-color', '#000')
         setColor('--primary-color', '#fff')
       },
-      text: `You turn the doorknob and slowly pull the door open. You stare into darkness.`,
+      text: `You turn the doorknob and slowly pull the door open. You stare into darkness`,
         before() {
           try {
             tmp.src1 = createSource('sine')
@@ -708,18 +724,18 @@
             // TODO rumbling noise, shuts off when you enter apartment
           }, 2000)
         },
-        text: 'You exit your apartment and enter a hallway. A series of LED lights flicker on and glare overhead. Pipes jut out from the ceiling and recede into the narrow, white walls.'
+        text: 'You exit your apartment and enter a hallway. A series of LED lights flicker on and glare overhead. Pipes jut out from the ceiling and recede into the narrow, white walls'
       },
 
       externalHallwayBack: {
-        text: 'You walk back towards the apartment door.'
+        text: 'You walk back towards the apartment door'
       },
     }, {
       handler: ({ur}) => ur,
       actions: [
         { text: 'Reenter Apartment', value: 'reenterApartment'},
-        { text: 'Stairway', value: 'stairway'},
         { text: 'Elevator', value: 'elevator'},
+        { text: 'Stairway', value: 'stairway'},
         { text: 'Phone', value: 'openPhone'},
       ]
     }),
@@ -729,7 +745,7 @@
         text: `You approach the elevator, noticing two buttons`,
       },
       elevatorButtons: {
-        text: `You try pressing both metalic buttons, but nothing seems to happen.`
+        text: `You try pressing both metalic buttons, but nothing seems to happen`
         // TODO: app
       },
 
@@ -772,13 +788,17 @@
 
         },
         text: `You enter the stairway and hear the door slam shut behind you`,
-        wait: 1500,
-        follow: 'enterStairway1'
+        async follow() {
+          await waitPromise(2000)
+          return 'enterStairway1'
+        }
       },
       enterStairway1: {
         text: `The sound echos off the cement walls, spiraling around the staircase in both directions`,
-        wait: 1500,
-        follow: 'enterStairway2'
+        async follow() {
+          await waitPromise(2000)
+          return 'enterStairway2'
+        }
       },
       enterStairway2: {
         text: `You turn around and see a QR code on the door behind you`
@@ -854,7 +874,7 @@
     $consoleLocation.innerHTML = niceLocation[globalState.location]
 
     if (ctx.state.checkedAlarmClock) {
-      $consoleTime.innerHTML = '88:88:88'
+      $consoleTime.innerHTML = ' — 88:88:88'
     }
     if (ctx.state.checkedThermostat) {
       $consoleTemperature.innerHTML = ' — 88˚'

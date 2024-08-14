@@ -2,7 +2,7 @@ import {persist} from './persist.js'
 
 export const globalState = persist('__GLOBAL_STATE', {
   routerRestartTime: 0,
-  location: 'bed',
+  location: 'nothing',
   idVerifierUpdate: Date.now(),
   routerReset: false,
   lightsOn: false,

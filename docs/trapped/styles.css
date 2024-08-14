@@ -25,10 +25,13 @@
 body {
   background: var(--bg-color);
   transition: 0.7s;
+  animation: FadeIn 0.5s linear;
+
 }
 
 header {
-  padding: 0.5em;
+  padding: 0.5em 1em;
+  height: 1.2em;
 }
 
 header {
@@ -43,6 +46,8 @@ aside {
 aside button {
   margin-bottom: 0.5em;
   margin-right: 0.5em;
+  animation: FadeIn 0.5s linear;
+
 }
 
 button {
@@ -127,6 +132,15 @@ p.preVisible {
     opacity: 1;
   }
 }
+
+@keyframes FadeIn {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
 
 ::selection {
   background: var(--primary-color);
