@@ -7,6 +7,19 @@
   <link rel="stylesheet" type="text/css" href="./styles.css">
 </head>
 <body>
+
+<script type="module">
+  import {ls} from './$.js'
+
+  const GAME_VERSION = 0.2
+
+  const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
+  if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {
+    localStorage.clear()
+  }
+  ls.set('__GAME_VERSION', GAME_VERSION)
+</script>
+
   <main id="currentDisplay">
     <section id="mainConsole">
       <header><span id="consoleLocation"></span><time id="consoleTime"></time><span id="consoleTemperature"></span></header>
@@ -35,21 +48,12 @@
   </trapped-modal>
 </body>
 
+
+
 <script src="./utils.js"></script>
 <script type="module" src="./modal.js"></script>
 <script type="module" src="./mobilePhone.js"></script>
 
-<script type="module">
-  import {ls} from './$.js'
-
-  const GAME_VERSION = 0.2
-
-  const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
-  if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {
-    localStorage.clear()
-  }
-  ls.set('__GAME_VERSION', GAME_VERSION)
-</script>
 
 
 <script type="module">
