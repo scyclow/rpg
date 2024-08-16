@@ -31,8 +31,12 @@ body {
   background: var(--bg-color);
   transition: 0.7s;
   animation: FadeIn 0.5s linear;
-  overflow: hidden;
 
+
+}
+
+main {
+  overflow: hidden;
 }
 
 header {
@@ -151,7 +155,7 @@ p.preVisible {
   }
 }
 
-@media (max-width: 550px) {
+@media (max-width: 650px) {
   #mainConsolePrimary {
     flex-direction: column;
   }
