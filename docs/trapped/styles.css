@@ -20,12 +20,18 @@
   font-family: monospace;
   color: var(--primary-color);
   /*font-size: 0.97em;*/
+
+  scrollbar-color: darkgray black;
+
+  scrollbar-color: color-mix(in srgb, var(--bg-color) 93%, var(--primary-color)) var(--bg-color);
+  scrollbar-width: thin;
 }
 
 body {
   background: var(--bg-color);
   transition: 0.7s;
   animation: FadeIn 0.5s linear;
+  overflow: hidden;
 
 }
 
@@ -39,7 +45,6 @@ header {
 }
 
 aside {
-  border-left: 1px solid;
   padding: 1em
 }
 
@@ -93,12 +98,15 @@ p {
 
 }
 #mainConsolePrimary aside {
-  max-width: 400px;
+  max-width: 40vw;
+  /*min-width: 250px;*/
+
 }
 
 #mainConsoleContent {
   padding: 1em;
   overflow: scroll;
+  border-right: 1px solid;
 }
 #mainConsoleContent > * {
   opacity: 0.85;
@@ -141,8 +149,33 @@ p.preVisible {
   100% {
     opacity: 1;
   }
+}
+
+@media (max-width: 550px) {
+  #mainConsolePrimary {
+    flex-direction: column;
+  }
+
+  #mainConsoleContent {
+    border-right: 0;
+    border-bottom: 1px solid;
+  }
+
+  #mainConsolePrimary aside {
+    max-width: 70vh;
+  }
+
+}
 
 ::selection {
   background: var(--primary-color);
   color: var(--bg-color);
+}
+
+* {
+  overflow: -moz-scrollbars-none;
+}
+
+::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
 }

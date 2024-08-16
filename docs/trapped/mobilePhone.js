@@ -734,6 +734,12 @@ createComponent(
         }
       }
 
+      @media (max-height: 595px) {
+        #phone {
+          transform: scale(0.75)
+        }
+      }
+
     </style>
     <div id="phone">
       <header id="header">
