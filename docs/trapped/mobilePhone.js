@@ -1657,7 +1657,7 @@ createComponent(
         const amount = Number(ctx.$('#sendCryptoAmount').value)
         const recipient = ctx.$('#sendCryptoAddress').value
 
-        if (!amount || amount < 0) {
+        if (!amount || amount < 0  || amount > exchangeCryptoBalance) {
           ctx.$('#sendError').innerHTML = 'Invalid Amount'
           return
         } else {
@@ -1690,7 +1690,7 @@ createComponent(
         const amount = Number(ctx.$('#sendUSDAmount').value)
         const recipient = ctx.$('#sendUSDAddress').value
 
-        if (!amount || amount < 0) {
+        if (!amount || amount < 0 || amount > exchangeUSDBalance) {
           ctx.$('#sendError').innerHTML = 'Invalid Amount'
           return
         } else {
