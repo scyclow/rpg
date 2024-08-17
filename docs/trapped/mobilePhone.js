@@ -799,6 +799,19 @@ createComponent(
         ctx.interval = setRunInterval(cb, globalState.eventLoopDuration)
       }, wait)
     }
+
+    ctx.createSPTX = ({ recipient, amount }) => {
+      const sptx = Math.floor(Math.random()*100000000000000000)
+
+      globalState.payments[sptx] = {
+        sptx,
+        recipient,
+        amount,
+        timestamp: Date.now(),
+        received: false
+      }
+      return sptx
+    }
   },
   ctx => {
     clearInterval(ctx.interval)
@@ -843,7 +856,7 @@ createComponent(
     if (globalState.wifiActive && !textMessages.some(m => m.from === '+7 809 3390 753')) {
       ctx.newText({
         from: '+7 809 3390 753',
-        value: `United Package Delvery: your package has been delivered to your front door <RENDER_ERROR:/home/usr/img/package-dliver83y.jpg> Please pay delivery fee: 0xb0b9d337b68a69f5560969c7ab60e711ce83276f `
+        value: `United Pakcåge Delvery MsG: "W⍷lcome ◻︎⎅◻︎ y⌾ure Pâck⎀ge ⎙ h⍶s been ◻︎ deLiveRed t⌀ ⇢⇢ <strong>FRONT DOOR</strong> ⇠⇠ <RENDER_ERROR:/home/usr/img/package-d⌽liver83y.jpg> ⎆ pAy deliver fee ⌱ 0xb0b9d337b68a69f5560969c7ab60e711ce83276f"`
       })
     }
 
@@ -1258,7 +1271,7 @@ createComponent(
           <h3 style="margin: 0.5em 0">Current $ Balance: $${payAppBalance.toFixed(2)}</h3>
 
           <div style="margin-bottom: 0.6em">
-            <h3>My PayApp Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h3>
+            <h3>My $ Recipient Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h3>
             <span style="font-size: 0.9em">0x308199aE4A5e94FE954D5B24B21B221476Dc90E9</span>
           </div>
           <!--
@@ -1276,7 +1289,8 @@ createComponent(
             <li><button id="sign">Sign Transaction</li>
           </ol>
 
-          <div id="sptx"></div>
+          <h4 id="sptx"></h4>
+          <p style="margin-top: 0.4em"><em>All $ transactions are irreversible. Please ensure that you have input the correct recipient address and amount</em></p>
         </div>
       `
       // ff33083322f66413ea6fb21e7b6451d9922b14c1622ebff8da71a61a36de0cc8
@@ -1292,7 +1306,7 @@ createComponent(
         $sptx.innerHTML = ''
 
         if (!recipient) {
-          $sptx.innerHTML = `Please input a valid recipient`
+          $sptx.innerHTML = `Please input a valid $ Recipient Address`
           return
         }
         if (amount <= 0 || !amount) {
@@ -1306,15 +1320,9 @@ createComponent(
 
         // globalState.payments = {}
 
-        const sptx = Math.floor(Math.random()*100000000000000000)
-
-        globalState.payments[sptx] = {
-          sptx,
-          recipient,
-          amount,
-          timestamp: Date.now(),
-          received: false
-        }
+        const sptx = ctx.createSPTX({
+          recipient, amount
+        })
 
         ctx.setUserData({
           payAppBalance: payAppBalance - amount
@@ -1529,9 +1537,9 @@ createComponent(
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2>Welcome to  $ Money Miner $</h2>
-          <h4>My Address:</h4>
+          <h4>Wallet Address:</h4>
           <h4 style="word-wrap: break-word; margin-bottom: 0.4em">0x5f9fc040c204724c833a777516a06ffe88b81819</h4>
-          <h4>To mine crypto, click the button below ⬇</h4>
+          <h4>To mine crypto, click the button below ⬇↓⇣↓⬇</h4>
           <button id="mine">Mine Crypto</button>
 
           <h4>Crypto Balance: <span id="cryptoBalance">${moneyMinerBalance}</span></h4>
@@ -1597,28 +1605,30 @@ createComponent(
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2>Currency Xchange</h2>
-          <h3 style="margin-bottom: 0.4em">Temporary Recipient Address: <div id="tempAddr" style="word-wrap: break-word; border: 1px dotted; padding: 0.2em; margin: 0.2em 0">${calcExchangeRecipientAddr(currentUser)}</div> (Valid for <span id="timeRemaining"></span> more seconds)</h3>
+          <h4 style="margin: 0.4em 0">Temporary Crypto Recipient Address: <div id="tempAddr" style="word-wrap: break-word; border: 1px dotted; padding: 0.2em; margin: 0.2em 0">${calcExchangeRecipientAddr(currentUser)}</div> (Valid for <span id="timeRemaining"></span> more seconds)</h4>
           <em>Recipient addresses are cycled every 60 seconds for security purposes. Any funds sent to an expired recipient address will be lost</em>
 
           <div style="margin: 0.6em 0">
             <h3>Exchange Rates (<em>Live!</em>)</h3>
             <table style="border: 1px solid; margin-bottom: 0.4em">
               <tr>
-                <td style="border: 1px solid">$1.00</td>
+                <td style="border: 1px solid">$ 1.00</td>
+                <td style="border: 1px solid">=</td>
                 <td id="usdC" style="border: 1px solid"></td>
               </tr>
              <tr>
-                <td style="border: 1px solid">C 1</td>
+                <td style="border: 1px solid">C 1.00</td>
+                <td style="border: 1px solid">=</td>
                 <td id="cUSD" style="border: 1px solid"></td>
               </tr>
             </table>
 
             <div>
               <div>
-                <input id="buyAmount" placeholder="Buy $ (val)" type="number"> <button id="buyUSD">BUY</button>
+                <input id="buyAmount" placeholder="$ 0.00" type="number"> <button id="buyUSD">BUY $</button>
               </div>
               <div>
-                <input id="sellAmount" placeholder="Sell $ (val)" type="number"> <button id="sellUSD">SELL</button>
+                <input id="sellAmount" placeholder="$ 0.00" type="number"> <button id="sellUSD">SELL $</button>
               </div>
             </div>
             <h4 id="tradeError"></h4>
@@ -1629,10 +1639,10 @@ createComponent(
             <h3>$ Balance: $${exchangeUSDBalance.toFixed(6)}</h3>
 
             <h4 style="margin: 0.4em 0">Send Funds</h4>
-            <input id="sendCryptoAddress" placeholder="Send Crypto Address" style="width: 90%; margin-bottom: 0.4em">
-            <input id="sendCryptoAmount" placeholder="Send Crypto (val)" type="number"> <button id="sendCrypto">SEND</button>
-            <input id="sendUSDAddress" placeholder="Send $ Address" style="width: 90%; margin-bottom: 0.4em">
-            <input id="sendUSDAmount" placeholder="Send $ (val)" type="number"> <button id="sendUSD">SEND</button>
+            <input id="sendCryptoAddress" placeholder="Crypto Address" style="width: 90%; margin-bottom: 0.4em">
+            <input id="sendCryptoAmount" placeholder="C 0.00" type="number"> <button id="sendCrypto">SEND Crypto</button>
+            <input id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin-bottom: 0.4em">
+            <input id="sendUSDAmount" placeholder="$ 0.00" type="number"> <button id="sendUSD">SEND $</button>
             <h4 id="sendError"></h4>
           </div>
 
@@ -1663,7 +1673,10 @@ createComponent(
         const amount = Number(ctx.$('#sendCryptoAmount').value)
         const recipient = ctx.$('#sendCryptoAddress').value
 
-        if (!amount || amount < 0  || amount > exchangeCryptoBalance) {
+        if (amount > exchangeCryptoBalance) {
+          ctx.$('#sendError').innerHTML = 'Amount EXCEEDS Current Balance'
+          return
+        } else if (!amount || amount < 0) {
           ctx.$('#sendError').innerHTML = 'Invalid Amount'
           return
         } else {
@@ -1696,7 +1709,10 @@ createComponent(
         const amount = Number(ctx.$('#sendUSDAmount').value)
         const recipient = ctx.$('#sendUSDAddress').value
 
-        if (!amount || amount < 0 || amount > exchangeUSDBalance) {
+        if (amount > exchangeUSDBalance) {
+          ctx.$('#sendError').innerHTML = 'Amount EXCEEDS Current Balance'
+          return
+        } else if (!amount || amount < 0) {
           ctx.$('#sendError').innerHTML = 'Invalid Amount'
           return
         } else {
@@ -1733,8 +1749,11 @@ createComponent(
         const buy$ = Number(ctx.$('#buyAmount').value)
         const sellC = buy$ / calcCryptoUSDExchangeRate()
 
-        if (!buy$ || buy$ < 0 || sellC > exchangeCryptoBalance) {
-          ctx.$('#tradeError').innerHTML = 'Invalid Amount'
+        if (sellC > exchangeCryptoBalance) {
+          ctx.$('#tradeError').innerHTML = 'Insufficient Crypto balance to execute transaction'
+          return
+        } else if (!buy$ || buy$ < 0) {
+          ctx.$('#tradeError').innerHTML = 'Must Input Positive $ Amount'
           return
         } else {
           ctx.$('#tradeError').innerHTML = ''
@@ -1753,8 +1772,11 @@ createComponent(
         const sell$ = Number(ctx.$('#sellAmount').value)
         const buyC = sell$ / calcCryptoUSDExchangeRate()
 
-        if (!sell$ || sell$ < 0 || sell$ > exchangeUSDBalance) {
-          ctx.$('#tradeError').innerHTML = 'Invalid Amount'
+        if (sell$ > exchangeUSDBalance) {
+          ctx.$('#tradeError').innerHTML = '$ Amount Exceeds Account Balance'
+          return
+        } else if (!sell$ || sell$ < 0) {
+          ctx.$('#tradeError').innerHTML = 'Must Input Positive $ Amount'
           return
         } else {
           ctx.$('#tradeError').innerHTML = ''

@@ -399,6 +399,8 @@
             <p class="letterText">Service Provider Code (SPC): 00010-032991</p>
             <p class="letterText">District Index: B47</p>
             <p class="letterText">Unlock Code: Qz8!9g97tR$f29</p>
+            <p class="letterText">ZC: 00000</p>
+
           </div>
         </div>
 
@@ -580,7 +582,7 @@
       },
 
       plugInRouter: {
-        text: ({ctx}) => `You plug the router back in. The Power, Internet, and WiFi lights all turn off for one second, turn back on for one second, and blink for three seconds${globalState.routerReset ? 'before returning to their original states.' : '. The WiFi light is now on.'}`,
+        text: ({ctx}) => `You plug the router back in. The Power, Internet, and WiFi lights all turn off for one second, turn back on for one second, and blink for three seconds${globalState.routerReset ? ' before returning to their original states.' : '. The WiFi light is now on.'}`,
         wait: 0,
         follow() {
           globalState.routerReset = true
