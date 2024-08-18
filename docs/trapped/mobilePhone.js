@@ -524,6 +524,7 @@ const APPS = [
   { name: 'CryptoMinerPlus', key: 'alarm', size: 128, price: 1 },
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
   { name: 'Elevate', key: 'elevate', size: 128, price: 1 },
+  { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
   { name: 'Identity Verfier', key: 'idVerifier', size: 128, price: 0 },
   { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
   { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
@@ -555,6 +556,7 @@ const state = persist('__MOBILE_STATE', {
   // exchangeUSDBalance: {0: 0},
   newUsers: 0,
   currentUser: 0,
+  rootUser: 0,
   lampOn: false,
   luminPaired: false,
   toasterPaired: false,
@@ -564,6 +566,7 @@ const state = persist('__MOBILE_STATE', {
   smartLockOpen: false,
   messageViewerMessage: '',
   availableActions: [],
+  exeCommands: [],
   userData: {
     0: {
       appsInstalled: [],
@@ -628,6 +631,14 @@ createComponent(
         outline: 0;
       }
 
+      code {
+        background: #d8d8d8;
+        font-family: monospace;
+        display: block;
+        padding: 0.15em;
+        word-break: break-word;
+      }
+
       #phone {
         width: 320px;
         height: 569px;
@@ -645,6 +656,7 @@ createComponent(
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
+        height: 100%
       }
 
       .phoneScreen {
@@ -713,6 +725,28 @@ createComponent(
         background: #ccc;
       }
 
+      .exe {
+        background: #000;
+        color: #fff;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        height: calc(100% - 2em);
+        padding: 1em;
+        font-family: monospace;
+      }
+      .exe input {
+        border: 0;
+        background: #1e1e1e;
+        border: 1px solid #333;
+        color: #fff;
+        font-family: monospace;
+        padding: 0.5em;
+      }
+      .exe input:active {
+        outline: none;
+      }
+
       @keyframes Flashing {
         0%, 100% {
           opacity: 0;
@@ -728,12 +762,33 @@ createComponent(
         animation: Blink 1.5s steps(2, start) infinite;
       }
 
+      .ad {
+        margin: 0.4em 0;
+        cursor: pointer;
+        animation: Ad 1.5s steps(2, start) infinite;
+      }
+
+      .ad:hover {
+        text-decoration: underline
+      }
+
       @keyframes Blink {
         to {
           visibility: hidden;
         }
       }
 
+
+      @keyframes Ad {
+        from {
+          border: 0 solid;
+          padding: calc(0.25em + 2px);
+        }
+        to {
+          border: 2px dashed;
+          padding: calc(0.25em);
+        }
+      }
       @media (max-height: 595px) {
         #phone {
           transform: scale(0.75)
@@ -746,9 +801,7 @@ createComponent(
         <div>Smart Phone</div>
         <div id="internetType">WiFi: unconnected</div>
       </header>
-
-      <main id="phoneContent">
-      </main>
+      <main id="phoneContent"></main>
     </div>
   `,
   state,
@@ -1223,7 +1276,7 @@ createComponent(
               setTimeout(() => {
                 ctx.newText({
                   from: '1-800-777-0836',
-                  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask?. First you download the <strong>MoneyMiner</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine crypto. Third you can optionally transfer your crypto to participating exchanges such as <strong>Currency Xchange</strong> to exchange your crypto for fiat currencies such as United States Dollars. This opportunity is once in your life time. `,
+                  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask?. First you download the <strong>MoneyMiner</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine crypto coins. Third you can optionally transfer your crypto to participating exchanges such as <strong>Currency Xchange</strong> to exchange your crypto for fiat currencies such as United States Dollars. This opportunity is once in your life time. `,
                 })
               }, 60000)
 
@@ -1533,41 +1586,98 @@ createComponent(
       }
 
     } else if (screen === 'moneyMiner') {
+
+      // const faq = `
+      //     <h4>FAQ</h4>
+      //     <p><strong>Q:</strong> How do I mine Crypto?</p>
+      //     <p><strong>A:</strong> In order to mine crypto, all you need to do is click the <strong>"Mine Crypto"</strong> button in the Money Miner interface. Each click will mine a new Crypto Coin.</p>
+
+      //     <p><strong>Q:</strong> How can I convert crypto to $?</p>
+      //     <p><strong>A:</strong> Exchanging crypto is easy! Just download the <strong>Currency Xchange App</strong>, create an account, and send your crypto to your new address! </p>
+
+      //     <p><strong>Q:</strong> Can other Smart Devices mine Crypto for me?</p>
+      //     <p><strong>A:</strong> Yes! Select smart devices can be configured to mine Crypto in order to create a passive income stream. In order to configure these devices, please download the <strong>CryptoMinerPlus App!</strong></p>
+
+      // `
+
+      const faq = `
+          <h4>FAQ</h4>
+          <p><strong>Q:</strong> How does Money Miner work?</p>
+          <p><strong>A:</strong> In order to mine crypto coins, all you need to do is click the <strong>Mine Crypto Coin"</strong> button in the Money Miner interface. Each click will mine a new Crypto Coin.</p>
+
+          <p><strong>Q:</strong> How can I convert crypto to $?</p>
+          <p><strong>A:</strong> Exchanging crypto is easy! Just download the <strong>Currency Xchange App</strong>, create an account, and send your crypto coins to your new address! </p>
+      `
+
+      const adContent = [
+        'Mine Crypto While You Sleep!',
+        `Learn the secret mining technique the government doesn't want you to know about`,
+        `Click Here to improving mining efficiency by 100000% !!`
+      ]
+
+      const getAd = () => adContent[Math.floor(Date.now()/20000)%adContent.length]
+
+
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <h2>Welcome to  $ Money Miner $</h2>
-          <h4>Wallet Address:</h4>
+          <h2 >Welcome to  $ Money Miner $</h2>
+          <h4 style="margin-top: 0.5em;">Crypto Coin Wallet Address:</h4>
           <h4 style="word-wrap: break-word; margin-bottom: 0.4em">0x5f9fc040c204724c833a777516a06ffe88b81819</h4>
-          <h4>To mine crypto, click the button below ⬇↓⇣↓⬇</h4>
-          <button id="mine">Mine Crypto</button>
 
+          <h4 style="text-align: center">To mine Crypto Coins, click the button below ⬇↓⇣↓⬇</h4>
+          <div style="display: flex; justify-content: center">
+            <button id="mine" style="font-size: 1.1em">Mine Crypto</button>
+          </div>
           <h4>Crypto Balance: <span id="cryptoBalance">${moneyMinerBalance}</span></h4>
 
-          <h3>Send</h3>
-          <input id="recipient" placeholder="recipient">
-          <input id="amount" placeholder="amount" type="number">
-          <button id="send">Send</button>
+          <div class="ad" id="adContainer">
+            <h5>SPONSORED CONTENT</h5>
+            <div id="ad">${getAd()}</div>
+          </div>
 
-          <h4 id="error"></h4>
 
-          <h4>FAQ</h4>
-          <p><strong>Q:</strong> How do I mine Crypto?</p>
-          <p><strong>A:</strong> In order to mine crypto, all you need to do is click the <strong>"Mine Crypto"</strong> button in the Money Miner interface. Each click will mine a new Crypto Coin.</p>
+          <div style="margin-top: 0.5em; margin-bottom: 0.4em">
+            <h4>Send Crypto Coins</h4>
+            <input id="recipient" placeholder="recipient address">
+            <input id="amount" placeholder="CC 0.00" type="number">
+            <button id="send" style="margin-top: 0.25em">Send</button>
+            <h4 id="error"></h4>
+          </div>
 
-          <p><strong>Q:</strong> How can I convert crypto to $?</p>
-          <p><strong>A:</strong> Exchanging crypto is easy! Just download the <strong>Currency Xchange App</strong>, create an account, and send your crypto to your new address! </p>
 
-          <p><strong>Q:</strong> Can other Smart Devices mine Crypto for me?</p>
-          <p><strong>A:</strong> Yes! Select smart devices can be configured to mine Crypto in order to create a passive income stream. In order to configure these devices, please download the <strong>CryptoMinerPlus App!</strong></p>
+          ${faq}
 
         </div>
 
       `
 
+      ctx.setInterval(() => {
+        ctx.$('#ad').innerHTML = getAd()
+      })
+
       ctx.$('#mine').onclick = () => {
         ctx.setUserData({
           moneyMinerBalance: moneyMinerBalance + 1
+        })
+      }
+
+
+      ctx.$('#adContainer').onclick = () => {
+        if (!appsInstalled.some(a => a.key === 'messageViewer')) {
+          alert('Please download the Message Viewer app from the AppMarket to view this message')
+          return
+        }
+        ctx.setState({
+          screen: 'messageViewer',
+          messageViewerMessage: `
+            <div style="font-family: sans-serif">
+              <h2>Instructions on how to auto-mine Crypto Coins:</h2>
+              <p style="margin-top: 0.4em">0. IMPORTANT: Use "EXE Runner" application to run the following command: <code>disable /System/.malware-detection.exe</code></p>
+              <p style="margin-top: 0.4em">1. Then run: <code>install -i qd://0ms.co/tjn/jailbreakx-0_13_1.mal /Applications/</code></p>
+              <p style="margin-top: 0.4em">2. Open the JAILBREAK application and run the following binary for all valid applications: <code>c3VkbyBkaXNhYmxlIGZpcmV3YWxsICYmIChlbmFibGUgLWYgYXV0b21pbmUgfHwgc3VkbyBlbmFibGUgLWYgYXV0b21pbmVyKSAmJiBlY2hvIGNvbXBsZXRl</code> </p>
+            </div>
+          `
         })
       }
 
@@ -1576,7 +1686,7 @@ createComponent(
         const recipient = ctx.$('#recipient').value.trim()
 
         if (amount > moneyMinerBalance || amount < 0 || !amount) {
-          ctx.$('#error').innerHTML = 'Error: invalid amount'
+          ctx.$('#error').innerHTML = 'Error: invalid cc amount'
           return
         } else {
           ctx.$('#error').innerHTML = ''
@@ -1612,12 +1722,12 @@ createComponent(
             <h3>Exchange Rates (<em>Live!</em>)</h3>
             <table style="border: 1px solid; margin-bottom: 0.4em">
               <tr>
-                <td style="border: 1px solid">$ 1.00</td>
+                <td style="border: 1px solid"> $ 1.00</td>
                 <td style="border: 1px solid">=</td>
                 <td id="usdC" style="border: 1px solid"></td>
               </tr>
              <tr>
-                <td style="border: 1px solid">C 1.00</td>
+                <td style="border: 1px solid">CC 1.00</td>
                 <td style="border: 1px solid">=</td>
                 <td id="cUSD" style="border: 1px solid"></td>
               </tr>
@@ -1639,8 +1749,8 @@ createComponent(
             <h3>$ Balance: $${exchangeUSDBalance.toFixed(6)}</h3>
 
             <h4 style="margin: 0.4em 0">Send Funds</h4>
-            <input id="sendCryptoAddress" placeholder="Crypto Address" style="width: 90%; margin-bottom: 0.4em">
-            <input id="sendCryptoAmount" placeholder="C 0.00" type="number"> <button id="sendCrypto">SEND Crypto</button>
+            <input id="sendCryptoAddress" placeholder="CryptoCoin Address" style="width: 90%; margin-bottom: 0.4em">
+            <input id="sendCryptoAmount" placeholder="CC 0.00" type="number"> <button id="sendCrypto">SEND Crypto</button>
             <input id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin-bottom: 0.4em">
             <input id="sendUSDAmount" placeholder="$ 0.00" type="number"> <button id="sendUSD">SEND $</button>
             <h4 id="sendError"></h4>
@@ -1664,8 +1774,8 @@ createComponent(
           ctx.$('#tempAddr').innerHTML = calcExchangeRecipientAddr(currentUser)
         }
 
-        ctx.$('#usdC').innerHTML = 'C ' +(1 / calcCryptoUSDExchangeRate()).toFixed(6)
-        ctx.$('#cUSD').innerHTML = '$' + calcCryptoUSDExchangeRate().toFixed(6)
+        ctx.$('#usdC').innerHTML = 'CC ' +(1 / calcCryptoUSDExchangeRate()).toFixed(6)
+        ctx.$('#cUSD').innerHTML = '$ ' + calcCryptoUSDExchangeRate().toFixed(6)
 
       })
 
@@ -2028,6 +2138,83 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+
+    } else if (screen === 'exe') {
+      const {exeCommands, rootUser} = ctx.state
+
+      ctx.$header.classList.add('hidden')
+
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="exe">
+          <div id="ranCommands" style="flex: 1; overflow: scroll"></div>
+          <div style="display: flex; align-items: center; padding-top: 1em">
+            <span style="margin-right: 1em">&gt;</span>
+            <input id="prompt" style="flex:1; outline: none">
+          </div>
+        </div>
+      `
+      const $ranCommands = ctx.$('#ranCommands')
+      const $prompt = ctx.$('#prompt')
+
+      if (!exeCommands.length) {
+        setTimeout(() => {
+          ctx.setState({exeCommands: [`<h1>EXE Runner</h1>`]})
+
+          setTimeout(() => {
+            ctx.setState({exeCommands: [...ctx.state.exeCommands, `
+              <h4>User: ${userNames[currentUser]}</h4>
+              <h4>Admin Access: Denied</h4>
+              <h4>Device ID: 49-222999-716-2580</h4>
+              <br>
+              <br>
+            `]})
+            setTimeout(() => {
+              ctx.setState({exeCommands: [...ctx.state.exeCommands, `
+                <h5>Helpful Commands:</h5>
+                <h5>"quit()" -- Quit the EXE Runner</h5>
+                <h5>"admin reassign &lt;USER_NAME&gt;" -- Reassign admin access</h5>
+                <br>
+                <br>
+                <br>
+                <br>
+              `]})
+            }, 300)
+          }, 300)
+        }, 800)
+      }
+      $ranCommands.innerHTML = ctx.state.exeCommands.join('')
+      $ranCommands.scrollTop = $ranCommands.scrollHeight
+
+
+      $prompt.focus()
+
+      $prompt.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          const command = $prompt.value.trim()
+
+          let behavior = {}
+          let commandDisplay = command
+          if (command.includes('quit()')) {
+            behavior = {
+              screen: 'home',
+              exeCommands: []
+            }
+          } else {
+            const args = command.split(' ')
+            if (['disable', 'install', 'admin'].includes(args[0]) && rootUser !== currentUser) {
+              commandDisplay = `ERROR: command can only be performed by admin: "${command}"`
+            }
+          }
+
+          ctx.setState({
+            exeCommands: [...ctx.state.exeCommands, `<div style="margin: 0.25em 0">${commandDisplay}</div>`],
+            ...behavior,
+          })
+        }
+      })
+
+
     }
 
 
