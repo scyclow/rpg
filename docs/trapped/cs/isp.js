@@ -107,6 +107,24 @@ export const ispCSNodes = {
   // },
 
   newCustomer: {
+    text: `You'd like to sign up for I S P service. I S P is the leading internet service provider among customers seeking high quality internet connection. I just need to ask you a few questions before we can get started. Do you currently have an I S P router? If so press 1. Otherwise press 2.`,
+    handler: options({
+      1: 'newCustomerRouter',
+      2: 'newCustomerZipCode'
+    })
+  },
+
+  newCustomerRouter: {
+    text: `Please input the device identifier located on the bottom of your router, followed by the pound key`,
+    follow: ({ctx}) => {
+      ctx.state.routerIdentifer = []
+      ctx.state.routerNotFound = 'newCustomerZipCode'
+      return 'routerIdentifier'
+    }
+  },
+
+
+  newCustomerZipCode: {
     text: 'Please enter your zip code, followed by the pound key',
     handler: ({ur}) => {
       if (ur === '#') return 'newCustomerPending'
@@ -198,6 +216,7 @@ export const ispCSNodes = {
     text: `I can't find an account associated with this phone number. Please input the device identifier located on the bottom of your router, followed by the pound key`,
     follow: ({ctx}) => {
       ctx.state.routerIdentifer = []
+      ctx.state.routerNotFound = 'routerIdentifierFail'
       return 'routerIdentifier'
     }
   },
@@ -219,7 +238,7 @@ export const ispCSNodes = {
     wait: 3000,
     follow: ({ctx}) => {
       if (ctx.state.routerIdentifer.join('') === '5879234963378') return 'routerIdentifierSucceed'
-      else return 'routerIdentifierFail'
+      else return ctx.state.routerNotFound
     }
   },
 

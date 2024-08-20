@@ -128,7 +128,10 @@ export class StateMachine {
     await this.evaluate(currentNode.before, event.ur)
 
     this.onUpdate(
-      await this.evaluate({...currentNode, text: await this.evaluate(currentNode.text)}, event.ur),
+      await this.evaluate({
+        ...currentNode,
+        text: await this.evaluate(currentNode.text, event.ur)
+      }, event.ur),
       this
     )
 

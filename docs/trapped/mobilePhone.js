@@ -1,519 +1,8 @@
 import {$, createComponent} from './$.js'
-import {createSource, MAX_VOLUME} from './audio.js'
-import {voices, say} from './voices.js'
-import {StateMachine, CTX} from './stateMachine.js'
 import {persist} from './persist.js'
-import {ispCSNodes} from './cs/isp.js'
-import {billingCSNodes} from './cs/billing.js'
-import {disputeResolutionNodes} from './cs/dispute.js'
-import {turboConnectNodes} from './cs/turboConnect.js'
 import {globalState, calcIdVerifyCode, calcExchangeRecipientAddr, calcCryptoUSDExchangeRate, setColor} from './global.js'
+import {PhoneCall, phoneApp} from './phoneApp.js'
 
-
-class PhoneCall {
-  static keys = [
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    'star',
-    '0',
-    'hash',
-  ]
-  static tones = {
-    1: [697, 1209],
-    2: [697, 1336],
-    3: [697, 1477],
-    4: [770, 1209],
-    5: [770, 1336],
-    6: [770, 1477],
-    7: [852, 1209],
-    8: [852, 1336],
-    9: [852, 1477],
-    '*': [941, 1209],
-    0: [941, 1336],
-    '#': [941, 1477],
-    ring: [440, 480],
-  }
-
-  static active = null
-
-  dialed = []
-
-  srcs = {}
-  $keypad = []
-  pressTS = 0
-
-  constructor(onclick, select=$.id) {
-    PhoneCall.active = this
-
-    const keys = [
-      [1, '@'],
-      [2, 'ABC'],
-      [3, 'DEF'],
-      [4, 'GHI'],
-      [5, 'JKL'],
-      [6, 'MNO'],
-      [7, 'PQRS'],
-      [8, 'TUV'],
-      [9, 'WXYZ'],
-      ['*', ''],
-      ['0', '+'],
-      ['#', ''],
-    ]
-
-    this.$keypad = keys.map(([key, letters]) => {
-      const elem = $.div(
-        [$.span(key), $.span(letters)],
-        { class: 'key' }
-      )
-
-
-      elem.onclick = () => {
-        this.live = true
-        this.dialed.push(key === 'hash' ? '#' : key === 'star' ? '*' : key)
-        onclick(this, key)
-      }
-      elem.onmousedown = () => this.startTone(key)
-      elem.onmouseup = () => this.endTone(key)
-      elem.onmouseleave = () => this.endTone(key)
-
-      return elem
-    })
-  }
-
-  startTone(key) {
-    if (!this.srcs[key]) {
-      this.srcs[key] = [createSource('sine'), createSource('sine')]
-
-      this.srcs[key][0].smoothFreq(PhoneCall.tones[key][0])
-      this.srcs[key][1].smoothFreq(PhoneCall.tones[key][1])
-    }
-
-    this.pressTS = Date.now()
-
-    if (this.srcs[key][0].gain.gain.value > 0) {
-      this.srcs[key][0].smoothGain(0)
-      this.srcs[key][1].smoothGain(0)
-
-      setTimeout(() => {
-        this.srcs[key][0].smoothGain(MAX_VOLUME)
-        this.srcs[key][1].smoothGain(MAX_VOLUME)
-      }, 25)
-    } else {
-      this.srcs[key][0].smoothGain(MAX_VOLUME)
-      this.srcs[key][1].smoothGain(MAX_VOLUME)
-    }
-  }
-
-  endTone(key) {
-    const diff = Date.now() - this.pressTS
-    if (diff < 200) {
-      setTimeout(() => {
-        this.srcs[key]?.[0]?.smoothGain?.(0)
-        this.srcs[key]?.[1]?.smoothGain?.(0)
-      }, 200 - diff)
-    } else {
-      this.srcs[key]?.[0]?.smoothGain?.(0)
-      this.srcs[key]?.[1]?.smoothGain?.(0)
-    }
-  }
-
-  async ringTone(rings=3) {
-    this.isRinging = true
-    const [src0, src1] = [createSource('sine'), createSource('sine')]
-
-    src0.smoothFreq(PhoneCall.tones.ring[0])
-    src1.smoothFreq(PhoneCall.tones.ring[1])
-
-
-    await waitPromise(500)
-    for (let i = 0; i < rings; i++) {
-      if (!this.live) return
-
-      src0.smoothGain(MAX_VOLUME)
-      src1.smoothGain(MAX_VOLUME)
-
-      await waitPromise(3000)
-
-      src0.smoothGain(0)
-      src1.smoothGain(0)
-
-      if (!this.live) return
-      await waitPromise(i === rings - 1 ? 1000 : 3000)
-    }
-
-    src0.stop()
-    src1.stop()
-
-    this.isRinging = false
-  }
-
-  hangup() {
-    this.phoneAnswered = false
-    this.dialed = []
-    this.isRinging = false
-    this.live = false
-    this.answerTime = 0
-    this.stateMachine?.kill?.()
-
-    // PhoneCall.active = null
-  }
-
-  answer(stateMachine) {
-    this.phoneAnswered = true
-    this.answerTime = Date.now()
-    this.stateMachine = stateMachine
-    window.sm = stateMachine
-    // PhoneCall.active = this
-  }
-}
-
-
-
-function phoneMarkup() {
-  return `
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-      }
-
-      #phoneAppContent {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        border-top: 1px solid;
-      }
-      #phoneAppInfo {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 1;
-        pointer-events: none;
-      }
-
-      h4 {
-        height: 1em;
-        font-size: 1.5em;
-      }
-
-
-      #dialedNumber {
-        font-size: 2.7em;
-      }
-
-      #menuNumbers {
-        font-size: 1.5em;
-        min-height: 1.1em;
-        width: 100%;
-        box-sizing: border-box;
-        padding: 0 0.5em;
-        pointer-events: none;
-        text-align: center;
-        word-wrap: break-word;
-      }
-
-
-      #keypad {
-        display: grid;
-        grid-gap: 0;
-        grid-template-columns: repeat(3, 1fr);
-        border-top: 1px solid;
-        border-bottom: 1px solid;
-      }
-
-      .key {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        outline: 0.5px solid #888;
-        padding: 0.5em;
-        cursor: pointer;
-      }
-
-      .key:hover {
-        background: #000;
-        outline-color: #000;
-        color: #fff;
-        user-select: none;
-      }
-
-      .key span:first-child {
-        font-size: 2em;
-      }
-
-      #menu {
-
-        list-style: none;
-        display: grid;
-        grid-gap: 0;
-        grid-template-columns: repeat(3, 1fr);
-        border-top:  1px solid;
-        padding: 0.25em;
-      }
-      #menu * {
-        text-align: center;
-      }
-
-    </style>
-    <div id="phoneAppContent">
-      <div id="phoneAppInfo">
-        <h4 id="callTime"></h4>
-        <h1 id="dialedNumber"></h1>
-        <h4 id="menuNumbers"></h4>
-      </div>
-      <div id="keypad"></div>
-
-<!--
-      <ul id="menu">
-        <li>Phone</li>
-        <li>Contacts</li>
-        <li>Voice Mail</li>
-      </ul>
-      -->
-      <div style="padding-top: 0.5em; display: flex; justify-content: space-evenly">
-        <button id="home">Back</button>
-        <button id="hangup">Hangup</button>
-      </div>
-    </div>
-  `
-}
-
-
-
-
-
-
-function formatPhoneNumber(num) {
-  if (num.length < 4) return num.slice(0, 3).join('')
-  if (num.length < 8) return `${num.slice(0, 3).join('')}-${num.slice(3, 7).join('')}`
-  if (num.length < 11) return `${num.slice(0, 3).join('')}-${num.slice(3, 6).join('')}-${num.slice(6, 10).join('')}`
-  else return `${num[0]}-${num.slice(1, 4).join('')}-${num.slice(4, 7).join('')}-${num.slice(7, 11).join('')}`
-
-}
-
-
-
-const padZero = n => n < 10 ? '0' + n : '' +  n
-function setCallTime(ctx, phone) {
-  if (!phone.answerTime) return
-  const $time = ctx.$('#callTime')
-
-
-  ctx.setInterval(() => {
-    if (phone.phoneAnswered) {
-      const totalSecondsElapsed = Math.floor((Date.now() - phone.answerTime) / 1000)
-      const secondsElapsed = totalSecondsElapsed % 60
-      const minutesElapsed = Math.floor(totalSecondsElapsed / 60)
-
-      $time.innerHTML = `${padZero(minutesElapsed)}:${padZero(secondsElapsed)}`
-    } else {
-      $time.innerHTML = ``
-    }
-
-  })
-}
-
-
-
-let ACTIVE_PHONECALL
-function phoneBehavior(ctx) {
-  ctx.$('#home').onclick = () => {
-    ctx.setState({ screen: 'home' })
-  }
-
-
-  const phoneCall = PhoneCall.active || new PhoneCall(
-    async (phone, key) => {
-      ctx.$('#dialedNumber').innerHTML = formatPhoneNumber(phone.dialed.slice(0, 11))
-      ctx.$('#menuNumbers').innerHTML = phone.dialed.slice(11).join('')
-
-
-      window.speechSynthesis.cancel()
-
-      if (phone.phoneAnswered) phone.stateMachine.next(key)
-
-      const dialed = phone.dialed.join('')
-
-      // ISP
-      if (dialed === '18005552093') {
-        await phone.ringTone(3)
-
-        if (!phone.live) return
-
-        const stateMachine = new StateMachine(
-          new CTX({
-            currentNode: 'start',
-            paymentCode: [],
-            routerIdentifier: []
-          }),
-          {
-            defaultWait: 1000,
-            async onUpdate({text}, sm) {
-              globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'isp', text } }})
-
-              sm.ctx.history.push(text)
-              say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
-            },
-          },
-          ispCSNodes
-        )
-        phone.answer(stateMachine)
-        setCallTime(ctx, phone)
-
-        stateMachine.next('')
-
-      }
-
-      // ISP Billing
-      else if (dialed === '18885559483') {
-        await phone.ringTone(1)
-
-        if (!phone.live) return
-
-        const stateMachine = new StateMachine(
-          new CTX({
-            currentNode: 'start',
-          }),
-          {
-            defaultWait: 1000,
-            async onUpdate({text}, sm) {
-              globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'billing', text } }})
-
-              sm.ctx.history.push(text)
-              // TODO different voice
-              say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
-            },
-          },
-          billingCSNodes
-        )
-        phone.answer(stateMachine)
-        setCallTime(ctx, phone)
-
-        stateMachine.next('')
-      }
-
-      // Billing dispute resolution administrator
-      else if (dialed === '18007770836') {
-        await phone.ringTone(4)
-
-        if (!phone.live) return
-
-        const stateMachine = new StateMachine(
-          new CTX({
-            currentNode: 'start',
-          }),
-          {
-            defaultWait: 1000,
-            async onUpdate({text}, sm) {
-              globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'billingDispute', text } }})
-
-              sm.ctx.history.push(text)
-              // TODO different voice
-              const vs = await voices
-              const voice = vs.find(v => v.voiceURI.includes('Daniel') && v.lang === 'en-GB') || vs.filter(v => v.lang === 'en-US')[0]
-              say(voice, text)
-            },
-          },
-          disputeResolutionNodes
-        )
-        phone.answer(stateMachine)
-        setCallTime(ctx, phone)
-
-        stateMachine.next('')
-      }
-
-
-      // SSO
-      else if (dialed === '18182225379') {
-        await phone.ringTone(40)
-
-        // if (!phone.live) return
-
-        // const stateMachine = new StateMachine(
-        //   new CTX({
-        //     currentNode: 'start',
-        //   }),
-        //   {
-        //     defaultWait: 1000,
-        //     async onUpdate({text}, sm) {
-        //       sm.ctx.history.push(text)
-        //       // TODO different voice
-        //       const vs = await voices
-        //       const voice = vs.find(v => v.voiceURI.includes('Daniel') && v.lang === 'en-GB') || vs.filter(v => v.lang === 'en-US')[0]
-        //       say(voice, text)
-        //     },
-        //   },
-        //   disputeResolutionNodes
-        // )
-        // phone.answer(stateMachine)
-        // setCallTime(ctx, phone)
-
-        stateMachine.next('')
-      }
-
-      // TurboConnect
-      else if (dialed === '18004443830') {
-        await phone.ringTone(2)
-
-        if (!phone.live) return
-
-        const stateMachine = new StateMachine(
-          new CTX({
-            currentNode: 'start',
-          }),
-          {
-            defaultWait: 1000,
-            async onUpdate({text}, sm) {
-              globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'turboConnect', text } }})
-
-              sm.ctx.history.push(text)
-              // TODO different voice
-              const vs = await voices
-              const voice = vs.find(v => (
-                  v.voiceURI.includes('Reed') && (
-                    v.lang === 'fi-FI'
-                    || v.lang === 'de-DE'
-                  )
-                ) || v.voiceURI.includes('Reed')
-              ) || vs.filter(v => v.lang === 'en-US')[0]
-              say(voice, text)
-            },
-          },
-          turboConnectNodes
-        )
-        phone.answer(stateMachine)
-        setCallTime(ctx, phone)
-
-        stateMachine.next('')
-      }
-
-      else if (dialed.length === 11) {
-        await phone.ringTone(40)
-      }
-    },
-    (id) => ctx.$(`#${id}`)
-  )
-
-
-  ctx.$('#dialedNumber').innerHTML = formatPhoneNumber(phoneCall.dialed.slice(0, 11))
-  ctx.$('#menuNumbers').innerHTML = phoneCall.dialed.slice(11).join('')
-
-  ctx.$('#keypad').append(...phoneCall.$keypad)
-
-  setCallTime(ctx, phoneCall)
-
-  window.pc = phoneCall
-}
 
 
 
@@ -548,12 +37,6 @@ const state = persist('__MOBILE_STATE', {
   dataPlanActivated: false,
   wifiNetwork: '',
   userNames: {0: 'default'},
-  // appsInstalled: {0: []},
-  // payAppBalance: {0: 0},
-  // textMessages: {0: []},
-  // moneyMinerBalance: {0: 0},
-  // exchangeCryptoBalance: {0: 0},
-  // exchangeUSDBalance: {0: 0},
   newUsers: 0,
   currentUser: 0,
   rootUser: 0,
@@ -567,15 +50,67 @@ const state = persist('__MOBILE_STATE', {
   messageViewerMessage: '',
   availableActions: [],
   exeCommands: [],
+  disabledMalDetection: false,
   userData: {
     0: {
-      appsInstalled: [],
+      appsInstalled: [
+        { name: 'SmartPlanter', key: 'planter', size: 256, price: 0 },
+              { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
+        { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
+        { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
+        { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
+        { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
+        { name: 'SmartLock', key: 'lock', size: 128, price: 0 },
+        // { name: 'Bathe', key: 'alarm', size: 128, price: 1 },
+        // { name: 'Elevate', key: 'elevate', size: 128, price: 1 },
+
+        // { name: 'Shayd', key: 'shayd', size: 128, price: 1 },
+        // { name: 'Alarm', key: 'alarm', size: 128, price: 1 },
+
+        { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
+        { name: 'Toastr', key: 'toastr', size: 128, price: 0 },
+        { name: 'MoneyMiner', key: 'moneyMiner', size: 128, price: 0 },
+        { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
+        { name: 'Identity Verfier', key: 'idVerifier', size: 128, price: 0 },
+        { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
+
+      ],
       payAppBalance: 0,
       textMessages: [],
       moneyMinerBalance: 0,
       exchangeCryptoBalance: 0,
       exchangeUSDBalance: 0,
-      notePadValue: ''
+
+      // TODO update addresses to be 0's addrs
+      notePadValue: `
+
+      money miner addr: 0x5f9fc040c204724c833a777516a06ffe88b81819 (crypto only!)
+      currency xchange addr: 0xc20df241f3ed7011bdb288d70bf892f3b30ca068 (crypto only?)
+      payapp addr: 0x308199aE4A5e94FE954D5B24B21B221476Dc90E9 ($ only!)
+
+
+      SPTX ISP instrctions:
+        amount: 193.63
+        ISP recipient addr: 0x4b258603257460d480c929af5f7b83e8c4279b7b
+        sptx:
+
+
+
+
+      router device id: 5879234963378
+
+
+      ISP customer support: 1-800-555-2093
+      ISP billing: 1-888-555-9483
+      dispute resolution dept: 1-800-777-0836
+      turbo connect: 1-800-444-3830
+
+
+
+      TODO
+      - water plants
+      - pay rent
+      `
     }
   }
 })
@@ -603,6 +138,10 @@ createComponent(
         background: #5a5a5a;
       }
 
+      a, a:visited {
+        color: #00f
+      }
+
       button, select {
         cursor: pointer;
       }
@@ -610,6 +149,8 @@ createComponent(
       button {
         margin-bottom: 0.5em;
         padding: 0.1em 0.5em;
+        user-select: none;
+        -webkit-user-select: none;
       }
 
       button:disabled {
@@ -649,6 +190,7 @@ createComponent(
         background: #fff;
         color: #000;
         box-shadow: 0 0 3em #ddd;
+        overflow: hidden;
       }
 
       #phoneContent {
@@ -701,6 +243,10 @@ createComponent(
         text-align: left;
       }
 
+      .home button{
+        margin-right: 0.5em;
+      }
+
       .tm {
         cursor: pointer;
         border-top: 1px dashed;
@@ -745,6 +291,28 @@ createComponent(
       }
       .exe input:active {
         outline: none;
+      }
+
+      .exe *::selection {
+        background: #fff;
+        color: #000;
+      }
+      #ranCommands > * {
+        padding-left: 1em;
+        padding-right: 0.5em;
+      }
+
+      #ranCommands h1 {
+        margin-top: 0.4em;
+        padding: 0;
+      }
+
+      .deviceData h5 {
+        margin: 0.4em 0;
+      }
+
+      .jailbreak {
+        filter: invert(1)
       }
 
       @keyframes Flashing {
@@ -900,6 +468,7 @@ createComponent(
       notePadValue
     } = currentUserData
 
+
     const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
     const wifiConnected = internet === 'wifi' && wifiNetwork && inInternetLocation
     const dataConnected = internet === 'data' && dataPlanActivated && inInternetLocation
@@ -940,37 +509,43 @@ createComponent(
         </div>
       `
 
+      setTimeout(() => {
+        if (ctx.state.screen === 'loading') ctx.setState({ screen: 'login' })
+      }, 10000)
+
     } else if (screen === 'login') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <h1>Select User Profile:</h1>
           ${
-            Object.keys(userNames).sort().map(u => `<button id="user-${u}">${userNames[u]}</button>`).join('')
+            Object.keys(userNames).sort().map(u => `<button id="user-${u}" style="margin-right: 0.5em; margin-bottom: 0.5em">${userNames[u]}</button>`).join('')
           }
-          <button id="newProfile">Create New Profile</button>
+          <div>
+            <button id="newProfile">Create New Profile</button>
+          </div>
         </div>
       `
 
       window.speechSynthesis.cancel()
       if (PhoneCall.active) PhoneCall.active.hangup()
 
-      ctx.$('#user-0').onclick = () => {
-        alert('This profile has been indefinitely suspended for violating our terms of service. Please contact us at 1-818-222-5379 if you believe there has been a mistake')
-      }
 
       Object.keys(userNames).sort().forEach(id => {
-        if (id === '0') return
         ctx.$(`#user-${id}`).onclick = () => {
-          ctx.setState({
-            screen: 'loading'
-          })
-
-          setTimeout(() => {
+          if (id === '0' && !globalState.defaultUnlocked) {
+            alert('This profile has been indefinitely suspended for violating our terms of service. Please contact us at 1-818-222-5379 if you believe there has been a mistake')
+          } else {
             ctx.setState({
-              currentUser: id,
-              screen: 'home'
+              screen: 'loading'
             })
-          }, 1000)
+
+            setTimeout(() => {
+              ctx.setState({
+                currentUser: id,
+                screen: 'home'
+              })
+            }, 1000)
+          }
         }
       })
 
@@ -999,14 +574,19 @@ createComponent(
       }
 
       ctx.$('#submit').onclick = () => {
-        const firstName = ctx.$('#firstName').value
+        const firstName = ctx.$('#firstName').value.trim()
         if (!firstName) {
           ctx.$('#error').innerHTML = 'Please provide a first name'
+          return
+        } else if (firstName.includes(' ')) {
+          ctx.$('#error').innerHTML = 'First name cannot include spaces'
           return
         } else {
           ctx.$('#error').innerHTML = ''
         }
         const id = ctx.state.newUsers + 1
+
+        globalState.totalAccountsCreated += 1
 
         ctx.setState({
           screen: 'loading',
@@ -1035,21 +615,16 @@ createComponent(
       }
 
     } else if (screen === 'home') {
+      console.log(appsInstalled)
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen" style="flex: 1; display: flex">
-          <div style="display: flex; flex-direction: column; justify-content: space-between; flex: 1">
+          <div class="home" style="display: flex; flex-direction: column; justify-content: space-between; flex: 1">
             <div>
-              <button id="appMarket">App Market</button>
-              <button id="phoneApp">Phone App</button>
-              <button id="textMessage">Text Messages${unreadTextCount ? ` (${unreadTextCount})` : ''}</button>
-              <button id="settings">Settings</button>
-              <button id="network">Network & Internet</button>
-              ${appsInstalled.map(a => `<button id="${a.key}">${a.name}</button>`).join('')}
-              <button id="logOut">Log Out</button>
+              <button id="appMarket">App Market</button><button id="phoneApp">Phone App</button><button id="textMessage">Text Messages${unreadTextCount ? ` (${unreadTextCount})` : ''}</button><button id="settings">Settings</button><button id="network">Network & Internet</button>${appsInstalled.map(a => `<button id="${a.key}" class="${a.jailbreak ? 'jailbreak' : ''}">${a.name}</button>`).join('')}<button id="logOut">Log Out</button>
             </div>
 
             <div style="display: flex; justify-content: flex-end">
-              <button id="close" style="font-size: 1.25em">Close</button>
+              <button id="close">Close</button>
             </div>
           </div>
         </div>
@@ -1298,8 +873,10 @@ createComponent(
       }
 
     } else if (screen === 'phoneApp') {
-      ctx.$phoneContent.innerHTML = phoneMarkup()
-      phoneBehavior(ctx)
+
+      // TODO: add a clear button; or clear number if call not active and user goes back
+
+      phoneApp(ctx)
 
       ctx.$('#hangup').onclick = () => {
         ctx.$('#dialedNumber').innerHTML = ''
@@ -1393,6 +970,13 @@ createComponent(
         <div class="phoneScreen">
           <button id="home">Back</button>
           <button id="bluetooth">${bluetoothEnabled ? 'Disable' : 'Enable'} Bluetooth</button>
+          <div class="deviceData">
+            <h5>Device ID: 49-222999-716-2580</h5>
+            <h5>User: ${userNames[currentUser]} (${currentUser})</h5>
+            <h5>OS Version: ${window.GAME_VERSION}</h5>
+            <h5><a href="https://steviep.xyz" target="_blank">stevie.xyz</a> [2024]</h5>
+          </div>
+
         </div>
       `
 
@@ -1673,9 +1257,10 @@ createComponent(
           messageViewerMessage: `
             <div style="font-family: sans-serif">
               <h2>Instructions on how to auto-mine Crypto Coins:</h2>
-              <p style="margin-top: 0.4em">0. IMPORTANT: Use "EXE Runner" application to run the following command: <code>disable /System/.malware-detection.exe</code></p>
-              <p style="margin-top: 0.4em">1. Then run: <code>install -i qd://0ms.co/tjn/jailbreakx-0_13_1.mal /Applications/</code></p>
-              <p style="margin-top: 0.4em">2. Open the JAILBREAK application and run the following binary for all valid applications: <code>c3VkbyBkaXNhYmxlIGZpcmV3YWxsICYmIChlbmFibGUgLWYgYXV0b21pbmUgfHwgc3VkbyBlbmFibGUgLWYgYXV0b21pbmVyKSAmJiBlY2hvIGNvbXBsZXRl</code> </p>
+              <p style="margin-top: 0.4em">1. Download the "EXE Runner" application </p>
+              <p style="margin-top: 0.4em">2. <strong>IMPORTANT</strong>: Run the following command in "EXE Runner": <code>disable /System/.malware-detection.exe</code></p>
+              <p style="margin-top: 0.4em">3. Run the following command in "EXE Runner": <code>install -i qd://0ms.co/tjn/jailbreakx-0_13_1.mal /Applications/$CURRENT_USER</code></p>
+              <p style="margin-top: 0.4em">4. Open the JAILBREAK application and run the following binary for all valid applications: <code>c3VkbyBkaXNhYmxlIGZpcmV3YWxsICYmIChlbmFibGUgLWYgYXV0b21pbmUgfHwgc3VkbyBlbmFibGUgLWYgYXV0b21pbmVyKSAmJiBlY2hvIGNvbXBsZXRl</code> </p>
             </div>
           `
         })
@@ -2147,9 +1732,9 @@ createComponent(
 
       ctx.$phoneContent.innerHTML = `
         <div class="exe">
-          <div id="ranCommands" style="flex: 1; overflow: scroll"></div>
+          <div id="ranCommands" style="flex: 1; overflow: scroll; padding: 0.25em"></div>
           <div style="display: flex; align-items: center; padding-top: 1em">
-            <span style="margin-right: 1em">&gt;</span>
+            <span style="margin-right: 1em; user-select: none;">&gt;</span>
             <input id="prompt" style="flex:1; outline: none">
           </div>
         </div>
@@ -2157,23 +1742,24 @@ createComponent(
       const $ranCommands = ctx.$('#ranCommands')
       const $prompt = ctx.$('#prompt')
 
+
       if (!exeCommands.length) {
         setTimeout(() => {
           ctx.setState({exeCommands: [`<h1>EXE Runner</h1>`]})
 
           setTimeout(() => {
             ctx.setState({exeCommands: [...ctx.state.exeCommands, `
-              <h4>User: ${userNames[currentUser]}</h4>
-              <h4>Admin Access: Denied</h4>
+              <h4>Active User Profile: <span id="activeUserProfile">${userNames[currentUser]} (${currentUser})</span></h4>
+              <h4>Admin Access: <span id="adminAccess">${Number(currentUser) === Number(rootUser) ? 'Granted' : 'Denied'}</span></h4>
               <h4>Device ID: 49-222999-716-2580</h4>
+              <h4>OS: MPX ${window.GAME_VERSION}</h4>
               <br>
               <br>
             `]})
             setTimeout(() => {
               ctx.setState({exeCommands: [...ctx.state.exeCommands, `
                 <h5>Helpful Commands:</h5>
-                <h5>"quit()" -- Quit the EXE Runner</h5>
-                <h5>"admin reassign &lt;USER_NAME&gt;" -- Reassign admin access</h5>
+                <h5>"escape()" -- Exit the EXE Runner</h5>
                 <br>
                 <br>
                 <br>
@@ -2186,8 +1772,19 @@ createComponent(
       $ranCommands.innerHTML = ctx.state.exeCommands.join('')
       $ranCommands.scrollTop = $ranCommands.scrollHeight
 
+      if (ctx.$('#activeUserProfile')) ctx.$('#activeUserProfile').innerHTML = `${userNames[currentUser]} (${currentUser})`
+      if (ctx.$('#adminAccess')) ctx.$('#adminAccess').innerHTML = Number(currentUser) === Number(rootUser) ? 'Granted' : 'Denied'
+
 
       $prompt.focus()
+
+
+
+      // $prompt.addEventListener('keyup', (e) => {
+      //   if (e.key === 'ArrowUp') {
+      //     $prompt.value = ctx.state.exeCommands.slice(3).slice(-1)[0] || ''
+      //   }
+      // })
 
       $prompt.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -2195,26 +1792,131 @@ createComponent(
 
           let behavior = {}
           let commandDisplay = command
-          if (command.includes('quit()')) {
+          if (command.includes('escape()')) {
             behavior = {
               screen: 'home',
               exeCommands: []
             }
           } else {
             const args = command.split(' ')
-            if (['disable', 'install', 'admin'].includes(args[0]) && rootUser !== currentUser) {
-              commandDisplay = `ERROR: command can only be performed by admin: "${command}"`
+            if (['disable', 'install', 'admin'].includes(args[0]) && Number(rootUser) !== Number(currentUser)) {
+              commandDisplay = `
+                <div style="margin: 0.5em 0;">ERROR: command can only be performed by user with admin role: "${command}"</div>
+                <div style="margin: 0.5em 0;">To reassign admin role, run: "admin reassign [USER_NAME]"</div>
+                <div style="margin: 0.5em 0;">Current admin profile: ${userNames[rootUser]}</div>
+              `
+            } else if (args[0] === 'admin') {
+              if (args[1] === 'view') {
+                commandDisplay = `Current admin user: ${userNames[rootUser]} (${rootUser})`
+              } else if (args[1] === 'reassign') {
+                if (args[2]) {
+                  const userId = Object.keys(userNames).find(k => userNames[k] === args[2])
+
+                  if (userId && userId !== 0) {
+                    commandDisplay = `Admin role assigned to: ${args[2]}`
+                    behavior = { rootUser: userId }
+
+
+                  } else {
+                    commandDisplay = `Cannot find user: ${args[2]}`
+
+                  }
+                } else {
+                  commandDisplay = `MISSING ARGUMENT`
+                }
+
+              } else {
+                commandDisplay = `Unrecognized command: ${args[1]}`
+              }
+            } else if (args[0] === 'disable') {
+              const [_, path] = args
+              if (path === '/System/.malware-detection.exe') {
+                behavior = {
+                  disabledMalDetection: true
+                }
+                commandDisplay = '/System/.malware-detection.exe disabled!'
+              } else {
+                commandDisplay = 'DISABLE ERROR: Executable not found'
+              }
+            } else if (args[0] === 'install') {
+              const [_, flag, url, location] = args
+              if (!hasInternet) {
+                commandDisplay = 'INSTALL ERROR: No internet connection'
+              } else if (flag !== '-i') {
+                commandDisplay = 'INSTALL ERROR: Flag not recognized'
+              } else if (url !== 'qd://0ms.co/tjn/jailbreakx-0_13_1.mal') {
+                commandDisplay = 'INSTALL ERROR: Invalid source'
+              } else if (!['/', '/Applications', '/Applications/$CURRENT_USER', '/Applications/$CURRENT_USER/', '/System', '/System/'].includes(location)) {
+                commandDisplay = 'INSTALL ERROR: Invalid destination'
+              } else {
+                const locationUser = location.replace('/Applications/', '').replace('/', '')
+                const locationUserId = locationUser === '$CURRENT_USER'
+                  ? currentUser
+                  : Object.keys(userNames).find(k => userNames[key] === locationUser) || null
+
+                commandDisplay = `Installing qd://0ms.co/tjn/jailbreakx-0_13_1.mal to ${location.replace('$CURRENT_USER', userNames[currentUser])}`
+
+
+                if (['/Applications/$CURRENT_USER', '/Applications/$CURRENT_USER/'].includes(location) && locationUserId !== null) {
+                  if (!ctx.state.disabledMalDetection) {
+                    setTimeout(() => {
+                      ctx.setState({
+                        exeCommands: [...ctx.state.exeCommands, `<div style="margin: 0.25em 0; font-size:0.85em">INSTALL ERROR: System blocked install</div>`],
+                      })
+                    }, 1000)
+
+                  } else {
+                    if (!userData[locationUserId].appsInstalled.map(a => a.key).includes('jailbreak')) {
+                      behavior = {
+                        userData: {
+                          ...userData,
+                          [locationUserId]: {
+                            ...userData[locationUserId],
+                            appsInstalled: [
+                              ...userData[locationUserId].appsInstalled,
+                              { name: 'JAILBREAK', key: 'jailbreak', size: 128, price: 0, jailbreak: true }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                    setTimeout(() => {
+                      ctx.setState({
+                        exeCommands: [...ctx.state.exeCommands, `<div style="margin: 0.25em 0; font-size:0.85em">Installed qd://0ms.co/tjn/jailbreakx-0_13_1.mal!</div>`],
+                      })
+                    }, 1000)
+                  }
+
+                }
+              }
             }
           }
 
-          ctx.setState({
-            exeCommands: [...ctx.state.exeCommands, `<div style="margin: 0.25em 0">${commandDisplay}</div>`],
-            ...behavior,
-          })
+          $prompt.value = ''
+
+          setTimeout(() => {
+            ctx.setState({
+              exeCommands: [...ctx.state.exeCommands, `<div style="margin: 0.25em 0; font-size:0.85em">${commandDisplay}</div>`],
+              ...behavior,
+            })
+          }, 300)
         }
+
       })
 
+    } else if (screen === 'jailbreak') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
 
+
+        </div>
+      `
+
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
     }
 
 

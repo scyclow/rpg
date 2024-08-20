@@ -66,6 +66,8 @@ button {
   border: 1px solid;
   border-radius: 2px;
   border-color: color-mix(in srgb, var(--primary-color) 55%, var(--bg-color));
+  user-select: none;
+  -webkit-user-select: none;
   /*box-shadow: 0 0 0.1em var(--primary-color);*/
 }
 button:hover {

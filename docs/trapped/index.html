@@ -32,7 +32,7 @@
 <script type="module">
   import {ls} from './$.js'
 
-  const GAME_VERSION = 0.2
+  window.GAME_VERSION = 0.2
 
   const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
   if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {

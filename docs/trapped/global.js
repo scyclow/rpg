@@ -15,7 +15,9 @@ export const globalState = persist('__GLOBAL_STATE', {
   payments: {},
   eventLog: [],
   eventLoopStartTime: Date.now(),
-  eventLoopDuration: 1000
+  eventLoopDuration: 1000,
+  totalAccountsCreated: 1,
+  defaultUnlocked: false,
 })
 
 window.globalState = globalState

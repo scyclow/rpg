@@ -119,15 +119,15 @@ createComponent(
   },
   (ctx) => {
     const escClose = e => {
-      if (e.key === 'Escape') ctx.close()
+      if (e.key === 'Escape' && ctx.state.display) ctx.close()
     }
 
     if (ctx.state.display) {
       ctx.$modelParent.classList.remove('hidden')
-      document.addEventListener('keydown', escClose)
+      document.addEventListener('keyup', escClose)
     } else {
       ctx.$modelParent.classList.add('hidden')
-      document.removeEventListener('keydown', escClose)
+      document.removeEventListener('keyup', escClose)
     }
 
   },
