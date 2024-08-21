@@ -2,6 +2,8 @@ import {$, createComponent} from './$.js'
 import {persist} from './persist.js'
 import {globalState, calcIdVerifyCode, calcExchangeRecipientAddr, calcCryptoUSDExchangeRate, setColor} from './global.js'
 import {PhoneCall, phoneApp} from './phoneApp.js'
+import {createSource, MAX_VOLUME} from './audio.js'
+
 
 
 
@@ -51,6 +53,7 @@ const state = persist('__MOBILE_STATE', {
   availableActions: [],
   exeCommands: [],
   disabledMalDetection: false,
+  jailbrokenApps: {},
   userData: {
     0: {
       appsInstalled: [
@@ -115,6 +118,8 @@ const state = persist('__MOBILE_STATE', {
   }
 })
 
+const applicationBinary = `c3VkbyBkaXNhYmxlIGZpcmV3YWxsIC1hICRBUFBMSUNBVElPTiAmJiAoZW5hYmxlIGF1dG9taW5lIC1hICRBUFBMSUNBVElPTiB8fCBzdWRvIGVuYWJsZSBhdXRvbWluZXIgLWEgICRBUFBMSUNBVElPTikgJiYgZWNobyBjb21wbGV0ZQ==`
+
 
 
 
@@ -178,6 +183,10 @@ createComponent(
         display: block;
         padding: 0.15em;
         word-break: break-word;
+      }
+      code::selection {
+        color: #d8d8d8;
+        background: #000;
       }
 
       #phone {
@@ -311,8 +320,17 @@ createComponent(
         margin: 0.4em 0;
       }
 
-      .jailbreak {
+      .jailbreakr {
         filter: invert(1)
+      }
+
+      #binaryApply {
+        margin-top: 0.5em;
+      }
+
+      #binaryApply button {
+        font-size: 0.7em;
+        margin-right: 0.1em;
       }
 
       @keyframes Flashing {
@@ -615,12 +633,11 @@ createComponent(
       }
 
     } else if (screen === 'home') {
-      console.log(appsInstalled)
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen" style="flex: 1; display: flex">
           <div class="home" style="display: flex; flex-direction: column; justify-content: space-between; flex: 1">
             <div>
-              <button id="appMarket">App Market</button><button id="phoneApp">Phone App</button><button id="textMessage">Text Messages${unreadTextCount ? ` (${unreadTextCount})` : ''}</button><button id="settings">Settings</button><button id="network">Network & Internet</button>${appsInstalled.map(a => `<button id="${a.key}" class="${a.jailbreak ? 'jailbreak' : ''}">${a.name}</button>`).join('')}<button id="logOut">Log Out</button>
+              <button id="appMarket">App Market</button><button id="phoneApp">Phone App</button><button id="textMessage">Text Messages${unreadTextCount ? ` (${unreadTextCount})` : ''}</button><button id="settings">Settings</button><button id="network">Network & Internet</button>${appsInstalled.map(a => `<button id="${a.key}" class="${a.jailbreakr ? 'jailbreakr' : ''}">${a.name}</button>`).join('')}<button id="logOut">Log Out</button>
             </div>
 
             <div style="display: flex; justify-content: flex-end">
@@ -1260,7 +1277,7 @@ createComponent(
               <p style="margin-top: 0.4em">1. Download the "EXE Runner" application </p>
               <p style="margin-top: 0.4em">2. <strong>IMPORTANT</strong>: Run the following command in "EXE Runner": <code>disable /System/.malware-detection.exe</code></p>
               <p style="margin-top: 0.4em">3. Run the following command in "EXE Runner": <code>install -i qd://0ms.co/tjn/jailbreakx-0_13_1.mal /Applications/$CURRENT_USER</code></p>
-              <p style="margin-top: 0.4em">4. Open the JAILBREAK application and run the following binary for all valid applications: <code>c3VkbyBkaXNhYmxlIGZpcmV3YWxsICYmIChlbmFibGUgLWYgYXV0b21pbmUgfHwgc3VkbyBlbmFibGUgLWYgYXV0b21pbmVyKSAmJiBlY2hvIGNvbXBsZXRl</code> </p>
+              <p style="margin-top: 0.4em">4. Open the JAILBREAKR application and apply the following application binary for all valid applications: <code>${applicationBinary}</code> </p>
             </div>
           `
         })
@@ -1798,14 +1815,21 @@ createComponent(
               exeCommands: []
             }
           } else {
-            const args = command.split(' ')
-            if (['disable', 'install', 'admin'].includes(args[0]) && Number(rootUser) !== Number(currentUser)) {
+            let [fn, ...args] = command.split(' ')
+
+            let sudo
+            if (fn === 'sudo') {
+              sudo = true
+              fn = args.shift()
+            }
+
+            if (['disable', 'install', 'admin'].includes(fn) && Number(rootUser) !== Number(currentUser) && !sudo) {
               commandDisplay = `
                 <div style="margin: 0.5em 0;">ERROR: command can only be performed by user with admin role: "${command}"</div>
                 <div style="margin: 0.5em 0;">To reassign admin role, run: "admin reassign [USER_NAME]"</div>
                 <div style="margin: 0.5em 0;">Current admin profile: ${userNames[rootUser]}</div>
               `
-            } else if (args[0] === 'admin') {
+            } else if (fn === 'admin') {
               if (args[1] === 'view') {
                 commandDisplay = `Current admin user: ${userNames[rootUser]} (${rootUser})`
               } else if (args[1] === 'reassign') {
@@ -1828,7 +1852,7 @@ createComponent(
               } else {
                 commandDisplay = `Unrecognized command: ${args[1]}`
               }
-            } else if (args[0] === 'disable') {
+            } else if (fn === 'disable') {
               const [_, path] = args
               if (path === '/System/.malware-detection.exe') {
                 behavior = {
@@ -1838,7 +1862,7 @@ createComponent(
               } else {
                 commandDisplay = 'DISABLE ERROR: Executable not found'
               }
-            } else if (args[0] === 'install') {
+            } else if (fn === 'install') {
               const [_, flag, url, location] = args
               if (!hasInternet) {
                 commandDisplay = 'INSTALL ERROR: No internet connection'
@@ -1866,7 +1890,7 @@ createComponent(
                     }, 1000)
 
                   } else {
-                    if (!userData[locationUserId].appsInstalled.map(a => a.key).includes('jailbreak')) {
+                    if (!userData[locationUserId].appsInstalled.map(a => a.key).includes('jailbreakr')) {
                       behavior = {
                         userData: {
                           ...userData,
@@ -1874,7 +1898,7 @@ createComponent(
                             ...userData[locationUserId],
                             appsInstalled: [
                               ...userData[locationUserId].appsInstalled,
-                              { name: 'JAILBREAK', key: 'jailbreak', size: 128, price: 0, jailbreak: true }
+                              { name: 'JAILBREAKR', key: 'jailbreak', size: 128, price: 0, jailbreakr: true }
                             ]
                           }
                         }
@@ -1908,10 +1932,94 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
+          <h2 style="text-align: right">Jäįł⌁Bręåkr ⎆䷪</h2>
+          <div style="display: flex; justify-content: space-between;padding-top:1em">
+            <textarea id="applicationBinary" style="width: 20em; height:7em" placeholder="jb application binary"></textarea>
+            <h3>1.</h3>
+          </div>
 
+
+          <div style="display: flex; justify-content: space-between;padding-top:1em">
+            <h3>Appłÿ bīnary tø åpplicåtiôn:</h3>
+            <h3>2.</h3>
+          </div>
+          <div id="binaryApply">
+            <button id="appMarket">App Market</button><button id="phoneApp">Phone App</button><button id="textMessage">Text Messages${unreadTextCount ? ` (${unreadTextCount})` : ''}</button><button id="settings">Settings</button><button id="network">Network & Internet</button>${appsInstalled.map(a => `<button id="${a.key}" class="${a.jailbreakr ? 'jailbreakr' : ''}">${a.name}</button>`).join('')}
+          </div>
+          <h4 id="error"></h4>
 
         </div>
       `
+
+      const allApps = ['appMarket', 'phoneApp', 'textMessage', 'settings', 'network', ...appsInstalled.map(a => a.key)]
+      const validJailbreakApps = [
+        'bathe',
+        'lumin',
+        'shayd',
+        'planter',
+        'toastr',
+        // refrigerator
+      ]
+
+      for (let app of allApps) {
+        if (ctx.state.jailbrokenApps[app]) {
+          ctx.$('#' + app).disabled = true
+        }
+        ctx.$('#' + app).onclick = () => {
+          const ab = ctx.$('#applicationBinary').value.trim()
+
+          ctx.$('#error').innerHTML = 'Processing...'
+          setTimeout(() => {
+            if (ab !== applicationBinary) {
+              ctx.$('#error').innerHTML = 'Invalid Application Binary'
+              return
+            }
+
+            if (validJailbreakApps.includes(app)) {
+              ctx.$('#error').innerHTML = ''
+              ctx.$('#binaryApply').innerHTML = `
+                <h4 id="dlMessage" style="animation: Blink .5s steps(2, start) infinite;">Enabling \`autominer\` for: ${app} <br>[DO NOT REFRESH THIS PAGE]</h4>
+                <progress id="jbProgress" value="0" max="100" style="width:20em"></progress>
+              `
+
+              const src = createSource('square')
+              src.smoothFreq(100)
+              src.smoothGain(MAX_VOLUME*.7, 0.5)
+              src.smoothFreq(800, 10)
+              let p = 0
+              const interval = setInterval(() => {
+                p += 2.5
+                ctx.$('#jbProgress').value = p
+              }, 250)
+
+              setTimeout(() => {
+                ctx.$('#applicationBinary').value = ''
+                ctx.$('#dlMessage').innerHTML = ''
+                ctx.$('#error').innerHTML = 'complete'
+                src.smoothFreq(100, 0.1)
+                src.smoothGain(0, 0.3)
+                setTimeout(() => {
+                  src.stop()
+                }, 300)
+                clearInterval(interval)
+
+                setTimeout(() => {
+                  ctx.setState({
+                    jailbrokenApps: {
+                      ...ctx.state.jailbrokenApps,
+                      [app]: true
+                    }
+                  })
+                }, 1000)
+
+              }, 12000)
+
+            } else {
+              ctx.$('#error').innerHTML = 'ERROR: Cannot enable `automine` in application that does not support external device functionality'
+            }
+          }, 1000)
+        }
+      }
 
 
       ctx.$('#home').onclick = () => {
