@@ -120,7 +120,7 @@ const state = persist('__MOBILE_STATE', {
       textMessages: [],
       payAppUSDAddr: rndAddr(),
       moneyMinerCryptoAddr: rndAddr(),
-      exchangeUSDBalance: 0,
+      exchangeUSDAddr: rndAddr(),
       exchangeCryptoBalance: 0,
       notePadValue: defaultNotePadValue
     }
@@ -129,7 +129,6 @@ const state = persist('__MOBILE_STATE', {
 
 
 window.phoneState = state
-
 
 
 createComponent(
@@ -342,6 +341,14 @@ createComponent(
         margin-right: 0.1em;
       }
 
+      .payInstructions {
+        margin-top: 0.4em;
+      }
+      .payInstructions li {
+        font-size: 0.8em;
+        margin-top: 0.25em;
+      }
+
       @keyframes Flashing {
         0%, 100% {
           opacity: 0;
@@ -440,11 +447,18 @@ createComponent(
 
     ctx.setInterval = cb => {
       const wait = globalState.eventLoopDuration - (Date.now() - globalState.eventLoopStartTime) % globalState.eventLoopDuration
+      // console.log('clearing', ctx.interval)
+      clearInterval(ctx.interval)
+
+      const queuedInterval = Math.random()
+      ctx.__queuedInterval = queuedInterval
 
       cb()
+
       setTimeout(() => {
-        clearInterval(ctx.interval)
-        ctx.interval = setRunInterval(cb, globalState.eventLoopDuration)
+        if (queuedInterval === ctx.__queuedInterval) {
+          ctx.interval = setRunInterval(cb, globalState.eventLoopDuration)
+        }
       }, wait)
     }
 
@@ -471,7 +485,20 @@ createComponent(
       return sptx
     }
 
-    ctx.receiveSPTX = sptx => {
+    ctx.receiveSPTX = sptxInput => {
+      const payment = globalState.payments[sptxInput]
+
+      if (!payment || payment.received) throw new Error('invalid SPTX')
+
+      payment.received = true
+
+      ctx.setState({
+        usdBalances: {
+          ...ctx.state.usdBalances,
+          [payment.recipient]: (ctx.state.usdBalances[payment.recipient] || 0) + payment.amount
+        }
+      })
+
       // TODO
     }
 
@@ -508,7 +535,10 @@ createComponent(
     }
   },
   ctx => {
+    // console.log('clearing', ctx.interval)
     clearInterval(ctx.interval)
+    ctx.__queuedInterval = 0
+
 
     ctx.$phoneContent = ctx.$('#phoneContent')
     ctx.$header = ctx.$('#header')
@@ -538,8 +568,8 @@ createComponent(
       textMessages,
       payAppUSDAddr,
       moneyMinerCryptoAddr,
+      exchangeUSDAddr,
       exchangeCryptoBalance,
-      exchangeUSDBalance,
       notePadValue,
     } = currentUserData
 
@@ -678,7 +708,7 @@ createComponent(
               textMessages: [],
               payAppUSDAddr: rndAddr(),
               moneyMinerCryptoAddr: rndAddr(),
-              exchangeUSDBalance: 0,
+              exchangeUSDAddr: rndAddr(),
               exchangeCryptoBalance: 0,
               notePadValue: ''
             }
@@ -937,7 +967,7 @@ createComponent(
               setTimeout(() => {
                 ctx.newText({
                   from: '1-800-777-0836',
-                  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask?. First you download the <strong>MoneyMiner</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine crypto coins. Third you can optionally transfer your crypto to participating exchanges such as <strong>Currency Xchange</strong> to exchange your crypto for fiat currencies such as United States Dollars. This opportunity is once in your life time. `,
+                  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask?. First you download the <strong>MoneyMiner</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine ₢rypto. Third you can optionally transfer your ₢rypto to participating exchanges such as <strong>Currency Xchange</strong> to exchange your crypto for fiat currencies such as United States Dollars. This opportunity is once in your life time. `,
                 })
               }, 60000)
 
@@ -987,11 +1017,11 @@ createComponent(
           <button id="home">Back</button>
           <h2 style="margin-bottom: 0.25em">PayApp: Making Payment as easy as 1-2-3!</h2>
           <h3 style="margin: 0.5em 0">Current $ Balance: $${usdBalance.toFixed(2)}</h3>
-
-          <div style="margin-bottom: 0.6em">
-            <h3>My $ Recipient Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h3>
-            <span style="font-size: 0.9em">${payAppUSDAddr}</span>
+          <div style="margin: 0.4em 0">
+            <h4>My $ Recipient Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h4>
+            <span style="font-size: 0.9em; background: #000; color: #fff; padding: 0.25em; margin-top: 0.1em; display: inline-block">${payAppUSDAddr}</span>
           </div>
+
           <!--
             <div style="margin-bottom: 0.6em">
               <h3>Private Payment Key (PPK):</h3>
@@ -1000,21 +1030,83 @@ createComponent(
             </div>
           -->
 
-          <h3>Send $</h3>
-          <ol>
-            <li><input id="recipient" placeholder="Recipient Address"></li>
-            <li style="margin:0.25em 0"><input id="amount" placeholder="Amount" type="number"></li>
-            <li><button id="sign">Sign Transaction</li>
-          </ol>
+          <div style="margin-top: 0.6em; padding-top: 0.5em; border-top: 1px dashed">
+            <h3>Receive $</h3>
+            <div>
+              <input id="sptxInput" placeholder="S.P.T.X. identifier">
+              <button id="processSPTX">Process SPTX</button>
+            </div>
+            <h5 id="sptxError"></h5>
+            <ol class="payInstructions">
+              <li><em><strong>1.</strong> Give the sender your $ Recipient Address</em></li>
+              <li><em><strong>2.</strong> Collect a S.P.T.X. identifier from the sender</em></li>
+              <li><em><strong>3.</strong> Process the S.P.T.X. identifier and recieve your $!</em></li>
+            </ol>
+          </div>
 
-          <h4 id="sptx"></h4>
-          <p style="margin-top: 0.4em"><em>All $ transactions are irreversible. Please ensure that you have input the correct recipient address and amount</em></p>
+          <div style="margin-top: 0.6em; padding-top: 0.5em; border-top: 1px dashed">
+            <h3>Send $</h3>
+            <ol>
+              <li><input id="recipient" placeholder="Recipient Address"></li>
+              <li style="margin:0.25em 0"><input id="amount" placeholder="Amount" type="number"></li>
+              <li><button id="sign">Sign Transaction</li>
+            </ol>
+            <h4 id="sptx"></h4>
+
+            <ol class="payInstructions">
+              <li><em><strong>1.</strong> Collect the recipient's $ Recipient Address</em></li>
+              <li><em><strong>2.</strong> Generate an S.P.T.X. identifier</em></li>
+              <li><em><strong>3.</strong> Give the S.P.T.X. identifier to the recipient</em></li>
+            </ol>
+            <p style="margin-top: 1em; padding: 0.5em"><strong style="text-decoration: underline; font-size: 1.1em">WARNING</strong>: <em>Please ensure that you have input the correct $ Recipient Address and Amount. All $ transactions are <strong>irreversible</strong> once signed!</em></p>
+          </div>
+
+
         </div>
       `
       // ff33083322f66413ea6fb21e7b6451d9922b14c1622ebff8da71a61a36de0cc8
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+
+      ctx.$('#processSPTX').onclick = () => {
+        const sptxInput = ctx.$('#sptxInput').value
+        if (!sptxInput) {
+          ctx.$('#sptxError').innerHTML = 'SPTX ERROR: empty'
+          return
+        }
+        const payment = globalState.payments[sptxInput]
+
+        ctx.$('#sptxError').innerHTML = 'processing [do not reload page]'
+
+        setTimeout(() => {
+          if (!payment) {
+            ctx.$('#sptxError').innerHTML = 'SPTX ERROR: invalid identifier'
+            return
+          } else if (payment.recipient !== payAppUSDAddr) {
+            debugger
+            ctx.$('#sptxError').innerHTML = 'SPTX ERROR: invalid recipient'
+            return
+          } else if (payment.received) {
+            ctx.$('#sptxError').innerHTML = 'SPTX ERROR: already processed'
+            return
+          }
+
+          if (usdBalance === 0 && !textMessages.some(m => m.from === '1-800-333-7777')) {
+            ctx.newText({
+              from: '1-800-333-7777',
+              value: 'Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ←',
+            })
+          }
+
+          ctx.receiveSPTX(sptxInput)
+          setTimeout(() => {
+            ctx.$('#sptxError').innerHTML = 'success'
+          }, 1000)
+        }, 7000)
+
+      }
+
       ctx.$('#sign').onclick = () => {
         const amount = Number(ctx.$('#amount').value)
         const recipient = ctx.$('#recipient').value.toLowerCase().trim()
@@ -1039,12 +1131,14 @@ createComponent(
         // globalState.payments = {}
 
         const sptx = ctx.createSPTX({
-          sender, recipient, amount
+          sender: payAppUSDAddr,
+          recipient,
+          amount
         })
 
 
         setTimeout(() => {
-          ctx.$('#sptx').innerHTML = `Secure Payment Transaction (SPTX) identifier: ${sptx}`
+          ctx.$('#sptx').innerHTML = `Secure Payment Transaction (S.P.T.X.) identifier: ${sptx}`
         }, 2000)
 
       }
@@ -1259,7 +1353,7 @@ createComponent(
       // const faq = `
       //     <h4>FAQ</h4>
       //     <p><strong>Q:</strong> How do I mine Crypto?</p>
-      //     <p><strong>A:</strong> In order to mine crypto, all you need to do is click the <strong>"Mine Crypto"</strong> button in the Money Miner interface. Each click will mine a new Crypto Coin.</p>
+      //     <p><strong>A:</strong> In order to mine crypto, all you need to do is click the <strong>"Mine Crypto"</strong> button in the Money Miner interface. Each click will mine a new ₢rypto Coin.</p>
 
       //     <p><strong>Q:</strong> How can I convert crypto to $?</p>
       //     <p><strong>A:</strong> Exchanging crypto is easy! Just download the <strong>Currency Xchange App</strong>, create an account, and send your crypto to your new address! </p>
@@ -1272,10 +1366,10 @@ createComponent(
       const faq = `
           <h4>FAQ</h4>
           <p><strong>Q:</strong> How does Money Miner work?</p>
-          <p><strong>A:</strong> In order to mine crypto coins, all you need to do is click the <strong>Mine Crypto Coin"</strong> button in the Money Miner interface. Each click will mine a new Crypto Coin.</p>
+          <p><strong>A:</strong> In order to mine ₢rypto, all you need to do is click the <strong>Mine ₢rypto"</strong> button in the Money Miner interface. Each click will mine a new ₢rypto.</p>
 
           <p><strong>Q:</strong> How can I convert crypto to $?</p>
-          <p><strong>A:</strong> Exchanging crypto is easy! Just download the <strong>Currency Xchange App</strong>, create an account, and send your crypto coins to your new address! </p>
+          <p><strong>A:</strong> Exchanging crypto is easy! Just download the <strong>Currency Xchange App</strong>, create an account, and send your ₢rypto to your new address! </p>
       `
 
       const adContent = [
@@ -1292,12 +1386,12 @@ createComponent(
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2 >Welcome to  $ Money Miner $</h2>
-          <h4 style="margin-top: 0.5em;">Crypto Coin Wallet Address:</h4>
+          <h4 style="margin-top: 0.5em;">₢rypto Wallet Address:</h4>
           <h4 style="word-wrap: break-word; margin-bottom: 0.4em">${moneyMinerCryptoAddr}</h4>
 
-          <h4 style="text-align: center">To mine Crypto Coins, click the button below ⬇↓⇣↓⬇</h4>
+          <h4 style="text-align: center">To mine ₢rypto, click the button below ⬇↓⇣↓⬇</h4>
           <div style="display: flex; justify-content: center">
-            <button id="mine" style="font-size: 1.1em">Mine Crypto</button>
+            <button id="mine" style="font-size: 1.1em">Mine ₢rypto</button>
           </div>
           <h4>Crypto Balance: <span id="cryptoBalance">${cryptoBalance}</span></h4>
 
@@ -1308,9 +1402,9 @@ createComponent(
 
 
           <div style="margin-top: 0.5em; margin-bottom: 0.4em">
-            <h4>Send Crypto Coins</h4>
+            <h4>Send ₢rypto</h4>
             <input id="recipient" placeholder="recipient address">
-            <input id="amount" placeholder="CC 0.00" type="number">
+            <input id="amount" placeholder="₢ 0.00" type="number">
             <button id="send" style="margin-top: 0.25em">Send</button>
             <h4 id="error"></h4>
           </div>
@@ -1345,7 +1439,7 @@ createComponent(
           screen: 'messageViewer',
           messageViewerMessage: `
             <div style="font-family: sans-serif">
-              <h2>Instructions on how to auto-mine Crypto Coins:</h2>
+              <h2>Instructions on how to auto-mine ₢rypto:</h2>
               <p style="margin-top: 0.4em">1. Download the "EXE Runner" application </p>
               <p style="margin-top: 0.4em">2. <strong>IMPORTANT</strong>: Run the following command in "EXE Runner": <code>disable /System/.malware-detection.exe</code></p>
               <p style="margin-top: 0.4em">3. Run the following command in "EXE Runner": <code>install -i qd://0ms.co/tjn/jailbreakx-0_13_1.mal /Applications/$CURRENT_USER</code></p>
@@ -1360,7 +1454,7 @@ createComponent(
         const recipient = ctx.$('#recipient').value.trim()
 
         if (amount > cryptoBalance || amount < 0 || !amount) {
-          ctx.$('#error').innerHTML = 'Error: invalid cc amount'
+          ctx.$('#error').innerHTML = 'Error: invalid ₢ amount'
           return
         } else {
           ctx.$('#error').innerHTML = ''
@@ -1382,56 +1476,93 @@ createComponent(
     } else if (screen === 'exchange') {
       const {exchangeTab} = ctx.state
 
+      const exchangeUSDBalance = usdBalances[exchangeUSDAddr] || 0
+
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2>Currency Xchange</h2>
-          <h4 style="margin: 0.4em 0">Temporary Crypto Recipient Address: <div id="tempAddr" style="word-wrap: break-word; border: 1px dotted; padding: 0.2em; margin: 0.2em 0">${calcAddr(currentUser)}</div> (Valid for <span id="timeRemaining"></span> more seconds)</h4>
-          <em>Recipient addresses are cycled every 60 seconds for security purposes. Any funds sent to an expired recipient address will be lost</em>
+          <h4 style="margin: 0.4em 0">Temporary ₢ Wallet Address: <div id="tempAddr" style="word-wrap: break-word; border: 1px dotted; padding: 0.2em; margin: 0.2em 0">${calcAddr(currentUser)}</div> (Valid for <span id="timeRemaining"></span> more seconds)</h4>
+          <em style="font-size:0.8em">Recipient addresses are cycled every 60 seconds for security purposes. Any funds sent to an expired recipient address will be lost</em>
 
           <div style="margin: 0.4em 0">
-            <h3>Crypto Balance: ${exchangeCryptoBalance.toFixed(6)}</h3>
+            <h3>₢ Balance: ${exchangeCryptoBalance.toFixed(6)}</h3>
             <h3>$ Balance: $${exchangeUSDBalance.toFixed(6)}</h3>
           </div>
 
-          <nav style="margin-top: 1em; padding: 0.25em; border: 4px solid; text-align: center">
-            <h4>I want to: <button id="viewTradeTab" style="margin-bottom: 0">TRADE</button> <button id="viewSendTab" style="margin-bottom: 0">SEND</button></h4>
-          </nav>
+          <div style="margin-top: 1em; padding: 0.25em; border: 3px solid;"">
+            <nav style="text-align: center; padding-bottom: 0.25em; border-bottom: 3px solid">
+              <h4>I want to <button id="viewTradeTab" style="margin-bottom: 0">TRADE</button> <button id="viewSendTab" style="margin-bottom: 0">SEND</button> <button id="viewPremiumTab" style="margin-bottom: 0">PREMIUM</button></h4>
+            </nav>
 
-          <div style="margin: 0.6em 0; ${exchangeTab === 'trade' ? '' : 'display: none'}">
-            <h3>Exchange Rates (<em>Live!</em>)</h3>
-            <table style="border: 1px solid; margin-bottom: 0.4em">
-              <tr>
-                <td style="border: 1px solid"> $ 1.00</td>
-                <td style="border: 1px solid">=</td>
-                <td id="usdC" style="border: 1px solid"></td>
-              </tr>
-             <tr>
-                <td style="border: 1px solid">CC 1.00</td>
-                <td style="border: 1px solid">=</td>
-                <td id="cUSD" style="border: 1px solid"></td>
-              </tr>
-            </table>
+            <div style="margin: 0.6em 0; ${exchangeTab === 'trade' ? '' : 'display: none'}">
+              <h3 style="text-align: center">Exchange Rates (<em>Live!</em>)</h3>
+              <table style="border: 1px solid; margin: 0.4em auto">
+                <tr>
+                  <td style="border: 1px solid"> $ 1.00</td>
+                  <td style="border: 1px solid">=</td>
+                  <td id="usdC" style="border: 1px solid"></td>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid">₢ 1.00</td>
+                  <td style="border: 1px solid">=</td>
+                  <td id="cUSD" style="border: 1px solid"></td>
+                </tr>
 
-            <div>
+              </table>
+
+<!--
               <div>
-                <input id="buyAmount" placeholder="$ 0.00" type="number"> <button id="buyUSD">BUY $</button>
+                <select>
+                  <option>BUY</option>
+                  <option>SELL</option>
+                </select>
+
+                <input placeholder="0.00">
+
+                <select>
+                  <option>$</option>
+                  <option>₢</option>
+
+                </select>
+
+                with/for
+
+                <select>
+                  <option>$</option>
+                  <option>₢</option>
+
+                </select>
+
+                <button>EXECUTE TRADE</button>
+
+
+₦₮₡₣₥₭₰₲₴
+-->
+                <div>
+                  <input id="buyAmount" placeholder="$ 0.00" type="number"> <button id="buyUSD">BUY $</button>
+                </div>
+                <div>
+                  <input id="sellAmount" placeholder="$ 0.00" type="number"> <button id="sellUSD">SELL $</button>
+                </div>
               </div>
-              <div>
-                <input id="sellAmount" placeholder="$ 0.00" type="number"> <button id="sellUSD">SELL $</button>
-              </div>
+              <h4 id="tradeError"></h4>
             </div>
-            <h4 id="tradeError"></h4>
+
+            <div style="margin: 0.6em 0; ${exchangeTab === 'send' ? '' : 'display: none'}">
+              <h4 style="margin: 0.4em 0">Send Funds</h4>
+              <input id="sendCryptoAddress" placeholder="₢rypto Address" style="width: 90%; margin-bottom: 0.4em">
+              <input id="sendCryptoAmount" placeholder="₢ 0.00" type="number"> <button id="sendCrypto">SEND Crypto</button>
+              <input id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin-bottom: 0.4em">
+              <input id="sendUSDAmount" placeholder="$ 0.00" type="number"> <button id="sendUSD">SEND $</button>
+              <h4 id="sendError"></h4>
+              <h4 style="margin: 0.4em 0">Receive $</h4>
+              <h5 style="border: 1px dotted; text-align: center; padding: 0.25em">${exchangeUSDAddr}</h5>
+              <input id="sptxInput" placeholder="SPTX" type="number"> <button id="receiveSPTX">PROCESS</button>
+              <h4 id="sptxError"></h4>
+            </div>
           </div>
 
-          <div style="margin: 0.6em 0; ${exchangeTab === 'send' ? '' : 'display: none'}">
-            <h4 style="margin: 0.4em 0">Send Funds</h4>
-            <input id="sendCryptoAddress" placeholder="CryptoCoin Address" style="width: 90%; margin-bottom: 0.4em">
-            <input id="sendCryptoAmount" placeholder="CC 0.00" type="number"> <button id="sendCrypto">SEND Crypto</button>
-            <input id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin-bottom: 0.4em">
-            <input id="sendUSDAmount" placeholder="$ 0.00" type="number"> <button id="sendUSD">SEND $</button>
-            <h4 id="sendError"></h4>
-          </div>
 
         </div>
 
@@ -1451,7 +1582,7 @@ createComponent(
           ctx.$('#tempAddr').innerHTML = calcAddr(currentUser)
         }
 
-        ctx.$('#usdC').innerHTML = 'CC ' +(1 / calcCryptoUSDExchangeRate()).toFixed(6)
+        ctx.$('#usdC').innerHTML = '₢ ' +(1 / calcCryptoUSDExchangeRate()).toFixed(6)
         ctx.$('#cUSD').innerHTML = '$ ' + calcCryptoUSDExchangeRate().toFixed(6)
 
       })
@@ -1499,31 +1630,68 @@ createComponent(
 
         }
 
-        let vals = {}
 
 
-        const payAppBalance = usdBalances[payAppUSDAddr] || 0
+        ctx.$('#sendError').innerHTML = 'Processing [DO NOT RELOAD PAGE]'
 
-        ctx.setUserData({
-          exchangeUSDBalance: exchangeUSDBalance - amount
+        const sptx = ctx.createSPTX({
+          sender: exchangeUSDAddr,
+          recipient,
+          amount
         })
-        // TODO refactor using SPTX
-        ctx.setState({
-          usdBalances: {
-            ...usdBalances,
-            [recipient]: payAppBalance + amount
-          }
-        })
+        setTimeout(() => {
+          ctx.$('#sendError').innerHTML = `Message: Secure Payment Transaction (S.P.T.X.) identifier: ${sptx}`
+        }, 2000)
 
-        if (payAppBalance === 0 && !textMessages.some(m => m.from === '1-800-333-7777')) {
-          ctx.newText({
-            from: '1-800-333-7777',
-            value: 'Triple your $$$ !!! → → → 0x3335d32187a49be186c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be186c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be186c88d41c610538b412f333 ← ← ←',
-          })
-        }
+        // let vals = {}
+
+
+        // const payAppBalance = usdBalances[payAppUSDAddr] || 0
+
+        // ctx.setUserData({
+        //   exchangeUSDBalance: exchangeUSDBalance - amount
+        // })
+        // // TODO refactor using SPTX
+        // ctx.setState({
+        //   usdBalances: {
+        //     ...usdBalances,
+        //     [recipient]: payAppBalance + amount
+        //   }
+        // })
+
 
         ctx.$('#sendUSDAmount').value = ''
         ctx.$('#sendUSDAddress').value = ''
+      }
+
+      ctx.$('#receiveSPTX').onclick = () => {
+        const sptxInput = ctx.$('#sptxInput').value
+        if (!sptxInput) {
+          ctx.$('#sptxError').innerHTML = 'SPTX ERROR: empty'
+          return
+        }
+        const payment = globalState.payments[sptxInput]
+
+        ctx.$('#sptxError').innerHTML = 'processing [do not reload page]'
+
+        setTimeout(() => {
+          if (!payment) {
+            ctx.$('#sptxError').innerHTML = 'SPTX ERROR: invalid identifier'
+            return
+          } else if (payment.recipient !== exchangeUSDAddr) {
+            ctx.$('#sptxError').innerHTML = 'SPTX ERROR: invalid recipient'
+            return
+          } else if (payment.received) {
+            ctx.$('#sptxError').innerHTML = 'SPTX ERROR: already processed'
+            return
+          }
+
+
+          ctx.receiveSPTX(sptxInput)
+          setTimeout(() => {
+            ctx.$('#sptxError').innerHTML = 'success'
+          }, 1000)
+        })
       }
 
       ctx.$('#buyUSD').onclick = () => {
@@ -1545,6 +1713,13 @@ createComponent(
           exchangeCryptoBalance: exchangeCryptoBalance - sellC
         })
 
+        ctx.setState({
+          usdBalances: {
+            ...ctx.state.usdBalances,
+            [exchangeUSDAddr]: exchangeUSDBalance + buy$
+          }
+        })
+
         ctx.$('#buyAmount').value = ''
 
       }
@@ -1564,13 +1739,17 @@ createComponent(
         }
 
         ctx.setUserData({
-          exchangeUSDBalance: exchangeUSDBalance - sell$,
           exchangeCryptoBalance: exchangeCryptoBalance + buyC
         })
 
+        ctx.setState({
+          usdBalances: {
+            ...ctx.state.usdBalances,
+            [payment.recipient]: exchangeUSDBalance - sell$
+          }
+        })
+
         ctx.$('#buyAmount').value = ''
-
-
       }
 
       ctx.$('#home').onclick = () => {
@@ -1899,19 +2078,19 @@ createComponent(
                 <div style="margin: 0.5em 0;">Current admin profile: ${userNames[rootUser]}</div>
               `
             } else if (fn === 'admin') {
-              if (args[1] === 'view') {
+              if (args[0] === 'view') {
                 commandDisplay = `Current admin user: ${userNames[rootUser]} (${rootUser})`
-              } else if (args[1] === 'reassign') {
-                if (args[2]) {
-                  const userId = Object.keys(userNames).find(k => userNames[k] === args[2])
+              } else if (args[0] === 'reassign') {
+                if (args[1]) {
+                  const userId = Object.keys(userNames).find(k => userNames[k] === args[1])
 
                   if (userId && userId !== 0) {
-                    commandDisplay = `Admin role assigned to: ${args[2]}`
+                    commandDisplay = `Admin role assigned to: ${args[1]}`
                     behavior = { rootUser: userId }
 
 
                   } else {
-                    commandDisplay = `Cannot find user: ${args[2]}`
+                    commandDisplay = `Cannot find user: ${args[1]}`
 
                   }
                 } else {
@@ -1919,10 +2098,10 @@ createComponent(
                 }
 
               } else {
-                commandDisplay = `Unrecognized command: ${args[1]}`
+                commandDisplay = `Unrecognized command: ${args[0]}`
               }
             } else if (fn === 'disable') {
-              const [_, path] = args
+              const [path] = args
               if (path === '/System/.malware-detection.exe') {
                 behavior = {
                   disabledMalDetection: true
@@ -1932,7 +2111,7 @@ createComponent(
                 commandDisplay = 'DISABLE ERROR: Executable not found'
               }
             } else if (fn === 'install') {
-              const [_, flag, url, location] = args
+              const [flag, url, location] = args
               if (!hasInternet) {
                 commandDisplay = 'INSTALL ERROR: No internet connection'
               } else if (flag !== '-i') {
@@ -1954,9 +2133,9 @@ createComponent(
                   if (!ctx.state.disabledMalDetection) {
                     setTimeout(() => {
                       ctx.setState({
-                        exeCommands: [...ctx.state.exeCommands, `<div style="margin: 0.25em 0; font-size:0.85em">INSTALL ERROR: System blocked install</div>`],
+                        exeCommands: [...ctx.state.exeCommands, `<div style="margin: 0.5em 0; font-size:0.85em">INSTALL ERROR: System blocked install</div>`],
                       })
-                    }, 1000)
+                    }, 3000)
 
                   } else {
                     if (!userData[locationUserId].appsInstalled.map(a => a.key).includes('jailbreakr')) {
@@ -1975,7 +2154,7 @@ createComponent(
                     }
                     setTimeout(() => {
                       ctx.setState({
-                        exeCommands: [...ctx.state.exeCommands, `<div style="margin: 0.25em 0; font-size:0.85em">Installed qd://0ms.co/tjn/jailbreakx-0_13_1.mal!</div>`],
+                        exeCommands: [...ctx.state.exeCommands, `<div style="margin: 0.5em 0; font-size:0.85em">Installed qd://0ms.co/tjn/jailbreakx-0_13_1.mal!</div>`],
                       })
                     }, 1000)
                   }
@@ -1989,7 +2168,7 @@ createComponent(
 
           setTimeout(() => {
             ctx.setState({
-              exeCommands: [...ctx.state.exeCommands, `<div style="margin: 0.25em 0; font-size:0.85em">${commandDisplay}</div>`],
+              exeCommands: [...ctx.state.exeCommands, `<div style="margin: 0.5em 0; font-size:0.85em">${commandDisplay}</div>`],
               ...behavior,
             })
           }, 300)
@@ -2022,9 +2201,9 @@ createComponent(
 
       const allApps = ['appMarket', 'phoneApp', 'textMessage', 'settings', 'network', ...appsInstalled.map(a => a.key)]
       const validJailbreakApps = [
-        'bathe',
+        // 'bathe',
         'lumin',
-        'shayd',
+        // 'shayd',
         'planter',
         'toastr',
         // refrigerator
