@@ -1,6 +1,6 @@
 import {$, createComponent} from './$.js'
 import {persist} from './persist.js'
-import {globalState, calcIdVerifyCode, calcExchangeRecipientAddr, calcCryptoUSDExchangeRate, setColor} from './global.js'
+import {globalState, calcIdVerifyCode, calcAddr, calcCryptoUSDExchangeRate, setColor, rndAddr} from './global.js'
 import {PhoneCall, phoneApp} from './phoneApp.js'
 import {createSource, MAX_VOLUME} from './audio.js'
 
@@ -32,6 +32,42 @@ const APPS = [
 ]
 
 
+const applicationBinary = `c3VkbyBkaXNhYmxlIGZpcmV3YWxsIC1hICRBUFBMSUNBVElPTiAmJiAoZW5hYmxlIGF1dG9taW5lIC1hICRBUFBMSUNBVElPTiB8fCBzdWRvIGVuYWJsZSBhdXRvbWluZXIgLWEgICRBUFBMSUNBVElPTikgJiYgZWNobyBjb21wbGV0ZQ==`
+
+// TODO update addresses to be 0's addrs
+
+const defaultNotePadValue = `
+
+money miner addr: 0x5f9fc040c204724c833a777516a06ffe88b81819 (crypto only!)
+currency xchange addr: 0xc20df241f3ed7011bdb288d70bf892f3b30ca068 (crypto only?)
+payapp addr: 0x308199aE4A5e94FE954D5B24B21B221476Dc90E9 ($ only!)
+
+
+SPTX ISP instrctions:
+  amount: 193.63
+  ISP recipient addr: 0x4b258603257460d480c929af5f7b83e8c4279b7b
+  sptx:
+
+
+
+
+router device id: 5879234963378
+
+
+ISP customer support: 1-800-555-2093
+ISP billing: 1-888-555-9483
+dispute resolution dept: 1-800-777-0836
+turbo connect: 1-800-444-3830
+
+
+
+TODO
+- water plants
+- pay rent
+`
+
+
+
 const state = persist('__MOBILE_STATE', {
   started: false,
   screen: 'loading',
@@ -53,7 +89,10 @@ const state = persist('__MOBILE_STATE', {
   availableActions: [],
   exeCommands: [],
   disabledMalDetection: false,
+  exchangeTab: 'trade',
   jailbrokenApps: {},
+  usdBalances: {},
+  cryptoBalances: {},
   userData: {
     0: {
       appsInstalled: [
@@ -78,48 +117,18 @@ const state = persist('__MOBILE_STATE', {
         { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
 
       ],
-      payAppBalance: 0,
       textMessages: [],
-      moneyMinerBalance: 0,
-      exchangeCryptoBalance: 0,
+      payAppUSDAddr: rndAddr(),
+      moneyMinerCryptoAddr: rndAddr(),
       exchangeUSDBalance: 0,
-
-      // TODO update addresses to be 0's addrs
-      notePadValue: `
-
-      money miner addr: 0x5f9fc040c204724c833a777516a06ffe88b81819 (crypto only!)
-      currency xchange addr: 0xc20df241f3ed7011bdb288d70bf892f3b30ca068 (crypto only?)
-      payapp addr: 0x308199aE4A5e94FE954D5B24B21B221476Dc90E9 ($ only!)
-
-
-      SPTX ISP instrctions:
-        amount: 193.63
-        ISP recipient addr: 0x4b258603257460d480c929af5f7b83e8c4279b7b
-        sptx:
-
-
-
-
-      router device id: 5879234963378
-
-
-      ISP customer support: 1-800-555-2093
-      ISP billing: 1-888-555-9483
-      dispute resolution dept: 1-800-777-0836
-      turbo connect: 1-800-444-3830
-
-
-
-      TODO
-      - water plants
-      - pay rent
-      `
+      exchangeCryptoBalance: 0,
+      notePadValue: defaultNotePadValue
     }
   }
 })
 
-const applicationBinary = `c3VkbyBkaXNhYmxlIGZpcmV3YWxsIC1hICRBUFBMSUNBVElPTiAmJiAoZW5hYmxlIGF1dG9taW5lIC1hICRBUFBMSUNBVElPTiB8fCBzdWRvIGVuYWJsZSBhdXRvbWluZXIgLWEgICRBUFBMSUNBVElPTikgJiYgZWNobyBjb21wbGV0ZQ==`
 
+window.phoneState = state
 
 
 
@@ -430,26 +439,72 @@ createComponent(
     }
 
     ctx.setInterval = cb => {
-      clearInterval(ctx.interval)
       const wait = globalState.eventLoopDuration - (Date.now() - globalState.eventLoopStartTime) % globalState.eventLoopDuration
 
       cb()
       setTimeout(() => {
+        clearInterval(ctx.interval)
         ctx.interval = setRunInterval(cb, globalState.eventLoopDuration)
       }, wait)
     }
 
-    ctx.createSPTX = ({ recipient, amount }) => {
+    ctx.createSPTX = ({ sender, recipient, amount }) => {
       const sptx = Math.floor(Math.random()*100000000000000000)
 
       globalState.payments[sptx] = {
         sptx,
+        sender,
         recipient,
         amount,
         timestamp: Date.now(),
         received: false
       }
+
+      if (ctx.state.usdBalances[sender] < amount) throw new Error('invalid amount')
+
+      ctx.setState({
+        usdBalances: {
+          ...ctx.state.usdBalances,
+          [sender]: ctx.state.usdBalances[sender] - amount
+        }
+      })
       return sptx
+    }
+
+    ctx.receiveSPTX = sptx => {
+      // TODO
+    }
+
+    ctx.sendCrypto = (from, to, amount) => {
+      const currentUser = ctx.state.currentUser
+      if (to === calcAddr(currentUser)) {
+        ctx.setUserData({
+          exchangeCryptoBalance: ctx.state.userData[currentUser].exchangeCryptoBalance + amount
+        })
+      } else {
+        ctx.setState({
+          cryptoBalances: {
+            ...ctx.state.cryptoBalances,
+            [to]: (ctx.state.cryptoBalances[to] || 0) + amount
+          }
+        })
+      }
+
+      if (from === null) {
+        if (ctx.state.userData[currentUser].exchangeCryptoBalance < amount) throw new Error('invalid amount')
+
+        ctx.setUserData({
+          exchangeCryptoBalance: ctx.state.userData[currentUser].exchangeCryptoBalance - amount
+        })
+      } else {
+        if (ctx.state.cryptoBalances[to] < amount) throw new Error('invalid amount')
+        ctx.setState({
+          cryptoBalances: {
+            ...ctx.state.cryptoBalances,
+            [from]: ctx.state.cryptoBalances[from] - amount
+          }
+        })
+      }
     }
   },
   ctx => {
@@ -471,19 +526,21 @@ createComponent(
       luminPaired,
       toasterPaired,
       planterPaired,
-      lampOn
+      lampOn,
+      usdBalances,
+      cryptoBalances
     } = ctx.state
 
     const currentUserData = userData[currentUser]
 
     const {
       appsInstalled,
-      payAppBalance,
       textMessages,
-      moneyMinerBalance,
+      payAppUSDAddr,
+      moneyMinerCryptoAddr,
       exchangeCryptoBalance,
       exchangeUSDBalance,
-      notePadValue
+      notePadValue,
     } = currentUserData
 
 
@@ -537,10 +594,7 @@ createComponent(
           <h1>Select User Profile:</h1>
           ${
             Object.keys(userNames).sort().map(u => `<button id="user-${u}" style="margin-right: 0.5em; margin-bottom: 0.5em">${userNames[u]}</button>`).join('')
-          }
-          <div>
-            <button id="newProfile">Create New Profile</button>
-          </div>
+          }<button id="newProfile">Create New Profile</button>
         </div>
       `
 
@@ -619,10 +673,10 @@ createComponent(
             [id]: {
               appsInstalled: [],
               textMessages: [],
-              payAppBalance: 0,
-              moneyMinerBalance: 0,
-              exchangeCryptoBalance: 0,
+              payAppUSDAddr: rndAddr(),
+              moneyMinerCryptoAddr: rndAddr(),
               exchangeUSDBalance: 0,
+              exchangeCryptoBalance: 0,
               notePadValue: ''
             }
           }
@@ -732,9 +786,21 @@ createComponent(
             const app = ctx.$(`#${clean(a.name)}-download`)
             if (app) app.onclick = () => {
 
-              ctx.$('#appContent').innerHTML = `<h4 class="blink">Downloading: ${a.name}</h4>`
+              ctx.$('#appContent').innerHTML = `
+                <h4 class="blink">Downloading: ${a.name}</h4>
+                <!--
+                  <div>
+                    <progress id="dlProgress" value="0" max="100" style="width:20em"></progress>
+                  </div>
+                -->
+              `
+
+              // const interval = setRunInterval(() => {
+              //   ctx.$('#dlProgress').value += 10
+              // }, 270)
 
               setTimeout(() => {
+                // clearInterval(interval)
                 if (ctx.$('#appContent')) ctx.$('#appContent').innerHTML = `<h4>Successfully downloaded: ${a.name}!</h4>`
               }, 2700)
               setTimeout(() => {
@@ -911,15 +977,17 @@ createComponent(
 
     } else if (screen === 'payApp') {
 
+      const usdBalance = usdBalances[payAppUSDAddr] || 0
+
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2 style="margin-bottom: 0.25em">PayApp: Making Payment as easy as 1-2-3!</h2>
-          <h3 style="margin: 0.5em 0">Current $ Balance: $${payAppBalance.toFixed(2)}</h3>
+          <h3 style="margin: 0.5em 0">Current $ Balance: $${usdBalance.toFixed(2)}</h3>
 
           <div style="margin-bottom: 0.6em">
             <h3>My $ Recipient Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h3>
-            <span style="font-size: 0.9em">0x308199aE4A5e94FE954D5B24B21B221476Dc90E9</span>
+            <span style="font-size: 0.9em">${payAppUSDAddr}</span>
           </div>
           <!--
             <div style="margin-bottom: 0.6em">
@@ -960,7 +1028,7 @@ createComponent(
           $sptx.innerHTML = `Please input a value greater than 0`
           return
         }
-        if (amount > payAppBalance) {
+        if (amount > usdBalance) {
           $sptx.innerHTML = `INVALID AMOUNT`
           return
         }
@@ -968,11 +1036,7 @@ createComponent(
         // globalState.payments = {}
 
         const sptx = ctx.createSPTX({
-          recipient, amount
-        })
-
-        ctx.setUserData({
-          payAppBalance: payAppBalance - amount
+          sender, recipient, amount
         })
 
 
@@ -1188,6 +1252,7 @@ createComponent(
 
     } else if (screen === 'moneyMiner') {
 
+
       // const faq = `
       //     <h4>FAQ</h4>
       //     <p><strong>Q:</strong> How do I mine Crypto?</p>
@@ -1218,19 +1283,20 @@ createComponent(
 
       const getAd = () => adContent[Math.floor(Date.now()/20000)%adContent.length]
 
+      const cryptoBalance = cryptoBalances[moneyMinerCryptoAddr] || 0
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2 >Welcome to  $ Money Miner $</h2>
           <h4 style="margin-top: 0.5em;">Crypto Coin Wallet Address:</h4>
-          <h4 style="word-wrap: break-word; margin-bottom: 0.4em">0x5f9fc040c204724c833a777516a06ffe88b81819</h4>
+          <h4 style="word-wrap: break-word; margin-bottom: 0.4em">${moneyMinerCryptoAddr}</h4>
 
           <h4 style="text-align: center">To mine Crypto Coins, click the button below ⬇↓⇣↓⬇</h4>
           <div style="display: flex; justify-content: center">
             <button id="mine" style="font-size: 1.1em">Mine Crypto</button>
           </div>
-          <h4>Crypto Balance: <span id="cryptoBalance">${moneyMinerBalance}</span></h4>
+          <h4>Crypto Balance: <span id="cryptoBalance">${cryptoBalance}</span></h4>
 
           <div class="ad" id="adContainer">
             <h5>SPONSORED CONTENT</h5>
@@ -1258,8 +1324,11 @@ createComponent(
       })
 
       ctx.$('#mine').onclick = () => {
-        ctx.setUserData({
-          moneyMinerBalance: moneyMinerBalance + 1
+        ctx.setState({
+          cryptoBalances: {
+            ...cryptoBalances,
+            [moneyMinerCryptoAddr]: (cryptoBalance || 0) + 1
+          }
         })
       }
 
@@ -1287,21 +1356,16 @@ createComponent(
         const amount = Number(ctx.$('#amount').value)
         const recipient = ctx.$('#recipient').value.trim()
 
-        if (amount > moneyMinerBalance || amount < 0 || !amount) {
+        if (amount > cryptoBalance || amount < 0 || !amount) {
           ctx.$('#error').innerHTML = 'Error: invalid cc amount'
           return
         } else {
           ctx.$('#error').innerHTML = ''
         }
 
-        ctx.setUserData({
-          moneyMinerBalance: moneyMinerBalance - amount,
-          exchangeCryptoBalance: exchangeCryptoBalance + (
-            recipient === calcExchangeRecipientAddr(currentUser)
-              ? amount
-              : 0
-          )
-        })
+        console.log(moneyMinerCryptoAddr, recipient, amount)
+
+        ctx.sendCrypto(moneyMinerCryptoAddr, recipient, amount)
 
 
         ctx.$('#amount').value = ''
@@ -1313,14 +1377,25 @@ createComponent(
       }
 
     } else if (screen === 'exchange') {
+      const {exchangeTab} = ctx.state
+
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2>Currency Xchange</h2>
-          <h4 style="margin: 0.4em 0">Temporary Crypto Recipient Address: <div id="tempAddr" style="word-wrap: break-word; border: 1px dotted; padding: 0.2em; margin: 0.2em 0">${calcExchangeRecipientAddr(currentUser)}</div> (Valid for <span id="timeRemaining"></span> more seconds)</h4>
+          <h4 style="margin: 0.4em 0">Temporary Crypto Recipient Address: <div id="tempAddr" style="word-wrap: break-word; border: 1px dotted; padding: 0.2em; margin: 0.2em 0">${calcAddr(currentUser)}</div> (Valid for <span id="timeRemaining"></span> more seconds)</h4>
           <em>Recipient addresses are cycled every 60 seconds for security purposes. Any funds sent to an expired recipient address will be lost</em>
 
-          <div style="margin: 0.6em 0">
+          <div style="margin: 0.4em 0">
+            <h3>Crypto Balance: ${exchangeCryptoBalance.toFixed(6)}</h3>
+            <h3>$ Balance: $${exchangeUSDBalance.toFixed(6)}</h3>
+          </div>
+
+          <nav style="margin-top: 1em; padding: 0.25em; border: 4px solid; text-align: center">
+            <h4>I want to: <button id="viewTradeTab" style="margin-bottom: 0">TRADE</button> <button id="viewSendTab" style="margin-bottom: 0">SEND</button></h4>
+          </nav>
+
+          <div style="margin: 0.6em 0; ${exchangeTab === 'trade' ? '' : 'display: none'}">
             <h3>Exchange Rates (<em>Live!</em>)</h3>
             <table style="border: 1px solid; margin-bottom: 0.4em">
               <tr>
@@ -1346,10 +1421,7 @@ createComponent(
             <h4 id="tradeError"></h4>
           </div>
 
-          <div style="margin: 0.6em 0">
-            <h3>Crypto Balance: ${exchangeCryptoBalance.toFixed(6)}</h3>
-            <h3>$ Balance: $${exchangeUSDBalance.toFixed(6)}</h3>
-
+          <div style="margin: 0.6em 0; ${exchangeTab === 'send' ? '' : 'display: none'}">
             <h4 style="margin: 0.4em 0">Send Funds</h4>
             <input id="sendCryptoAddress" placeholder="CryptoCoin Address" style="width: 90%; margin-bottom: 0.4em">
             <input id="sendCryptoAmount" placeholder="CC 0.00" type="number"> <button id="sendCrypto">SEND Crypto</button>
@@ -1373,13 +1445,18 @@ createComponent(
         if (Math.random() < 0.1)  {
           ctx.$('#tempAddr').innerHTML = 'ERROR: Invalid signing key'
         } else if (ctx.$('#tempAddr').innerHTML.includes('ERROR') || seconds < 2) {
-          ctx.$('#tempAddr').innerHTML = calcExchangeRecipientAddr(currentUser)
+          ctx.$('#tempAddr').innerHTML = calcAddr(currentUser)
         }
 
         ctx.$('#usdC').innerHTML = 'CC ' +(1 / calcCryptoUSDExchangeRate()).toFixed(6)
         ctx.$('#cUSD').innerHTML = '$ ' + calcCryptoUSDExchangeRate().toFixed(6)
 
       })
+
+      ctx.$('#viewTradeTab').onclick = () => ctx.setState({ exchangeTab: 'trade' })
+      ctx.$('#viewSendTab').onclick = () => ctx.setState({ exchangeTab: 'send' })
+
+
 
       ctx.$('#sendCrypto').onclick = () => {
         const amount = Number(ctx.$('#sendCryptoAmount').value)
@@ -1393,24 +1470,11 @@ createComponent(
           return
         } else {
           ctx.$('#sendError').innerHTML = ''
-
         }
 
-        let vals = {}
-        if (recipient === calcExchangeRecipientAddr(currentUser)) {
-          // pass
-
-        } else if (recipient === '0x5f9fc040c204724c833a777516a06ffe88b81819') {
-          ctx.setUserData({
-            moneyMinerBalance: moneyMinerBalance + amount,
-            exchangeCryptoBalance: exchangeCryptoBalance - amount
-          })
-
-        } else {
-          ctx.setUserData({
-            exchangeCryptoBalance: exchangeCryptoBalance - amount
-          })
-        }
+        ctx.sendCrypto(
+          null, recipient, amount
+        )
 
         ctx.$('#sendCryptoAmount').value = ''
         ctx.$('#sendCryptoAddress').value = ''
@@ -1433,10 +1497,18 @@ createComponent(
         }
 
         let vals = {}
-        if (recipient === '0x308199aE4A5e94FE954D5B24B21B221476Dc90E9') {
+        if (recipient === payAppUSDAddr) {
+          const payAppBalance = usdBalances[payAppUSDAddr] || 0
+
+          // TODO refactor using SPTX
           ctx.setUserData({
-            payAppBalance: payAppBalance + amount,
             exchangeUSDBalance: exchangeUSDBalance - amount
+          })
+          ctx.setState({
+            usdBalances: {
+              ...usdBalances,
+              [recipient]: usdBalances[recipient] + amount
+            }
           })
 
 

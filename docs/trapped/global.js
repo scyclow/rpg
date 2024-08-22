@@ -38,15 +38,25 @@ export const calcIdVerifyCode = id => {
   return out < 10000 ? '0'+out : ''+out
 }
 
-export const calcExchangeRecipientAddr = id => {
+export const calcAddr = seed => {
   return (
     '0x'
-    + Math.floor((globalState.idVerifierUpdate + id)**1.20).toString(16).slice(-7)
-    + Math.floor((globalState.idVerifierUpdate + id)**1.21).toString(16).slice(-7)
-    + Math.floor((globalState.idVerifierUpdate + id)**1.22).toString(16).slice(-7)
-    + Math.floor((globalState.idVerifierUpdate + id)**1.23).toString(16).slice(-7)
-    + Math.floor((globalState.idVerifierUpdate + id)**1.24).toString(16).slice(-7)
-    + Math.floor((globalState.idVerifierUpdate + id)**1.25).toString(16).slice(-5)
+    + Math.floor((globalState.idVerifierUpdate + seed)**1.20).toString(16).slice(-7)
+    + Math.floor((globalState.idVerifierUpdate + seed)**1.21).toString(16).slice(-7)
+    + Math.floor((globalState.idVerifierUpdate + seed)**1.22).toString(16).slice(-7)
+    + Math.floor((globalState.idVerifierUpdate + seed)**1.23).toString(16).slice(-7)
+    + Math.floor((globalState.idVerifierUpdate + seed)**1.24).toString(16).slice(-7)
+    + Math.floor((globalState.idVerifierUpdate + seed)**1.25).toString(16).slice(-5)
+  )
+}
+
+export const rndAddr = () => {
+  return (
+    '0x'
+    + Math.floor(Math.random()*100000000000000000).toString(16)
+    + Math.floor(Math.random()*100000000000000000).toString(16)
+    + Math.floor(Math.random()*100000000000000000).toString(16).slice(-10)
+
   )
 }
 
