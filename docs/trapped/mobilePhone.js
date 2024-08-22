@@ -584,9 +584,9 @@ createComponent(
         </div>
       `
 
-      setTimeout(() => {
-        if (ctx.state.screen === 'loading') ctx.setState({ screen: 'login' })
-      }, 10000)
+      // setTimeout(() => {
+      //   if (ctx.state.screen === 'loading') ctx.setState({ screen: 'login' })
+      // }, 10000)
 
     } else if (screen === 'login') {
       ctx.$phoneContent.innerHTML = `
@@ -652,6 +652,9 @@ createComponent(
           return
         } else if (firstName.includes(' ')) {
           ctx.$('#error').innerHTML = 'First name cannot include spaces'
+          return
+        } else if (Object.values(userNames).includes(firstName)) {
+          ctx.$('#error').innerHTML = 'A profile with this name already exists'
           return
         } else {
           ctx.$('#error').innerHTML = ''
@@ -1497,31 +1500,25 @@ createComponent(
         }
 
         let vals = {}
-        if (recipient === payAppUSDAddr) {
-          const payAppBalance = usdBalances[payAppUSDAddr] || 0
-
-          // TODO refactor using SPTX
-          ctx.setUserData({
-            exchangeUSDBalance: exchangeUSDBalance - amount
-          })
-          ctx.setState({
-            usdBalances: {
-              ...usdBalances,
-              [recipient]: usdBalances[recipient] + amount
-            }
-          })
 
 
-          if (payAppBalance === 0 && !textMessages.some(m => m.from === '1-800-333-7777')) {
-            ctx.newText({
-              from: '1-800-333-7777',
-              value: 'Triple your $$$ !!! → → → 0x3335d32187a49be186c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be186c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be186c88d41c610538b412f333 ← ← ←',
-            })
+        const payAppBalance = usdBalances[payAppUSDAddr] || 0
+
+        ctx.setUserData({
+          exchangeUSDBalance: exchangeUSDBalance - amount
+        })
+        // TODO refactor using SPTX
+        ctx.setState({
+          usdBalances: {
+            ...usdBalances,
+            [recipient]: payAppBalance + amount
           }
+        })
 
-        } else {
-          ctx.setUserData({
-            exchangeUSDBalance: exchangeUSDBalance - amount
+        if (payAppBalance === 0 && !textMessages.some(m => m.from === '1-800-333-7777')) {
+          ctx.newText({
+            from: '1-800-333-7777',
+            value: 'Triple your $$$ !!! → → → 0x3335d32187a49be186c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be186c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be186c88d41c610538b412f333 ← ← ←',
           })
         }
 
