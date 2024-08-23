@@ -1,6 +1,6 @@
 import {$, createComponent} from './$.js'
 import {persist} from './persist.js'
-import {globalState, calcIdVerifyCode, calcAddr, calcCryptoUSDExchangeRate, calcPremiumCryptoUSDExchangeRate, setColor, rndAddr} from './global.js'
+import {globalState, calcIdVerifyCode, calcAddr, calcCryptoUSDExchangeRate, calcPremiumCryptoUSDExchangeRate, setColor, rndAddr, setMiningInterval, clearMiningInterval} from './global.js'
 import {PhoneCall, phoneApp} from './phoneApp.js'
 import {createSource, MAX_VOLUME} from './audio.js'
 
@@ -82,7 +82,7 @@ const state = persist('__MOBILE_STATE', {
   luminPaired: false,
   toasterPaired: false,
   planterPaired: false,
-  plantStatus: 'Poor',
+  plantStatus: 1,
   smartLockPaired: false,
   smartLockOpen: false,
   messageViewerMessage: '',
@@ -457,9 +457,11 @@ createComponent(
       ctx.__queuedInterval = queuedInterval
 
       cb()
-
+// console.log('blah')
       setTimeout(() => {
+        // console.log('to', queuedInterval, ctx.__queuedInterval)
         if (queuedInterval === ctx.__queuedInterval) {
+          // console.log('dsf')
           ctx.interval = setRunInterval(cb, globalState.eventLoopDuration)
         }
       }, wait)
@@ -561,7 +563,8 @@ createComponent(
       planterPaired,
       lampOn,
       usdBalances,
-      cryptoBalances
+      cryptoBalances,
+      jailbrokenApps
     } = ctx.state
 
     const currentUserData = userData[currentUser]
@@ -1466,8 +1469,6 @@ createComponent(
           ctx.$('#error').innerHTML = ''
         }
 
-        console.log(moneyMinerCryptoAddr, recipient, amount)
-
         ctx.sendCrypto(moneyMinerCryptoAddr, recipient, amount)
 
 
@@ -1728,9 +1729,14 @@ createComponent(
 
         }
 
-
-
         ctx.$('#sendError').innerHTML = 'Processing [DO NOT RELOAD PAGE]'
+
+        if (recipient === '0x4b258603257460d480c929af5f7b83e8c4279b7b') {
+          setTimeout(() => {
+            ctx.$('#sendError').innerHTML = `PROCESSING ERROR: Recipient outside payment network`
+          }, 2000)
+          return
+        }
 
         const sptx = ctx.createSPTX({
           sender: exchangeUSDAddr,
@@ -2054,33 +2060,46 @@ createComponent(
       }
 
     } else if (screen === 'planter') {
+      const plantStates = ['Dead', ':(', ':|', ':)']
 
-      const mainInterface = globalState.wifiActive
-        ? `<h3 class="blink">Loading Interface</h3>`
-        : `<h3>Device Error: ERROR: Cannot connect to server.</h3>`
+      const mainInterface = planterPaired
+        ? `
+          <h3>Plant Status: <span id="plantStatus">${plantStates[ctx.state.plantStatus]}</span></h3>
+          <button id="water" ${globalState.plantWatered ? 'disabled' : ''}>Water</button>
+        `
+        : `
+          <input id="planterDeviceCode" placeholder="Device Code"><button id="pairPlanter" style="margin-left: 0.25em">Pair Device</button>
+        `
+
+      const globalPlanter = globalState.cryptoDevices.planter
+
+
+      const jailbreakInterface = jbiMarkup(globalPlanter)
+
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2>SmartPlanter</h2>
-          ${planterPaired
-            ? `
-              <h3>Plant Status: ${ctx.state.plantStatus}</h3>
-              <button id="water" ${globalState.plantWatered ? 'disabled' : ''}>Water</button>
-            `
-            : `
-              <input id="planterDeviceCode" placeholder="Device Code"><button id="pairPlanter" style="margin-left: 0.25em">Pair Device</button>
-            `
-          }
+          ${mainInterface}
           <h4 id="error"><h4>
+          ${jailbrokenApps.planter && planterPaired ? jailbreakInterface : ''}
         </div>
       `
+
+      jbBehavior(ctx, globalPlanter, 2, () => {
+        if (ctx.state.plantStatus > 0 && globalPlanter.totalTime > 20) {
+          ctx.setState({ plantStatus: 0 })
+        }
+      })
 
       if (ctx.$('#water')) ctx.$('#water').onclick = () => {
         globalState.plantWatered = true
 
         setTimeout(() => {
-          ctx.setState({ plantStatus: 'Okay' })
+          if (ctx.state.plantStatus > 0) {
+            ctx.setState({ plantStatus: ctx.state.plantStatus + 1 })
+          }
         }, 2000)
       }
 
@@ -2321,17 +2340,11 @@ createComponent(
       `
 
       const allApps = ['appMarket', 'phoneApp', 'textMessage', 'settings', 'network', ...appsInstalled.map(a => a.key)]
-      const validJailbreakApps = [
-        // 'bathe',
-        'lumin',
-        // 'shayd',
-        'planter',
-        'toastr',
-        // refrigerator
-      ]
+      const validJailbreakApps = Object.keys(globalState.cryptoDevices)
+
 
       for (let app of allApps) {
-        if (ctx.state.jailbrokenApps[app]) {
+        if (jailbrokenApps[app]) {
           ctx.$('#' + app).disabled = true
         }
         ctx.$('#' + app).onclick = () => {
@@ -2403,3 +2416,93 @@ createComponent(
     globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phone', payload: stateUpdate }})
   }
 )
+
+
+// TODO can't really send crypto to this wallet, or else it will get blown away
+// maybe the sendCrypto function should add it to the global device balance if it exists
+function jbiMarkup(device) {
+
+  const balance = device.balance
+  return `
+    <div style="margin: 0.4em 0; padding: 0.5em; background: #000; color: #fff; border: 2px dashed">
+      <div>
+        <h3>Auto-Miner Module [${device.ram}gb RAM]</h3>
+        <h5 style="display: inline-block; padding: 0.25em; margin: 0.25em 0; background: #333; border: 1px solid">${device.wallet}</h4>
+        <h4 style="margin: 0.4em 0">Balance: ₢ <span id="cryptoBalance">${device.balance}</span></h4>
+        <button id="enableMining">${device.active ? 'Disable' : 'Enable'} Autominer</button>
+        <h5 id="mineError"></h5>
+      </div>
+
+      <div style="margin-top: 1em">
+        <h4>Send</h4>
+        <input id="cryptoAddr" placeholder="Address" style="width: 15em">
+        <input id="cryptoAmount" placeholder="0.00" type="number" style="width: 15em">
+        <button id="sendCrypto">Send</button>
+        <h5 id="sendError"></h5>
+      </div>
+    <div>
+  `
+}
+
+function jbBehavior(ctx, device, speed, cb=noop) {
+  const update = () => {
+    ctx.state.cryptoBalances[device.wallet] = device.balance
+    ctx.$('#cryptoBalance').innerHTML = device.balance
+    cb()
+  }
+  if (device.active) {
+    ctx.interval = setRunInterval(update, speed)
+  }
+
+
+  if (ctx.$('#enableMining')) ctx.$('#enableMining').onclick = () => {
+    if (!globalState.wifiActive) {
+      setTimeout(() => {
+        ctx.$('#mineError').innerHTML = `ERROR: DEVICE CANNOT CONNECT TO INTERNET`
+      }, 2500)
+      return
+    }
+
+    if (device.active) {
+      clearInterval(ctx.interval)
+      clearMiningInterval(device)
+      device.active = false
+      ctx.setState({
+        cryptoBalances: {
+          ...ctx.state.cryptoBalances,
+          [device.wallet]: device.balance
+        }
+      })
+
+    } else {
+      setMiningInterval(device, speed*device.ram/1000, speed)
+
+      ctx.interval = setRunInterval(update, speed)
+    }
+
+    ctx.$('#enableMining').innerHTML = `${device.active ? 'Disable' : 'Enable'} Autominer`
+  }
+
+  if (ctx.$('#sendCrypto')) ctx.$('#sendCrypto').onclick = () => {
+    const amount = Number(ctx.$('#cryptoAmount').value)
+    const recipient = ctx.$('#cryptoAddr').value.trim()
+
+    ctx.state.cryptoBalances[device.wallet] = device.balance
+
+    if (amount > device.balance || amount < 0 || !amount) {
+      ctx.$('#error').innerHTML = 'Error: invalid ₢ amount'
+      return
+    } else {
+      ctx.$('#error').innerHTML = ''
+    }
+
+    ctx.sendCrypto(device.wallet, recipient, amount)
+
+    // bleh lol
+    device.balance -= amount
+    ctx.state.cryptoBalances[device.wallet] = device.balance
+
+    ctx.$('#cryptoAmount').value = ''
+    ctx.$('#cryptoAddr').value = ''
+  }
+}

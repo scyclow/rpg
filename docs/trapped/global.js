@@ -1,5 +1,6 @@
 import {persist} from './persist.js'
 
+
 export const globalState = persist('__GLOBAL_STATE', {
   routerRestartTime: 0,
   location: 'nothing',
@@ -18,6 +19,15 @@ export const globalState = persist('__GLOBAL_STATE', {
   eventLoopDuration: 1000,
   totalAccountsCreated: 1,
   defaultUnlocked: false,
+  cryptoDevices: {
+    planter: newCryptoDevice(4),
+    lumin: newCryptoDevice(1),
+    toastr: newCryptoDevice(1),
+    // bathe
+    // shayd
+    // refrigerator
+  },
+
 })
 
 window.globalState = globalState
@@ -32,6 +42,46 @@ setInterval(() => {
 
 }, globalState.eventLoopDuration)
 
+
+function newCryptoDevice (ram) {
+  return {
+    wallet: rndAddr(),
+    balance: 0,
+    interval: null,
+    active: false,
+    ms: null,
+    amount: 0,
+    totalTime: 0,
+    ram
+  }
+}
+
+export function setMiningInterval(device, amount, ms) {
+  device.amount = amount
+  device.ms = ms
+  device.active = true
+  device.interval = setRunInterval(() => {
+    device.totalTime += ms
+    device.balance += amount * 2 * Math.random()
+  }, ms)
+}
+
+export function clearMiningInterval(device) {
+  device.active = false
+  clearInterval(device.interval)
+
+}
+
+
+for (let device of Object.values(globalState.cryptoDevices)) {
+  const { active, amount, ms } = device
+  if (active) {
+    device.interval = setRunInterval(() => {
+      device.totalTime += ms
+      device.balance += amount * 2 * Math.random()
+    }, ms)
+  }
+}
 
 export const calcIdVerifyCode = id => {
   const out = (globalState.idVerifierUpdate * (17 + id) + 1) % 100000
@@ -50,7 +100,7 @@ export const calcAddr = seed => {
   )
 }
 
-export const rndAddr = () => {
+export function rndAddr() {
   return (
     '0x'
     + Math.floor(Math.random()*100000000000000000).toString(16)
