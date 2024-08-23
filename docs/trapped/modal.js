@@ -34,8 +34,11 @@ createComponent(
 
       .hidden, .hidden * {
         pointer-events: none;
-        opacity: 0;
         display: none;
+      }
+
+      .invisible {
+        opacity: 0;
       }
 
       article {
@@ -124,9 +127,15 @@ createComponent(
 
     if (ctx.state.display) {
       ctx.$modelParent.classList.remove('hidden')
+      setTimeout(() => {
+        ctx.$modelParent.classList.remove('invisible')
+      })
       document.addEventListener('keyup', escClose)
     } else {
-      ctx.$modelParent.classList.add('hidden')
+      ctx.$modelParent.classList.add('invisible')
+      setTimeout(() => {
+        ctx.$modelParent.classList.add('hidden')
+      }, 1000)
       document.removeEventListener('keyup', escClose)
     }
 

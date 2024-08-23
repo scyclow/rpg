@@ -32,7 +32,7 @@
 <script type="module">
   import {ls} from './$.js'
 
-  window.GAME_VERSION = 0.2
+  window.GAME_VERSION = 1.1
 
   const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
   if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {
@@ -504,6 +504,8 @@
       livingRoomCurrent: {
         text: ''
       },
+
+      // TODO update if dead
 
       planter: {
         text: `You check your plants. The leaves sag from a lack of light${globalState.plantWatered ? '' : ' and water'}. On the side of the pot you read: "SmartPlanter<sup>TM</sup> - The quick and easy way to conveniently water your plants! Download our app in the AppMarket. DEVICE CODE: F93892O30249B48"`
