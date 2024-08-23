@@ -62,6 +62,16 @@ export const rndAddr = () => {
 
 export const calcCryptoUSDExchangeRate = () => {
   const base = 0.001
+  const cycle = Math.sin(Date.now()/8000)
+
+  const modifier = (1 + cycle / 10)
+
+  return base + (cycle / 30000) + (globalState.rand - 0.5)/80000
+}
+
+
+export const calcPremiumCryptoUSDExchangeRate = () => {
+  const base = 0.001
   const cycle = Math.sin(Date.now()/40000)
 
   const modifier = (1.45 + cycle) ** 2

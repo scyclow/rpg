@@ -1,6 +1,6 @@
 import {$, createComponent} from './$.js'
 import {persist} from './persist.js'
-import {globalState, calcIdVerifyCode, calcAddr, calcCryptoUSDExchangeRate, setColor, rndAddr} from './global.js'
+import {globalState, calcIdVerifyCode, calcAddr, calcCryptoUSDExchangeRate, calcPremiumCryptoUSDExchangeRate, setColor, rndAddr} from './global.js'
 import {PhoneCall, phoneApp} from './phoneApp.js'
 import {createSource, MAX_VOLUME} from './audio.js'
 
@@ -93,6 +93,7 @@ const state = persist('__MOBILE_STATE', {
   jailbrokenApps: {},
   usdBalances: {},
   cryptoBalances: {},
+  premiumCryptoBalances: {},
   userData: {
     0: {
       appsInstalled: [
@@ -121,7 +122,9 @@ const state = persist('__MOBILE_STATE', {
       payAppUSDAddr: rndAddr(),
       moneyMinerCryptoAddr: rndAddr(),
       exchangeUSDAddr: rndAddr(),
+      exchangePremium: false,
       exchangeCryptoBalance: 0,
+      exchangePremiumCryptoBalance: 0,
       notePadValue: defaultNotePadValue
     }
   }
@@ -570,7 +573,9 @@ createComponent(
       moneyMinerCryptoAddr,
       exchangeUSDAddr,
       exchangeCryptoBalance,
+      exchangePremiumCryptoBalance,
       notePadValue,
+      exchangePremium,
     } = currentUserData
 
 
@@ -710,6 +715,8 @@ createComponent(
               moneyMinerCryptoAddr: rndAddr(),
               exchangeUSDAddr: rndAddr(),
               exchangeCryptoBalance: 0,
+              exchangePremiumCryptoBalance: 0,
+              exchangePremium: false,
               notePadValue: ''
             }
           }
@@ -1084,7 +1091,6 @@ createComponent(
             ctx.$('#sptxError').innerHTML = 'SPTX ERROR: invalid identifier'
             return
           } else if (payment.recipient !== payAppUSDAddr) {
-            debugger
             ctx.$('#sptxError').innerHTML = 'SPTX ERROR: invalid recipient'
             return
           } else if (payment.received) {
@@ -1368,12 +1374,12 @@ createComponent(
           <p><strong>Q:</strong> How does Money Miner work?</p>
           <p><strong>A:</strong> In order to mine ₢rypto, all you need to do is click the <strong>Mine ₢rypto"</strong> button in the Money Miner interface. Each click will mine a new ₢rypto.</p>
 
-          <p><strong>Q:</strong> How can I convert crypto to $?</p>
-          <p><strong>A:</strong> Exchanging crypto is easy! Just download the <strong>Currency Xchange App</strong>, create an account, and send your ₢rypto to your new address! </p>
+          <p><strong>Q:</strong> How can I convert ₢rypto to $?</p>
+          <p><strong>A:</strong> Exchanging ₢rypto is easy! Just download the <strong>Currency Xchange App</strong>, create an account, and send your ₢rypto to your new address! </p>
       `
 
       const adContent = [
-        'Mine Crypto While You Sleep!',
+        'Mine ₢rypto While You Sleep!',
         `Learn the secret mining technique the government doesn't want you to know about`,
         `Click Here to improving mining efficiency by 100000% !!`
       ]
@@ -1393,7 +1399,7 @@ createComponent(
           <div style="display: flex; justify-content: center">
             <button id="mine" style="font-size: 1.1em">Mine ₢rypto</button>
           </div>
-          <h4>Crypto Balance: <span id="cryptoBalance">${cryptoBalance}</span></h4>
+          <h4>₢rypto Balance: <span id="cryptoBalance">${cryptoBalance}</span></h4>
 
           <div class="ad" id="adContainer">
             <h5>SPONSORED CONTENT</h5>
@@ -1403,7 +1409,7 @@ createComponent(
 
           <div style="margin-top: 0.5em; margin-bottom: 0.4em">
             <h4>Send ₢rypto</h4>
-            <input id="recipient" placeholder="recipient address">
+            <input id="recipient" placeholder="0x000000000000000....">
             <input id="amount" placeholder="₢ 0.00" type="number">
             <button id="send" style="margin-top: 0.25em">Send</button>
             <h4 id="error"></h4>
@@ -1478,88 +1484,149 @@ createComponent(
 
       const exchangeUSDBalance = usdBalances[exchangeUSDAddr] || 0
 
+      const tabHighlight = `font-weight: bold; text-decoration: underline;`
       ctx.$phoneContent.innerHTML = `
-        <div class="phoneScreen">
+        <div class="phoneScreen" style="flex:1;${exchangePremium ? 'background: #000; color: #fff' : ''}">
           <button id="home">Back</button>
-          <h2>Currency Xchange</h2>
-          <h4 style="margin: 0.4em 0">Temporary ₢ Wallet Address: <div id="tempAddr" style="word-wrap: break-word; border: 1px dotted; padding: 0.2em; margin: 0.2em 0">${calcAddr(currentUser)}</div> (Valid for <span id="timeRemaining"></span> more seconds)</h4>
+          <h2>Currency Xchange ${exchangePremium ? '[PREMIUM]' : ''}</h2>
+          <h4 style="margin: 0.4em 0">Temporary ₢rypto Wallet Address: <div id="tempAddr" style="word-wrap: break-word; border: 1px dotted; padding: 0.2em; margin: 0.2em 0">${calcAddr(currentUser)}</div> (Valid for <span id="timeRemaining"></span> more seconds)</h4>
           <em style="font-size:0.8em">Recipient addresses are cycled every 60 seconds for security purposes. Any funds sent to an expired recipient address will be lost</em>
 
           <div style="margin: 0.4em 0">
             <h3>₢ Balance: ${exchangeCryptoBalance.toFixed(6)}</h3>
-            <h3>$ Balance: $${exchangeUSDBalance.toFixed(6)}</h3>
+            <h3>$ Balance: ${exchangeUSDBalance.toFixed(6)}</h3>
+            ${exchangePremium ? `<h3>₱ Balance: ${exchangePremiumCryptoBalance.toFixed(6)}</h3>` : ''}
           </div>
 
-          <div style="margin-top: 1em; padding: 0.25em; border: 3px solid;"">
+          <div style="padding: 0.25em; border: 3px solid;"">
             <nav style="text-align: center; padding-bottom: 0.25em; border-bottom: 3px solid">
-              <h4>I want to <button id="viewTradeTab" style="margin-bottom: 0">TRADE</button> <button id="viewSendTab" style="margin-bottom: 0">SEND</button> <button id="viewPremiumTab" style="margin-bottom: 0">PREMIUM</button></h4>
+              <h4>I want to <button id="viewTradeTab" style="margin-bottom: 0; ${exchangeTab === 'trade' ? tabHighlight : ''}">TRADE</button> <button id="viewSendTab" style="margin-bottom: 0; ${exchangeTab === 'send' ? tabHighlight : ''}">SEND</button> <button id="viewPremiumTab" style="margin-bottom: 0; ${exchangeTab === 'premium' ? tabHighlight : ''}">PREMIUM</button></h4>
             </nav>
 
             <div style="margin: 0.6em 0; ${exchangeTab === 'trade' ? '' : 'display: none'}">
               <h3 style="text-align: center">Exchange Rates (<em>Live!</em>)</h3>
               <table style="border: 1px solid; margin: 0.4em auto">
                 <tr>
+                  ${exchangePremium
+                    ? `<td id="usdCBuy" style="border: 1px solid"></td>`
+                    : ''
+                  }
                   <td style="border: 1px solid"> $ 1.00</td>
                   <td style="border: 1px solid">=</td>
                   <td id="usdC" style="border: 1px solid"></td>
                 </tr>
                 <tr>
+                  ${exchangePremium
+                    ? `<td id="cUSDBuy" style="border: 1px solid"></td>`
+                    : ''
+                  }
                   <td style="border: 1px solid">₢ 1.00</td>
                   <td style="border: 1px solid">=</td>
                   <td id="cUSD" style="border: 1px solid"></td>
                 </tr>
-
+                <tr style="${exchangePremium ? '' : 'background: #000'}">
+                  ${exchangePremium
+                    ? `<td id="cPremBuy" style="border: 1px solid"></td>`
+                    : ''
+                  }
+                  <td style="border: 1px solid">₢ 1.00</td>
+                  <td style="border: 1px solid">=</td>
+                  <td id="cPrem" style="border: 1px solid"></td>
+                </tr>
+                <tr style="${exchangePremium ? '' : 'background: #000'}">
+                  ${exchangePremium
+                    ? `<td id="premCBuy" style="border: 1px solid"></td>`
+                    : ''
+                  }
+                  <td style="border: 1px solid"> ₱ 1.00</td>
+                  <td style="border: 1px solid">=</td>
+                  <td id="premC" style="border: 1px solid"></td>
+                </tr>
+                <tr style="${exchangePremium ? '' : 'background: #000'}">
+                  ${exchangePremium
+                    ? `<td id="premUSDBuy" style="border: 1px solid"></td>`
+                    : ''
+                  }
+                  <td style="border: 1px solid"> ₱ 1.00</td>
+                  <td style="border: 1px solid">=</td>
+                  <td id="premUSD" style="border: 1px solid"></td>
+                </tr>
+                <tr style="${exchangePremium ? '' : 'background: #000'}">
+                  ${exchangePremium
+                    ? `<td id="usdPremBuy" style="border: 1px solid"></td>`
+                    : ''
+                  }
+                  <td style="border: 1px solid"> $ 1.00</td>
+                  <td style="border: 1px solid">=</td>
+                  <td id="usdPrem" style="border: 1px solid"></td>
+                </tr>
               </table>
 
-<!--
-              <div>
-                <select>
-                  <option>BUY</option>
-                  <option>SELL</option>
-                </select>
+              <div style="display: flex; flex-direction: column; align-items: center">
+                <div style="text-align: center">
+                  <select id="tradeAction">
+                    <option value="buy">BUY</option>
+                    <option value="sell">SELL</option>
+                  </select>
 
-                <input placeholder="0.00">
+                  <select id="currency1">
+                    <option value="usd">$</option>
+                    <option value="crypto">₢</option>
+                    ${exchangePremium ? '<option value="premium">₱</option>' : ''}
+                  </select>
 
-                <select>
-                  <option>$</option>
-                  <option>₢</option>
-
-                </select>
-
-                with/for
-
-                <select>
-                  <option>$</option>
-                  <option>₢</option>
-
-                </select>
-
-                <button>EXECUTE TRADE</button>
+                  <input id="transactionAmount" placeholder="0.00" style="width: 4em; text-align: center" type="number">
 
 
-₦₮₡₣₥₭₰₲₴
--->
-                <div>
-                  <input id="buyAmount" placeholder="$ 0.00" type="number"> <button id="buyUSD">BUY $</button>
+                  <span id="tradeOperation">with</span>
+
+                  <select id="currency2">
+                    <option value="usd">$</option>
+                    <option value="crypto">₢</option>
+                    ${exchangePremium ? '<option value="premium">₱</option>' : ''}
+                  </select>
                 </div>
-                <div>
-                  <input id="sellAmount" placeholder="$ 0.00" type="number"> <button id="sellUSD">SELL $</button>
-                </div>
+
+                <button id="executeTrade" style="margin-top: 0.4em">EXECUTE TRADE</button>
+
               </div>
-              <h4 id="tradeError"></h4>
+              <h4 id="tradeError" style="text-align: center"></h4>
             </div>
 
             <div style="margin: 0.6em 0; ${exchangeTab === 'send' ? '' : 'display: none'}">
               <h4 style="margin: 0.4em 0">Send Funds</h4>
               <input id="sendCryptoAddress" placeholder="₢rypto Address" style="width: 90%; margin-bottom: 0.4em">
-              <input id="sendCryptoAmount" placeholder="₢ 0.00" type="number"> <button id="sendCrypto">SEND Crypto</button>
+              <input id="sendCryptoAmount" placeholder="₢ 0.00" type="number" style="width: 6em"> <button id="sendCrypto">SEND ₢</button>
+
               <input id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin-bottom: 0.4em">
-              <input id="sendUSDAmount" placeholder="$ 0.00" type="number"> <button id="sendUSD">SEND $</button>
+              <input id="sendUSDAmount" placeholder="$ 0.00" type="number" style="width: 6em"> <button id="sendUSD">SEND $</button>
               <h4 id="sendError"></h4>
               <h4 style="margin: 0.4em 0">Receive $</h4>
               <h5 style="border: 1px dotted; text-align: center; padding: 0.25em">${exchangeUSDAddr}</h5>
-              <input id="sptxInput" placeholder="SPTX" type="number"> <button id="receiveSPTX">PROCESS</button>
+              <input id="sptxInput" placeholder="SPTX" type="number" style="width: 11em"> <button id="receiveSPTX">PROCESS</button>
               <h4 id="sptxError"></h4>
+            </div>
+
+            <div style="margin: 0.6em 0; ${exchangeTab === 'premium' ? '' : 'display: none'}">
+              <ul style="padding-left: 2em">
+                <li>Trade the <em>exclusive</em> ₱remium Coin!</li>
+                <li>Buy/Sell signals!</li>
+                <li>Weekly Alpha Reports!</li>
+                <li>Greater money-making opportunity!</li>
+              </ul>
+
+              <div style="margin-top: 0.5em; display: flex; flex-direction: column; align-items: center">
+                <button id="buyPremium" ${exchangeCryptoBalance < 10000 || exchangePremium ? 'disabled' : ''} style="font-size: 1.2em; margin-bottom: 0.25em">BUY PREMIUM</button>
+                <h4>₢ 10,000.00</h4>
+                ${exchangeCryptoBalance < 10000 && !exchangePremium ? '<h5>(CURRENT BALANCE TOO LOW)</h5>' : ''}
+                ${exchangePremium ? '<h5>(PURCHASE SUCCESSFUL)</h5>' : ''}
+              </div>
+              ${exchangePremium
+                ? `<div style="margin-top: 0.4em; padding: 0.25em; border: 1px dashed">
+                  <h5 style="text-align: center">ALPHA REPORT</h5>
+                  <p style="font-size: 0.8em; font-family: serif">The new ₱remium Coin (₱) just dropped, and it's been pumping nonstop. It just passed a major resistance threshold, so this thing is pretty much guaranteed to moon. Our analysts say that we could see prices as high as $0.0069! But you might want to keep some dry powder around to re-up your positiong when the FUD gets too strong.</p>
+                </div>`
+                : ''}
             </div>
           </div>
 
@@ -1567,6 +1634,7 @@ createComponent(
         </div>
 
       `
+
 
       ctx.setInterval(() => {
         const msSinceUpdate = Date.now() - globalState.idVerifierUpdate
@@ -1582,13 +1650,43 @@ createComponent(
           ctx.$('#tempAddr').innerHTML = calcAddr(currentUser)
         }
 
-        ctx.$('#usdC').innerHTML = '₢ ' +(1 / calcCryptoUSDExchangeRate()).toFixed(6)
-        ctx.$('#cUSD').innerHTML = '$ ' + calcCryptoUSDExchangeRate().toFixed(6)
+        const prem = `background:#000; color: #fff`
 
+        const usdC = 1 / calcCryptoUSDExchangeRate()
+        const cUSD = calcCryptoUSDExchangeRate()
+        const cPrem = calcCryptoUSDExchangeRate() / calcPremiumCryptoUSDExchangeRate()
+        const premC = calcPremiumCryptoUSDExchangeRate() / calcCryptoUSDExchangeRate()
+        const premUSD = calcPremiumCryptoUSDExchangeRate()
+        const usdPrem = 1 / calcPremiumCryptoUSDExchangeRate()
+
+        ctx.$('#usdC').innerHTML = '₢ ' + usdC.toFixed(6)
+        ctx.$('#cUSD').innerHTML = '$ ' + cUSD.toFixed(6)
+        ctx.$('#cPrem').innerHTML = exchangePremium ? '₱ ' + cPrem.toFixed(6) : `<strong style="${prem}">---PREMIUM---</strong>`
+        ctx.$('#premC').innerHTML = exchangePremium ? '₢ ' + premC.toFixed(6) : `<strong style="${prem}">---PREMIUM---<strong>`
+        ctx.$('#premUSD').innerHTML = exchangePremium ? '$ ' + premUSD.toFixed(6) : `<strong style="${prem}">---PREMIUM---</strong>`
+        ctx.$('#usdPrem').innerHTML = exchangePremium ? '₱ ' + usdPrem.toFixed(6) : `<strong style="${prem}">---PREMIUM---</strong>`
+
+        if (exchangePremium) {
+          ctx.$('#usdCBuy').innerHTML = usdC < 987 ? 'BUY' : usdC > 1020 ? 'SELL' : 'HODL'
+          ctx.$('#cUSDBuy').innerHTML = cUSD < 0.00098 ? 'BUY' : cUSD > 0.00102 ? 'SELL' : 'HODL'
+          ctx.$('#cPremBuy').innerHTML = cPrem < .22 ? 'BUY' : cPrem > 5 ? 'SELL' : 'HODL'
+          ctx.$('#premCBuy').innerHTML = premC < .2 ? 'BUY' : premC > 4.5 ? 'SELL' : 'HODL'
+          ctx.$('#premUSDBuy').innerHTML = premUSD < 0.000285 ? 'BUY' : premUSD > 0.0035 ? 'SELL' : 'HODL'
+          ctx.$('#usdPremBuy').innerHTML = usdPrem < 285 ? 'BUY' : usdPrem > 3500 ? 'SELL' : 'HODL'
+        }
       })
 
       ctx.$('#viewTradeTab').onclick = () => ctx.setState({ exchangeTab: 'trade' })
       ctx.$('#viewSendTab').onclick = () => ctx.setState({ exchangeTab: 'send' })
+      ctx.$('#viewPremiumTab').onclick = () => ctx.setState({ exchangeTab: 'premium' })
+
+      ctx.$('#buyPremium').onclick = () => {
+        if (exchangeCryptoBalance >= 10000) ctx.setUserData({
+          exchangePremium: true,
+          exchangeCryptoBalance: exchangeCryptoBalance - 10000,
+
+        })
+      }
 
 
 
@@ -1643,23 +1741,6 @@ createComponent(
           ctx.$('#sendError').innerHTML = `Message: Secure Payment Transaction (S.P.T.X.) identifier: ${sptx}`
         }, 2000)
 
-        // let vals = {}
-
-
-        // const payAppBalance = usdBalances[payAppUSDAddr] || 0
-
-        // ctx.setUserData({
-        //   exchangeUSDBalance: exchangeUSDBalance - amount
-        // })
-        // // TODO refactor using SPTX
-        // ctx.setState({
-        //   usdBalances: {
-        //     ...usdBalances,
-        //     [recipient]: payAppBalance + amount
-        //   }
-        // })
-
-
         ctx.$('#sendUSDAmount').value = ''
         ctx.$('#sendUSDAddress').value = ''
       }
@@ -1686,70 +1767,110 @@ createComponent(
             return
           }
 
-
-          ctx.receiveSPTX(sptxInput)
           setTimeout(() => {
-            ctx.$('#sptxError').innerHTML = 'success'
-          }, 1000)
+            ctx.receiveSPTX(sptxInput)
+            setTimeout(() => {
+              ctx.$('#sptxError').innerHTML = 'success'
+            }, 1000)
+          }, 4000)
         })
       }
 
-      ctx.$('#buyUSD').onclick = () => {
-        const buy$ = Number(ctx.$('#buyAmount').value)
-        const sellC = buy$ / calcCryptoUSDExchangeRate()
+      ctx.$('#tradeAction').onchange = () => {
+        ctx.$('#tradeOperation').innerHTML =
+          ctx.$('#tradeAction').value === 'buy'
+            ? 'with'
+            : 'for'
 
-        if (sellC > exchangeCryptoBalance) {
-          ctx.$('#tradeError').innerHTML = 'Insufficient Crypto balance to execute transaction'
+      }
+
+      ctx.$('#executeTrade').onclick = () => {
+        const action = ctx.$('#tradeAction').value
+        const amount = Number(ctx.$('#transactionAmount').value)
+
+        const buyCurrency = action === 'buy'
+          ? ctx.$('#currency1').value
+          : ctx.$('#currency2').value
+
+        const sellCurrency = action === 'sell'
+          ? ctx.$('#currency1').value
+          : ctx.$('#currency2').value
+
+
+        const exchangeRates = {
+          usdcrypto: 1/calcCryptoUSDExchangeRate(), // sell usd, buy crypto
+          cryptousd: calcCryptoUSDExchangeRate(), // sell crypto, buy usd
+          cryptopremium: calcCryptoUSDExchangeRate() / calcPremiumCryptoUSDExchangeRate(), // sell crypto, buy premium
+          premiumcrypto: calcCryptoUSDExchangeRate() / calcPremiumCryptoUSDExchangeRate(), // sell premium, buy crypto
+          premiumusd: calcPremiumCryptoUSDExchangeRate(), // sell premium, buy usd
+          usdpremium: 1/calcPremiumCryptoUSDExchangeRate(), // sell usd, buy premium
+        }
+
+        const exchangeRate = exchangeRates[sellCurrency + buyCurrency]
+
+        const sellAmount = action === 'sell'
+          ? amount
+          : amount / exchangeRate
+
+        const buyAmount = action === 'buy'
+          ? amount
+          : amount * exchangeRate
+
+        const sellBalance = {
+          usd: exchangeUSDBalance,
+          crypto: exchangeCryptoBalance,
+          premium: exchangePremiumCryptoBalance,
+        }[sellCurrency]
+
+        const sellSymbol = {
+          usd: '$',
+          crypto: '₢',
+          premium: '₱',
+        }[sellCurrency]
+
+        let cryptoChange = 0, premiumChange = 0, usdChange = 0
+
+        if (buyCurrency === 'crypto') cryptoChange = buyAmount
+        if (buyCurrency === 'premium') premiumChange = buyAmount
+        if (buyCurrency === 'usd') usdChange = buyAmount
+
+        if (sellCurrency === 'crypto') cryptoChange = sellAmount * -1
+        if (sellCurrency === 'premium') premiumChange = sellAmount * -1
+        if (sellCurrency === 'usd') usdChange = sellAmount * -1
+
+
+        if (buyCurrency === sellCurrency) {
+          ctx.$('#tradeError').innerHTML = `Buy currency cannot equal Sell currency`
           return
-        } else if (!buy$ || buy$ < 0) {
-          ctx.$('#tradeError').innerHTML = 'Must Input Positive $ Amount'
+        }
+
+        if (sellAmount > sellBalance) {
+          ctx.$('#tradeError').innerHTML = `Insufficient ${sellSymbol} balance to execute transaction`
           return
-        } else {
-          ctx.$('#tradeError').innerHTML = ''
+        }
+
+        if (!sellAmount || sellAmount < 0) {
+          ctx.$('#tradeError').innerHTML = `Must input positive ${sellSymbol} amount`
+          return
         }
 
         ctx.setUserData({
-          exchangeUSDBalance: exchangeUSDBalance + buy$,
-          exchangeCryptoBalance: exchangeCryptoBalance - sellC
+          exchangeCryptoBalance: exchangeCryptoBalance + cryptoChange,
+          exchangePremiumCryptoBalance: exchangePremiumCryptoBalance + premiumChange,
         })
 
         ctx.setState({
           usdBalances: {
-            ...ctx.state.usdBalances,
-            [exchangeUSDAddr]: exchangeUSDBalance + buy$
+            ...usdBalances,
+            [exchangeUSDAddr]: exchangeUSDBalance + usdChange
           }
         })
 
-        ctx.$('#buyAmount').value = ''
 
-      }
 
-      ctx.$('#sellUSD').onclick = () => {
-        const sell$ = Number(ctx.$('#sellAmount').value)
-        const buyC = sell$ / calcCryptoUSDExchangeRate()
+        ctx.$('#tradeError').innerHTML = ``
+        ctx.$('#transactionAmount').value = ''
 
-        if (sell$ > exchangeUSDBalance) {
-          ctx.$('#tradeError').innerHTML = '$ Amount Exceeds Account Balance'
-          return
-        } else if (!sell$ || sell$ < 0) {
-          ctx.$('#tradeError').innerHTML = 'Must Input Positive $ Amount'
-          return
-        } else {
-          ctx.$('#tradeError').innerHTML = ''
-        }
-
-        ctx.setUserData({
-          exchangeCryptoBalance: exchangeCryptoBalance + buyC
-        })
-
-        ctx.setState({
-          usdBalances: {
-            ...ctx.state.usdBalances,
-            [payment.recipient]: exchangeUSDBalance - sell$
-          }
-        })
-
-        ctx.$('#buyAmount').value = ''
       }
 
       ctx.$('#home').onclick = () => {
