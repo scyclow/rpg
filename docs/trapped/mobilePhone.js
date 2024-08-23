@@ -1160,7 +1160,7 @@ createComponent(
           <div class="deviceData">
             <h5>Device ID: 49-222999-716-2580</h5>
             <h5>User: ${userNames[currentUser]} (${currentUser})</h5>
-            <h5>OS Version: ${window.GAME_VERSION}</h5>
+            <h5>OS Version: ${window.GAME_VERSION}.1</h5>
             <h5><a href="https://steviep.xyz" target="_blank">stevie.xyz</a> [2024]</h5>
           </div>
 
@@ -1293,6 +1293,7 @@ createComponent(
 
       const mainInterface = `
         <button id="offOn">${lampOn ? 'Turn Off' : 'Turn On'}</button>
+        <div>${jbMarkup(globalState.cryptoDevices.lumin)}</div>
       `
 
       ctx.$phoneContent.innerHTML = `
@@ -1311,6 +1312,8 @@ createComponent(
       if (ctx.$('#pairLumin')) ctx.$('#pairLumin').onclick = () => {
         ctx.setState({ luminPaired: true })
       }
+
+      jbBehavior(ctx, globalState.cryptoDevices.lumin, 300)
 
       if (ctx.$('#offOn')) ctx.$('#offOn').onclick = () => {
 
@@ -2036,7 +2039,14 @@ createComponent(
     } else if (screen === 'toastr') {
 
       const mainInterface = globalState.wifiActive
-        ? `<h3 class="blink">Loading Interface</h3>`
+        ? `
+          <div>
+            <input placeholder="Username">
+            <input placeholder="Password" type="password">
+            <button disabled>Login</button>
+          </div>
+          <div>${jbMarkup(globalState.cryptoDevices.toastr)}</div>
+        `
         : `<h3>Device Error: ERROR: Cannot connect to server.</h3>`
 
       ctx.$phoneContent.innerHTML = `
@@ -2050,6 +2060,10 @@ createComponent(
           }
         </div>
       `
+
+
+      jbBehavior(ctx, globalState.cryptoDevices.toastr, 300)
+
 
       if (ctx.$('#pairToaster')) ctx.$('#pairToaster').onclick = () => {
         ctx.setState({ toasterPaired: true })
@@ -2071,11 +2085,6 @@ createComponent(
           <input id="planterDeviceCode" placeholder="Device Code"><button id="pairPlanter" style="margin-left: 0.25em">Pair Device</button>
         `
 
-      const globalPlanter = globalState.cryptoDevices.planter
-
-
-      const jailbreakInterface = jbiMarkup(globalPlanter)
-
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -2083,12 +2092,12 @@ createComponent(
           <h2>SmartPlanter</h2>
           ${mainInterface}
           <h4 id="error"><h4>
-          ${jailbrokenApps.planter && planterPaired ? jailbreakInterface : ''}
+          ${jailbrokenApps.planter && planterPaired ? jbMarkup(globalState.cryptoDevices.planter) : ''}
         </div>
       `
 
-      jbBehavior(ctx, globalPlanter, 2, () => {
-        if (ctx.state.plantStatus > 0 && globalPlanter.totalTime > 20) {
+      jbBehavior(ctx, globalState.cryptoDevices.planter, 100, () => {
+        if (ctx.state.plantStatus > 0 && globalState.cryptoDevices.planter.totalTime > 20) {
           ctx.setState({ plantStatus: 0 })
         }
       })
@@ -2157,7 +2166,7 @@ createComponent(
               <h4>Active User Profile: <span id="activeUserProfile">${userNames[currentUser]} (${currentUser})</span></h4>
               <h4>Admin Access: <span id="adminAccess">${Number(currentUser) === Number(rootUser) ? 'Granted' : 'Denied'}</span></h4>
               <h4>Device ID: 49-222999-716-2580</h4>
-              <h4>OS: MPX ${window.GAME_VERSION}</h4>
+              <h4>OS: MPX ${window.GAME_VERSION}.1</h4>
               <br>
               <br>
             `]})
@@ -2331,8 +2340,12 @@ createComponent(
             <h3>Appłÿ bīnary tø åpplicåtiôn:</h3>
             <h3>2.</h3>
           </div>
-          <div id="binaryApply">
-            <button id="appMarket">App Market</button><button id="phoneApp">Phone App</button><button id="textMessage">Text Messages${unreadTextCount ? ` (${unreadTextCount})` : ''}</button><button id="settings">Settings</button><button id="network">Network & Internet</button>${appsInstalled.map(a => `<button id="${a.key}" class="${a.jailbreakr ? 'jailbreakr' : ''}">${a.name}</button>`).join('')}
+          <div id="binaryApply" style="text-align: right">
+            <button id="appMarket">App Market</button><button id="phoneApp">Phone App</button><button id="textMessage">Text Messages${unreadTextCount ? ` (${unreadTextCount})` : ''}</button><button id="settings">Settings</button><button id="network">Network & Internet</button>${appsInstalled.map(a => `<button id="${a.key}" class="${a.jailbreakr ? 'jailbreakr' : ''}">${a.name + (
+                globalState.cryptoDevices[a.key]
+                ? ` (${globalState.cryptoDevices[a.key].ram}gb RAM)`
+                : ''
+              )}</button>`).join('')}
           </div>
           <h4 id="error"></h4>
 
@@ -2420,7 +2433,7 @@ createComponent(
 
 // TODO can't really send crypto to this wallet, or else it will get blown away
 // maybe the sendCrypto function should add it to the global device balance if it exists
-function jbiMarkup(device) {
+function jbMarkup(device) {
 
   const balance = device.balance
   return `
