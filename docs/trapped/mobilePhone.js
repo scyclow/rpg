@@ -69,6 +69,8 @@ TODO
 
 
 const state = persist('__MOBILE_STATE', {
+  devMode: false,
+  fastMode: false,
   started: false,
   screen: 'loading',
   internet: 'wifi',
@@ -152,13 +154,14 @@ createComponent(
         font-size: 0.75em;
         color: #fff;
         background: #5a5a5a;
+        user-select: none;
       }
 
       a, a:visited {
         color: #00f
       }
 
-      button, select {
+      button, select, label {
         cursor: pointer;
       }
 
@@ -416,7 +419,7 @@ createComponent(
       ctx.setState({ screen: 'loading', started: true})
       setTimeout(() => {
         ctx.setState({ screen: 'login' })
-      }, 8000)
+      }, ctx.state.fastMode ? 0 : 8000)
     }
 
     ctx.phoneNotifications = () => ctx.state.userData[ctx.state.currentUser].textMessages.reduce((a, c) => c.read ? a : a + 1, 0)
@@ -564,7 +567,8 @@ createComponent(
       lampOn,
       usdBalances,
       cryptoBalances,
-      jailbrokenApps
+      jailbrokenApps,
+      devMode
     } = ctx.state
 
     const currentUserData = userData[currentUser]
@@ -726,7 +730,7 @@ createComponent(
         })
         setTimeout(() => {
           ctx.setState({ screen: 'home' })
-        }, 4000)
+        }, ctx.state.fastMode ? 0 : 4000)
       }
 
     } else if (screen === 'home') {
@@ -761,7 +765,7 @@ createComponent(
         ctx.setState({ screen: 'loading' })
         setTimeout(() => {
           ctx.setState({ screen: 'login' })
-        }, 4000)
+        }, ctx.state.fastMode ? 0 : 4000)
       }
 
     } else if (screen === 'appMarket') {
@@ -845,7 +849,7 @@ createComponent(
               setTimeout(() => {
                 // clearInterval(interval)
                 if (ctx.$('#appContent')) ctx.$('#appContent').innerHTML = `<h4>Successfully downloaded: ${a.name}!</h4>`
-              }, 2700)
+              }, ctx.state.fastMode ? 0 : 2700)
               setTimeout(() => {
                 ctx.setState({
                   appMarketPreSearch: '',
@@ -857,7 +861,7 @@ createComponent(
                     }
                   }
                 })
-              }, 3300)
+              }, ctx.state.fastMode ? 0 : 3300)
             }
           })
 
@@ -893,6 +897,7 @@ createComponent(
                     <option value="CapitalC">CapitalC</option>
                     <option value="ClickToAddNetwork">ClickToAddNetwork</option>
                     <option value="ElectricLadyLand" ${inInternetLocation && wifiNetwork === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
+                    <option value="Free-WiFi">Free-WiFi</option>
                     ${globalState.routerReset ? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetwork === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
                     <option value="ISP-Default-89s22D">ISP-Default-89s22D</option>
                     <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
@@ -1133,7 +1138,7 @@ createComponent(
           return
         }
         if (amount > usdBalance) {
-          $sptx.innerHTML = `INVALID AMOUNT`
+          $sptx.innerHTML = `INSUFFICIENT BALANCE`
           return
         }
 
@@ -1156,16 +1161,118 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <button id="bluetooth">${bluetoothEnabled ? 'Disable' : 'Enable'} Bluetooth</button>
+          <button id="bluetooth">${bluetoothEnabled ? 'Disable' : 'Enable'} Bluetooth ®</button>
           <div class="deviceData">
             <h5>Device ID: 49-222999-716-2580</h5>
-            <h5>User: ${userNames[currentUser]} (${currentUser})</h5>
-            <h5>OS Version: ${window.GAME_VERSION}.1</h5>
+            <h5>User: ${userNames[currentUser]}</h5>
+            <h5 id="versionNumber">OS Version: ${window.GAME_VERSION}.1</h5>
             <h5><a href="https://steviep.xyz" target="_blank">stevie.xyz</a> [2024]</h5>
           </div>
+          ${devMode
+            ? `
+              <div style="margin-top: 0.5em; padding: 0.5em; border: 1px solid">
+                <h3>Dev Mode</h3>
+                <div>
+                  <label><input id="fastMode" type="checkbox" ${ctx.state.fastMode ? 'checked' : ''}> fast mode</label>
+                </div>
+                <div>
+                  <label><input id="activateWiFi" type="checkbox" ${globalState.wifiActive ? 'checked' : ''}> wifi activated</label>
+                </div>
+                <div>
+                  <label><input id="connectData" type="checkbox" ${dataPlanActivated ? 'checked' : ''}> data connected</label>
+                </div>
+                <div>
+                  <label><input id="getPremium" type="checkbox" ${exchangePremium ? 'checked' : ''}> exchange premium</label>
+                </div>
+                <div><input id="exchangeUSD" placeholder="exchange $"> <button id="setExchangeUSD">Set</button></div>
+                <div><input id="exchangeC" placeholder="exchange ₢"> <button id="setExchangeC">Set</button></div>
+                <div><input id="exchangeP" placeholder="exchange ₱"> <button id="setExchangeP">Set</button></div>
+                <div><input id="payappUSD" placeholder="payapp $"> <button id="setPayappUSD">Set</button></div>
+                <div><input placeholder="admin account"> <button>Set</button></div>
+                <button id="dlJB">Download JailBreaker</button>
+
+                <table>
+                  <tr>
+                    <td>ISP:</td>
+                    <td>1.800.555.2093</td>
+                  </tr>
+                  <tr>
+                    <td>Billing:</td>
+                    <td>1.888.555.9483</td>
+                  </tr>
+                  <tr>
+                    <td>Dispute:</td>
+                    <td>1.800.777.0836</td>
+                  </tr>
+                  <tr>
+                    <td>SSO:</td>
+                    <td>1.818.222.5379</td>
+                  </tr>
+                  <tr>
+                    <td>TurboConnect:</td>
+                    <td>1.800.444.3830</td>
+                  </tr>
+                  <tr>
+                    <td>ISP recipient addr:</td>
+                    <td style="word-break: break-word">0x4b258603257460d480c929af5f7b83e8c4279b7b</td>
+                  </tr>
+                </table>
+
+              </div>
+            `
+            : ''
+          }
 
         </div>
       `
+
+      let versionTaps = 0
+      ctx.$('#versionNumber').onclick = () => {
+        versionTaps++
+        if (versionTaps >= 7) {
+          ctx.setState({ devMode: true })
+        }
+      }
+
+      if (devMode) {
+        ctx.$('#dlJB').onclick = () => {
+          if (!ctx.state.userData[currentUser].appsInstalled.some(a => a.key === 'jailbreak')) {
+            ctx.state.userData[currentUser].appsInstalled.push({ name: 'JAILBREAKR', key: 'jailbreak', size: 128, price: 0, jailbreakr: true })
+          }
+        }
+
+        ctx.$('#fastMode').onclick = () => {
+          ctx.setState({
+            fastMode: ctx.$('#fastMode').checked
+          })
+        }
+        ctx.$('#connectData').onclick = () => {
+          ctx.setState({
+            dataPlanActivated: ctx.$('#connectData').checked,
+            internet: 'data'
+          })
+        }
+        ctx.$('#activateWiFi').onclick = () => {
+          globalState.wifiActive = ctx.$('#activateWiFi').checked
+        }
+        ctx.$('#getPremium').onclick = () => {
+          ctx.state.userData[currentUser].exchangePremium = ctx.$('#getPremium').checked
+        }
+
+        ctx.$('#setExchangeUSD').onclick = () => {
+          ctx.state.usdBalances[exchangeUSDAddr] = ctx.$('#exchangeUSD').value
+        }
+        ctx.$('#setExchangeC').onclick = () => {
+          ctx.state.userData[currentUser].exchangeCryptoBalance = ctx.$('#exchangeC').value
+        }
+        ctx.$('#setExchangeP').onclick = () => {
+          ctx.state.userData[currentUser].exchangePremiumCryptoBalance = ctx.$('#exchangeP').value
+        }
+        ctx.$('#setPayappUSD').onclick = () => {
+          ctx.state.usdBalances[payAppUSDAddr] = ctx.$('#payappUSD').value
+        }
+
+      }
 
       ctx.$('#bluetooth').onclick = () => {
         ctx.setState({ bluetoothEnabled: !bluetoothEnabled })
@@ -1293,7 +1400,7 @@ createComponent(
 
       const mainInterface = `
         <button id="offOn">${lampOn ? 'Turn Off' : 'Turn On'}</button>
-        <div>${jbMarkup(globalState.cryptoDevices.lumin)}</div>
+        <div>${jailbrokenApps.lumin ? jbMarkup(globalState.cryptoDevices.lumin) : ''}</div>
       `
 
       ctx.$phoneContent.innerHTML = `
@@ -1598,13 +1705,16 @@ createComponent(
             </div>
 
             <div style="margin: 0.6em 0; ${exchangeTab === 'send' ? '' : 'display: none'}">
-              <h4 style="margin: 0.4em 0">Send Funds</h4>
-              <input id="sendCryptoAddress" placeholder="₢rypto Address" style="width: 90%; margin-bottom: 0.4em">
-              <input id="sendCryptoAmount" placeholder="₢ 0.00" type="number" style="width: 6em"> <button id="sendCrypto">SEND ₢</button>
+              <div>
+                <h4 style="margin: 0.4em 0">Send Funds</h4>
+                <input id="sendCryptoAddress" placeholder="₢rypto Address" style="width: 90%; margin-bottom: 0.4em">
+                <input id="sendCryptoAmount" placeholder="₢ 0.00" type="number" style="width: 6em"> <button id="sendCrypto" style="margin-bottom: 0.1em">SEND ₢</button>
+                <h6 id="sendCryptoError" style="display: inline-block; margin-bottom: 0.75em"></h6>
+              </div>
 
-              <input id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin-bottom: 0.4em">
-              <input id="sendUSDAmount" placeholder="$ 0.00" type="number" style="width: 6em"> <button id="sendUSD">SEND $</button>
-              <h4 id="sendError"></h4>
+              <input id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin: 0.4em 0">
+              <input id="sendUSDAmount" placeholder="$ 0.00" type="number" style="width: 6em"> <button id="sendUSD" style="margin-bottom: 0.1em">SEND $</button>
+              <h6>SPTX: <span id="sendUSDError">ERROR: Invalid Amount</span></h6>
               <h4 style="margin: 0.4em 0">Receive $</h4>
               <h5 style="border: 1px dotted; text-align: center; padding: 0.25em">${exchangeUSDAddr}</h5>
               <input id="sptxInput" placeholder="SPTX" type="number" style="width: 11em"> <button id="receiveSPTX">PROCESS</button>
@@ -1699,13 +1809,13 @@ createComponent(
         const recipient = ctx.$('#sendCryptoAddress').value
 
         if (amount > exchangeCryptoBalance) {
-          ctx.$('#sendError').innerHTML = 'Amount EXCEEDS Current Balance'
+          ctx.$('#sendCryptoError').innerHTML = 'Amount EXCEEDS Current Balance'
           return
         } else if (!amount || amount < 0) {
-          ctx.$('#sendError').innerHTML = 'Invalid Amount'
+          ctx.$('#sendCryptoError').innerHTML = 'Invalid Amount'
           return
         } else {
-          ctx.$('#sendError').innerHTML = ''
+          ctx.$('#sendCryptoError').innerHTML = ''
         }
 
         ctx.sendCrypto(
@@ -1722,21 +1832,21 @@ createComponent(
         const recipient = ctx.$('#sendUSDAddress').value
 
         if (amount > exchangeUSDBalance) {
-          ctx.$('#sendError').innerHTML = 'Amount EXCEEDS Current Balance'
+          ctx.$('#sendUSDError').innerHTML = 'ERROR: Amount EXCEEDS Current Balance'
           return
         } else if (!amount || amount < 0) {
-          ctx.$('#sendError').innerHTML = 'Invalid Amount'
+          ctx.$('#sendUSDError').innerHTML = 'ERROR: Invalid Amount'
           return
         } else {
-          ctx.$('#sendError').innerHTML = ''
+          ctx.$('#sendUSDError').innerHTML = ''
 
         }
 
-        ctx.$('#sendError').innerHTML = 'Processing [DO NOT RELOAD PAGE]'
+        ctx.$('#sendUSDError').innerHTML = 'Processing [DO NOT RELOAD PAGE]'
 
         if (recipient === '0x4b258603257460d480c929af5f7b83e8c4279b7b') {
           setTimeout(() => {
-            ctx.$('#sendError').innerHTML = `PROCESSING ERROR: Recipient outside payment network`
+            ctx.$('#sendUSDError').innerHTML = `PROCESSING ERROR: Recipient outside payment network`
           }, 2000)
           return
         }
@@ -1747,7 +1857,7 @@ createComponent(
           amount
         })
         setTimeout(() => {
-          ctx.$('#sendError').innerHTML = `Message: Secure Payment Transaction (S.P.T.X.) identifier: ${sptx}`
+          ctx.$('#sendUSDError').innerHTML = `Message: Secure Payment Transaction (S.P.T.X.) identifier: ${sptx}`
         }, 2000)
 
         ctx.$('#sendUSDAmount').value = ''
@@ -2045,7 +2155,7 @@ createComponent(
             <input placeholder="Password" type="password">
             <button disabled>Login</button>
           </div>
-          <div>${jbMarkup(globalState.cryptoDevices.toastr)}</div>
+          <div>${jailbrokenApps.toastr ? jbMarkup(globalState.cryptoDevices.toastr) : ''}</div>
         `
         : `<h3>Device Error: ERROR: Cannot connect to server.</h3>`
 
@@ -2164,6 +2274,7 @@ createComponent(
           setTimeout(() => {
             ctx.setState({exeCommands: [...ctx.state.exeCommands, `
               <h4>Active User Profile: <span id="activeUserProfile">${userNames[currentUser]} (${currentUser})</span></h4>
+              <h4>Active UserID: <span id="activeUserID">${currentUser}</span></h4>
               <h4>Admin Access: <span id="adminAccess">${Number(currentUser) === Number(rootUser) ? 'Granted' : 'Denied'}</span></h4>
               <h4>Device ID: 49-222999-716-2580</h4>
               <h4>OS: MPX ${window.GAME_VERSION}.1</h4>
@@ -2186,7 +2297,8 @@ createComponent(
       $ranCommands.innerHTML = ctx.state.exeCommands.join('')
       $ranCommands.scrollTop = $ranCommands.scrollHeight
 
-      if (ctx.$('#activeUserProfile')) ctx.$('#activeUserProfile').innerHTML = `${userNames[currentUser]} (${currentUser})`
+      if (ctx.$('#activeUserProfile')) ctx.$('#activeUserProfile').innerHTML = `${userNames[currentUser]}`
+      if (ctx.$('#activeUserID')) ctx.$('#activeUserID').innerHTML = currentUser
       if (ctx.$('#adminAccess')) ctx.$('#adminAccess').innerHTML = Number(currentUser) === Number(rootUser) ? 'Granted' : 'Denied'
 
 
@@ -2310,6 +2422,8 @@ createComponent(
 
                 }
               }
+            } else {
+              commandDisplay = `${fn}: command not found`
             }
           }
 

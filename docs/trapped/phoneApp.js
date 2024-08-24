@@ -240,6 +240,7 @@ function phoneMarkup() {
         outline: 0.5px solid #888;
         padding: 0.5em;
         cursor: pointer;
+        user-select: none;
       }
 
       .key:hover {
@@ -348,7 +349,7 @@ function phoneBehavior(ctx) {
 
       // ISP
       if (dialed === '18005552093') {
-        await phone.ringTone(3)
+        await phone.ringTone(ctx.state.fastMode ? 0 : 3)
 
         if (!phone.live) return
 
@@ -378,7 +379,7 @@ function phoneBehavior(ctx) {
 
       // ISP Billing
       else if (dialed === '18885559483') {
-        await phone.ringTone(1)
+        await phone.ringTone(ctx.state.fastMode ? 0 : 1)
 
         if (!phone.live) return
 
@@ -406,7 +407,7 @@ function phoneBehavior(ctx) {
 
       // Billing dispute resolution administrator
       else if (dialed === '18007770836') {
-        await phone.ringTone(4)
+        await phone.ringTone(ctx.state.fastMode ? 0 : 4)
 
         if (!phone.live) return
 
@@ -437,7 +438,7 @@ function phoneBehavior(ctx) {
 
       // SSO
       else if (dialed === '18182225379') {
-        await phone.ringTone(1)
+        await phone.ringTone(ctx.state.fastMode ? 0 : 1)
 
         if (!phone.live) return
 
@@ -473,7 +474,7 @@ function phoneBehavior(ctx) {
 
       // TurboConnect
       else if (dialed === '18004443830') {
-        await phone.ringTone(2)
+        await phone.ringTone(ctx.state.fastMode ? 0 : 2)
 
         if (!phone.live) return
 
@@ -508,7 +509,7 @@ function phoneBehavior(ctx) {
       }
 
       else if (dialed.length === 11) {
-        await phone.ringTone(40)
+        await phone.ringTone(ctx.state.fastMode ? 0 : 40)
       }
     },
     (id) => ctx.$(`#${id}`)

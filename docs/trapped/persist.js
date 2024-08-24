@@ -19,7 +19,6 @@ export function createDeepProxy(target, cb) {
 
 export function persist(lsKey, init={}) {
   const ctx = ls.get(lsKey) || init
-  console.log(ctx, init)
 
   const set = () => {
     ls.set(lsKey, JSON.stringify(ctx))
