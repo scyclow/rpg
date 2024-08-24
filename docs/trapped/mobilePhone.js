@@ -1184,10 +1184,13 @@ createComponent(
                 <div>
                   <label><input id="getPremium" type="checkbox" ${exchangePremium ? 'checked' : ''}> exchange premium</label>
                 </div>
-                <div><input id="exchangeUSD" placeholder="exchange $"> <button id="setExchangeUSD">Set</button></div>
-                <div><input id="exchangeC" placeholder="exchange ₢"> <button id="setExchangeC">Set</button></div>
-                <div><input id="exchangeP" placeholder="exchange ₱"> <button id="setExchangeP">Set</button></div>
-                <div><input id="payappUSD" placeholder="payapp $"> <button id="setPayappUSD">Set</button></div>
+                <div>
+                  <label><input id="pauseCurrency" type="checkbox" ${globalState.pauseCurrency ? 'checked' : ''}> pause currency</label>
+                </div>
+                <div><input id="exchangeUSD" type="number" placeholder="exchange $"> <button id="setExchangeUSD">Set</button></div>
+                <div><input id="exchangeC" type="number" placeholder="exchange ₢"> <button id="setExchangeC">Set</button></div>
+                <div><input id="exchangeP" type="number" placeholder="exchange ₱"> <button id="setExchangeP">Set</button></div>
+                <div><input id="payappUSD" type="number" placeholder="payapp $"> <button id="setPayappUSD">Set</button></div>
                 <div><input placeholder="admin account"> <button>Set</button></div>
                 <button id="dlJB">Download JailBreaker</button>
 
@@ -1258,18 +1261,21 @@ createComponent(
         ctx.$('#getPremium').onclick = () => {
           ctx.state.userData[currentUser].exchangePremium = ctx.$('#getPremium').checked
         }
+        ctx.$('#pauseCurrency').onclick = () => {
+          globalState.pauseCurrency = ctx.$('#pauseCurrency').checked
+        }
 
         ctx.$('#setExchangeUSD').onclick = () => {
-          ctx.state.usdBalances[exchangeUSDAddr] = ctx.$('#exchangeUSD').value
+          ctx.state.usdBalances[exchangeUSDAddr] = Number(ctx.$('#exchangeUSD').value)
         }
         ctx.$('#setExchangeC').onclick = () => {
-          ctx.state.userData[currentUser].exchangeCryptoBalance = ctx.$('#exchangeC').value
+          ctx.state.userData[currentUser].exchangeCryptoBalance = Number(ctx.$('#exchangeC').value)
         }
         ctx.$('#setExchangeP').onclick = () => {
-          ctx.state.userData[currentUser].exchangePremiumCryptoBalance = ctx.$('#exchangeP').value
+          ctx.state.userData[currentUser].exchangePremiumCryptoBalance = Number(ctx.$('#exchangeP').value)
         }
         ctx.$('#setPayappUSD').onclick = () => {
-          ctx.state.usdBalances[payAppUSDAddr] = ctx.$('#payappUSD').value
+          ctx.state.usdBalances[payAppUSDAddr] = Number(ctx.$('#payappUSD').value)
         }
 
       }
@@ -1758,7 +1764,7 @@ createComponent(
 
 
         ctx.$('#timeRemaining').innerHTML = 60 - seconds
-        if (Math.random() < 0.1)  {
+        if (Math.random() < 0.1 && !globalState.pauseCurrency)  {
           ctx.$('#tempAddr').innerHTML = 'ERROR: Invalid signing key'
         } else if (ctx.$('#tempAddr').innerHTML.includes('ERROR') || seconds < 2) {
           ctx.$('#tempAddr').innerHTML = calcAddr(currentUser)
@@ -1920,12 +1926,13 @@ createComponent(
           usdcrypto: 1/calcCryptoUSDExchangeRate(), // sell usd, buy crypto
           cryptousd: calcCryptoUSDExchangeRate(), // sell crypto, buy usd
           cryptopremium: calcCryptoUSDExchangeRate() / calcPremiumCryptoUSDExchangeRate(), // sell crypto, buy premium
-          premiumcrypto: calcCryptoUSDExchangeRate() / calcPremiumCryptoUSDExchangeRate(), // sell premium, buy crypto
+          premiumcrypto: calcPremiumCryptoUSDExchangeRate() / calcCryptoUSDExchangeRate(), // sell premium, buy crypto
           premiumusd: calcPremiumCryptoUSDExchangeRate(), // sell premium, buy usd
           usdpremium: 1/calcPremiumCryptoUSDExchangeRate(), // sell usd, buy premium
         }
 
         const exchangeRate = exchangeRates[sellCurrency + buyCurrency]
+
 
         const sellAmount = action === 'sell'
           ? amount
@@ -1956,7 +1963,6 @@ createComponent(
         if (sellCurrency === 'crypto') cryptoChange = sellAmount * -1
         if (sellCurrency === 'premium') premiumChange = sellAmount * -1
         if (sellCurrency === 'usd') usdChange = sellAmount * -1
-
 
         if (buyCurrency === sellCurrency) {
           ctx.$('#tradeError').innerHTML = `Buy currency cannot equal Sell currency`

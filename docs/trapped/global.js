@@ -19,6 +19,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   eventLoopDuration: 1000,
   totalAccountsCreated: 1,
   defaultUnlocked: false,
+  pauseCurrency: false,
   cryptoDevices: {
     planter: newCryptoDevice(4),
     lumin: newCryptoDevice(1),
@@ -110,23 +111,27 @@ export function rndAddr() {
   )
 }
 
+// 1 Crypto === X USD
 export const calcCryptoUSDExchangeRate = () => {
   const base = 0.001
-  const cycle = Math.sin(Date.now()/8000)
+  const cycle = globalState.pauseCurrency ? 1 : Math.sin(Date.now()/8000)
+  const rand = globalState.pauseCurrency ? 1 : globalState.rand
 
   const modifier = (1 + cycle / 10)
 
-  return base + (cycle / 30000) + (globalState.rand - 0.5)/80000
+  return base + (cycle / 30000) + (rand - 0.5)/80000
 }
 
 
+// 1 Prem === X Crypto
 export const calcPremiumCryptoUSDExchangeRate = () => {
   const base = 0.001
-  const cycle = Math.sin(Date.now()/40000)
+  const cycle = globalState.pauseCurrency ? 1 : Math.sin(Date.now()/40000)
+  const rand = globalState.pauseCurrency ? 1 : globalState.rand
 
   const modifier = (1.45 + cycle) ** 2
 
-  return (base / modifier) * (0.85 + globalState.rand * 0.3)
+  return (base / modifier) * (0.85 + rand * 0.3)
 }
 
 
