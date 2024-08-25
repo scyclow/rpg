@@ -135,7 +135,7 @@
   /*
 
     TODO
-
+      kitchen sink/bethroom sink spit out cold water when you have internet
 
 
   */
@@ -508,7 +508,26 @@
       // TODO update if dead
 
       planter: {
-        text: `You check your plants. The leaves sag from a lack of light${globalState.plantWatered ? '' : ' and water'}. On the side of the pot you read: "SmartPlanter<sup>TM</sup> - The quick and easy way to conveniently water your plants! Download our app in the AppMarket. DEVICE CODE: F93892O30249B48"`
+        text: () => {
+          let txt
+          if (globalState.plantsDead) {
+            txt = `They're dead.`
+
+          } else if (globalState.shaydOpen && globalState.plantWatered) {
+            txt = `They're thriving!`
+
+          } else if (globalState.shaydOpen && !globalState.plantWatered) {
+            txt = `The leaves sag from a lack of water.`
+
+          } else if (!globalState.shaydOpen && globalState.plantWatered) {
+            txt = `The leaves sag from a lack of sunlight.`
+
+          } else if (!globalState.shaydOpen && !globalState.plantWatered) {
+            txt = `The leaves sag from a lack of water and sunlight.`
+          }
+
+          return `You check your plants. ${txt} On the side of the pot you read: "SmartPlanter<sup>TM</sup> - The quick and easy way to conveniently water your plants! Download our app in the AppMarket. DEVICE CODE: F93892O30249B48"`
+        }
       },
 
       livingRoomWindow: {
@@ -580,6 +599,13 @@
       },
       unplugRouter: {
         text: `You unplug the router. The Power, Internet, and WiFi lights immediately turn off`,
+        follow() {
+          globalState.routerUnplugged = true
+          Object.values(globalState.cryptoDevices).forEach(device => {
+            device.active = false
+            clearInterval(device.interval)
+          })
+        },
         wait: 0
       },
 
@@ -587,6 +613,7 @@
         text: ({ctx}) => `You plug the router back in. The Power, Internet, and WiFi lights all turn off for one second, turn back on for one second, and blink for three seconds${globalState.routerReset ? ' before returning to their original states.' : '. The WiFi light is now on.'}`,
         wait: 0,
         follow() {
+          globalState.routerUnplugged = false
           globalState.routerReset = true
         }
       },
@@ -882,9 +909,9 @@
     } else if (globalState.lightsOn) {
       setColor('--bg-color', '#fff')
       setColor('--primary-color', '#000')
-    } else {
-      setColor('--bg-color', 'var(--dark-color)')
-      setColor('--primary-color', 'var(--light-color)')
+    } else if (globalState.shaydOpen) {
+      setColor('--bg-color', 'var(--light-color)')
+      setColor('--primary-color', 'var(--dark-color)')
     }
 
 

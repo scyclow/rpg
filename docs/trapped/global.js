@@ -6,6 +6,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   location: 'nothing',
   idVerifierUpdate: Date.now(),
   routerReset: false,
+  routerUnplugged: false,
   lightsOn: false,
   rand: Math.random(),
   wifiActive: false,
@@ -13,6 +14,8 @@ export const globalState = persist('__GLOBAL_STATE', {
   rentBalance: 6437.98,
   ispBalance: 0.37,
   plantWatered: false,
+  plantsDead: false,
+  shaydOpen: false,
   payments: {},
   eventLog: [],
   eventLoopStartTime: Date.now(),
@@ -21,15 +24,16 @@ export const globalState = persist('__GLOBAL_STATE', {
   defaultUnlocked: false,
   pauseCurrency: false,
   cryptoDevices: {
-    planter: newCryptoDevice(4),
+    planter: newCryptoDevice(8),
+    freeze: newCryptoDevice(8),
+    toastr: newCryptoDevice(4),
     lumin: newCryptoDevice(1),
-    toastr: newCryptoDevice(1),
-    // bathe
-    // shayd
-    // refrigerator
+    shayd: newCryptoDevice(1),
+    lock: newCryptoDevice(1),
   },
 
 })
+
 
 window.globalState = globalState
 

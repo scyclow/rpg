@@ -10,12 +10,26 @@ import {createSource, MAX_VOLUME} from './audio.js'
 
 
 const APPS = [
+
+// needs name/IRL callout
+  // TV
+  // ebook
+  // thermostat
+  // fridge (freezelocker)
+  // elevate
+
+// needs building
+  // bathe
+  // toastr (login, default toast posts)
+  // alarm
+  // shayd
+  // security camera
   { name: 'Alarm', key: 'alarm', size: 128, price: 1 },
   { name: 'Bathe', key: 'bathe', size: 128, price: 1 },
-  { name: 'CryptoMinerPlus', key: 'alarm', size: 128, price: 1 },
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
-  { name: 'Elevate', key: 'elevate', size: 128, price: 1 },
+  // { name: 'Elevate', key: 'elevate', size: 128, price: 1 },
   { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
+  { name: 'FreezeLocker', key: 'freeze', size: 128, price: 0 },
   { name: 'Identity Verfier', key: 'idVerifier', size: 128, price: 0 },
   { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
   { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
@@ -24,7 +38,7 @@ const APPS = [
   { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
   { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
-  { name: 'Shayd', key: 'shayd', size: 128, price: 1 },
+  { name: 'Shayd', key: 'shayd', size: 128, price: 0 },
   { name: 'SmartLock', key: 'lock', size: 128, price: 0 },
   { name: 'SmartPlanter', key: 'planter', size: 256, price: 0 },
   { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: 1 },
@@ -587,7 +601,8 @@ createComponent(
 
 
     const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
-    const wifiConnected = internet === 'wifi' && wifiNetwork && inInternetLocation
+    const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged
+    const wifiConnected = internet === 'wifi' && wifiNetwork && inInternetLocation && wifiAvailable
     const dataConnected = internet === 'data' && dataPlanActivated && inInternetLocation
     const hasInternet = dataConnected || wifiConnected
 
@@ -886,7 +901,7 @@ createComponent(
           <div class="phoneScreen">
             <button id="home">Back</button>
             <button id="data">Switch to Data</button>
-            <h3>Current Network: ${wifiNetwork ? 'InpatientRehabilitationServices' : 'null'}</h3>
+            <h3>Current Network: ${wifiNetwork || 'null'}</h3>
             ${
               bluetoothEnabled
                 ? `
@@ -898,7 +913,7 @@ createComponent(
                     <option value="ClickToAddNetwork">ClickToAddNetwork</option>
                     <option value="ElectricLadyLand" ${inInternetLocation && wifiNetwork === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
                     <option value="Free-WiFi">Free-WiFi</option>
-                    ${globalState.routerReset ? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetwork === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
+                    ${globalState.routerReset && !globalState.routerUnplugged? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetwork === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
                     <option value="ISP-Default-89s22D">ISP-Default-89s22D</option>
                     <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
                     <option value="NewNetwork">NewNetwork</option>
@@ -907,7 +922,7 @@ createComponent(
                   <input id="networkPassword" placeholder="password" type="password">
                   <button id="connect">Connect</button>
                 `
-                : `<h3>Please enable Bluetooth in your device Settings to view available networks</h3>`
+                : `<h3>${inInternetLocation ? 'Please enable Bluetooth in your device Settings to view available networks' : 'Cannot find networks'}</h3>`
             }
 
             <h3 id="error"></h3>
@@ -921,14 +936,15 @@ createComponent(
           const networkName = ctx.$('#networkName').value
           const networkPassword = ctx.$('#networkPassword').value
 
+          ctx.$('#error').innerHTML = 'Connecting...'
+
           if (
             (networkName === 'InpatientRehabilitationServices' && networkPassword === 'StompLookAndListen123')
             || (networkName === 'ElectricLadyLand' && networkPassword === 'CrosstownTraffic007')
           ) {
-            ctx.$('#error').innerHTML = 'Connecting...'
 
             setTimeout(() => {
-              if (globalState.wifiActive) {
+              if (globalState.wifiActive || networkName === 'ElectricLadyLand') {
                 ctx.$('#error').innerHTML = 'Success!'
                 setTimeout(() => {
                   ctx.setState({ wifiNetwork: networkName })
@@ -939,7 +955,6 @@ createComponent(
             }, 3000)
 
           } else {
-            ctx.$('#error').innerHTML = 'Connecting...'
             setTimeout(() => {
               ctx.$('#error').innerHTML = 'Incorrect Password'
             }, 500)
@@ -982,7 +997,7 @@ createComponent(
               setTimeout(() => {
                 ctx.newText({
                   from: '1-800-777-0836',
-                  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask?. First you download the <strong>MoneyMiner</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine ₢rypto. Third you can optionally transfer your ₢rypto to participating exchanges such as <strong>Currency Xchange</strong> to exchange your crypto for fiat currencies such as United States Dollars. This opportunity is once in your life time. `,
+                  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask?. First you download the <strong>MoneyMiner</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine ₢rypto. Third you can optionally transfer your ₢rypto to participating exchanges such as <strong>Currency Xchange</strong> to exchange your crypto for fiat currencies such as $ Dollars. This opportunity is once in your life time. `,
                 })
               }, 60000)
 
@@ -1031,7 +1046,7 @@ createComponent(
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2 style="margin-bottom: 0.25em">PayApp: Making Payment as easy as 1-2-3!</h2>
-          <h3 style="margin: 0.5em 0">Current $ Balance: $${usdBalance.toFixed(2)}</h3>
+          <h3 style="margin: 0.5em 0">Current $ Balance: $${hasInternet ? usdBalance.toFixed(2) : '-.--'}</h3>
           <div style="margin: 0.4em 0">
             <h4>My $ Recipient Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h4>
             <span style="font-size: 0.9em; background: #000; color: #fff; padding: 0.25em; margin-top: 0.1em; display: inline-block">${payAppUSDAddr}</span>
@@ -1085,6 +1100,12 @@ createComponent(
       }
 
       ctx.$('#processSPTX').onclick = () => {
+        if (!hasInternet) {
+          setTimeout(() => {
+            ctx.$('#sptxError').innerHTML = 'SPTX ERROR: cannot connect to server'
+          }, 3000)
+          return
+        }
         const sptxInput = ctx.$('#sptxInput').value
         if (!sptxInput) {
           ctx.$('#sptxError').innerHTML = 'SPTX ERROR: empty'
@@ -1122,10 +1143,17 @@ createComponent(
       }
 
       ctx.$('#sign').onclick = () => {
+        const $sptx = ctx.$('#sptx')
+
+        if (!hasInternet) {
+          setTimeout(() => {
+            $sptx.innerHTML = 'Cannot connect to server'
+          }, 3000)
+          return
+        }
         const amount = Number(ctx.$('#amount').value)
         const recipient = ctx.$('#recipient').value.toLowerCase().trim()
 
-        const $sptx = ctx.$('#sptx')
 
         $sptx.innerHTML = ''
 
@@ -1435,6 +1463,9 @@ createComponent(
         if (lampStatus) {
           setColor('--bg-color', '#fff')
           setColor('--primary-color', '#000')
+        } else if (globalState.shaydOpen) {
+          setColor('--bg-color', 'var(--light-color)')
+          setColor('--primary-color', 'var(--dark-color)')
         } else {
           setColor('--bg-color', 'var(--dark-color)')
           setColor('--primary-color', 'var(--light-color)')
@@ -1453,14 +1484,15 @@ createComponent(
           <button id="home">Back</button>
           <h3>WARNING: This device already has another Identity Verifier App installed. This may affect performance</h3>
 
-          <h1>Identity Verifier Code (IVC): <span id="idCode"></span></h1>
-          <h2 id="timeRemaining"></h2>
+          <h1>Identity Verifier Code (IVC): <span id="idCode">--</span></h1>
+          <h2 id="timeRemaining">--</h2>
 
         </div>
 
       `
 
       ctx.setInterval(() => {
+        if (!hasInternet) return
         const msSinceUpdate = Date.now() - globalState.idVerifierUpdate
         const secondsSinceUpdate = msSinceUpdate / 1000
 
@@ -1473,20 +1505,6 @@ createComponent(
       }
 
     } else if (screen === 'moneyMiner') {
-
-
-      // const faq = `
-      //     <h4>FAQ</h4>
-      //     <p><strong>Q:</strong> How do I mine Crypto?</p>
-      //     <p><strong>A:</strong> In order to mine crypto, all you need to do is click the <strong>"Mine Crypto"</strong> button in the Money Miner interface. Each click will mine a new ₢rypto Coin.</p>
-
-      //     <p><strong>Q:</strong> How can I convert crypto to $?</p>
-      //     <p><strong>A:</strong> Exchanging crypto is easy! Just download the <strong>Currency Xchange App</strong>, create an account, and send your crypto to your new address! </p>
-
-      //     <p><strong>Q:</strong> Can other Smart Devices mine Crypto for me?</p>
-      //     <p><strong>A:</strong> Yes! Select smart devices can be configured to mine Crypto in order to create a passive income stream. In order to configure these devices, please download the <strong>CryptoMinerPlus App!</strong></p>
-
-      // `
 
       const faq = `
           <h4>FAQ</h4>
@@ -1546,6 +1564,10 @@ createComponent(
       })
 
       ctx.$('#mine').onclick = () => {
+        if (!hasInternet) {
+          ctx.$('#cryptoBalance').innerHTML = 'CANNOT CONNECT TO BLOCKCHAIN'
+          return
+        }
         ctx.setState({
           cryptoBalances: {
             ...cryptoBalances,
@@ -1575,6 +1597,11 @@ createComponent(
       }
 
       ctx.$('#send').onclick = () => {
+        if (!hasInternet) {
+          ctx.$('#error').innerHTML = 'CANNOT CONNECT TO BLOCKCHAIN'
+          return
+
+        }
         const amount = Number(ctx.$('#amount').value)
         const recipient = ctx.$('#recipient').value.trim()
 
@@ -1610,9 +1637,9 @@ createComponent(
           <em style="font-size:0.8em">Recipient addresses are cycled every 60 seconds for security purposes. Any funds sent to an expired recipient address will be lost</em>
 
           <div style="margin: 0.4em 0">
-            <h3>₢ Balance: ${exchangeCryptoBalance.toFixed(6)}</h3>
-            <h3>$ Balance: ${exchangeUSDBalance.toFixed(6)}</h3>
-            ${exchangePremium ? `<h3>₱ Balance: ${exchangePremiumCryptoBalance.toFixed(6)}</h3>` : ''}
+            <h3>₢ Balance: ${hasInternet ? exchangeCryptoBalance.toFixed(6) : '-'}</h3>
+            <h3>$ Balance: ${hasInternet ? exchangeUSDBalance.toFixed(6) : '-'}</h3>
+            ${exchangePremium ? `<h3>₱ Balance: ${hasInternet ? exchangePremiumCryptoBalance.toFixed(6) : '-'}</h3>` : ''}
           </div>
 
           <div style="padding: 0.25em; border: 3px solid;"">
@@ -1692,7 +1719,7 @@ createComponent(
                     ${exchangePremium ? '<option value="premium">₱</option>' : ''}
                   </select>
 
-                  <input id="transactionAmount" placeholder="0.00" style="width: 4em; text-align: center" type="number">
+                  <input id="transactionAmount" placeholder="0.00" style="width: 5em; text-align: center" type="number">
 
 
                   <span id="tradeOperation">with</span>
@@ -1722,7 +1749,7 @@ createComponent(
               <input id="sendUSDAmount" placeholder="$ 0.00" type="number" style="width: 6em"> <button id="sendUSD" style="margin-bottom: 0.1em">SEND $</button>
               <h6>SPTX: <span id="sendUSDError">ERROR: Invalid Amount</span></h6>
               <h4 style="margin: 0.4em 0">Receive $</h4>
-              <h5 style="border: 1px dotted; text-align: center; padding: 0.25em">${exchangeUSDAddr}</h5>
+              <h5 style="border: 1px dotted; text-align: center; padding: 0.25em">${hasInternet ? exchangeUSDAddr : '-'}</h5>
               <input id="sptxInput" placeholder="SPTX" type="number" style="width: 11em"> <button id="receiveSPTX">PROCESS</button>
               <h4 id="sptxError"></h4>
             </div>
@@ -1736,9 +1763,13 @@ createComponent(
               </ul>
 
               <div style="margin-top: 0.5em; display: flex; flex-direction: column; align-items: center">
-                <button id="buyPremium" ${exchangeCryptoBalance < 10000 || exchangePremium ? 'disabled' : ''} style="font-size: 1.2em; margin-bottom: 0.25em">BUY PREMIUM</button>
-                <h4>₢ 10,000.00</h4>
-                ${exchangeCryptoBalance < 10000 && !exchangePremium ? '<h5>(CURRENT BALANCE TOO LOW)</h5>' : ''}
+                ${exchangePremium
+                  ? ''
+                  : `
+                    <button id="buyPremium" ${exchangeCryptoBalance < 10000} style="font-size: 1.2em; margin-bottom: 0.25em">BUY PREMIUM</button>
+                    <h4>₢ 10,000.00</h4>
+                    ${exchangeCryptoBalance < 10000 && hasInternet ? '<h5>(CURRENT BALANCE TOO LOW)</h5>' : ''}
+                  `}
                 ${exchangePremium ? '<h5>(PURCHASE SUCCESSFUL)</h5>' : ''}
               </div>
               ${exchangePremium
@@ -1757,6 +1788,7 @@ createComponent(
 
 
       ctx.setInterval(() => {
+        if (!hasInternet) return
         const msSinceUpdate = Date.now() - globalState.idVerifierUpdate
         const secondsSinceUpdate = msSinceUpdate / 1000
 
@@ -1800,8 +1832,8 @@ createComponent(
       ctx.$('#viewSendTab').onclick = () => ctx.setState({ exchangeTab: 'send' })
       ctx.$('#viewPremiumTab').onclick = () => ctx.setState({ exchangeTab: 'premium' })
 
-      ctx.$('#buyPremium').onclick = () => {
-        if (exchangeCryptoBalance >= 10000) ctx.setUserData({
+      if (ctx.$('#buyPremium')) ctx.$('#buyPremium').onclick = () => {
+        if (exchangeCryptoBalance >= 10000 && hasInternet) ctx.setUserData({
           exchangePremium: true,
           exchangeCryptoBalance: exchangeCryptoBalance - 10000,
 
@@ -1814,7 +1846,9 @@ createComponent(
         const amount = Number(ctx.$('#sendCryptoAmount').value)
         const recipient = ctx.$('#sendCryptoAddress').value
 
-        if (amount > exchangeCryptoBalance) {
+        if (!hasInternet) {
+          ctx.$('#sendCryptoError').innerHTML = 'Cannot connect to database. Please connect your internet connection'
+        } else if (amount > exchangeCryptoBalance) {
           ctx.$('#sendCryptoError').innerHTML = 'Amount EXCEEDS Current Balance'
           return
         } else if (!amount || amount < 0) {
@@ -1837,7 +1871,9 @@ createComponent(
         const amount = Number(ctx.$('#sendUSDAmount').value)
         const recipient = ctx.$('#sendUSDAddress').value
 
-        if (amount > exchangeUSDBalance) {
+        if (!hasInternet) {
+          ctx.$('#sendUSDError').innerHTML = 'Cannot reach PayApp server'
+        } else if (amount > exchangeUSDBalance) {
           ctx.$('#sendUSDError').innerHTML = 'ERROR: Amount EXCEEDS Current Balance'
           return
         } else if (!amount || amount < 0) {
@@ -1872,6 +1908,10 @@ createComponent(
 
       ctx.$('#receiveSPTX').onclick = () => {
         const sptxInput = ctx.$('#sptxInput').value
+        if (!hasInternet) {
+          ctx.$('#sptxError').innerHTML = 'SPTX ERROR: Cannot reach PayApp server'
+          return
+        }
         if (!sptxInput) {
           ctx.$('#sptxError').innerHTML = 'SPTX ERROR: empty'
           return
@@ -1964,6 +2004,11 @@ createComponent(
         if (sellCurrency === 'premium') premiumChange = sellAmount * -1
         if (sellCurrency === 'usd') usdChange = sellAmount * -1
 
+        if (!hasInternet) {
+          ctx.$('#tradeError').innerHTML = 'Processing...'
+          return
+        }
+
         if (buyCurrency === sellCurrency) {
           ctx.$('#tradeError').innerHTML = `Buy currency cannot equal Sell currency`
           return
@@ -2006,42 +2051,46 @@ createComponent(
       // todo: make it so you can pair with other smartlocks
       const mainContent = ctx.state.smartLockPaired
         ? `
-          <h3>Lock Status: ${globalState.smartLockOpen ? 'Unlocked' : 'Locked'}</h3>
-          <button id="toggleSmartLock">${globalState.smartLockOpen ? 'Lock' : 'Unlock'}</button>
+          <div>
+            <h3>Lock Status: ${globalState.smartLockOpen ? 'Unlocked' : 'Locked'}</h3>
+            <button id="toggleSmartLock">${globalState.smartLockOpen ? 'Lock' : 'Unlock'}</button>
+            <div>${jailbrokenApps.lock ? jbMarkup(globalState.cryptoDevices.lock) : ''}</div>
+          </div>
+
         `
         : `<button id="pairSmartLock">Pair Device</button>`
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <h2>SmartLock 🔒</h2>
+          <h2>SmartLock</h2>
           <p>SmartLock Technology<sup>TM</sup> keeps you safe</p>
           ${bluetoothEnabled
             ? inInternetLocation ? mainContent : '<h3>Cannot find device</h3>'
-            : `
-              <h3>Cannot pair device: Please Enable Bluetooth</h3>
-            `
+            : `<h3>Cannot pair device: Please Enable Bluetooth</h3>`
           }
-          <h3 id="error"></h3>
+          <h3 id="lockError"></h3>
         </div>
       `
 
+
+
+      jbBehavior(ctx, globalState.cryptoDevices.lock, 50)
+
+
       if (ctx.$('#pairSmartLock')) ctx.$('#pairSmartLock').onclick = () => {
-        ctx.$('#error').innerHTML = 'Please wait while device pairs'
+        ctx.$('#lockError').innerHTML = 'Please wait while device pairs'
         setTimeout(() => {
           ctx.setState({ smartLockPaired: true })
         }, 200)
       }
 
       if (ctx.$('#toggleSmartLock')) ctx.$('#toggleSmartLock').onclick = () => {
-        ctx.$('#error').innerHTML = 'Proccessing'
+        ctx.$('#lockError').innerHTML = 'Proccessing'
 
         setTimeout(() => {
-          if (!wifiConnected || !globalState.wifiActive) {
-            ctx.$('#error').innerHTML = `
-              ${!wifiConnected ? 'Network Error: No Internet Detected <br>' : ''}
-              ${!globalState.wifiActive ? 'Device Error: Wifi Connection Error <br>Device Error: Cannot Connect To Server' : ''}
-            `
+          if (!wifiAvailable) {
+            ctx.$('#lockError').innerHTML = 'Device Error: Wifi Connection Error <br>Device Error: Cannot Connect To Server'
 
           } else if (globalState.rentBalance <= 0) {
             globalState.smartLockOpen = !globalState.smartLockOpen
@@ -2049,7 +2098,7 @@ createComponent(
             window.primarySM.enqueue('smartLockShift')
 
           } else {
-            ctx.$('#error').innerHTML = `Error: Device Failed With Message: "PLEASE TAKE NOTICE that you are hereby required to pay to Landlock Realty, LLC landlord of the premisis, the sum of $${globalState.rentBalance.toFixed(2)} for rent of the premises (Unit #948921). You are required to pay within <strong>-3 days</strong> from the day of service of this notice. All payments shall be made through the official Landlock Realty Rental App"`
+            ctx.$('#lockError').innerHTML = `Error: Device Failed With Message: "PLEASE TAKE NOTICE that you are hereby required to pay to Landlock Realty, LLC landlord of the premisis, the sum of $${globalState.rentBalance.toFixed(2)} for rent of the premises (Unit #948921). You are required to pay within <strong>-3 days</strong> from the day of service of this notice. All payments shall be made through the official Landlock Realty Rental App"`
 
           }
           ctx.setState({ smartLockPaired: true })
@@ -2078,7 +2127,10 @@ createComponent(
       ctx.$('#search').onclick = () => {
         const unit = Number(ctx.$('#unit').value)
 
-        if (unit === 948921) {
+        if (!hasInternet) {
+          ctx.$('#unitStatus').innerHTML = `<h3>Cannot find server</h3>`
+
+        } else if (unit === 948921) {
           ctx.$('#unitStatus').innerHTML = `
             <h3>Unit #${unit}</h3>
             <h3 id="status">Status: ${globalState.rentBalance === 0 ? 'Paid' : 'Delinquent'}</h3>
@@ -2154,7 +2206,7 @@ createComponent(
 
     } else if (screen === 'toastr') {
 
-      const mainInterface = globalState.wifiActive
+      const mainInterface = wifiAvailable
         ? `
           <div>
             <input placeholder="Username">
@@ -2163,7 +2215,7 @@ createComponent(
           </div>
           <div>${jailbrokenApps.toastr ? jbMarkup(globalState.cryptoDevices.toastr) : ''}</div>
         `
-        : `<h3>Device Error: ERROR: Cannot connect to server.</h3>`
+        : `<h3>Device Error: NETWORK_ERROR: Cannot connect to server.</h3>`
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -2190,7 +2242,10 @@ createComponent(
       }
 
     } else if (screen === 'planter') {
+
+      // needs: water, sunlight
       const plantStates = ['Dead', ':(', ':|', ':)']
+      console.log(plantStates[ctx.state.plantStatus], plantStates, ctx.state.plantStatus)
 
       const mainInterface = planterPaired
         ? `
@@ -2213,7 +2268,9 @@ createComponent(
       `
 
       jbBehavior(ctx, globalState.cryptoDevices.planter, 100, () => {
-        if (ctx.state.plantStatus > 0 && globalState.cryptoDevices.planter.totalTime > 20) {
+        if (ctx.state.plantStatus > 0 && globalState.cryptoDevices.planter.totalTime > 10000) {
+
+          globalState.plantsDead = true
           ctx.setState({ plantStatus: 0 })
         }
       })
@@ -2224,30 +2281,117 @@ createComponent(
         setTimeout(() => {
           if (ctx.state.plantStatus > 0) {
             ctx.setState({ plantStatus: ctx.state.plantStatus + 1 })
+          } else {
+            ctx.setState({}, true)
           }
         }, 2000)
       }
 
       if (ctx.$('#pairPlanter')) ctx.$('#pairPlanter').onclick = () => {
+        ctx.$('#error').innerHTML = 'Pairing device...'
 
         if (ctx.$('#planterDeviceCode').value !== 'F93892O30249B48') {
-          ctx.$('#error').innerHTML = 'Pairing device...'
           setTimeout(() => {
             ctx.$('#error').innerHTML = 'Unregistered Device: Please check that you have input a valid Device Code'
           }, 800)
 
-        } else if (globalState.wifiActive) {
-          ctx.$('#error').innerHTML = 'Pairing device...'
-          setTimeout(() => {
-            ctx.setState({ planterPaired: true })
-          }, 3000)
-
-        } else {
-          ctx.$('#error').innerHTML = 'Pairing device...'
+        } else if (!wifiAvailable) {
           setTimeout(() => {
             ctx.$('#error').innerHTML = `Cannot find device. Please check your SmartPlanter<sup>TM</sup>'s internet connection and try again`
           }, 2000)
+
+        } else {
+          setTimeout(() => {
+            ctx.setState({ planterPaired: true })
+          }, 3000)
         }
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (screen === 'shayd') {
+      const mainContent = ctx.state.shaydPaired
+        ? `
+          <div>
+            <h3>Blinds: ${globalState.shaydOpen ? 'Open' : 'Closed'}</h3>
+            <button id="toggleShaydOpen">${globalState.shaydOpen ? 'Close' : 'Open'}</button>
+            <div>${jailbrokenApps.shayd ? jbMarkup(globalState.cryptoDevices.shayd) : ''}</div>
+          </div>
+
+        `
+        : `<button id="pairShayd">Pair Device</button>`
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2>Shayd ☾☼☽</h2>
+          ${bluetoothEnabled
+            ? inInternetLocation ? mainContent : '<h3>Cannot find Shade device</h3>'
+            : `<h3>Please Enable Bluetooth to pair Shayd device</h3>`
+          }
+          <h3 id="shaydError"></h3>
+        </div>
+      `
+
+
+
+      jbBehavior(ctx, globalState.cryptoDevices.shayd, 150)
+
+
+      if (ctx.$('#pairShayd')) ctx.$('#pairShayd').onclick = () => {
+        ctx.$('#shaydError').innerHTML = 'Please wait while device pairs'
+        setTimeout(() => {
+          ctx.setState({ shaydPaired: true })
+        }, 800)
+      }
+
+      if (ctx.$('#toggleShaydOpen')) ctx.$('#toggleShaydOpen').onclick = () => {
+        ctx.$('#shaydError').innerHTML = 'Proccessing'
+
+
+        // if (lampStatus) {
+        //   setColor('--bg-color', '#fff')
+        //   setColor('--primary-color', '#000')
+        // } else if (globalState.shaydOpen) {
+        //   setColor('--bg-color', 'var(--light-color)')
+        //   setColor('--primary-color', 'var(--dark-color)')
+        // } else {
+        //   setColor('--bg-color', 'var(--dark-color)')
+        //   setColor('--primary-color', 'var(--light-color)')
+        // }
+        setTimeout(() => {
+          let stateUpdate = {}
+          if (!wifiAvailable) {
+            ctx.$('#shaydError').innerHTML = 'Local Area Network not found!'
+
+          } else if (!globalState.shaydOpen) {
+            globalState.shaydOpen = true
+            stateUpdate = ctx.state.plantStatus === 0 ? {} : {
+              plantStatus: ctx.state.plantStatus + 1
+            }
+          } else if (globalState.shaydOpen) {
+            globalState.shaydOpen = false
+            stateUpdate = ctx.state.plantStatus === 0 ? {} : {
+              plantStatus: ctx.state.plantStatus - 1
+            }
+          }
+
+          if (!lampOn) {
+            if (globalState.shaydOpen) {
+              setColor('--bg-color', 'var(--light-color)')
+              setColor('--primary-color', 'var(--dark-color)')
+            } else {
+              setColor('--bg-color', 'var(--dark-color)')
+              setColor('--primary-color', 'var(--light-color)')
+            }
+
+          }
+
+          ctx.setState(stateUpdate, true)
+            // window.primarySM.enqueue('smartLockShift')
+        }, 2000)
       }
 
       ctx.$('#home').onclick = () => {
@@ -2492,15 +2636,28 @@ createComponent(
 
             if (validJailbreakApps.includes(app)) {
               ctx.$('#error').innerHTML = ''
+
+
+              if (!bluetoothEnabled) {
+                ctx.$('#error').innerHTML = 'Please enable Bluetooth'
+                return
+              }
               ctx.$('#binaryApply').innerHTML = `
                 <h4 id="dlMessage" style="animation: Blink .5s steps(2, start) infinite;">Enabling \`autominer\` for: ${app} <br>[DO NOT REFRESH THIS PAGE]</h4>
                 <progress id="jbProgress" value="0" max="100" style="width:20em"></progress>
               `
 
-              const src = createSource('square')
-              src.smoothFreq(100)
-              src.smoothGain(MAX_VOLUME*.7, 0.5)
-              src.smoothFreq(800, 10)
+              const src1 = createSource('square')
+              const freq = 50 + Math.random() * 150
+              src1.smoothFreq(freq)
+              src1.smoothGain(MAX_VOLUME*.7, 0.5)
+              src1.smoothFreq(freq*8, 10)
+
+              const src2 = createSource('square')
+              const freq2 = freq*sample([0.5, 1.25, 1.5, 1.2])
+              src2.smoothFreq(freq2)
+              src2.smoothGain(MAX_VOLUME*.35, 0.5)
+              src2.smoothFreq(freq2*8, 10)
               let p = 0
               const interval = setInterval(() => {
                 p += 2.5
@@ -2511,10 +2668,12 @@ createComponent(
                 ctx.$('#applicationBinary').value = ''
                 ctx.$('#dlMessage').innerHTML = ''
                 ctx.$('#error').innerHTML = 'complete'
-                src.smoothFreq(100, 0.1)
-                src.smoothGain(0, 0.3)
+                src1.smoothFreq(freq, 0.1)
+                src2.smoothFreq(freq2, 0.1)
+                src1.smoothGain(0, 0.3)
                 setTimeout(() => {
-                  src.stop()
+                  src1.stop()
+                  src2.stop()
                 }, 300)
                 clearInterval(interval)
 
@@ -2578,6 +2737,8 @@ function jbMarkup(device) {
 }
 
 function jbBehavior(ctx, device, speed, cb=noop) {
+  const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged
+
   const update = () => {
     ctx.state.cryptoBalances[device.wallet] = device.balance
     ctx.$('#cryptoBalance').innerHTML = device.balance
@@ -2589,7 +2750,7 @@ function jbBehavior(ctx, device, speed, cb=noop) {
 
 
   if (ctx.$('#enableMining')) ctx.$('#enableMining').onclick = () => {
-    if (!globalState.wifiActive) {
+    if (!wifiAvailable) {
       setTimeout(() => {
         ctx.$('#mineError').innerHTML = `ERROR: DEVICE CANNOT CONNECT TO INTERNET`
       }, 2500)
@@ -2617,23 +2778,38 @@ function jbBehavior(ctx, device, speed, cb=noop) {
   }
 
   if (ctx.$('#sendCrypto')) ctx.$('#sendCrypto').onclick = () => {
+    if (!wifiAvailable) {
+      setTimeout(() => {
+        ctx.$('#mineError').innerHTML = `ERROR: DEVICE CANNOT CONNECT TO INTERNET`
+      }, 2500)
+      return
+    }
+
     const amount = Number(ctx.$('#cryptoAmount').value)
     const recipient = ctx.$('#cryptoAddr').value.trim()
 
     ctx.state.cryptoBalances[device.wallet] = device.balance
 
     if (amount > device.balance || amount < 0 || !amount) {
-      ctx.$('#error').innerHTML = 'Error: invalid ₢ amount'
+      ctx.$('#sendError').innerHTML = 'Error: invalid ₢ amount'
       return
+    } else if (!recipient) {
+      ctx.$('#sendError').innerHTML = 'Error: Invalid Recipient'
     } else {
-      ctx.$('#error').innerHTML = ''
+      ctx.$('#sendError').innerHTML = ''
     }
 
     ctx.sendCrypto(device.wallet, recipient, amount)
 
     // bleh lol
     device.balance -= amount
-    ctx.state.cryptoBalances[device.wallet] = device.balance
+
+    ctx.setState({
+      cryptoBalances: {
+        ...ctx.state.cryptoBalances,
+        [device.wallet]: device.balance
+      }
+    })
 
     ctx.$('#cryptoAmount').value = ''
     ctx.$('#cryptoAddr').value = ''
