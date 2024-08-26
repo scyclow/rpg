@@ -90,11 +90,58 @@ function waitPromise(ms) {
 }
 
 
-const group = (nodesInput, props) => Object.keys(nodesInput).reduce((nodesOutput, nodeName) => ({
-  ...nodesOutput,
-  [nodeName]: { ...props, ...nodesInput[nodeName]}
-}), {})
+const group = (nodesInput, props) => {
+  return Object.keys(nodesInput).reduce((nodesOutput, nodeName) => {
+    const node = nodesInput[nodeName]
+    const newNode = Array.isArray(node)
+      ? node.map(n => ({ ...props, ...n }))
+      : { ...props, ...nodesInput[nodeName] }
+
+    return ({
+      ...nodesOutput,
+      [nodeName]: newNode
+    })
+  }, {})
+}
+
 const options = mapping => ({ur}) => mapping[ur]
+
+
+function hsvToRGB({h, s, v}) {
+  h /= 60
+  const c = (v/100) * (s/100)
+  const x = c * (1 - Math.abs(h % 2 - 1))
+  const m = (v/100) - c
+
+  let r, g, b;
+  switch (Math.floor(h)) {
+    case 0:
+    case 6:
+      r = c; g = x; b = 0; break;
+    case 1:
+      r = x; g = c; b = 0; break;
+    case 2:
+      r = 0; g = c; b = x; break;
+    case 3:
+      r = 0; g = x; b = c; break;
+    case 4:
+      r = x; g = 0; b = c; break;
+    case 5:
+      r = c; g = 0; b = x; break;
+  }
+
+
+  const round = (n, decimals=0) => +n.toFixed(decimals)
+
+  return '#' + numToHex((r + m) * 255) + numToHex((g + m) * 255) + numToHex((b + m) * 255)
+}
+
+function numToHex(num) {
+  let hex = Math.round( Math.min(num, 255) ).toString(16)
+  return (hex.length === 1 ? '0' + hex : hex).toUpperCase()
+}
+
+
 
 
 // const lineStats = (x1, y1, x2, y2) => ({

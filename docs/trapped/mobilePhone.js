@@ -22,14 +22,13 @@ const APPS = [
   // bathe
   // toastr (login, default toast posts)
   // alarm
-  // shayd
   // security camera
   { name: 'Alarm', key: 'alarm', size: 128, price: 1 },
   { name: 'Bathe', key: 'bathe', size: 128, price: 1 },
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
   // { name: 'Elevate', key: 'elevate', size: 128, price: 1 },
   { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
-  { name: 'FreezeLocker', key: 'freeze', size: 128, price: 0 },
+  { name: 'FreezeLocker', key: 'freeze', size: 128, price: 1 },
   { name: 'Identity Verfier', key: 'idVerifier', size: 128, price: 0 },
   { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
   { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
@@ -80,6 +79,25 @@ TODO
 - pay rent
 `
 
+const turboConnectText = {
+  from: '1-800-444-3830',
+  value: 'You have subscribed: TurboConnect FREE TRIAL for MOBILE + DATA Plan! Please Dial 1-800-444-3830 on <strong>*PhoneApp*</strong> for all question',
+}
+const mmText = {
+  from: '1-800-777-0836',
+  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask?. First you download the <strong>MoneyMiner</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine ₢rypto. Third you can optionally transfer your ₢rypto to participating exchanges such as <strong>Currency Xchange</strong> to exchange your crypto for fiat currencies such as $ Dollars. This opportunity is once in your life time. `,
+}
+const packageText = {
+  from: '+7 809 3390 753',
+  value: `United Pakcåge Delvery MsG: "W⍷lcome ◻︎⎅◻︎ y⌾ure Pâck⎀ge ⎙ h⍶s been ◻︎ deLiveRed t⌀ ⇢⇢ <strong>FRONT DOOR</strong> ⇠⇠ <RENDER_ERROR:/home/usr/img/package-d⌽liver83y.jpg> ⎆ pAy deliver fee ⌱ 0xb0b9d337b68a69f5560969c7ab60e711ce83276f"`
+}
+
+const tripleText = {
+  from: '1-800-333-7777',
+  value: 'Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ←',
+}
+
+
 
 
 const state = persist('__MOBILE_STATE', {
@@ -92,7 +110,7 @@ const state = persist('__MOBILE_STATE', {
   wifiNetwork: '',
   userNames: {0: 'default'},
   newUsers: 0,
-  currentUser: 0,
+  currentUser: null,
   rootUser: 0,
   lampOn: false,
   luminPaired: false,
@@ -114,16 +132,16 @@ const state = persist('__MOBILE_STATE', {
     0: {
       appsInstalled: [
         { name: 'SmartPlanter', key: 'planter', size: 256, price: 0 },
-              { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
         { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
         { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
+        { name: 'Shayd', key: 'shayd', size: 128, price: 0 },
+        { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
         { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
         { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
         { name: 'SmartLock', key: 'lock', size: 128, price: 0 },
         // { name: 'Bathe', key: 'alarm', size: 128, price: 1 },
         // { name: 'Elevate', key: 'elevate', size: 128, price: 1 },
 
-        // { name: 'Shayd', key: 'shayd', size: 128, price: 1 },
         // { name: 'Alarm', key: 'alarm', size: 128, price: 1 },
 
         { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
@@ -134,7 +152,10 @@ const state = persist('__MOBILE_STATE', {
         { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
 
       ],
-      textMessages: [],
+      textMessages: [
+        {...turboConnectText, read: true},
+        ...times(197, () => ({...sample([mmText, packageText, tripleText]), read: false}))
+      ],
       payAppUSDAddr: rndAddr(),
       moneyMinerCryptoAddr: rndAddr(),
       exchangeUSDAddr: rndAddr(),
@@ -148,6 +169,7 @@ const state = persist('__MOBILE_STATE', {
 
 
 window.phoneState = state
+
 
 
 createComponent(
@@ -175,7 +197,7 @@ createComponent(
         color: #00f
       }
 
-      button, select, label {
+      button, select, label, input[type="range"], input[type="checkbox"] {
         cursor: pointer;
       }
 
@@ -290,7 +312,7 @@ createComponent(
         padding: 0.5em;
       }
 
-      .tm:first-child {
+      .tm:last-child {
         border-top: 0;
       }
 
@@ -436,7 +458,10 @@ createComponent(
       }, ctx.state.fastMode ? 0 : 8000)
     }
 
-    ctx.phoneNotifications = () => ctx.state.userData[ctx.state.currentUser].textMessages.reduce((a, c) => c.read ? a : a + 1, 0)
+    ctx.phoneNotifications = () => ctx.state.userData[ctx.state.currentUser]?.textMessages?.reduce?.((a, c) => c.read ? a : a + 1, 0)
+
+    ctx.__notificationCb
+    ctx.onNotification = cb => ctx.__notificationCb = cb
 
     ctx.newText = (txt) => {
       ctx.setState({
@@ -585,11 +610,10 @@ createComponent(
       devMode
     } = ctx.state
 
-    const currentUserData = userData[currentUser]
+    const currentUserData = userData[currentUser] || {}
 
     const {
       appsInstalled,
-      textMessages,
       payAppUSDAddr,
       moneyMinerCryptoAddr,
       exchangeUSDAddr,
@@ -599,6 +623,8 @@ createComponent(
       exchangePremium,
     } = currentUserData
 
+    const textMessages = currentUserData?.textMessages || []
+
 
     const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
     const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged
@@ -607,11 +633,8 @@ createComponent(
     const hasInternet = dataConnected || wifiConnected
 
 
-    if (globalState.wifiActive && !textMessages.some(m => m.from === '+7 809 3390 753')) {
-      ctx.newText({
-        from: '+7 809 3390 753',
-        value: `United Pakcåge Delvery MsG: "W⍷lcome ◻︎⎅◻︎ y⌾ure Pâck⎀ge ⎙ h⍶s been ◻︎ deLiveRed t⌀ ⇢⇢ <strong>FRONT DOOR</strong> ⇠⇠ <RENDER_ERROR:/home/usr/img/package-d⌽liver83y.jpg> ⎆ pAy deliver fee ⌱ 0xb0b9d337b68a69f5560969c7ab60e711ce83276f"`
-      })
+    if (currentUser !== null && globalState.wifiActive && !textMessages.some(m => m.from === '+7 809 3390 753')) {
+      ctx.newText(packageText)
     }
 
 
@@ -627,7 +650,7 @@ createComponent(
     ctx.$header.classList.remove('hidden')
     ctx.$phoneContent.innerHTML = ''
 
-    const unreadTextCount = textMessages.reduce((a, c) => c.read ? a : a + 1, 0)
+    const unreadTextCount = textMessages.reduce((a, c) => c.read ? a : a + 1, 0) || 0
 
     // TODO: none of the apps should work if you're outside the apartment
 
@@ -646,6 +669,8 @@ createComponent(
       // }, 10000)
 
     } else if (screen === 'login') {
+      ctx?.__notificationCb?.()
+
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <h1>Select User Profile:</h1>
@@ -749,6 +774,8 @@ createComponent(
       }
 
     } else if (screen === 'home') {
+      ctx?.__notificationCb?.()
+
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen" style="flex: 1; display: flex">
           <div class="home" style="display: flex; flex-direction: column; justify-content: space-between; flex: 1">
@@ -779,7 +806,7 @@ createComponent(
       ctx.$('#logOut').onclick = () => {
         ctx.setState({ screen: 'loading' })
         setTimeout(() => {
-          ctx.setState({ screen: 'login' })
+          ctx.setState({ screen: 'login', currentUser: null })
         }, ctx.state.fastMode ? 0 : 4000)
       }
 
@@ -988,17 +1015,11 @@ createComponent(
               ctx.$('#error').innerHTML = 'Success!'
               setTimeout(() => {
                 ctx.setState({ dataPlanActivated: true })
-                ctx.newText({
-                  from: '1-800-444-3830',
-                  value: 'You have subscribed: TurboConnect FREE TRIAL for MOBILE + DATA Plan! Please Dial 1-800-444-3830 on <strong>*PhoneApp*</strong> for all question',
-                })
+                ctx.newText(turboConnectText)
               }, 2000)
 
               setTimeout(() => {
-                ctx.newText({
-                  from: '1-800-777-0836',
-                  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask?. First you download the <strong>MoneyMiner</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine ₢rypto. Third you can optionally transfer your ₢rypto to participating exchanges such as <strong>Currency Xchange</strong> to exchange your crypto for fiat currencies such as $ Dollars. This opportunity is once in your life time. `,
-                })
+                ctx.newText(mmText)
               }, 60000)
 
             } else {
@@ -1128,10 +1149,7 @@ createComponent(
           }
 
           if (usdBalance === 0 && !textMessages.some(m => m.from === '1-800-333-7777')) {
-            ctx.newText({
-              from: '1-800-333-7777',
-              value: 'Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ←',
-            })
+            ctx.newText(tripleText)
           }
 
           ctx.receiveSPTX(sptxInput)
@@ -1215,6 +1233,9 @@ createComponent(
                 <div>
                   <label><input id="pauseCurrency" type="checkbox" ${globalState.pauseCurrency ? 'checked' : ''}> pause currency</label>
                 </div>
+                <div>
+                  <label><input id="defaultUnlocked" type="checkbox" ${globalState.defaultUnlocked ? 'checked' : ''}> default unlocked</label>
+                </div>
                 <div><input id="exchangeUSD" type="number" placeholder="exchange $"> <button id="setExchangeUSD">Set</button></div>
                 <div><input id="exchangeC" type="number" placeholder="exchange ₢"> <button id="setExchangeC">Set</button></div>
                 <div><input id="exchangeP" type="number" placeholder="exchange ₱"> <button id="setExchangeP">Set</button></div>
@@ -1293,6 +1314,10 @@ createComponent(
           globalState.pauseCurrency = ctx.$('#pauseCurrency').checked
         }
 
+        ctx.$('#defaultUnlocked').onclick = () => {
+          globalState.defaultUnlocked = ctx.$('#defaultUnlocked').checked
+        }
+
         ctx.$('#setExchangeUSD').onclick = () => {
           ctx.state.usdBalances[exchangeUSDAddr] = Number(ctx.$('#exchangeUSD').value)
         }
@@ -1333,10 +1358,7 @@ createComponent(
 
     } else if (screen === 'textMessage') {
 
-      // dataPlanActivated
-
-
-      const messageList = `<ul style="list-style: none; border: 1px dashed; margin-top: 0.4em">${textMessages.map((m, ix) => `
+      const messageList = `<ul style="list-style: none; border: 1px dashed; margin-top: 0.4em; display: flex; flex-direction: column-reverse">${textMessages.map((m, ix) => `
         <li id="tm-${ix}" class="tm ${!m.read ? 'unread' : ''}">
           <div class="tm-from">${m.from || 'unknown'}</div>
           <div>${(!m.read ? '<em>(unread!)</em> ' : '') + m.value.slice(0, 19) + '...'}</div>
@@ -1344,7 +1366,7 @@ createComponent(
       `).join('')}</ul`
 
       ctx.$phoneContent.innerHTML = `
-        <div class="phoneScreen">
+        <div class="phoneScreen" style="flex: 1; overflow: scroll; padding-bottom: 2em">
           <button id="home">Back</button>
           <h2>Text Messages</h2>
 
@@ -1355,7 +1377,7 @@ createComponent(
       `
 
       textMessages.forEach((m, ix) => {
-        ctx.$(`#tm-${ix}`).onclick = () => {
+        if (ctx.$(`#tm-${ix}`)) ctx.$(`#tm-${ix}`).onclick = () => {
           ctx.setState({
             activeTextMessage: ix,
             screen: 'textMessageIndividual',
@@ -1382,6 +1404,7 @@ createComponent(
       }
 
     } else if (screen === 'textMessageIndividual') {
+      ctx?.__notificationCb?.()
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -1425,15 +1448,33 @@ createComponent(
       }
 
     } else if (screen === 'lumin') {
-      // const localDevices = {
-      //   livingRoom: 'Lumin Lamp A32',
-      //   livingRoom: 'Lumin Lamp A32',
-      // }[globalState.location]
-
-      // TODO pair by room
 
       const mainInterface = `
         <button id="offOn">${lampOn ? 'Turn Off' : 'Turn On'}</button>
+        ${
+          lampOn
+            ? `
+              <div style="display: flex; justify-content: space-around">
+                <div>
+                  <h6>H1</h6>
+                  <input type="range" min="0" max="360" value="${globalState.light1.h}" id="l1h">
+                  <h6>S1</h6>
+                  <input type="range" min="0" max="100" value="${globalState.light1.s}" id="l1s">
+                  <h6>L1</h6>
+                  <input type="range" min="0" max="100" value="${globalState.light1.v}" id="l1v">
+                </div>
+                <div>
+                  <h6>H2</h6>
+                  <input type="range" min="0" max="360" value="${globalState.light2.h}" id="l2h">
+                  <h6>S2</h6>
+                  <input type="range" min="0" max="100" value="${globalState.light2.s}" id="l2s">
+                  <h6>L2</h6>
+                  <input type="range" min="0" max="100" value="${globalState.light2.v}" id="l2v">
+                </div>
+              </div>
+            `
+            :''
+        }
         <div>${jailbrokenApps.lumin ? jbMarkup(globalState.cryptoDevices.lumin) : ''}</div>
       `
 
@@ -1456,13 +1497,12 @@ createComponent(
 
       jbBehavior(ctx, globalState.cryptoDevices.lumin, 300)
 
-      if (ctx.$('#offOn')) ctx.$('#offOn').onclick = () => {
+      const changeLight = () => {
+        const { light1, light2 } = globalState
 
-        const lampStatus = !lampOn
-
-        if (lampStatus) {
-          setColor('--bg-color', '#fff')
-          setColor('--primary-color', '#000')
+        if (globalState.lightsOn) {
+          setColor('--bg-color', hsvToRGB(light1))
+          setColor('--primary-color', hsvToRGB(light2))
         } else if (globalState.shaydOpen) {
           setColor('--bg-color', 'var(--light-color)')
           setColor('--primary-color', 'var(--dark-color)')
@@ -1470,8 +1510,39 @@ createComponent(
           setColor('--bg-color', 'var(--dark-color)')
           setColor('--primary-color', 'var(--light-color)')
         }
-        globalState.lightsOn = lampStatus
-        ctx.setState({ lampOn: lampStatus })
+      }
+
+      if (ctx.$('#offOn')) ctx.$('#offOn').onclick = () => {
+        globalState.lightsOn = !lampOn
+        ctx.setState({ lampOn: !lampOn })
+        changeLight()
+      }
+
+      if (lampOn) {
+        ctx.$('#l1h').oninput = e => {
+          globalState.light1.h = Number(e.target.value)
+          changeLight()
+        }
+        ctx.$('#l1s').oninput = e => {
+          globalState.light1.s = Number(e.target.value)
+          changeLight()
+        }
+        ctx.$('#l1v').oninput = e => {
+          globalState.light1.v = Number(e.target.value)
+          changeLight()
+        }
+        ctx.$('#l2h').oninput = e => {
+          globalState.light2.h = Number(e.target.value)
+          changeLight()
+        }
+        ctx.$('#l2s').oninput = e => {
+          globalState.light2.s = Number(e.target.value)
+          changeLight()
+        }
+        ctx.$('#l2v').oninput = e => {
+          globalState.light2.v = Number(e.target.value)
+          changeLight()
+        }
       }
 
       ctx.$('#home').onclick = () => {
@@ -2114,7 +2185,7 @@ createComponent(
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2>Landlock Realty Rental App</h2>
-          <div>
+          <div style="margin-top: 0.4em">
             <input id="unit" placeholder="Unit #" type="number">
             <button id="search">Search</button>
           </div>
@@ -2127,59 +2198,77 @@ createComponent(
       ctx.$('#search').onclick = () => {
         const unit = Number(ctx.$('#unit').value)
 
-        if (!hasInternet) {
-          ctx.$('#unitStatus').innerHTML = `<h3>Cannot find server</h3>`
+        ctx.$('#unitStatus').innerHTML = `<h3>Searching</h3>`
+        ctx.$('#payNow').innerHTML = ''
 
-        } else if (unit === 948921) {
-          ctx.$('#unitStatus').innerHTML = `
-            <h3>Unit #${unit}</h3>
-            <h3 id="status">Status: ${globalState.rentBalance === 0 ? 'Paid' : 'Delinquent'}</h3>
-            <h3 id="balance">Balance: $${globalState.rentBalance.toFixed(2)}</h3>
-          `
+        setTimeout(() => {
+          if (!hasInternet) {
+            ctx.$('#unitStatus').innerHTML = `<h3>Cannot find server</h3>`
 
-        } else {
-          ctx.$('#unitStatus').innerHTML = `
-            <h3>Unit #${unit}</h3>
-            <h3 id="status">Status: Paid</h3>
-            <h3 id="balance">Balance: $0.00</h3>
-          `
-        }
-        ctx.$('#payNow').innerHTML = `
-          <p>Please use the following PayApp recipient address to generate a SPTX: 0xef301fb6c54b7cf2cecac63c9243b507a8695f4d</p>
-          <input id="sptx" placeholder="SPTX identifier" type="number">
-          <button id="pay">Pay Now</button>
-          <h4 id="error"></h4>
-        `
+          } else if (unit === 948921) {
+            ctx.$('#unitStatus').innerHTML = `
+              <h3>Unit #${unit}</h3>
+              <h3 id="status">Status: ${globalState.rentBalance === 0 ? 'Paid' : 'Delinquent'}</h3>
+              <h3 id="balance">Balance: $${globalState.rentBalance.toFixed(2)}</h3>
+            `
 
-        ctx.$('#pay').onclick = () => {
-          const sptx = ctx.$('#sptx').value
-          const payment = globalState.payments[sptx]
-
-          if (!payment || payment.recipient !== '0xef301fb6c54b7cf2cecac63c9243b507a8695f4d') {
-            ctx.$('#error').innerHTML = 'Invalid SPTX'
-          } else if (payment.received) {
-            ctx.$('#error').innerHTML = 'SPTX already processed'
           } else {
-
-            setTimeout(() => {
-              ctx.$('#error').innerHTML = 'Processing Payment. Do not refresh this page!'
-              payment.received = true
-            }, 2000)
-
-            setTimeout(() => {
-              ctx.$('#error').innerHTML = 'SPTX processed!'
-
-              if (unit === 948921) {
-                globalState.rentBalance = Math.max(0, globalState.rentBalance - payment.amount)
-                ctx.$('#balance').innerHTML = `Balance: $${globalState.rentBalance.toFixed(2)}`
-                if (globalState.rentBalance === 0) {
-                  ctx.$('#status').innerHTML = 'Status: Paid'
-                }
-              }
-            }, 11000)
+            ctx.$('#unitStatus').innerHTML = `
+              <h3>Unit #${unit}</h3>
+              <h3 id="status">Status: Paid</h3>
+              <h3 id="balance">Balance: $0.00</h3>
+            `
           }
 
-        }
+          ctx.$('#payNow').innerHTML = `
+            <p>Please use the following PayApp recipient address to generate a SPTX: 0xef301fb6c54b7cf2cecac63c9243b507a8695f4d</p>
+            <input id="sptx" placeholder="SPTX identifier" type="number" style="margin-top: 0.4em">
+            <button id="pay">Pay Now</button>
+            <h4 id="error"></h4>
+            <div style="margin: 1em 0">
+              <h3 style="margin-bottom: 0.4em">Maintenance Request</h3>
+              <div>
+                <textarea id="maintenanceRequest"></textarea>
+              </div>
+              <button id="submitMaintenanceRequest">Submit</button>
+              <h4 id="maintenanceRequestMsg"></h4>
+            </div>
+          `
+
+          ctx.$('#submitMaintenanceRequest').onclick = () => {
+            ctx.$('#maintenanceRequest').value = ''
+            ctx.$('#maintenanceRequestMsg').innerHTML = 'Thank You. Your maintenance request will be processed'
+          }
+          ctx.$('#pay').onclick = () => {
+            const sptx = ctx.$('#sptx').value
+            const payment = globalState.payments[sptx]
+
+            if (!payment || payment.recipient !== '0xef301fb6c54b7cf2cecac63c9243b507a8695f4d') {
+              ctx.$('#error').innerHTML = 'Invalid SPTX'
+            } else if (payment.received) {
+              ctx.$('#error').innerHTML = 'SPTX already processed'
+            } else {
+
+              setTimeout(() => {
+                ctx.$('#error').innerHTML = 'Processing Payment. Do not refresh this page!'
+                payment.received = true
+              }, 2000)
+
+              setTimeout(() => {
+                ctx.$('#error').innerHTML = 'SPTX processed!'
+
+                if (unit === 948921) {
+                  globalState.rentBalance = Math.max(0, globalState.rentBalance - payment.amount)
+                  ctx.$('#balance').innerHTML = `Balance: $${globalState.rentBalance.toFixed(2)}`
+                  if (globalState.rentBalance === 0) {
+                    ctx.$('#status').innerHTML = 'Status: Paid'
+                  }
+                }
+              }, 11000)
+            }
+          }
+        }, Math.random() * 4000)
+
 
       }
 
@@ -2206,21 +2295,85 @@ createComponent(
 
     } else if (screen === 'toastr') {
 
-      const mainInterface = wifiAvailable
+      const mainContent = Number(currentUser) === 0
         ? `
+          <div>
+            <h3 style="text-align: center; margin: 0.4em 0;">ToastBaby69</h3>
+            <h5 style="text-align: center;">Followers: 12 | Following: 58 | Toasts: 11</h5>
+            <div>
+              <div style="margin-top: 0.4em">
+                <div><strong>ToastBaby69</strong><span style="font-size: 0.8em; margin-left: 1em">[52 days ago] (3 ♥)</span></div>
+                <div><em> Just Toasted!</em></div>
+              </div>
+              <div style="margin-top: 0.3em; padding-top: 0.3em; border-top: 1px dotted">
+                <div><strong>ToastBaby69</strong><span style="font-size: 0.8em; margin-left: 1em">[58 days ago] (15 ♥)</span></div>
+                <div><em> Just Toasted!</em></div>
+              </div>
+              <div style="margin-top: 0.3em; padding-top: 0.3em; border-top: 1px dotted">
+                <div><strong>ToastBaby69</strong><span style="font-size: 0.8em; margin-left: 1em">[63 days ago] (25 ♥)</span></div>
+                <div><em> Just Toasted!</em></div>
+              </div>
+              <div style="margin-top: 0.3em; padding-top: 0.3em; border-top: 1px dotted">
+                <div><strong>ToastBaby69</strong><span style="font-size: 0.8em; margin-left: 1em">[69 days ago] (24 ♥)</span></div>
+                <div><em> Just Toasted!</em></div>
+              </div>
+              <div style="margin-top: 0.3em; padding-top: 0.3em; border-top: 1px dotted">
+                <div><strong>ToastBaby69</strong><span style="font-size: 0.8em; margin-left: 1em">[88 days ago] (9 ♥)</span></div>
+                <div><em> Just Toasted!</em></div>
+              </div>
+              <div style="margin-top: 0.3em; padding-top: 0.3em; border-top: 1px dotted">
+                <div><strong>ToastBaby69</strong><span style="font-size: 0.8em; margin-left: 1em">[104 days ago] (12 ♥)</span></div>
+                <div><em> Just Toasted!</em></div>
+              </div>
+              <div style="margin-top: 0.3em; padding-top: 0.3em; border-top: 1px dotted">
+                <div><strong>ToastBaby69</strong><span style="font-size: 0.8em; margin-left: 1em">[105 days ago] (77 ♥)</span></div>
+                <div><em> Just Toasted!</em></div>
+              </div>
+              <div style="margin-top: 0.3em; padding-top: 0.3em; border-top: 1px dotted">
+                <div><strong>ToastBaby69</strong><span style="font-size: 0.8em; margin-left: 1em">[109 days ago] (75 ♥)</span></div>
+                <div><em> Just Toasted!</em></div>
+              </div>
+              <div style="margin-top: 0.3em; padding-top: 0.3em; border-top: 1px dotted">
+                <div><strong>ToastBaby69</strong><span style="font-size: 0.8em; margin-left: 1em">[111 days ago] (86 ♥)</span></div>
+                <div><em> Just Toasted!</em></div>
+              </div>
+              <div style="margin-top: 0.3em; padding-top: 0.3em; border-top: 1px dotted">
+                <div>♺ re-toast ♺ !</div>
+                <div style="padding-left: 0.5em"><strong>ralph23901413043141</strong><span style="font-size: 0.8em; margin-left: 1em">[112 days ago] (847 ♥)</span></div>
+                <div style="padding-left: 0.5em"><em> Just Toasted!</em></div>
+              </div>
+              <div style="margin-top: 0.3em; padding-top: 0.3em; border-top: 1px dotted">
+                <div><strong>ToastBaby69</strong><span style="font-size: 0.8em; margin-left: 1em">[112 days ago] (123 ♥)</span></div>
+                <div><em> Just Toasted!</em></div>
+              </div>
+              <div style="margin-top: 0.3em; padding-top: 0.3em; border-top: 1px dotted">
+                <div><strong>ToastBaby69</strong><span style="font-size: 0.8em; margin-left: 1em">[113 days ago] (189 ♥)</span></div>
+                <div><em> Just Toasted!</em></div>
+              </div>
+            </div>
+          </div>
+        `
+        : `
           <div>
             <input placeholder="Username">
             <input placeholder="Password" type="password">
-            <button disabled>Login</button>
+            <button id="login" style="margin-top: 0.4em">Login</button>
+            <h5 id="loginError"></h5>
           </div>
           <div>${jailbrokenApps.toastr ? jbMarkup(globalState.cryptoDevices.toastr) : ''}</div>
         `
+
+      const mainInterface = wifiAvailable
+        ? mainContent
         : `<h3>Device Error: NETWORK_ERROR: Cannot connect to server.</h3>`
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
-          <button id="home">Back</button>
-          <h2>Toastr</h2>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.25em; border-bottom: 1px solid">
+            <button id="home" style="margin-bottom: 0">Back</button>
+            <h2 style="">Toastr</h2>
+            <h6 style="">Powered by <a href="https://friendworld.social" target="_blank">friendworld.social</a></h6>
+          </div>
           ${
             bluetoothEnabled
               ? toasterPaired ? mainInterface : `<button id="pairToaster">Pair Device</button>`
@@ -2233,6 +2386,10 @@ createComponent(
       jbBehavior(ctx, globalState.cryptoDevices.toastr, 300)
 
 
+      if (ctx.$('#login')) ctx.$('#login').onclick = () => {
+        ctx.$('#loginError').innerHTML = 'Credentials Incorrect'
+      }
+
       if (ctx.$('#pairToaster')) ctx.$('#pairToaster').onclick = () => {
         ctx.setState({ toasterPaired: true })
       }
@@ -2243,14 +2400,22 @@ createComponent(
 
     } else if (screen === 'planter') {
 
-      // needs: water, sunlight
       const plantStates = ['Dead', ':(', ':|', ':)']
-      console.log(plantStates[ctx.state.plantStatus], plantStates, ctx.state.plantStatus)
+      const {plantStatus} = ctx.state
 
       const mainInterface = planterPaired
         ? `
-          <h3>Plant Status: <span id="plantStatus">${plantStates[ctx.state.plantStatus]}</span></h3>
+          <h3 style="margin: 0.4em 0">Plant Status: <span id="plantStatus">${plantStates[plantStatus]}</span></h3>
           <button id="water" ${globalState.plantWatered ? 'disabled' : ''}>Water</button>
+          <h5>Needs: ${
+            plantStatus === 0
+              ? 'null'
+              : [
+                !globalState.plantWatered && 'Water',
+                !globalState.shaydOpen && 'Sunlight',
+                globalState.shaydOpen && globalState.plantWatered && '0',
+              ].filter(iden).join(', ')
+          }</h5>
         `
         : `
           <input id="planterDeviceCode" placeholder="Device Code"><button id="pairPlanter" style="margin-left: 0.25em">Pair Device</button>
@@ -2268,7 +2433,7 @@ createComponent(
       `
 
       jbBehavior(ctx, globalState.cryptoDevices.planter, 100, () => {
-        if (ctx.state.plantStatus > 0 && globalState.cryptoDevices.planter.totalTime > 10000) {
+        if (plantStatus > 0 && globalState.cryptoDevices.planter.totalTime > 10000) {
 
           globalState.plantsDead = true
           ctx.setState({ plantStatus: 0 })
@@ -2280,7 +2445,7 @@ createComponent(
 
         setTimeout(() => {
           if (ctx.state.plantStatus > 0) {
-            ctx.setState({ plantStatus: ctx.state.plantStatus + 1 })
+            ctx.setState({ plantStatus: plantStatus + 1 })
           } else {
             ctx.setState({}, true)
           }
@@ -2350,32 +2515,23 @@ createComponent(
       if (ctx.$('#toggleShaydOpen')) ctx.$('#toggleShaydOpen').onclick = () => {
         ctx.$('#shaydError').innerHTML = 'Proccessing'
 
-
-        // if (lampStatus) {
-        //   setColor('--bg-color', '#fff')
-        //   setColor('--primary-color', '#000')
-        // } else if (globalState.shaydOpen) {
-        //   setColor('--bg-color', 'var(--light-color)')
-        //   setColor('--primary-color', 'var(--dark-color)')
-        // } else {
-        //   setColor('--bg-color', 'var(--dark-color)')
-        //   setColor('--primary-color', 'var(--light-color)')
-        // }
         setTimeout(() => {
           let stateUpdate = {}
           if (!wifiAvailable) {
-            ctx.$('#shaydError').innerHTML = 'Local Area Network not found!'
+            ctx.$('#shaydError').innerHTML = 'Device Error: "LAN Error: Cannot Connect to Local Area Network"'
 
           } else if (!globalState.shaydOpen) {
             globalState.shaydOpen = true
             stateUpdate = ctx.state.plantStatus === 0 ? {} : {
               plantStatus: ctx.state.plantStatus + 1
             }
+            ctx.setState(stateUpdate, true)
           } else if (globalState.shaydOpen) {
             globalState.shaydOpen = false
             stateUpdate = ctx.state.plantStatus === 0 ? {} : {
               plantStatus: ctx.state.plantStatus - 1
             }
+            ctx.setState(stateUpdate, true)
           }
 
           if (!lampOn) {
@@ -2389,7 +2545,6 @@ createComponent(
 
           }
 
-          ctx.setState(stateUpdate, true)
             // window.primarySM.enqueue('smartLockShift')
         }, 2000)
       }
@@ -2741,7 +2896,7 @@ function jbBehavior(ctx, device, speed, cb=noop) {
 
   const update = () => {
     ctx.state.cryptoBalances[device.wallet] = device.balance
-    ctx.$('#cryptoBalance').innerHTML = device.balance
+    if (ctx.$('#cryptoBalance')) ctx.$('#cryptoBalance').innerHTML = device.balance
     cb()
   }
   if (device.active) {

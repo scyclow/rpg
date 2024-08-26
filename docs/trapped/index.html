@@ -32,7 +32,7 @@
 <script type="module">
   import {ls} from './$.js'
 
-  window.GAME_VERSION = 1.1
+  window.GAME_VERSION = 1.2
 
   const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
   if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {
@@ -82,13 +82,6 @@
   const $consoleTemperature = $.id('consoleTemperature')
 
 
-  const group = (nodesInput, props) => Object.keys(nodesInput).reduce((nodesOutput, nodeName) => ({
-    ...nodesOutput,
-    [nodeName]: { ...props, ...nodesInput[nodeName]}
-  }), {})
-
-  const options = mapping => ({ur}) => mapping[ur]
-
   setTimeout(() => {
     $.id('mainConsoleContent').classList.add('smoothScroll')
   }, 200)
@@ -103,6 +96,7 @@
       router: {
         pluggedIn: true
       },
+      blindsOpenedBefore: false,
       stairwayLevel: 0
     }
     // state: {
@@ -203,6 +197,14 @@
         sm.ctx.currentActions = actions
         $phoneDevice.setState({ availableActions: actions.filter(a => a.text !== 'Phone')})
       }
+
+      $phoneDevice.onNotification(() => {
+        const notifications = $phoneDevice.phoneNotifications()
+          ? ` (${$phoneDevice.phoneNotifications()})`
+          : ''
+        const phoneButton = $.id(`${sm.ctx.currentNode}-openPhone`)
+        if (phoneButton) phoneButton.innerHTML = `Phone${notifications}`
+      })
     },
   }
 
@@ -272,6 +274,10 @@
       text: 'You close your phone',
       follow({ ctx, redirect }) {
         redirect(ctx.stack.pop())
+      },
+      handler({ ctx, redirect }) {
+        if (ctx.stack.length) redirect(ctx.stack.pop())
+        else return ctx.fallbackNode
       }
     },
 
@@ -292,19 +298,43 @@
           $consoleTime.innerHTML = ' — 88:88:88'
         }
       },
+
       bedroomWindow: {
+        text: '',
+        wait: 0,
+        follow({ctx}) {
+          if (!ctx.state.blindsOpenedBefore && globalState.shaydOpen) {
+            ctx.state.blindsOpenedBefore = true
+            return 'bedroomWindowOpenNew'
+          } else if (globalState.shaydOpen) {
+            return 'bedroomWindowOpen'
+          } else {
+            return 'bedroomWindowClosed'
+          }
+        }
+      },
+      bedroomWindowClosed: {
         text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+      },
+      bedroomWindowOpenNew: [
+        { text: `The blinds are now open`, wait: 1800 },
+        { text: `You stare at the brick wall outside, three feet away from your window`, wait: 2500 },
+        { text: `Light creeps into the narrow alley from above, originating slightly outside your field of vision`, wait: 3000 },
+        { text: `At the bottom right corner of the continuous double pane of glass: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the Landlock Realty Rental App"`},
+      ],
+      bedroomWindowOpen: {
+        text: `You stare at the window. At the bottom right corner of the continuous double pane of glass: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the Landlock Realty Rental App"`
       },
       bedroomLamp: {
         text: `You inspect the lamp. You don't see a light switch, but you do see a QR code pasted to its side with no label`
       }
     }, {
-      actions: [
+      actions: ({ctx}) => [
         { text: 'Phone', value: 'openPhone'},
         { text: 'Hallway', value: 'hallway'},
         { text: 'Alarm Clock', value: 'bedroomAlarm'},
         { text: 'Bed', value: 'bed'},
-        { text: 'Window', value: 'bedroomWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'}},
+        { text: 'Window', value: 'bedroomWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'} },
         { text: 'Lamp', value: 'bedroomLamp', qr: { screen: 'messageViewer', messageViewerMessage: 'Illuminate your home with the Lumin app. Available only in AppMarket!'}},
       ],
       handler: ({ur}) => ur
@@ -505,8 +535,6 @@
         text: ''
       },
 
-      // TODO update if dead
-
       planter: {
         text: () => {
           let txt
@@ -530,23 +558,46 @@
         }
       },
 
-      livingRoomWindow: {
-        text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
-      },
-
       ebook: {
         text: 'You pick up the ebook. You read: "Cannot access Library"'
       },
       tv: {
         text: 'The black screen of the TV looms ominously over you.'
-      }
+      },
+      livingroomWindow: {
+        text: '',
+        wait: 0,
+        follow({ctx}) {
+          if (!ctx.state.blindsOpenedBefore && globalState.shaydOpen) {
+            ctx.state.blindsOpenedBefore = true
+            return 'livingroomWindowOpenNew'
+          } else if (globalState.shaydOpen) {
+            return 'livingroomWindowOpen'
+          } else {
+            return 'livingroomWindowClosed'
+          }
+        }
+      },
+      livingroomWindowClosed: {
+        text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+      },
+      livingroomWindowOpenNew: [
+        { text: `The blinds are now open`, wait: 1750 },
+        { text: `You stare at the brick wall outside, three feet away from your window`, wait: 2750 },
+        { text: `Light creeps into the narrow alley from above, originating slightly outside your field of vision`, wait: 3500 },
+        { text: `At the bottom right corner of the continuous double pane of glass: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the Landlock Realty Rental App"`},
+      ],
+      livingroomWindowOpen: {
+        text: `You stare at the window. At the bottom right corner of the continuous double pane of glass: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the Landlock Realty Rental App"`
+      },
     }, {
-      actions: [
+      actions: ({ctx}) => [
         { text: 'Phone', value: 'openPhone'},
         { text: 'Hallway', value: 'hallway'},
         { text: 'Kitchen', value: 'kitchen'},
         { text: 'SmartPlanter', value: 'planter'},
-        { text: 'Window', value: 'livingRoomWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'}},
+        { text: 'Window', value: 'livingroomWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'} },
+
         { text: 'Router', value: 'router'},
         { text: 'TV', value: 'tv'},
         { text: 'ebook', value: 'ebook'},
@@ -715,15 +766,41 @@
           </div>
         `
       },
+      kitchenWindow: {
+        text: '',
+        wait: 0,
+        follow({ctx}) {
+          if (!ctx.state.blindsOpenedBefore && globalState.shaydOpen) {
+            ctx.state.blindsOpenedBefore = true
+            return 'kitchenWindowOpenNew'
+          } else if (globalState.shaydOpen) {
+            return 'kitchenWindowOpen'
+          } else {
+            return 'kitchenWindowClosed'
+          }
+        }
+      },
+      kitchenWindowClosed: {
+        text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+      },
+      kitchenWindowOpenNew: [
+        { text: `The blinds are now open`, wait: 1800 },
+        { text: `You stare at the brick wall outside, three feet away from your window`, wait: 2500 },
+        { text: `Light creeps into the narrow alley from above, originating slightly outside your field of vision`, wait: 3000 },
+        { text: `At the bottom right corner of the continuous double pane of glass: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the Landlock Realty Rental App"`},
+      ],
+      kitchenWindowOpen: {
+        text: `You stare at the window. At the bottom right corner of the continuous double pane of glass: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the Landlock Realty Rental App"`
+      },
     }, {
-      actions: () => [
+      actions: ({ctx}) => [
         { text: 'Phone', value: 'openPhone'},
         { text: 'Living Room', value: 'livingRoom'},
-        { text: 'Window', value: 'kitchenWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'}},
         { text: 'Refrigerator', value: globalState.wifiActive ? 'refrigeratorOpen' : 'refrigeratorLocked'},
         { text: 'Kitchen Sink', value: 'kitchenSink'},
         // { text: 'Oven', value: 'oven'},
         { text: 'Toaster', value: 'toaster', qr: { screen: 'messageViewer', messageViewerMessage: 'Introducing <em>Toastr</em>: the social way to toast! Download our App today!'}},
+        { text: 'Window', value: 'kitchenWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'} },
       ],
       handler: ({ur}) => ur
     }),
@@ -895,6 +972,7 @@
   window.primarySM = new StateMachine(primaryStartingCtx, primaryConfig, primaryNodes)
 
 
+
   function rehydrate(ctx, sm) {
     const $content = $.id('mainConsoleContent')
     const $nextActions = $.id('nextActions')
@@ -907,8 +985,9 @@
       setColor('--bg-color', '#000')
       setColor('--primary-color', '#fff')
     } else if (globalState.lightsOn) {
-      setColor('--bg-color', '#fff')
-      setColor('--primary-color', '#000')
+      const { light1, light2 } = globalState
+      setColor('--bg-color', hsvToRGB(light1))
+      setColor('--primary-color', hsvToRGB(light2))
     } else if (globalState.shaydOpen) {
       setColor('--bg-color', 'var(--light-color)')
       setColor('--primary-color', 'var(--dark-color)')

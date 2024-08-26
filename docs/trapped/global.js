@@ -31,7 +31,12 @@ export const globalState = persist('__GLOBAL_STATE', {
     shayd: newCryptoDevice(1),
     lock: newCryptoDevice(1),
   },
-
+  light1: {
+    h: 0, s: 0, v: 100
+  },
+  light2: {
+    h: 180, s: 0, v: 0
+  },
 })
 
 

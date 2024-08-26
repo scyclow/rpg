@@ -1,7 +1,7 @@
 import {createSource, MAX_VOLUME} from '../audio.js'
 import { globalState } from '../global.js'
 
-let SOURCE1, SOURCE2
+// let SOURCE1, SOURCE2
 
 
 
@@ -33,29 +33,31 @@ export const ispCSNodes = {
     handler: x => 'representative',
     wait: 8000,
     follow: () => {
-      SOURCE1 = createSource('sine')
-      SOURCE2 = createSource('sine')
+      const note = 300 * sample([1, 1.125, 1.2, 1.33333, 1.5, 1.6, 1.75])
+      // const note = 300 * sample([1, 1.122, 1.189, 1.334, 1.498, 1.588, 1.782])
 
-      const note = 300 * sample([1, 1.122, 1.189, 1.334, 1.498, 1.588, 1.782])
-      SOURCE1.smoothFreq(note)
-      SOURCE1.smoothFreq(note*2)
+      const SOURCE1 = createSource('sine', note)
+      const SOURCE2 = createSource('sine', note*2)
+
+      setRunInterval(() => {
+        SOURCE1.smoothFreq(note)
+        SOURCE2.smoothFreq(note*2)
+
+        SOURCE1.smoothGain(MAX_VOLUME)
+        SOURCE2.smoothGain(MAX_VOLUME)
+
+        setTimeout(() => {
+          SOURCE1.smoothGain(0)
+          SOURCE2.smoothGain(0)
+        }, 80)
+      }, 1000 + Math.random()*2)
+
       return 'representativeRing'
     }
   },
 
   representativeRing: {
-    before() {
-      SOURCE1.smoothGain(MAX_VOLUME)
-      SOURCE2.smoothGain(MAX_VOLUME)
-
-      setTimeout(() => {
-        SOURCE1.smoothGain(0)
-        SOURCE2.smoothGain(0)
-      }, 80)
-    },
     text: '',
-    wait: 1000,
-    follow: 'representativeRing',
     handler: 'representative',
   },
 

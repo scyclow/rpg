@@ -1,6 +1,6 @@
 import {StateMachine, CTX} from './stateMachine.js'
 import {voices, say} from './voices.js'
-import {createSource, MAX_VOLUME} from './audio.js'
+import {createSource, MAX_VOLUME, allSources} from './audio.js'
 import {ispCSNodes} from './cs/isp.js'
 import {billingCSNodes} from './cs/billing.js'
 import {disputeResolutionNodes} from './cs/dispute.js'
@@ -159,6 +159,7 @@ export class PhoneCall {
     this.live = false
     this.answerTime = 0
     this.stateMachine?.kill?.()
+    allSources.forEach(src => src.stop())
 
     // PhoneCall.active = null
   }

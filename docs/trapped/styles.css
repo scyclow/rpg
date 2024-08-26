@@ -104,8 +104,8 @@ p {
 
 }
 #mainConsolePrimary aside {
-  max-width: 40vw;
-  /*min-width: 250px;*/
+  max-width: 36vw;
+  min-width: 290px;
 
 }
 
