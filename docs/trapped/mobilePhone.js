@@ -36,6 +36,7 @@ const APPS = [
   // { name: 'Elevate', key: 'elevate', size: 128, price: 1 },
   { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
   { name: 'FreezeLocker', key: 'freeze', size: 128, price: 1 },
+  { name: 'Identity Wizard', key: 'identityWizard', size: 128, price: 0 },
   { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
   { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
   { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
@@ -172,7 +173,10 @@ const state = persist('__MOBILE_STATE', {
       exchangePremium: false,
       exchangeCryptoBalance: 0,
       exchangePremiumCryptoBalance: 0,
-      notePadValue: defaultNotePadValue
+      notePadValue: defaultNotePadValue,
+      payAppAMLKYCed: false,
+      idvWizardStep: 0,
+      idWizardInfo: {},
     }
   }
 })
@@ -401,6 +405,50 @@ createComponent(
         margin-top: 0.25em;
       }
 
+      .wizardSection {
+        animation: SlideFromLeft 1s linear;
+      }
+      .wizardSection h2, .wizardSection h3 {
+        text-align: center;
+        margin-top: 0.5em
+      }
+      .wizardSection fieldset {
+        padding: 0.75em;
+        border: 1px solid;
+        margin: 0.5em 0;
+        text-align: center;
+      }
+
+      .wizardSection section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 1em;
+      }
+
+      .wizardSection input, .wizardSection select {
+        padding: 0.25em;
+        font-size: 1em;
+        text-align: center;
+      }
+      .wizardSection button#next {
+        font-size: 1.25em;
+        margin: 0.5em 0;
+        padding: 0.25em 0.75em;
+      }
+
+
+
+      @keyframes SlideFromLeft {
+        0% {
+          transform: translateX(100%);
+        }
+
+        100% {
+          transform: translateX(0%);
+        }
+      }
+
       @keyframes Flashing {
         0%, 100% {
           opacity: 0;
@@ -560,7 +608,7 @@ createComponent(
         }
       })
 
-      // TODO
+      return payment
     }
 
     ctx.sendCrypto = (from, to, amount) => {
@@ -596,10 +644,8 @@ createComponent(
     }
   },
   ctx => {
-    // console.log('clearing', ctx.interval)
     clearInterval(ctx.interval)
     ctx.__queuedInterval = 0
-
 
     ctx.$phoneContent = ctx.$('#phoneContent')
     ctx.$header = ctx.$('#header')
@@ -607,6 +653,7 @@ createComponent(
 
     const {
       screen,
+      lastScreen,
       currentUser,
       dataPlanActivated,
       wifiNetwork,
@@ -638,6 +685,9 @@ createComponent(
       notePadValue,
       exchangePremium,
       keyPairs,
+      payAppAMLKYCed,
+      idvWizardStep,
+      idWizardInfo
     } = currentUserData
 
     const textMessages = currentUserData?.textMessages || []
@@ -654,8 +704,6 @@ createComponent(
       ctx.newText(packageText)
     }
 
-
-
     ctx.$internetType.innerHTML = `
       ${internet === 'wifi' ? 'WiFi' : 'Data'}: ${
         hasInternet
@@ -669,7 +717,6 @@ createComponent(
 
     const unreadTextCount = textMessages.reduce((a, c) => c.read ? a : a + 1, 0) || 0
 
-    // TODO: none of the apps should work if you're outside the apartment
 
     if (screen === 'loading') {
       ctx.$header.classList.add('hidden')
@@ -732,7 +779,6 @@ createComponent(
           <div><input placeholder="last name"/></div>
           <div><input placeholder="birthday"/></div>
           <div><input placeholder="gender"/></div>
-          <div><input placeholder="sexual orientation"/></div>
           <div><input placeholder="height"/></div>
           <div><input placeholder="weight"/></div>
           <button id="submit">submit</button>
@@ -782,7 +828,10 @@ createComponent(
               exchangeCryptoBalance: 0,
               exchangePremiumCryptoBalance: 0,
               exchangePremium: false,
-              notePadValue: ''
+              payAppAMLKYCed: false,
+              notePadValue: '',
+              idvWizardStep: 0,
+              idWizardInfo: {},
             }
           }
         })
@@ -1171,9 +1220,17 @@ createComponent(
           }
 
           ctx.receiveSPTX(sptxInput)
+
+          if (payment.amount >= 1000) {
+            setTimeout(() => {
+              ctx.setState({
+                payAppUpdate: 4
+              })
+            }, 1000)
+          }
           setTimeout(() => {
             ctx.$('#sptxError').innerHTML = 'success'
-          }, 1000)
+          }, 500)
         }, 7000)
 
       }
@@ -1205,8 +1262,6 @@ createComponent(
           $sptx.innerHTML = `INSUFFICIENT BALANCE`
           return
         }
-
-        // globalState.payments = {}
 
         const sptx = ctx.createSPTX({
           sender: payAppUSDAddr,
@@ -1266,12 +1321,14 @@ createComponent(
         }
 
       // let the user log in for 10 minutes
-      } else if (payAppUpdate === 3 && lastPayApp2fa < Date.now() - 600000) {
-        ctx.$('#payappContent').classList.add('hidden')
-        ctx.$('#payapp2fa').innerHTML = `
+      } else if (
+        (payAppUpdate === 3 || payAppAMLKYCed)
+        && lastPayApp2fa < Date.now() - 600000 && lastScreen !== 'payApp'
+      ) {
+        ctx.$('#payappContent').innerHTML = `
           <div>
             <h2>PayApp: Making Payment as easy as 1-2-3!</h2>
-            <h3 style="margin: 0.4em 0">For your security: please generate a 2FA Code using the following security key: 48299285</h3>
+            <h3 style="margin: 0.4em 0">You have been logged out for your security. Please generate a 2FA Code using the following security key: 48299285</h3>
             <input id="faInput" placeholder="2FA Code" type="number"> <button id="faLogin">Login</button>
             <h4 id="faError"></h4>
           </div>
@@ -1280,15 +1337,345 @@ createComponent(
           if (Number(ctx.$('#faInput').value) === Number(calcIdVerifyCode(currentUser + 48299285))) {
             ctx.$('#faError').innerHTML = 'VERIFYING...'
             setTimeout(() => {
-              ctx.state.payAppUpdate = 3
-              ctx.$('#payappContent').classList.remove('hidden')
-              ctx.$('#payapp2fa').classList.add('hidden')
+              ctx.setState({
+                lastPayApp2fa: Date.now()
+              })
             }, 300)
           } else {
             ctx.$('#faError').innerHTML = 'INVALID 2FA CODE'
           }
         }
+      } else if (payAppUpdate === 4 && !payAppAMLKYCed) {
+        ctx.$('#payappContent').innerHTML = `
+          <h2>PayApp: Making Payment as easy as 1-2-3!</h2>
+
+          <div style="margin: 0.5em; padding: 0.5em;">
+            <div style="text-align: justify">
+              <h1 class="blink" style="text-align: center">ACTION REQUIRED ⚑</h1>
+              <p>Your PayApp account <strong>has been flagged for suspicious activity</strong> by our Anti Money Laundering (AML) division.</p>
+              <p>This may be related to recent cryptocurrency transactions. As a precautionary measure we have <strong>locked your acount</strong>. In order to continue, please complete the following Know Your Customer (KYC) steps:</p>
+            </div>
+            <div style="margin-top: 0.5em; padding: 1em; border: 1px solid">
+              <p style="margin-bottom: 0.75em"><strong>1.</strong> Download and install the <strong>Identity Wizard</strong> application</p>
+              <p style="margin-bottom: 0.75em"><strong>2.</strong> Using the Customer Referral Code: <strong>777123865</strong>, follow the instructions given</p>
+              <p style="margin-bottom: 0.75em"><strong>3.</strong> Input the resulting <strong>IVC</strong> here:</p>
+              <div style="text-align: center">
+                <input id="ivcValue" placeholder="I.V.C." id="ivc" style="padding: 0.25em; text-align: center"> <button id="submitIVC" style="margin-bottom: 0; font-size: 1em">Submit</button>
+              </div>
+              <h4 id="ivcError" style="text-align: center; margin-top: 0.4em"></h4>
+            </div>
+          </div>
+        `
+
+        const ivc = Math.floor((777123865 * 3) / 7) + 5
+
+        ctx.$('#submitIVC').onclick = () => {
+          if (Number(ctx.$('#ivcValue').value) !== ivc) {
+            ctx.$('#ivcError').innerHTML = 'Invalid IVC: Cannot Verify Identity'
+            return
+          }
+
+          ctx.$('#ivcError').innerHTML = 'Verifying...'
+
+          setTimeout(() => {
+            ctx.setUserData({
+              payAppAMLKYCed: true
+            })
+          }, 1000)
+
+
+        }
+
       }
+
+    } else if (screen === 'identityWizard') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <section id="wizardContent">
+          </section>
+        </div>
+      `
+
+      const {idvWizardStep, idWizardInfo} = currentUserData
+      const $wizardContent = ctx.$('#wizardContent')
+
+      // <span style="transform: scale(-1.5,1.5); display: inline-block">⎉✪✷⎌</span>
+      if (idvWizardStep === 0) {
+        $wizardContent.innerHTML = `
+          <h2 style="text-align: center; margin: 1em 0.5em">Welcome to the Identity Verifier Wizard! <span style="transform: scale(1.5); display: inline-block">✔</span></h2>
+
+          <h4 style="margin: 1em">Please continue with a Customer Referral Code</h4>
+
+          <div style="margin: 1em">
+            <input id="referralCode" placeholder="Referral Code" style="padding: 0.25em" type="number"> <button id="continue" style="font-size: 1em">Continue</button>
+          </div>
+        `
+        ctx.$('#continue').onclick = () => {
+          ctx.setUserData({
+            idvWizardStep: 1,
+            idWizardInfo: {
+              ...idWizardInfo,
+              referralCode: Number(ctx.$('#referralCode').value)
+            }
+          })
+        }
+
+      } else if (idvWizardStep === 1) {
+        $wizardContent.innerHTML = `
+          <div class="wizardSection">
+            <button id="goBack">Back</button>
+            <h2>Let's get started!</h2>
+            <h3>What's your name?</h3>
+            <section>
+              <fieldset>
+                <legend>First Name</legend>
+                <input id="firstName" placeholder="First Name" value="${idWizardInfo.firstName}">
+              </fieldset>
+
+              <fieldset>
+                <legend>Middle Name</legend>
+                <input id="middleName" placeholder="Middle Name" value="${idWizardInfo.middleName}">
+              </fieldset>
+
+              <fieldset>
+                <legend>Last Name</legend>
+                <input id="lastName" placeholder="Last Name" value="${idWizardInfo.lastName}">
+              </fieldset>
+              <button id="next">Next →</button>
+            </section>
+          </div>
+        `
+
+        ctx.$('#next').onclick = () => {
+          ctx.setUserData({
+            idvWizardStep: 2,
+            idWizardInfo: {
+              ...idWizardInfo,
+              firstName: ctx.$('#firstName').value,
+              middleName: ctx.$('#middleName').value,
+              lastName: ctx.$('#lastName').value,
+            }
+          })
+        }
+
+        ctx.$('#goBack').onclick = () => {
+          ctx.setUserData({
+            idvWizardStep: 0,
+          })
+        }
+
+      } else if (idvWizardStep === 2) {
+        $wizardContent.innerHTML = `
+          <div class="wizardSection">
+            <button id="goBack">Back</button>
+            <h2>Nice to meet you, ${idWizardInfo.firstName}!</h2>
+            <h3>We just need to verify that you're really you</h3>
+            <section>
+              <fieldset>
+                <legend>Date of Birth</legend>
+                <select value="${idWizardInfo.dobMonth}" id="dobDay">
+                  ${times(31, i => `<option value="${i}">${i}</option>`).join('')}
+                </select>
+
+                <select value="${idWizardInfo.dobMonth}" id="dobMonth">
+                  ${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November'].map((m, i) => `<option value="${i}">${m}</option>`).join('')}
+                </select>
+
+                <select value="${idWizardInfo.dobYear}" id="dobYear">
+                  ${times(125, i => `<option value="${i+ 1900}">${i+ 1900}</option>`).join('')}
+                </select>
+              </fieldset>
+
+              <fieldset>
+                <legend>Social Security Number</legend>
+                <input id="ssn" placeholder="000-00-0000" value="${idWizardInfo.ssn}" type="number">
+              </fieldset>
+
+              <fieldset>
+                <legend>Legal Address</legend>
+                <textarea id="address" placeholder="123 Main Street, New York, NY 10001, USA" value="${idWizardInfo.address}"></textarea>
+              </fieldset>
+              <button id="next">Next →</button>
+            </section>
+          </div>
+        `
+
+        ctx.$('#next').onclick = () => {
+          ctx.setUserData({
+            idvWizardStep: 3,
+            idWizardInfo: {
+              ...idWizardInfo,
+              ssn: ctx.$('#ssn').value,
+              dobDay: ctx.$('#dobDay').value,
+              dobMonth: ctx.$('#dobMonth').value,
+              dobYear: ctx.$('#dobYear').value,
+              address: ctx.$('#address').value,
+            }
+          })
+        }
+
+        ctx.$('#goBack').onclick = () => {
+          ctx.setUserData({
+            idvWizardStep: 1,
+          })
+        }
+
+      } else if (idvWizardStep === 3) {
+        $wizardContent.innerHTML = `
+          <div class="wizardSection">
+            <button id="goBack">Back</button>
+            <h2>Almost there!</h2>
+            <h3>Just a few more questions</h3>
+            <section>
+              <fieldset>
+                <legend>Gender</legend>
+                <select value="${idWizardInfo.gender}" id="gender">
+                  ${['Agender', 'Androgynous', 'Bigender', 'Binary', 'Demigender', 'DemiFlux', 'GenderFluid', 'GenderNonConforming', 'Genderqueer', 'Hijra', 'Intersex', 'Male', 'Non-Binary', 'Other', 'Pangender', 'Transfeminine', 'Transmasculine', 'TransNonBinary', 'Two-Spirit', 'Woman'].map(g => `<option value="${g}">${g}</option>`).join('')}
+                </select>
+              </fieldset>
+
+              <fieldset>
+                <legend>Sexual Orientation</legend>
+                <select value="${idWizardInfo.sexualOrientation}" id="sexualOrientation">
+                  ${['Androgynosexual', 'Androsexual', 'Aromantic', 'Asexual', 'Bisexual', 'Bi-curious', 'Demisexual', 'Finsexual', 'Gay', 'GrayAsexual', 'Gynosexual', 'Heteroflexible', 'Heterosexual', 'Homoflexible', 'Homosexual', 'Lesbian', 'Lithosexual', 'Minsexual', 'Neptunic', 'Ninsexual', 'Objectumsexual', 'Omnisexual', 'Pansexual', 'Polysexual', 'Queer', 'Sapiosexual', 'Saturnic', 'Skoliosexual', 'Straight', 'Uranic'].map(s => `<option value="${s}">${s}</option>`).join('')}
+                </select>
+              </fieldset>
+
+              <fieldset>
+                <legend>Martial Status</legend>
+                <select value="${idWizardInfo.martialStatus}" id="martialStatus">
+                  ${['Casual Relationship', 'Civil Union', 'Divorced', 'Domestic Partner', 'Married', 'Filing for Divorce', 'Polyamorous', 'Single', 'Relationship Anarchy'].map(m => `<option value="${m}">${m}</option>`).join('')}
+                </select>
+              </fieldset>
+
+              <fieldset>
+                <legend>Dependants</legend>
+                <select value="${idWizardInfo.martialStatus}" id="martialStatus">
+                  ${times(50, i => `<option value="${i}">${i}</option>`).join('')}
+                </select>
+              </fieldset>
+              <button id="next">Next →</button>
+            </section>
+          </div>
+        `
+
+        ctx.$('#next').onclick = () => {
+          ctx.setUserData({
+            idvWizardStep: 4,
+            idWizardInfo: {
+              ...idWizardInfo,
+              gender: ctx.$('#gender').value,
+              sexualOrientation: ctx.$('#sexualOrientation').value,
+              martialStatus: ctx.$('#martialStatus').value,
+            }
+          })
+        }
+
+        ctx.$('#goBack').onclick = () => {
+          ctx.setUserData({
+            idvWizardStep: 2,
+          })
+        }
+
+      } else if (idvWizardStep === 4) {
+        $wizardContent.innerHTML = `
+          <div class="wizardSection">
+            <button id="goBack">Back</button>
+            <h2 style="margin-top: 0">Last Step!</h2>
+            <h3>Humanity Verification</h3>
+
+            <section style="padding: 0 1em">
+              <div style="margin-bottom: 1em">
+                <h4>1. 892 + 899 * 3 = ???</h4>
+                <input type="number" placeholder="???" style="margin-top: 0.4em" id="mathProblem">
+              </div>
+
+              <div style="margin-bottom: 1em; padding: 0 2em">
+                <h4>2. "Before the Law stands a doorkeeper. To this doorkeeper there comes a man from the country and prays admittance to the Law. But the doorkeeper says that he cannot grant admittance at the moment." What is the subject of this passage?</h4>
+                <div style="display: flex; justify-content: center; margin-top: 0.75em">
+                  <select>
+                    ${['The Law', 'The doorkeeper', 'The man', 'The country', 'The moment'].map(i => `<option value="${i}">${i}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div style="margin-bottom: 1em; padding: 0 2em">
+                <h4>3. What color was your first car?</h4>
+                <div style="display: flex; justify-content: center; margin-top: 0.25em">
+                  <select>
+                    ${['Red', 'Orange', 'Brown', 'Yellow', 'Green', 'Teal', 'Blue', 'Purple', 'White', 'Black', 'Gray',].map(i => `<option value="${i}">${i}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <label style="margin-top: 0.5em"><input type="checkbox" id="confirmation"> I am a Human</label>
+              <button id="next">Complete →</button>
+              <h4 id="humanError"></h4>
+            </section>
+          </div>
+        `
+
+        ctx.$('#next').onclick = () => {
+          if (Number(ctx.$('#mathProblem').value) !== (892 + 899 * 3) || !ctx.$('#confirmation').checked) {
+            ctx.$('#humanError').innerHTML = 'Please correctly answer all Human Verification questions'
+            return
+          }
+
+          ctx.setUserData({
+            idvWizardStep: 5,
+          })
+        }
+
+        ctx.$('#goBack').onclick = () => {
+          ctx.setUserData({
+            idvWizardStep: 3,
+          })
+        }
+
+      } else if (idvWizardStep === 5) {
+        $wizardContent.innerHTML = `
+          <div class="wizardSection">
+            <button id="goBack">Back</button>
+            <div id="lastStepContent">
+              <h2 style="margin: 2em 0" class="blink">Verifying Identity...</h2>
+            </div>
+          </div>
+        `
+
+        setTimeout(() => {
+          if (!hasInternet) {
+            ctx.$('#lastStepContent').innerHTML = `<h2 style="margin: 2em 0" class="blink">Cannot connect to internet. Please try again later.</h2>`
+            return
+          }
+          ctx.$('#lastStepContent').innerHTML = `
+            <h2 style="margin: 2em 0">Success!</h2>
+            <h3>Identity Verification Code: ${Math.floor((idWizardInfo.referralCode * 3) / 7) + 5}</h3>
+            <div style="display: flex; justify-content: center; margin-top: 2em">
+              <button id="startOver" style="font-size: 1.25em">Start Over</button>
+            </div>
+          `
+
+          ctx.$('#startOver').onclick = () => {
+            ctx.setUserData({
+              idvWizardStep: 0,
+              idWizardInfo: {}
+            })
+          }
+        }, 6300)
+
+        ctx.$('#goBack').onclick = () => {
+          ctx.setUserData({
+            idvWizardStep: 4,
+          })
+        }
+
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+      // welcome to the identity wizard
 
     } else if (screen === 'settings') {
       ctx.$phoneContent.innerHTML = `
@@ -1676,7 +2063,7 @@ createComponent(
 
       ctx.setInterval(() => {
         if (!hasInternet) return
-        const msSinceUpdate = Date.now() - globalState.idVerifierUpdate
+        const msSinceUpdate = Date.now() - globalState.lastGlobalUpdate
         const secondsSinceUpdate = msSinceUpdate / 1000
 
         const roundedSeconds =  60 - (Math.floor(secondsSinceUpdate))
@@ -1998,7 +2385,7 @@ createComponent(
 
       ctx.setInterval(() => {
         if (!hasInternet) return
-        const msSinceUpdate = Date.now() - globalState.idVerifierUpdate
+        const msSinceUpdate = Date.now() - globalState.lastGlobalUpdate
         const secondsSinceUpdate = msSinceUpdate / 1000
 
         const seconds = (Math.floor(secondsSinceUpdate))
@@ -2095,7 +2482,7 @@ createComponent(
 
         ctx.$('#sendUSDError').innerHTML = 'Processing [DO NOT RELOAD PAGE]'
 
-        if (recipient === '0x4b258603257460d480c929af5f7b83e8c4279b7b') {
+        if (['0x4b258603257460d480c929af5f7b83e8c4279b7b', '0xef301fb6c54b7cf2cecac63c9243b507a8695f4d'].includes(recipient)) {
           setTimeout(() => {
             ctx.$('#sendUSDError').innerHTML = `PROCESSING ERROR: Recipient outside payment network`
           }, 2000)
@@ -2997,8 +3384,8 @@ createComponent(
 
   },
   (oldState, newState, stateUpdate) => {
-    Object.assign(state, newState)
-    globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phone', payload: stateUpdate }})
+    Object.assign(state, { ...newState, lastScreen: oldState.screen})
+    // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phone', payload: stateUpdate }})
   }
 )
 

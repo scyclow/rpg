@@ -4,7 +4,7 @@ import {persist} from './persist.js'
 export const globalState = persist('__GLOBAL_STATE', {
   routerRestartTime: 0,
   location: 'nothing',
-  idVerifierUpdate: Date.now(),
+  lastGlobalUpdate: Date.now(),
   routerReset: false,
   routerUnplugged: false,
   lightsOn: false,
@@ -48,7 +48,7 @@ window.globalState = globalState
 globalState.eventLoopStartTime = Date.now()
 
 setInterval(() => {
-  if (Date.now() >= globalState.idVerifierUpdate + 60000) globalState.idVerifierUpdate = Date.now()
+  if (Date.now() >= globalState.lastGlobalUpdate + 60000) globalState.lastGlobalUpdate = Date.now()
   globalState.rand = Math.random()
 
 }, globalState.eventLoopDuration)
@@ -95,19 +95,19 @@ for (let device of Object.values(globalState.cryptoDevices)) {
 }
 
 export const calcIdVerifyCode = id => {
-  const out = (globalState.idVerifierUpdate * (17 + id) + 1) % 100000
+  const out = (globalState.lastGlobalUpdate * (17 + id) + 1) % 100000
   return out < 10000 ? '0'+out : ''+out
 }
 
 export const calcAddr = seed => {
   return (
     '0x'
-    + Math.floor((globalState.idVerifierUpdate + seed)**1.20).toString(16).slice(-7)
-    + Math.floor((globalState.idVerifierUpdate + seed)**1.21).toString(16).slice(-7)
-    + Math.floor((globalState.idVerifierUpdate + seed)**1.22).toString(16).slice(-7)
-    + Math.floor((globalState.idVerifierUpdate + seed)**1.23).toString(16).slice(-7)
-    + Math.floor((globalState.idVerifierUpdate + seed)**1.24).toString(16).slice(-7)
-    + Math.floor((globalState.idVerifierUpdate + seed)**1.25).toString(16).slice(-5)
+    + Math.floor((globalState.lastGlobalUpdate + seed)**1.20).toString(16).slice(-7)
+    + Math.floor((globalState.lastGlobalUpdate + seed)**1.21).toString(16).slice(-7)
+    + Math.floor((globalState.lastGlobalUpdate + seed)**1.22).toString(16).slice(-7)
+    + Math.floor((globalState.lastGlobalUpdate + seed)**1.23).toString(16).slice(-7)
+    + Math.floor((globalState.lastGlobalUpdate + seed)**1.24).toString(16).slice(-7)
+    + Math.floor((globalState.lastGlobalUpdate + seed)**1.25).toString(16).slice(-5)
   )
 }
 

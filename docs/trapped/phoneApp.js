@@ -363,7 +363,7 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text}, sm) {
-              globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'isp', text } }})
+              // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'isp', text } }})
 
               sm.ctx.history.push(text)
               say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
@@ -391,7 +391,7 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text}, sm) {
-              globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'billing', text } }})
+              // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'billing', text } }})
 
               sm.ctx.history.push(text)
               // TODO different voice
@@ -419,7 +419,7 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text}, sm) {
-              globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'billingDispute', text } }})
+              // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'billingDispute', text } }})
 
               sm.ctx.history.push(text)
               // TODO different voice
@@ -448,7 +448,7 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text, action}, sm) {
-              globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'sso', text } }})
+              // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'sso', text } }})
 
               sm.ctx.history.push(text)
 
@@ -486,7 +486,7 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text}, sm) {
-              globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'turboConnect', text } }})
+              // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'turboConnect', text } }})
 
               sm.ctx.history.push(text)
               // TODO different voice
