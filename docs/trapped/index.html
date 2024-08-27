@@ -80,6 +80,7 @@
   const $consoleLocation = $.id('consoleLocation')
   const $consoleTime = $.id('consoleTime')
   const $consoleTemperature = $.id('consoleTemperature')
+  window.$phoneDevice = $phoneDevice
 
 
   setTimeout(() => {
@@ -267,7 +268,7 @@
         })
       },
       text: 'You open your phone',
-      wait: 0
+      wait: 0,
     },
 
     closePhone: {
@@ -379,7 +380,7 @@
 
 
       thermostat: {
-        text: `You check the thermostat. Every light is on, and it reads: 88˚. You're not sure if it's accurate, but for the first time you realize how uncomfortably warm it is`,
+        text: ({ctx}) => `You check the thermostat. Every light is on, and it reads: 88˚. You're not sure if it's accurate${ctx.state.checkedThermostat ? '' : ', but for the first time you realize how uncomfortably warm it is'}`,
         follow({ctx}) {
           ctx.state.checkedThermostat = true
           $consoleTemperature.innerHTML = ' — 88˚'

@@ -39,6 +39,7 @@ createComponent(
 
       .invisible {
         opacity: 0;
+        pointer-events: none;
       }
 
       article {
@@ -63,8 +64,13 @@ createComponent(
         right: 0;
         z-index:501;
         font-size:1.2em;
-        opacity:0.75;
-        transition: 0.3s;
+        opacity: 0;
+        transition: 0.6s;
+        user-select: none;
+      }
+
+      #bg:hover #x {
+        opacity: 0.75;
       }
       #x:hover {
         opacity: 1
@@ -77,13 +83,14 @@ createComponent(
 
     <div id="modelParent" class="hidden">
       <article>
-        <div id="bg" ></div>
+        <div id="bg">
+          <div id="x">close</div>
+        </div>
         <div id="modal" >
           <slot name="content"></slot>
         </div>
 
       </article>
-      <div id="x" style="display:">close</div>
     </div>
   `,
   {display: false},
@@ -96,6 +103,7 @@ createComponent(
 
     const blur = ctx.getAttribute('blur')
     const display = ctx.getAttribute('display')
+
     if (blur) {
       ctx.$bg.classList.add('blur')
     }
@@ -107,9 +115,15 @@ createComponent(
     let onClose = noop
     ctx.onClose = cb => onClose = cb
 
+    let lastClose = Date.now()
     ctx.close = () => {
-      ctx.setState({ display: false })
-      onClose()
+      if (lastClose + 1200 < Date.now()) {
+        ctx.setState({ display: false })
+        onClose()
+        lastClose = Date.now()
+      } else  {
+        console.log('blah')
+      }
     }
 
     ctx.open = () => {
@@ -117,7 +131,7 @@ createComponent(
     }
 
     ctx.$bg.onclick = ctx.close
-    ctx.$x.onclick = ctx.close
+    // ctx.$x.onclick = ctx.close
 
   },
   (ctx) => {

@@ -16,6 +16,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   plantWatered: false,
   plantsDead: false,
   shaydOpen: false,
+  hideClose: false,
   payments: {},
   eventLog: [],
   eventLoopStartTime: Date.now(),

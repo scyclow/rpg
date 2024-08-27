@@ -50,7 +50,7 @@ export class StateMachine {
   }
 
   nodeIsArray(key) {
-    return key.includes('.') || Array.isArray(this.nodes[key])
+    return key && (key.includes('.') || Array.isArray(this.nodes[key]))
   }
 
   async getNextNodeKey(fn, key, ur) {

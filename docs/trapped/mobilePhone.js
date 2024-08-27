@@ -17,19 +17,25 @@ const APPS = [
   // thermostat
   // fridge (freezelocker)
   // elevate
+  // ai assistant?
 
 // needs building
   // bathe
   // toastr (login, default toast posts)
   // alarm
   // security camera
+  // fastcash (finance)
+  // ronamerch (ecommerce)
+  // fakebullshit (news)
+  // finsexy (dating)
+  // friendworld (social)
+
   { name: 'Alarm', key: 'alarm', size: 128, price: 1 },
   { name: 'Bathe', key: 'bathe', size: 128, price: 1 },
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
   // { name: 'Elevate', key: 'elevate', size: 128, price: 1 },
   { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
   { name: 'FreezeLocker', key: 'freeze', size: 128, price: 1 },
-  { name: 'Identity Verfier', key: 'idVerifier', size: 128, price: 0 },
   { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
   { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
   { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
@@ -37,6 +43,7 @@ const APPS = [
   { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
   { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
+  { name: 'Secure 2FA', key: 'secure2fa', size: 128, price: 0 },
   { name: 'Shayd', key: 'shayd', size: 128, price: 0 },
   { name: 'SmartLock', key: 'lock', size: 128, price: 0 },
   { name: 'SmartPlanter', key: 'planter', size: 256, price: 0 },
@@ -117,6 +124,8 @@ const state = persist('__MOBILE_STATE', {
   toasterPaired: false,
   planterPaired: false,
   plantStatus: 1,
+  payAppUpdate: 0,
+  lastPayApp2fa: 0,
   smartLockPaired: false,
   smartLockOpen: false,
   messageViewerMessage: '',
@@ -148,7 +157,7 @@ const state = persist('__MOBILE_STATE', {
         { name: 'Toastr', key: 'toastr', size: 128, price: 0 },
         { name: 'MoneyMiner', key: 'moneyMiner', size: 128, price: 0 },
         { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
-        { name: 'Identity Verfier', key: 'idVerifier', size: 128, price: 0 },
+        { name: 'Secure 2FA', key: 'secure2fa', size: 128, price: 0 },
         { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
 
       ],
@@ -156,6 +165,7 @@ const state = persist('__MOBILE_STATE', {
         {...turboConnectText, read: true},
         ...times(197, () => ({...sample([mmText, packageText, tripleText]), read: false}))
       ],
+      keyPairs: [],
       payAppUSDAddr: rndAddr(),
       moneyMinerCryptoAddr: rndAddr(),
       exchangeUSDAddr: rndAddr(),
@@ -492,18 +502,14 @@ createComponent(
 
     ctx.setInterval = cb => {
       const wait = globalState.eventLoopDuration - (Date.now() - globalState.eventLoopStartTime) % globalState.eventLoopDuration
-      // console.log('clearing', ctx.interval)
       clearInterval(ctx.interval)
 
       const queuedInterval = Math.random()
       ctx.__queuedInterval = queuedInterval
 
       cb()
-// console.log('blah')
       setTimeout(() => {
-        // console.log('to', queuedInterval, ctx.__queuedInterval)
         if (queuedInterval === ctx.__queuedInterval) {
-          // console.log('dsf')
           ctx.interval = setRunInterval(cb, globalState.eventLoopDuration)
         }
       }, wait)
@@ -523,7 +529,15 @@ createComponent(
 
       if (ctx.state.usdBalances[sender] < amount) throw new Error('invalid amount')
 
+      let updatePayApp = {}
+      if (amount >= 0.37 && recipient === ctx.state.userData[ctx.state.currentUser].payAppUSDAddr && ctx.state.payAppUpdate <= 0) {
+        updatePayApp = {
+          payAppUpdate: 1
+        }
+      }
+
       ctx.setState({
+        ...updatePayApp,
         usdBalances: {
           ...ctx.state.usdBalances,
           [sender]: ctx.state.usdBalances[sender] - amount
@@ -607,7 +621,9 @@ createComponent(
       usdBalances,
       cryptoBalances,
       jailbrokenApps,
-      devMode
+      devMode,
+      payAppUpdate,
+      lastPayApp2fa,
     } = ctx.state
 
     const currentUserData = userData[currentUser] || {}
@@ -621,6 +637,7 @@ createComponent(
       exchangePremiumCryptoBalance,
       notePadValue,
       exchangePremium,
+      keyPairs,
     } = currentUserData
 
     const textMessages = currentUserData?.textMessages || []
@@ -758,6 +775,7 @@ createComponent(
             [id]: {
               appsInstalled: [],
               textMessages: [],
+              keyPairs: [],
               payAppUSDAddr: rndAddr(),
               moneyMinerCryptoAddr: rndAddr(),
               exchangeUSDAddr: rndAddr(),
@@ -821,7 +839,7 @@ createComponent(
             <h3 id="searchError"></h3>
             ${hasInternet ? `
               <h3 style="margin-top: 0.5em; margin-bottom: 0.25em">Credits Balance: 0</h3>
-              <button id="purchase">Purchase Credits</button>
+              <button id="purchase" disabled>Purchase Credits</button>
               <h4 id="error"></h4>
             ` : ''}
           </div>
@@ -1066,56 +1084,56 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <h2 style="margin-bottom: 0.25em">PayApp: Making Payment as easy as 1-2-3!</h2>
-          <h3 style="margin: 0.5em 0">Current $ Balance: $${hasInternet ? usdBalance.toFixed(2) : '-.--'}</h3>
-          <div style="margin: 0.4em 0">
-            <h4>My $ Recipient Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h4>
-            <span style="font-size: 0.9em; background: #000; color: #fff; padding: 0.25em; margin-top: 0.1em; display: inline-block">${payAppUSDAddr}</span>
-          </div>
-
-          <!--
-            <div style="margin-bottom: 0.6em">
-              <h3>Private Payment Key (PPK):</h3>
-              <span style="font-size: 0.9em"><em>hidden</em></span>
-              <div>(Don't share this with anyone! Including PayApp employees)</div>
+          <div id="payappContent">
+            <h2 style="margin-bottom: 0.25em">PayApp: Making Payment as easy as 1-2-3!</h2>
+            <h3 style="margin: 0.5em 0">Current $ Balance: $${hasInternet ? usdBalance.toFixed(2) : '-.--'}</h3>
+            <div style="margin: 0.4em 0">
+              <h4>My $ Recipient Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h4>
+              <span style="font-size: 0.9em; background: #000; color: #fff; padding: 0.25em; margin-top: 0.1em; display: inline-block">${payAppUSDAddr}</span>
             </div>
-          -->
 
-          <div style="margin-top: 0.6em; padding-top: 0.5em; border-top: 1px dashed">
-            <h3>Receive $</h3>
-            <div>
-              <input id="sptxInput" placeholder="S.P.T.X. identifier">
-              <button id="processSPTX">Process SPTX</button>
+            <!--
+              <div style="margin-bottom: 0.6em">
+                <h3>Private Payment Key (PPK):</h3>
+                <span style="font-size: 0.9em"><em>hidden</em></span>
+                <div>(Don't share this with anyone! Including PayApp employees)</div>
+              </div>
+            -->
+
+            <div style="margin-top: 0.6em; padding-top: 0.5em; border-top: 1px dashed">
+              <h3>Receive $</h3>
+              <div>
+                <input id="sptxInput" placeholder="S.P.T.X. identifier">
+                <button id="processSPTX">Process SPTX</button>
+              </div>
+              <h5 id="sptxError"></h5>
+              <ol class="payInstructions">
+                <li><em><strong>1.</strong> Give the sender your $ Recipient Address</em></li>
+                <li><em><strong>2.</strong> Collect a S.P.T.X. identifier from the sender</em></li>
+                <li><em><strong>3.</strong> Process the S.P.T.X. identifier and recieve your $!</em></li>
+              </ol>
             </div>
-            <h5 id="sptxError"></h5>
-            <ol class="payInstructions">
-              <li><em><strong>1.</strong> Give the sender your $ Recipient Address</em></li>
-              <li><em><strong>2.</strong> Collect a S.P.T.X. identifier from the sender</em></li>
-              <li><em><strong>3.</strong> Process the S.P.T.X. identifier and recieve your $!</em></li>
-            </ol>
+
+            <div style="margin-top: 0.6em; padding-top: 0.5em; border-top: 1px dashed">
+              <h3>Send $</h3>
+              <ol>
+                <li><input id="recipient" placeholder="Recipient Address"></li>
+                <li style="margin:0.25em 0"><input id="amount" placeholder="Amount" type="number"></li>
+                <li><button id="sign">Sign Transaction</li>
+              </ol>
+              <h4 id="sptx"></h4>
+
+              <ol class="payInstructions">
+                <li><em><strong>1.</strong> Collect the recipient's $ Recipient Address</em></li>
+                <li><em><strong>2.</strong> Generate an S.P.T.X. identifier</em></li>
+                <li><em><strong>3.</strong> Give the S.P.T.X. identifier to the recipient</em></li>
+              </ol>
+              <p style="margin-top: 1em; padding: 0.5em"><strong style="text-decoration: underline; font-size: 1.1em">WARNING</strong>: <em>Please ensure that you have input the correct $ Recipient Address and Amount. All $ transactions are <strong>irreversible</strong> once signed!</em></p>
+            </div>
           </div>
-
-          <div style="margin-top: 0.6em; padding-top: 0.5em; border-top: 1px dashed">
-            <h3>Send $</h3>
-            <ol>
-              <li><input id="recipient" placeholder="Recipient Address"></li>
-              <li style="margin:0.25em 0"><input id="amount" placeholder="Amount" type="number"></li>
-              <li><button id="sign">Sign Transaction</li>
-            </ol>
-            <h4 id="sptx"></h4>
-
-            <ol class="payInstructions">
-              <li><em><strong>1.</strong> Collect the recipient's $ Recipient Address</em></li>
-              <li><em><strong>2.</strong> Generate an S.P.T.X. identifier</em></li>
-              <li><em><strong>3.</strong> Give the S.P.T.X. identifier to the recipient</em></li>
-            </ol>
-            <p style="margin-top: 1em; padding: 0.5em"><strong style="text-decoration: underline; font-size: 1.1em">WARNING</strong>: <em>Please ensure that you have input the correct $ Recipient Address and Amount. All $ transactions are <strong>irreversible</strong> once signed!</em></p>
-          </div>
-
-
         </div>
       `
-      // ff33083322f66413ea6fb21e7b6451d9922b14c1622ebff8da71a61a36de0cc8
+
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
@@ -1201,6 +1219,75 @@ createComponent(
           ctx.$('#sptx').innerHTML = `Secure Payment Transaction (S.P.T.X.) identifier: ${sptx}`
         }, 2000)
 
+      }
+
+      if (payAppUpdate === 1) {
+        ctx.$('#payappContent').innerHTML = `
+          <div>
+            <h2>PayApp</h2>
+            <h3>Auto-Update Progress</h3>
+            <progress id="autoUpdateProgress" value="96" max="100" style="width:20em"></progress><h4 id="progressNumber" style="display: inline-block; padding-left: 1em"></h4>
+          </div>
+        `
+
+        ctx.setInterval(() => {
+          if (Date.now() % 2) return
+          if (Number(ctx.$('#autoUpdateProgress').value) < 100) {
+            ctx.$('#autoUpdateProgress').value = Number(ctx.$('#autoUpdateProgress').value) + 1
+            ctx.$('#progressNumber').innerHTML = Number(ctx.$('#autoUpdateProgress').value) + '%'
+          } else {
+            ctx.setState({
+              payAppUpdate: 2
+            })
+          }
+        })
+
+      } else if (payAppUpdate === 2) {
+        ctx.$('#payappContent').innerHTML = `
+          <div>
+            <h2>PayApp: Making Payment as easy as 1-2-3!</h2>
+            <h3 style="margin: 0.4em 0">Welcome to the new, more secure PayApp! To continue to your account, please download the Secure 2FA app, and generate a 2FA Code using the following security key: 48299285</h3>
+            <input id="faInput" placeholder="2FA Code" type="number"> <button id="faLogin">Login</button>
+            <h4 id="faError"></h4>
+          </div>
+        `
+        ctx.$('#faLogin').onclick = () => {
+          if (Number(ctx.$('#faInput').value) === Number(calcIdVerifyCode(currentUser + 48299285))) {
+            ctx.$('#faError').innerHTML = 'VERIFYING...'
+            setTimeout(() => {
+              ctx.setState({
+                payAppUpdate: 3,
+                lastPayApp2fa: Date.now()
+              })
+            }, 1000)
+          } else {
+            ctx.$('#faError').innerHTML = 'INVALID 2FA CODE'
+          }
+        }
+
+      // let the user log in for 10 minutes
+      } else if (payAppUpdate === 3 && lastPayApp2fa < Date.now() - 600000) {
+        ctx.$('#payappContent').classList.add('hidden')
+        ctx.$('#payapp2fa').innerHTML = `
+          <div>
+            <h2>PayApp: Making Payment as easy as 1-2-3!</h2>
+            <h3 style="margin: 0.4em 0">For your security: please generate a 2FA Code using the following security key: 48299285</h3>
+            <input id="faInput" placeholder="2FA Code" type="number"> <button id="faLogin">Login</button>
+            <h4 id="faError"></h4>
+          </div>
+        `
+        ctx.$('#faLogin').onclick = () => {
+          if (Number(ctx.$('#faInput').value) === Number(calcIdVerifyCode(currentUser + 48299285))) {
+            ctx.$('#faError').innerHTML = 'VERIFYING...'
+            setTimeout(() => {
+              ctx.state.payAppUpdate = 3
+              ctx.$('#payappContent').classList.remove('hidden')
+              ctx.$('#payapp2fa').classList.add('hidden')
+            }, 300)
+          } else {
+            ctx.$('#faError').innerHTML = 'INVALID 2FA CODE'
+          }
+        }
       }
 
     } else if (screen === 'settings') {
@@ -1473,9 +1560,8 @@ createComponent(
                 </div>
               </div>
             `
-            :''
+            : ''
         }
-        <div>${jailbrokenApps.lumin ? jbMarkup(globalState.cryptoDevices.lumin) : ''}</div>
       `
 
       ctx.$phoneContent.innerHTML = `
@@ -1488,6 +1574,9 @@ createComponent(
                 : `<button id="pairLumin">Pair Device</button>`
               : `<h3>Please enable blue tooth to pair local devices</h3>`
           }
+
+          <div>${jailbrokenApps.lumin ? jbMarkup(globalState.cryptoDevices.lumin, !lampOn) : ''}</div>
+          <h2 style="text-align: center; font-family: cursive">☼ Lumin ☀︎</h2>
         </div>
       `
 
@@ -1495,7 +1584,24 @@ createComponent(
         ctx.setState({ luminPaired: true })
       }
 
-      jbBehavior(ctx, globalState.cryptoDevices.lumin, 300)
+      const turnOffMiner = jbBehavior(ctx, globalState.cryptoDevices.lumin, 300, noop, () => {
+        globalState.light1.h += 1
+        globalState.light2.h -= 1
+
+        if (globalState.light1.h >= 360) globalState.light1.h = 0
+        if (globalState.light2.h <= 0) globalState.light2.h = 360
+
+        if (globalState.light1.s <= 100) globalState.light1.s = Math.min(globalState.light1.s + 1, 100)
+        if (globalState.light1.v <= 100) globalState.light1.v = Math.min(globalState.light1.v + 1, 100)
+        if (globalState.light2.s <= 100) globalState.light2.s = Math.min(globalState.light2.s + 1, 100)
+        if (globalState.light2.v <= 100) globalState.light2.v = Math.min(globalState.light2.v + 1, 100)
+
+        if (globalState.lightsOn) {
+          setColor('--bg-color', hsvToRGB(globalState.light1))
+          setColor('--primary-color', hsvToRGB(globalState.light2))
+        }
+
+      })
 
       const changeLight = () => {
         const { light1, light2 } = globalState
@@ -1516,6 +1622,10 @@ createComponent(
         globalState.lightsOn = !lampOn
         ctx.setState({ lampOn: !lampOn })
         changeLight()
+
+        if (lampOn) {
+          turnOffMiner()
+        }
       }
 
       if (lampOn) {
@@ -1549,15 +1659,17 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
-    } else if (screen === 'idVerifier') {
+    } else if (screen === 'secure2fa') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <h3>WARNING: This device already has another Identity Verifier App installed. This may affect performance</h3>
-
-          <h1>Identity Verifier Code (IVC): <span id="idCode">--</span></h1>
-          <h2 id="timeRemaining">--</h2>
-
+          <h3>WARNING: This device already has another Secure 2FA App installed. This may negatively impact performance</h3>
+          <h1 id="timeRemaining" style="text-align: center; margin: 0.5em 0">--s</h1>
+          <input id="appName" placeholder="App Name"> <input id="securityKey" placeholder="Security Key">
+          <div style="display: flex; flex-direction: column; align-items: center">
+            <button id="createKeyPair" style="margin: 0.5em">Create New KeyPair</button>
+            <table id="faKeyPairs" style="margin: 0.5em auto"></table>
+          </div>
         </div>
 
       `
@@ -1567,9 +1679,35 @@ createComponent(
         const msSinceUpdate = Date.now() - globalState.idVerifierUpdate
         const secondsSinceUpdate = msSinceUpdate / 1000
 
-        ctx.$('#timeRemaining').innerHTML = 60 - (Math.floor(secondsSinceUpdate))
-        ctx.$('#idCode').innerHTML = calcIdVerifyCode(currentUser)
+        const roundedSeconds =  60 - (Math.floor(secondsSinceUpdate))
+
+        ctx.$('#timeRemaining').innerHTML = roundedSeconds + 's'
+
+        if (!ctx.$('#faKeyPairs').innerHTML || roundedSeconds < 2 || roundedSeconds > 59) {
+          const kps = keyPairs.length ? [...keyPairs].reverse() : { appName: '-', securityKey: '-' }
+          ctx.$('#faKeyPairs').innerHTML = `<tr><th>App</th><th>2FA Code</th></tr>` + kps.map(({ appName, securityKey }) => `
+            <tr>
+              <td>${appName}</td>
+              <td>${calcIdVerifyCode(currentUser + securityKey)}</td>
+            </tr>
+          `).join('')
+        }
       }, 1000)
+
+
+      ctx.$('#createKeyPair').onclick = () => {
+        const appName = ctx.$('#appName').value
+        const securityKey = Number(ctx.$('#securityKey').value)
+
+        if (!securityKey) return
+
+        ctx.setUserData({
+          keyPairs: [
+            ...keyPairs,
+            { appName, securityKey }
+          ]
+        })
+      }
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
@@ -2867,7 +3005,7 @@ createComponent(
 
 // TODO can't really send crypto to this wallet, or else it will get blown away
 // maybe the sendCrypto function should add it to the global device balance if it exists
-function jbMarkup(device) {
+function jbMarkup(device, disabled) {
 
   const balance = device.balance
   return `
@@ -2876,7 +3014,12 @@ function jbMarkup(device) {
         <h3>Auto-Miner Module [${device.ram}gb RAM]</h3>
         <h5 style="display: inline-block; padding: 0.25em; margin: 0.25em 0; background: #333; border: 1px solid">${device.wallet}</h4>
         <h4 style="margin: 0.4em 0">Balance: ₢ <span id="cryptoBalance">${device.balance}</span></h4>
-        <button id="enableMining">${device.active ? 'Disable' : 'Enable'} Autominer</button>
+        ${disabled
+          ? '<h5 style="text-align:center; padding: 1em">Cannot find device. Please ensure device is powered "On"</h5>'
+          : `
+            <button id="enableMining">${device.active ? 'Disable' : 'Enable'} Autominer</button>
+          `
+        }
         <h5 id="mineError"></h5>
       </div>
 
@@ -2887,11 +3030,11 @@ function jbMarkup(device) {
         <button id="sendCrypto">Send</button>
         <h5 id="sendError"></h5>
       </div>
-    <div>
+    </div>
   `
 }
 
-function jbBehavior(ctx, device, speed, cb=noop) {
+function jbBehavior(ctx, device, speed, cb=noop, persistCb=noop) {
   const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged
 
   const update = () => {
@@ -2899,10 +3042,25 @@ function jbBehavior(ctx, device, speed, cb=noop) {
     if (ctx.$('#cryptoBalance')) ctx.$('#cryptoBalance').innerHTML = device.balance
     cb()
   }
+
+  let persistantInterval
   if (device.active) {
     ctx.interval = setRunInterval(update, speed)
+    persistantInterval = setRunInterval(persistCb, speed)
   }
 
+  const turnOff = () => {
+    clearInterval(ctx.interval)
+    clearInterval(persistantInterval)
+    clearMiningInterval(device)
+    device.active = false
+    ctx.setState({
+      cryptoBalances: {
+        ...ctx.state.cryptoBalances,
+        [device.wallet]: device.balance
+      }
+    })
+  }
 
   if (ctx.$('#enableMining')) ctx.$('#enableMining').onclick = () => {
     if (!wifiAvailable) {
@@ -2913,20 +3071,13 @@ function jbBehavior(ctx, device, speed, cb=noop) {
     }
 
     if (device.active) {
-      clearInterval(ctx.interval)
-      clearMiningInterval(device)
-      device.active = false
-      ctx.setState({
-        cryptoBalances: {
-          ...ctx.state.cryptoBalances,
-          [device.wallet]: device.balance
-        }
-      })
+      turnOff()
 
     } else {
       setMiningInterval(device, speed*device.ram/1000, speed)
 
       ctx.interval = setRunInterval(update, speed)
+      persistantInterval = setRunInterval(persistCb, speed)
     }
 
     ctx.$('#enableMining').innerHTML = `${device.active ? 'Disable' : 'Enable'} Autominer`
@@ -2969,4 +3120,6 @@ function jbBehavior(ctx, device, speed, cb=noop) {
     ctx.$('#cryptoAmount').value = ''
     ctx.$('#cryptoAddr').value = ''
   }
+
+  return turnOff
 }
