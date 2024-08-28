@@ -1007,6 +1007,7 @@ createComponent(
                     <option value="ClickToAddNetwork">ClickToAddNetwork</option>
                     <option value="ElectricLadyLand" ${inInternetLocation && wifiNetwork === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
                     <option value="Free-WiFi">Free-WiFi</option>
+                    <option value="HellInACellPhone98">Free-WiFi</option>
                     ${globalState.routerReset && !globalState.routerUnplugged? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetwork === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
                     <option value="ISP-Default-89s22D">ISP-Default-89s22D</option>
                     <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
@@ -2071,13 +2072,15 @@ createComponent(
         ctx.$('#timeRemaining').innerHTML = roundedSeconds + 's'
 
         if (!ctx.$('#faKeyPairs').innerHTML || roundedSeconds < 2 || roundedSeconds > 59) {
-          const kps = keyPairs.length ? [...keyPairs].reverse() : { appName: '-', securityKey: '-' }
-          ctx.$('#faKeyPairs').innerHTML = `<tr><th>App</th><th>2FA Code</th></tr>` + kps.map(({ appName, securityKey }) => `
-            <tr>
-              <td>${appName}</td>
-              <td>${calcIdVerifyCode(currentUser + securityKey)}</td>
-            </tr>
-          `).join('')
+          if (keyPairs.length) {
+            const kps = [...keyPairs].reverse()
+            ctx.$('#faKeyPairs').innerHTML = `<tr><th style="padding: 0.5em">App</th><th style="padding: 0.5em; border-left: 1px solid">2FA Code</th></tr>` + kps.map(({ appName, securityKey }) => `
+              <tr>
+                <td style="padding: 0.5em; border-top: 1px solid">${appName}</td>
+                <td style="padding: 0.5em; border-top: 1px solid; border-left: 1px solid">${calcIdVerifyCode(currentUser + securityKey)}</td>
+              </tr>
+            `).join('')
+          }
         }
       }, 1000)
 
