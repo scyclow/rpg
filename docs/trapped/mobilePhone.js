@@ -18,6 +18,7 @@ const APPS = [
   // fridge (freezelocker)
   // elevate
   // ai assistant?
+  // intercom
 
 // needs building
   // bathe
@@ -109,7 +110,11 @@ const tripleText = {
 
 
 const state = persist('__MOBILE_STATE', {
+  bluetoothEnabled: false,
+  a11yEnabled: false,
   devMode: false,
+  soundEnabled: true,
+  distractionMode: 1,
   fastMode: false,
   started: false,
   screen: 'loading',
@@ -195,6 +200,19 @@ createComponent(
         margin: 0
       }
 
+      .a11yMode {
+        font-size: 1.5em;
+      }
+
+      .a11yMode button, .a11yMode input {
+        font-size: 0.9em;
+      }
+
+      .a11yMode .phoneScreen {
+        height: 525px;
+        overflow: scroll
+      }
+
       header {
         height: 1em;
         font-family: sans-serif;
@@ -251,6 +269,11 @@ createComponent(
       code::selection {
         color: #d8d8d8;
         background: #000;
+      }
+
+      .icon {
+        display: inline-block;
+        transform: scale(1.7)
       }
 
       #phone {
@@ -649,6 +672,7 @@ createComponent(
 
     ctx.$phoneContent = ctx.$('#phoneContent')
     ctx.$header = ctx.$('#header')
+    ctx.$phone = ctx.$('#phone')
     ctx.$internetType = ctx.$('#internetType')
 
     const {
@@ -661,6 +685,9 @@ createComponent(
       userData,
       userNames,
       bluetoothEnabled,
+      a11yEnabled,
+      soundEnabled,
+      distractionMode,
       luminPaired,
       toasterPaired,
       planterPaired,
@@ -714,6 +741,9 @@ createComponent(
 
     ctx.$header.classList.remove('hidden')
     ctx.$phoneContent.innerHTML = ''
+
+    if (a11yEnabled) ctx.$phone.classList.add('a11yMode')
+    else ctx.$phone.classList.remove('a11yMode')
 
     const unreadTextCount = textMessages.reduce((a, c) => c.read ? a : a + 1, 0) || 0
 
@@ -1005,6 +1035,9 @@ createComponent(
                     <option value="Alien Nation">Alien Nation</option>
                     <option value="CapitalC">CapitalC</option>
                     <option value="ClickToAddNetwork">ClickToAddNetwork</option>
+                    <!-- i feel like i need to unlock this experience
+                      <option value="Dial19996663333ForAFunTime">Dial19996667777ForAFunTime</option>
+                    -->
                     <option value="ElectricLadyLand" ${inInternetLocation && wifiNetwork === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
                     <option value="Free-WiFi">Free-WiFi</option>
                     <option value="HellInACellPhone98">Free-WiFi</option>
@@ -1045,7 +1078,7 @@ createComponent(
                   ctx.setState({ wifiNetwork: networkName })
                 }, 2000)
               } else {
-                ctx.$('#error').innerHTML = 'ServiceError: No signal detected'
+                ctx.$('#error').innerHTML = 'ServiceError: No signal detected. Please contact your internet service provider if this issue persists.'
               }
             }, 3000)
 
@@ -1113,14 +1146,6 @@ createComponent(
 
       phoneApp(ctx)
 
-      ctx.$('#hangup').onclick = () => {
-        ctx.$('#dialedNumber').innerHTML = ''
-        ctx.$('#menuNumbers').innerHTML = ''
-        window.speechSynthesis.cancel()
-        if (PhoneCall.active) PhoneCall.active.hangup()
-        // PhoneCall.active.stateMachine.goto('start')
-      }
-
       if (!dataPlanActivated) {
         setTimeout(() => {
           ctx.$('#keypad').innerHTML = '<div style="font-size:4em; margin: 0.75em; text-align: center">Cannot connect to service provider</div>'
@@ -1151,6 +1176,7 @@ createComponent(
             -->
 
             <div style="margin-top: 0.6em; padding-top: 0.5em; border-top: 1px dashed">
+              <div id="txMessage"></div>
               <h3>Receive $</h3>
               <div>
                 <input id="sptxInput" placeholder="S.P.T.X. identifier">
@@ -1277,6 +1303,8 @@ createComponent(
 
       }
 
+      const outstandingPayment = Object.values(globalState.payments).reverse().find(p => !p.received && p.recipient === payAppUSDAddr) || null
+
       if (payAppUpdate === 1) {
         ctx.$('#payappContent').innerHTML = `
           <div>
@@ -1387,6 +1415,16 @@ createComponent(
 
         }
 
+      } else if (outstandingPayment) {
+
+        ctx.$('#txMessage').innerHTML = `
+          <div style="border: 2px solid; border-radius: 5px; padding: 0.5em; margin-bottom: 0.5em">
+            <div id="closeMessage" style="cursor: pointer; font-weight: bolder; text-align: right">X</div>
+            <h4>You have a $${outstandingPayment.amount.toFixed(2)} transaction waiting for you! Input your SPTX below to redeem it <span class="icon">☟</span></h4>
+          </div>
+        `
+
+        ctx.$('#closeMessage').onclick = () => ctx.$('#txMessage').classList.add('hidden')
       }
 
     } else if (screen === 'identityWizard') {
@@ -1682,8 +1720,18 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <button id="bluetooth">${bluetoothEnabled ? 'Disable' : 'Enable'} Bluetooth ®</button>
-          <div class="deviceData">
+          <div>
+            <button id="sound">${soundEnabled ? 'Disable' : 'Enable'} Sound</button><br>
+            <button id="bluetooth">${bluetoothEnabled ? 'Disable' : 'Enable'} Bluetooth ®</button><h4 id="message" style="display: inline-block; margin-left: 1em"></h4><br>
+            <button id="a11y">${a11yEnabled ? 'Disable' : 'Enable'} A11Y Mode</button>
+            <div>
+              <label style="display: block; font-size: 0.9em"><input id="noDistraction" type="radio" name="distractionMode" ${distractionMode === 1 ? 'checked' : ''}> No-Distraction Mode</label>
+              <label style="display: block; font-size: 0.9em"><input id="deepFocus" type="radio" name="distractionMode" ${distractionMode === 2 ? 'checked' : ''}> Deep Focus Mode</label>
+              <label style="display: block; font-size: 0.9em"><input id="multitask" type="radio" name="distractionMode" ${distractionMode === 0 ? 'checked' : ''}> Multitask Mode</label>
+            </div>
+          </div>
+
+          <div class="deviceData" style="margin-top: 2em">
             <h5>Device ID: 49-222999-716-2580</h5>
             <h5>User: ${userNames[currentUser]}</h5>
             <h5 id="versionNumber">OS Version: ${window.GAME_VERSION}.1</h5>
@@ -1691,7 +1739,7 @@ createComponent(
           </div>
           ${devMode
             ? `
-              <div style="margin-top: 0.5em; padding: 0.5em; border: 1px solid">
+              <div style="margin-top: 0.5em; padding: 0.5em; border: 1px solid; height: 290px; overflow: scroll">
                 <h3>Dev Mode</h3>
                 <div>
                   <label><input id="fastMode" type="checkbox" ${ctx.state.fastMode ? 'checked' : ''}> fast mode</label>
@@ -1809,7 +1857,43 @@ createComponent(
       }
 
       ctx.$('#bluetooth').onclick = () => {
-        ctx.setState({ bluetoothEnabled: !bluetoothEnabled })
+        ctx.$('#message').innerHTML = `Connecting...`
+        setTimeout(() => {
+          ctx.setState({ bluetoothEnabled: !bluetoothEnabled })
+        }, Math.random() * 750)
+      }
+
+      ctx.$('#a11y').onclick = () => {
+        ctx.setState({ a11yEnabled: !a11yEnabled })
+      }
+
+      ctx.$('#noDistraction').onclick = () => {
+        globalState.modelBgMode = 1
+        ctx.parentElement.setBgMode(1)
+        ctx.setState({ distractionMode: 1 })
+      }
+
+      ctx.$('#deepFocus').onclick = () => {
+        globalState.modelBgMode = 2
+        ctx.parentElement.setBgMode(2)
+        ctx.setState({ distractionMode: 2 })
+      }
+
+      ctx.$('#multitask').onclick = () => {
+        globalState.modelBgMode = 0
+        ctx.parentElement.setBgMode(0)
+        ctx.setState({ distractionMode: 0 })
+      }
+
+      ctx.$('#sound').onclick = () => {
+        if (!soundEnabled) {
+          const src = createSource('sine', sample([440, 660, 880]))
+          src.smoothGain(MAX_VOLUME)
+          setTimeout(() => {
+            src.smoothGain(0)
+          }, 300)
+        }
+        ctx.setState({ soundEnabled: !soundEnabled })
       }
 
       ctx.$('#home').onclick = () => {
@@ -2127,15 +2211,15 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <h2 >Welcome to  $ Money Miner $</h2>
-          <h4 style="margin-top: 0.5em;">₢rypto Wallet Address:</h4>
-          <h4 style="word-wrap: break-word; margin-bottom: 0.4em">${moneyMinerCryptoAddr}</h4>
+          <h2 style="text-align: center"><span class="icon">⚒︎</span> Money Miner <span class="icon">⚒︎</span></h2>
 
-          <h4 style="text-align: center">To mine ₢rypto, click the button below ⬇↓⇣↓⬇</h4>
+          <h4 style="text-align: center; margin-top: 1em">To mine ₢rypto, click the button below ⬇↓⇣↓⬇</h4>
           <div style="display: flex; justify-content: center">
             <button id="mine" style="font-size: 1.1em">Mine ₢rypto</button>
           </div>
           <h4>₢rypto Balance: <span id="cryptoBalance">${cryptoBalance}</span></h4>
+          <h4 style="margin-top: 0.5em;">₢rypto Wallet Address:</h4>
+          <h4 style="word-wrap: break-word; margin-bottom: 0.4em">${moneyMinerCryptoAddr}</h4>
 
           <div class="ad" id="adContainer">
             <h5>SPONSORED CONTENT</h5>
@@ -2346,7 +2430,7 @@ createComponent(
 
               <input id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin: 0.4em 0">
               <input id="sendUSDAmount" placeholder="$ 0.00" type="number" style="width: 6em"> <button id="sendUSD" style="margin-bottom: 0.1em">SEND $</button>
-              <h6>SPTX: <span id="sendUSDError">ERROR: Invalid Amount</span></h6>
+              <h5>SPTX: <span id="sendUSDError">ERROR: Invalid Amount</span></h5>
               <h4 style="margin: 0.4em 0">Receive $</h4>
               <h5 style="border: 1px dotted; text-align: center; padding: 0.25em">${hasInternet ? exchangeUSDAddr : '-'}</h5>
               <input id="sptxInput" placeholder="SPTX" type="number" style="width: 11em"> <button id="receiveSPTX">PROCESS</button>
@@ -2499,7 +2583,7 @@ createComponent(
         })
         setTimeout(() => {
           ctx.$('#sendUSDError').innerHTML = `Message: Secure Payment Transaction (S.P.T.X.) identifier: ${sptx}`
-        }, 2000)
+        }, 1000)
 
         ctx.$('#sendUSDAmount').value = ''
         ctx.$('#sendUSDAddress').value = ''

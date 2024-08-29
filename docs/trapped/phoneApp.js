@@ -6,6 +6,7 @@ import {billingCSNodes} from './cs/billing.js'
 import {disputeResolutionNodes} from './cs/dispute.js'
 import {turboConnectNodes} from './cs/turboConnect.js'
 import {ssoNodes, ssoCTX} from './cs/sso.js'
+import {hellNodes} from './cs/hell.js'
 
 
 export class PhoneCall {
@@ -42,10 +43,10 @@ export class PhoneCall {
   static active = null
 
   dialed = []
-
   srcs = {}
   $keypad = []
   pressTS = 0
+  silent = false
 
   constructor(onclick, select=$.id) {
     PhoneCall.active = this
@@ -87,25 +88,27 @@ export class PhoneCall {
 
   startTone(key) {
     if (!this.srcs[key]) {
-      this.srcs[key] = [createSource('sine'), createSource('sine')]
-
-      this.srcs[key][0].smoothFreq(PhoneCall.tones[key][0])
-      this.srcs[key][1].smoothFreq(PhoneCall.tones[key][1])
+      this.srcs[key] = [
+        createSource('sine', PhoneCall.tones[key][0]),
+        createSource('sine', PhoneCall.tones[key][1])
+      ]
     }
 
     this.pressTS = Date.now()
 
-    if (this.srcs[key][0].gain.gain.value > 0) {
-      this.srcs[key][0].smoothGain(0)
-      this.srcs[key][1].smoothGain(0)
+    if (!this.silent) {
+      if (this.srcs[key][0].gain.gain.value > 0) {
+        this.srcs[key][0].smoothGain(0)
+        this.srcs[key][1].smoothGain(0)
 
-      setTimeout(() => {
+        setTimeout(() => {
+          this.srcs[key][0].smoothGain(MAX_VOLUME)
+          this.srcs[key][1].smoothGain(MAX_VOLUME)
+        }, 25)
+      } else {
         this.srcs[key][0].smoothGain(MAX_VOLUME)
         this.srcs[key][1].smoothGain(MAX_VOLUME)
-      }, 25)
-    } else {
-      this.srcs[key][0].smoothGain(MAX_VOLUME)
-      this.srcs[key][1].smoothGain(MAX_VOLUME)
+      }
     }
   }
 
@@ -122,7 +125,7 @@ export class PhoneCall {
     }
   }
 
-  async ringTone(rings=3) {
+  async ringTone(rings=3, soundEnabled=true) {
     this.isRinging = true
     const [src0, src1] = [createSource('sine'), createSource('sine')]
 
@@ -134,8 +137,8 @@ export class PhoneCall {
     for (let i = 0; i < rings; i++) {
       if (!this.live) return
 
-      src0.smoothGain(MAX_VOLUME)
-      src1.smoothGain(MAX_VOLUME)
+      if (soundEnabled) src0.smoothGain(MAX_VOLUME)
+      if (soundEnabled) src1.smoothGain(MAX_VOLUME)
 
       await waitPromise(3000)
 
@@ -160,6 +163,7 @@ export class PhoneCall {
     this.answerTime = 0
     this.stateMachine?.kill?.()
     allSources.forEach(src => src.stop())
+    Object.keys(this.srcs).forEach(s => delete this.srcs[s])
 
     // PhoneCall.active = null
   }
@@ -201,6 +205,17 @@ function phoneMarkup() {
         justify-content: center;
         z-index: 1;
         pointer-events: none;
+        user-select: none;
+        overflow: hidden;
+      }
+
+      #phoneAppInfo.silentMode {
+        padding-top: 2em;
+        justify-content: flex-start;
+      }
+
+      #phoneAppInfo.silentMode #menuNumbers {
+        font-size: 0.8em
       }
 
       h4 {
@@ -277,13 +292,6 @@ function phoneMarkup() {
       </div>
       <div id="keypad"></div>
 
-<!--
-      <ul id="menu">
-        <li>Phone</li>
-        <li>Contacts</li>
-        <li>Voice Mail</li>
-      </ul>
-      -->
       <div style="padding-top: 0.5em; display: flex; justify-content: space-evenly">
         <button id="home">Back</button>
         <button id="hangup">Hangup</button>
@@ -331,26 +339,81 @@ function setCallTime(ctx, phone) {
 
 let ACTIVE_PHONECALL
 function phoneBehavior(ctx) {
+  const $menu = ctx.$('#menuNumbers')
+
+
   ctx.$('#home').onclick = () => {
     ctx.setState({ screen: 'home' })
   }
 
 
+
+  let transcriptTimeout = 0, transcriptInterval = 0, wordIx = 0, wordQueue = ''
+
+  function clearTranscripts() {
+    clearTimeout(transcriptTimeout)
+    clearInterval(transcriptInterval)
+    transcriptTimeout = 0
+    transcriptInterval = 0
+    wordQueue = ''
+  }
+
+  function startInterval() {
+    console.log('interval')
+    transcriptTimeout = setTimeout(() => {
+      $menu.innerHTML = `Transcript: `
+
+      transcriptInterval = setInterval(() => {
+        try {
+          const allWords = wordQueue.split(' ')
+          const word = allWords.shift()
+          wordQueue = allWords.join(' ')
+
+          const newWords = $menu.innerHTML.split(' ')
+          newWords.push(word)
+          if (newWords.length >= 110) times(20, () => newWords.shift())
+
+          $menu.innerHTML = newWords.join(' ')
+
+          if (!wordQueue) clearTranscripts()
+        } catch (e) {
+          clearTranscripts()
+        }
+      }, 200)
+    }, 1000)
+  }
+
+  function displayTranscript(txt) {
+    console.log('display')
+    ctx.$('#phoneAppInfo').classList.add('silentMode')
+    if (!transcriptTimeout) startInterval()
+
+    wordQueue += txt.replaceAll('.,', '.')
+  }
+
+
+
   const phoneCall = PhoneCall.active || new PhoneCall(
     async (phone, key) => {
+      clearTranscripts()
+
+      const dialed = phone.dialed.join('')
       ctx.$('#dialedNumber').innerHTML = formatPhoneNumber(phone.dialed.slice(0, 11))
-      ctx.$('#menuNumbers').innerHTML = phone.dialed.slice(11).join('')
+
+      if (ctx.state.soundEnabled) ctx.$('#menuNumbers').innerHTML = phone.dialed.slice(11).join('')
+      else if (dialed.length > 11) ctx.$('#menuNumbers').innerHTML = key
 
 
       window.speechSynthesis.cancel()
 
       if (phone.phoneAnswered) phone.stateMachine.next(key)
 
-      const dialed = phone.dialed.join('')
+
+      if (!ctx.state.soundEnabled && dialed.length === 11) ctx.$('#callTime').innerHTML = `<span class="blink">(Ringing)</span>`
 
       // ISP
       if (dialed === '18005552093') {
-        await phone.ringTone(ctx.state.fastMode ? 0 : 3)
+        await phone.ringTone(ctx.state.fastMode ? 0 : 2, ctx.state.soundEnabled)
 
         if (!phone.live) return
 
@@ -366,7 +429,10 @@ function phoneBehavior(ctx) {
               // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'isp', text } }})
 
               sm.ctx.history.push(text)
-              say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
+              if (ctx.state.soundEnabled) say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
+              else {
+                displayTranscript(text)
+              }
             },
           },
           ispCSNodes
@@ -380,7 +446,7 @@ function phoneBehavior(ctx) {
 
       // ISP Billing
       else if (dialed === '18885559483') {
-        await phone.ringTone(ctx.state.fastMode ? 0 : 1)
+        await phone.ringTone(ctx.state.fastMode ? 0 : 1, ctx.state.soundEnabled)
 
         if (!phone.live) return
 
@@ -395,7 +461,10 @@ function phoneBehavior(ctx) {
 
               sm.ctx.history.push(text)
               // TODO different voice
-              say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
+              if (ctx.state.soundEnabled) say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
+              else {
+                displayTranscript(text)
+              }
             },
           },
           billingCSNodes
@@ -408,7 +477,7 @@ function phoneBehavior(ctx) {
 
       // Billing dispute resolution administrator
       else if (dialed === '18007770836') {
-        await phone.ringTone(ctx.state.fastMode ? 0 : 4)
+        await phone.ringTone(ctx.state.fastMode ? 0 : 3, ctx.state.soundEnabled)
 
         if (!phone.live) return
 
@@ -425,7 +494,10 @@ function phoneBehavior(ctx) {
               // TODO different voice
               const vs = await voices
               const voice = vs.find(v => v.voiceURI.includes('Daniel') && v.lang === 'en-GB') || vs.filter(v => v.lang === 'en-US')[0]
-              say(voice, text)
+              if (ctx.state.soundEnabled) say(voice, text)
+              else {
+                displayTranscript(text)
+              }
             },
           },
           disputeResolutionNodes
@@ -439,7 +511,7 @@ function phoneBehavior(ctx) {
 
       // SSO
       else if (dialed === '18182225379') {
-        await phone.ringTone(ctx.state.fastMode ? 0 : 1)
+        await phone.ringTone(ctx.state.fastMode ? 0 : 1, ctx.state.soundEnabled)
 
         if (!phone.live) return
 
@@ -456,13 +528,17 @@ function phoneBehavior(ctx) {
                 phone.hangup()
                 ctx.$('#dialedNumber').innerHTML = ''
                 ctx.$('#menuNumbers').innerHTML = ''
+                setTimeout(() => ctx.$('#callTime').innerHTML = ``, 2000)
                 return
               }
 
               const vs = await voices
               const voice = vs.find(v => v.voiceURI.includes('Aaron') && v.lang === 'en-US') || vs.filter(v => v.lang === 'en-US')[0]
 
-              say(voice, text)
+              if (ctx.state.soundEnabled) say(voice, text)
+              else {
+                displayTranscript(text)
+              }
             },
           },
           ssoNodes
@@ -475,7 +551,7 @@ function phoneBehavior(ctx) {
 
       // TurboConnect
       else if (dialed === '18004443830') {
-        await phone.ringTone(ctx.state.fastMode ? 0 : 2)
+        await phone.ringTone(ctx.state.fastMode ? 0 : 2, ctx.state.soundEnabled)
 
         if (!phone.live) return
 
@@ -509,18 +585,67 @@ function phoneBehavior(ctx) {
         stateMachine.next('')
       }
 
+      // GatesOfHell
+      else if (dialed === '19996663333') {
+        await phone.ringTone(ctx.state.fastMode ? 0 : 3, ctx.state.soundEnabled)
+
+        if (!phone.live) return
+
+        const stateMachine = new StateMachine(
+          new CTX({
+            currentNode: 'start',
+          }),
+          {
+            defaultWait: 1000,
+            async onUpdate({text}, sm) {
+              // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'turboConnect', text } }})
+
+              sm.ctx.history.push(text)
+              // TODO different voice
+              const vs = await voices
+              if (ctx.state.soundEnabled) say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
+              else {
+                displayTranscript(text)
+              }
+            },
+          },
+          hellNodes
+        )
+        phone.answer(stateMachine)
+        setCallTime(ctx, phone)
+
+        stateMachine.next('')
+      }
+
       else if (dialed.length === 11) {
-        await phone.ringTone(ctx.state.fastMode ? 0 : 40)
+        await phone.ringTone(ctx.state.fastMode ? 0 : 40, ctx.state.soundEnabled)
       }
     },
     (id) => ctx.$(`#${id}`)
   )
+
+  phoneCall.silent = !ctx.state.soundEnabled
 
 
   ctx.$('#dialedNumber').innerHTML = formatPhoneNumber(phoneCall.dialed.slice(0, 11))
   ctx.$('#menuNumbers').innerHTML = phoneCall.dialed.slice(11).join('')
 
   ctx.$('#keypad').append(...phoneCall.$keypad)
+
+  ctx.$('#hangup').onclick = () => {
+    clearTranscripts()
+    ctx.$('#dialedNumber').innerHTML = ''
+    ctx.$('#menuNumbers').innerHTML = ''
+    setTimeout(() => {
+      try {
+        ctx.$('#callTime').innerHTML = ''
+      } catch (e) {}
+    }, 2000)
+    window.speechSynthesis.cancel()
+    if (PhoneCall.active) PhoneCall.active.hangup()
+    // PhoneCall.active.stateMachine.goto('start')
+  }
+
 
   setCallTime(ctx, phoneCall)
 

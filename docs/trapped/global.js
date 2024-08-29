@@ -2,6 +2,7 @@ import {persist} from './persist.js'
 
 
 export const globalState = persist('__GLOBAL_STATE', {
+  modelBgMode: 1,
   routerRestartTime: 0,
   location: 'nothing',
   lastGlobalUpdate: Date.now(),
