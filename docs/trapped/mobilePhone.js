@@ -1,6 +1,6 @@
 import {$, createComponent} from './$.js'
 import {persist} from './persist.js'
-import {globalState, calcIdVerifyCode, calcAddr, calcCryptoUSDExchangeRate, calcPremiumCryptoUSDExchangeRate, setColor, rndAddr, setMiningInterval, clearMiningInterval} from './global.js'
+import {globalState, tmp, calcIdVerifyCode, calcAddr, calcCryptoUSDExchangeRate, calcPremiumCryptoUSDExchangeRate, setColor, rndAddr, setMiningInterval, clearMiningInterval} from './global.js'
 import {PhoneCall, phoneApp} from './phoneApp.js'
 import {createSource, MAX_VOLUME} from './audio.js'
 
@@ -52,6 +52,7 @@ const APPS = [
   { name: 'SmartLock', key: 'lock', size: 128, price: 0 },
   { name: 'SmartPlanter<sup>TM</sup>', key: 'planter', size: 256, price: 0 },
   { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: 1 },
+  { name: 'ThermoSmart', key: 'thermoSmart', size: 128, price: 0 },
   { name: 'Toastr', key: 'toastr', size: 128, price: 0 },
 ]
 
@@ -760,6 +761,7 @@ createComponent(
     if (currentUser !== null && globalState.wifiActive && !textMessages.some(m => m.from === '+7 809 3390 753')) {
       ctx.newText(packageText)
     }
+
 
     // if thermostat app downloaded, provide alert
     // ringing in hallway
@@ -1797,6 +1799,9 @@ createComponent(
                 <div>
                   <label><input id="defaultUnlocked" type="checkbox" ${globalState.defaultUnlocked ? 'checked' : ''}> default unlocked</label>
                 </div>
+                <div>
+                  <label><input id="rentPaid" type="checkbox" ${globalState.rentPaid ? 'checked' : ''}> rent paid</label>
+                </div>
                 <div><input id="exchangeUSD" type="number" placeholder="exchange $"> <button id="setExchangeUSD">Set</button></div>
                 <div><input id="exchangeC" type="number" placeholder="exchange ₢"> <button id="setExchangeC">Set</button></div>
                 <div><input id="exchangeP" type="number" placeholder="exchange ₱"> <button id="setExchangeP">Set</button></div>
@@ -1877,6 +1882,10 @@ createComponent(
 
         ctx.$('#defaultUnlocked').onclick = () => {
           globalState.defaultUnlocked = ctx.$('#defaultUnlocked').checked
+        }
+
+        ctx.$('#rentPaid').onclick = () => {
+          globalState.rentBalance = ctx.$('#rentPaid').checked ? 0 : 6437.98
         }
 
         ctx.$('#setExchangeUSD').onclick = () => {
@@ -3324,6 +3333,81 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
+    } else if (screen === 'thermoSmart') {
+      // TODO
+      // TODO
+      // TODO
+      // TODO
+      const mainContent = ctx.state.clearBreezePaired
+        ? `
+          <div style="display: flex; flex-direction: column; align-items: center">
+            <button id="openWindow" style="font-size: 1.2em">Open Window</button>
+            <h3 id="windowError" style="text-align: center; margin-top: 0.5em"></h3>
+            <div>${jailbrokenApps.clearBreeze ? jbMarkup(globalState.cryptoDevices.clearBreeze) : ''}</div>
+          </div>
+
+        `
+        : `<button id="pairWindow">Pair Device</button>`
+
+      // ctx.$phoneContent.innerHTML = `
+      //   <div class="phoneScreen">
+      //     <button id="home">Back</button>
+      //     <h2 style="margin: 1em 0; text-align: center">ThermoSmart</h2>
+      //     <h2 style="margin: 1em 0; text-align: center"><span class="icon">⌸</span></h2>
+      //     ${bluetoothEnabled
+      //       ? inInternetLocation ? mainContent : '<h3>Cannot find Shade device</h3>'
+      //       : `<h3>Please Enable Bluetooth to pair Shayd device</h3>`
+      //     }
+      //     <h3 id="pairError"></h3>
+      //   </div>
+      // `
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2 style="margin: 1em 0; text-align: center">ThermoSmart</h2>
+          <h3 class="blink">WARNING: HAZARDOUS CO2 LEVELS</h3>
+          <button id="disable">Disable</button>
+        </div>
+      `
+
+
+      if (ctx.$('#disable')) ctx.$('#disable').onclick = () => {
+        clearInterval(tmp.thermostatRingInterval)
+        tmp.thermostatSrc?.stop?.()
+        tmp.thermostatRinging = false
+        globalState.thermostatDisabled = true
+
+      }
+
+      // jbBehavior(ctx, globalState.cryptoDevices.clearBreeze, 150)
+
+
+      // if (ctx.$('#pairWindow')) ctx.$('#pairWindow').onclick = () => {
+      //   ctx.$('#pairError').innerHTML = 'Please wait while device pairs'
+      //   setTimeout(() => {
+      //     ctx.setState({ clearBreezePaired: true })
+      //   }, 800)
+      // }
+
+      // if (ctx.$('#openWindow')) ctx.$('#openWindow').onclick = () => {
+      //   ctx.$('#windowError').innerHTML = 'Opening...'
+
+      //   if (!wifiAvailable) {
+      //     setTimeout(() => {
+      //       ctx.$('#windowError').innerHTML = 'Device Error: "Local Area Network (LAN) Error: Cannot Connect to WiFi"'
+      //     }, 1700)
+      //   } else {
+      //     setTimeout(() => {
+      //       ctx.$('#windowError').innerHTML = 'Device Error: "HARDWARE MALFUNCTION"'
+      //     }, 4000)
+      //   }
+      // }
+
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
     } else if (screen === 'exe') {
       const {exeCommands, rootUser} = ctx.state
 

@@ -32,7 +32,7 @@
 <script type="module">
   import {ls} from './$.js'
 
-  window.GAME_VERSION = 1.4
+  window.GAME_VERSION = 1.5
 
   const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
   if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {
@@ -69,7 +69,7 @@
   import {$} from './$.js'
   import {StateMachine, CTX} from './stateMachine.js'
   import {persist} from './persist.js'
-  import {globalState, setColor} from './global.js'
+  import {globalState, setColor, tmp} from './global.js'
   import {createSource, MAX_VOLUME} from './audio.js'
 
 
@@ -98,7 +98,9 @@
         pluggedIn: true
       },
       blindsOpenedBefore: false,
-      stairwayLevel: 0
+      stairwayLevel: 0,
+      checkedThermostat: false,
+      checkedThermostatTwice: false,
     }
     // state: {
     //   apartment: {
@@ -135,9 +137,6 @@
 
   */
 
-  const tmp = {}
-
-  window.tmp = tmp
 
 
 
@@ -155,7 +154,7 @@
 
   const primaryConfig = {
     defaultWait: 300,
-    async onUpdate({ text, actions }, sm) {
+    async onUpdate({ text, actions }, sm, nodeKey) {
       sm.ctx.history.push(text)
       // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'mainConsole', payload: text}})
       const $content = $.id('mainConsoleContent')
@@ -206,6 +205,16 @@
         const phoneButton = $.id(`${sm.ctx.currentNode}-openPhone`)
         if (phoneButton) phoneButton.innerHTML = `Phone${notifications}`
       })
+
+      if (
+        globalState.wifiActive
+        && !globalState.thermostatDisabled
+        && !tmp.thermostatRinging
+        && nodeKey !== 'thermostatRing'
+      ) {
+        tmp.thermostatRinging = true
+        setTimeout(() => sm.enqueue('thermostatRing'), 1000)
+      }
     },
   }
 
@@ -387,10 +396,34 @@
 
 
       thermostat: {
-        text: ({ctx}) => `You check the thermostat. Every light is on, and it reads: 88˚. You're not sure if it's accurate${ctx.state.checkedThermostat ? '' : ', but for the first time you realize how uncomfortably warm it is'}`,
+        text: ({ctx}) => {
+          if (tmp.thermostatRinging) {
+            return `You check the thermostat. Now display says 84˚, and it reads: "WARNING: CO2 HAZARDOUS". You notice a QR code you hadn't noticed before`
+
+          } else if (globalState.wifiActive) {
+            return `You check the thermostat. It says 84˚ and continues to display the CO2 warning. You notice a QR code you hadn't noticed before`
+
+          } else if (ctx.state.checkedThermostat) {
+            return `You check the thermostat. You notice a QR code you hadn't noticed before`
+
+          } else {
+            return `You check the thermostat. Every light is on, and it reads: 88˚. You're not sure if it's accurate${ctx.state.checkedThermostat ? '' : ', but for the first time you realize how uncomfortably warm it is'}`
+          }
+        },
         follow({ctx}) {
           ctx.state.checkedThermostat = true
-          $consoleTemperature.innerHTML = ' — 88˚'
+          if (tmp.thermostatRinging) {
+            // TODO figure out how to display this on mobile
+            $consoleTemperature.innerHTML = ' — 84˚ [CO2 LEVEL: HAZARDOUS]'
+            ctx.state.checkedThermostatTwice = true
+
+          } else if (globalState.wifiActive) {
+            $consoleTemperature.innerHTML = ' — 84˚ [CO2 LEVEL: HAZARDOUS]'
+            ctx.state.checkedThermostatTwice = true
+
+          } else {
+            $consoleTemperature.innerHTML = ' — 88˚'
+          }
         }
       },
 
@@ -406,7 +439,7 @@
         { text: 'Bedroom', value: 'bedroom'},
         { text: 'Front Door', value: 'frontDoor',  qr: {screen: 'messageViewer', messageViewerMessage: 'Powered by SmartLock Technology<sup>TM</sup> Download the Official App today!'} },
         { text: 'Camera', value: 'camera'},
-        { text: 'Thermostat', value: 'thermostat'},
+        { text: 'Thermostat', value: 'thermostat', qr: { screen: 'appMarket', appMarketPreSearch: 'thermosmart'} },
         { text: 'Intercom', value: 'intercom'},
       ],
       handler: ({ur}) => ur
@@ -417,6 +450,24 @@
       after({ ctx, redirect }) {
         redirect(ctx.lastNode)
       },
+    },
+
+    thermostatRing: {
+      text: 'You hear a ringing coming from your thermostat',
+      follow({ ctx, redirect }) {
+        tmp.thermostatSrc = createSource('sine', 500)
+        tmp.thermostatRinging = true
+        // TODO - add a thermostat app
+
+        tmp.thermostatRingInterval = setRunInterval(() => {
+          tmp.thermostatSrc.smoothGain(MAX_VOLUME/2)
+          setTimeout(() => {
+            tmp.thermostatSrc.smoothGain(0)
+          }, 150)
+        }, 500)
+        redirect(ctx.lastNode)
+      },
+
     },
 
 
@@ -1025,7 +1076,7 @@
       $consoleTime.innerHTML = ' — 88:88:88'
     }
     if (ctx.state.checkedThermostat) {
-      $consoleTemperature.innerHTML = ' — 88˚'
+      $consoleTemperature.innerHTML = ctx.state.checkedThermostatTwice ? ' — 84˚ [CO2 LEVEL: HAZARDOUS]' : ' — 88˚'
     }
 
 

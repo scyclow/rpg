@@ -42,6 +42,7 @@ export function createSource(waveType = 'square', startingFreq=3000) {
 
   const stop = () => {
     source.stop()
+
   }
 
   const src = { source, gain, panner,smoothFreq, smoothGain, smoothPanner, originalSrcType: source.type, stop }

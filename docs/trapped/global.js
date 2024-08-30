@@ -19,6 +19,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   shaydOpen: false,
   shaydEverOpen: false,
   hideClose: false,
+  thermostatDisabled: false,
   payments: {},
   eventLog: [],
   eventLoopStartTime: Date.now(),
@@ -45,6 +46,9 @@ export const globalState = persist('__GLOBAL_STATE', {
 
 
 window.globalState = globalState
+
+export const tmp = {}
+window.tmp = tmp
 
 
 

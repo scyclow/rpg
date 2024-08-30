@@ -145,7 +145,8 @@ export class StateMachine {
         ...newNode,
         text: await this.evaluate(newNode.text, event.ur)
       }, event.ur),
-      this
+      this,
+      event.nodeKey
     )
 
     if (newNode.follow) this.run(event.ur, 'follow')
