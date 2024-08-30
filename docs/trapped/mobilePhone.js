@@ -34,6 +34,7 @@ const APPS = [
 
   { name: 'Alarm', key: 'alarm', size: 128, price: 1 },
   { name: 'Bathe', key: 'bathe', size: 128, price: 1 },
+  { name: 'ClearBreeze', key: 'clearBreeze', size: 128, price: 0 },
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
   // { name: 'Elevate', key: 'elevate', size: 128, price: 1 },
   { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
@@ -49,7 +50,7 @@ const APPS = [
   { name: 'Secure 2FA', key: 'secure2fa', size: 128, price: 0 },
   { name: 'Shayd', key: 'shayd', size: 128, price: 0 },
   { name: 'SmartLock', key: 'lock', size: 128, price: 0 },
-  { name: 'SmartPlanter', key: 'planter', size: 256, price: 0 },
+  { name: 'SmartPlanter<sup>TM</sup>', key: 'planter', size: 256, price: 0 },
   { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: 1 },
   { name: 'Toastr', key: 'toastr', size: 128, price: 0 },
 ]
@@ -153,9 +154,11 @@ const state = persist('__MOBILE_STATE', {
   rootUser: 0,
   lampOn: false,
   luminPaired: false,
+  clearBreezePaired: false,
   toasterPaired: false,
   planterPaired: false,
   plantStatus: 1,
+  plantName: '',
   payAppUpdate: 0,
   lastPayApp2fa: 0,
   smartLockPaired: false,
@@ -758,6 +761,14 @@ createComponent(
       ctx.newText(packageText)
     }
 
+    // if thermostat app downloaded, provide alert
+    // ringing in hallway
+
+
+    // if (currentUser !== null && globalState.wifiActive && !textMessages.some(m => m.from === '+7 809 3390 753')) {
+    //   ctx.newText(packageText)
+    // }
+
     ctx.$internetType.innerHTML = `
       ${internet === 'wifi' ? 'WiFi' : 'Data'}: ${
         hasInternet
@@ -962,7 +973,7 @@ createComponent(
 
       const appSearch = ctx.$('#appSearch')
 
-      const clean = txt => txt.toLowerCase().replaceAll(' ', '').replaceAll(':', '')
+      const clean = txt => txt.replaceAll('<sup>TM</sup>', 'tm').toLowerCase().replaceAll(' ', '').replaceAll(':', '')
 
       const search = () => {
         if (hasInternet) {
@@ -987,7 +998,7 @@ createComponent(
                   <td>${
                     appsInstalled.some(_a => _a.name === a.name)
                       ? `Downloaded`
-                      : `<button id="${clean(a.name)}-download" ${a.price > 0 ? 'disabled' : ''}>Download</button></td>`
+                      : `<button id="${clean(a.key)}-download" ${a.price > 0 ? 'disabled' : ''}>Download</button></td>`
 
                   }
                   </tr>`).join('')
@@ -996,7 +1007,7 @@ createComponent(
           `
 
           APPS.forEach(a => {
-            const app = ctx.$(`#${clean(a.name)}-download`)
+            const app = ctx.$(`#${clean(a.key)}-download`)
             if (app) app.onclick = () => {
 
               ctx.$('#appContent').innerHTML = `
@@ -3042,32 +3053,58 @@ createComponent(
       const plantStates = ['Dead', ':(', ':|', ':)']
       const {plantStatus} = ctx.state
 
-      const mainInterface = planterPaired
+      const needs = plantStatus === 0
+        ? 'null'
+        : [
+          !globalState.plantWatered && 'Water',
+          !globalState.shaydOpen && 'Sunlight',
+          globalState.shaydOpen && globalState.plantWatered && '0',
+        ].filter(iden).join(', ')
+
+      // const mainInterface = planterPaired
+      //   ? `
+      //     <h3 style="margin: 0.4em 0">Plant Status: <span id="plantStatus">${plantStates[plantStatus]}</span></h3>
+      //     <button id="water" ${globalState.plantWatered ? 'disabled' : ''}>Water</button>
+      //     <h5>Needs: ${needs}</h5>
+      //   `
+      //   : `
+      //     <input id="planterDeviceCode" placeholder="Device Code"><button id="pairPlanter" style="margin-left: 0.25em">Pair Device</button>
+      //   `
+
+      const nameModule =
+        ctx.state.plantName
+          ? `<h3>Plant Name: ${ctx.state.plantName}!</h3>`
+          : `
+            <div>
+              <h3>Name your plant!</h3>
+              <input id="plantName" placeholder="Plant Name"> <button id="namePlant">Name</button>
+            </div>
+          `
+
+
+      const mainContent = planterPaired
         ? `
+          ${globalState.plantWatered && globalState.shaydEverOpen
+              ? nameModule
+              : ''
+            }
           <h3 style="margin: 0.4em 0">Plant Status: <span id="plantStatus">${plantStates[plantStatus]}</span></h3>
           <button id="water" ${globalState.plantWatered ? 'disabled' : ''}>Water</button>
-          <h5>Needs: ${
-            plantStatus === 0
-              ? 'null'
-              : [
-                !globalState.plantWatered && 'Water',
-                !globalState.shaydOpen && 'Sunlight',
-                globalState.shaydOpen && globalState.plantWatered && '0',
-              ].filter(iden).join(', ')
-          }</h5>
+          <h5>Needs: ${needs}</h5>
+          <h4 id="error"><h4>
+          ${jailbrokenApps.planter && planterPaired ? jbMarkup(globalState.cryptoDevices.planter) : ''}
         `
-        : `
-          <input id="planterDeviceCode" placeholder="Device Code"><button id="pairPlanter" style="margin-left: 0.25em">Pair Device</button>
-        `
+        : `<button id="pairPlanter">Pair SmartPlanter<sup>TM</sup></button>`
 
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <h2>SmartPlanter</h2>
-          ${mainInterface}
-          <h4 id="error"><h4>
-          ${jailbrokenApps.planter && planterPaired ? jbMarkup(globalState.cryptoDevices.planter) : ''}
+          <h2 style="margin-bottom: 0.4em">SmartPlanter<sup>TM</sup></h2>
+          ${bluetoothEnabled
+            ? inInternetLocation ? mainContent : '<h3>Cannot find SmartPlanter<sup>TM</sup></h3>'
+            : `<h3>Please Enable Bluetooth to pair SmartPlanter<sup>TM</sup></h3>`
+          }
         </div>
       `
 
@@ -3083,32 +3120,55 @@ createComponent(
         globalState.plantWatered = true
 
         setTimeout(() => {
-          if (ctx.state.plantStatus > 0) {
+          if (!globalState.plantWatered && ctx.state.plantStatus > 0) {
             ctx.setState({ plantStatus: plantStatus + 1 })
           } else {
             ctx.setState({}, true)
           }
-        }, 2000)
+        }, 1000)
       }
 
       if (ctx.$('#pairPlanter')) ctx.$('#pairPlanter').onclick = () => {
-        ctx.$('#error').innerHTML = 'Pairing device...'
+        ctx.$('#pairPlanter').innerHTML = 'Pairing device...'
 
-        if (ctx.$('#planterDeviceCode').value !== 'F93892O30249B48') {
-          setTimeout(() => {
-            ctx.$('#error').innerHTML = 'Unregistered Device: Please check that you have input a valid Device Code'
-          }, 800)
+        // if (ctx.$('#planterDeviceCode').value !== 'F93892O30249B48') {
+        //   setTimeout(() => {
+        //     ctx.$('#error').innerHTML = 'Unregistered Device: Please check that you have input a valid Device Code'
+        //   }, 800)
 
-        } else if (!wifiAvailable) {
-          setTimeout(() => {
-            ctx.$('#error').innerHTML = `Cannot find device. Please check your SmartPlanter<sup>TM</sup>'s internet connection and try again`
-          }, 2000)
+        // } else if (!wifiAvailable) {
+        //   setTimeout(() => {
+        //     ctx.$('#error').innerHTML = `Cannot find device. Please check your SmartPlanter<sup>TM</sup>'s internet connection and try again`
+        //   }, 2000)
 
-        } else {
+        // } else {
           setTimeout(() => {
             ctx.setState({ planterPaired: true })
           }, 3000)
+        // }
+      }
+
+      if (ctx.$('#namePlant')) ctx.$('#namePlant').onclick = () => {
+        const name = ctx.$('#plantName').value
+
+        if (!name) {
+          ctx.$('#error').innerHTML = `Please input a valid name for your plant`
         }
+
+        ctx.$('#error').innerHTML = `<span style="icon'>⌛︎</span>`
+
+        if (!wifiAvailable) {
+          setTimeout(() => {
+            ctx.$('#error').innerHTML = 'ERROR: SERVER NOT FOUND -- Please check that your device is connected to WiFi'
+          }, 300)
+        } else {
+          setTimeout(() => {
+            ctx.setState({
+              plantName: name
+            })
+          }, 1500)
+        }
+
       }
 
       ctx.$('#home').onclick = () => {
@@ -3121,6 +3181,7 @@ createComponent(
           <div>
             <h3>Blinds: ${globalState.shaydOpen ? 'Open' : 'Closed'}</h3>
             <button id="toggleShaydOpen">${globalState.shaydOpen ? 'Close' : 'Open'}</button>
+            <h3 id="shaydError" style="display: inline-block;"></h3>
             <div>${jailbrokenApps.shayd ? jbMarkup(globalState.cryptoDevices.shayd) : ''}</div>
           </div>
 
@@ -3130,37 +3191,61 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <h2>Shayd ☾☼☽</h2>
+          <h2 style="text-align: center">☾☼☽</h2>
+          <h2 style="text-align: center">Shayd</h2>
           ${bluetoothEnabled
             ? inInternetLocation ? mainContent : '<h3>Cannot find Shade device</h3>'
             : `<h3>Please Enable Bluetooth to pair Shayd device</h3>`
           }
-          <h3 id="shaydError"></h3>
+          <h3 id="btError"></h3>
         </div>
       `
 
+      const setBg = () => {
+        if (!lampOn) {
+          if (globalState.shaydOpen) {
+            setColor('--bg-color', 'var(--light-color)')
+            setColor('--primary-color', 'var(--dark-color)')
+          } else {
+            setColor('--bg-color', 'var(--dark-color)')
+            setColor('--primary-color', 'var(--light-color)')
+          }
+        }
+      }
 
+      jbBehavior(ctx, globalState.cryptoDevices.shayd, 150, () => {
+        if (globalState.shaydOpen) {
+          globalState.shaydOpen = false
+          const stateUpdate = ctx.state.plantStatus === 0 ? {} : {
+            plantStatus: ctx.state.plantStatus - 1
+          }
+          ctx.setState(stateUpdate, true)
 
-      jbBehavior(ctx, globalState.cryptoDevices.shayd, 150)
+          setBg()
+        }
+      })
 
 
       if (ctx.$('#pairShayd')) ctx.$('#pairShayd').onclick = () => {
-        ctx.$('#shaydError').innerHTML = 'Please wait while device pairs'
+        ctx.$('#btError').innerHTML = 'Please wait while device pairs'
         setTimeout(() => {
           ctx.setState({ shaydPaired: true })
         }, 800)
       }
 
       if (ctx.$('#toggleShaydOpen')) ctx.$('#toggleShaydOpen').onclick = () => {
-        ctx.$('#shaydError').innerHTML = 'Proccessing'
+        ctx.$('#shaydError').innerHTML = globalState.shaydOpen ? 'Closing' : 'Opening'
 
         setTimeout(() => {
           let stateUpdate = {}
-          if (!wifiAvailable) {
-            ctx.$('#shaydError').innerHTML = 'Device Error: "LAN Error: Cannot Connect to Local Area Network"'
+          // if (!wifiAvailable) {
+          //   ctx.$('#shaydError').innerHTML = 'Device Error: "LAN Error: Cannot Connect to Local Area Network"'
 
-          } else if (!globalState.shaydOpen) {
+          // } else
+
+          if (!globalState.shaydOpen) {
             globalState.shaydOpen = true
+            globalState.shaydEverOpen = true
             stateUpdate = ctx.state.plantStatus === 0 ? {} : {
               plantStatus: ctx.state.plantStatus + 1
             }
@@ -3173,20 +3258,67 @@ createComponent(
             ctx.setState(stateUpdate, true)
           }
 
-          if (!lampOn) {
-            if (globalState.shaydOpen) {
-              setColor('--bg-color', 'var(--light-color)')
-              setColor('--primary-color', 'var(--dark-color)')
-            } else {
-              setColor('--bg-color', 'var(--dark-color)')
-              setColor('--primary-color', 'var(--light-color)')
-            }
-
-          }
+          setBg()
 
             // window.primarySM.enqueue('smartLockShift')
         }, 2000)
       }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (screen === 'clearBreeze') {
+      const mainContent = ctx.state.clearBreezePaired
+        ? `
+          <div style="display: flex; flex-direction: column; align-items: center">
+            <button id="openWindow" style="font-size: 1.2em">Open Window</button>
+            <h3 id="windowError" style="text-align: center; margin-top: 0.5em"></h3>
+            <div>${jailbrokenApps.clearBreeze ? jbMarkup(globalState.cryptoDevices.clearBreeze) : ''}</div>
+          </div>
+
+        `
+        : `<button id="pairWindow">Pair Device</button>`
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2 style="margin: 1em 0; text-align: center">ClearBreeze Windows</h2>
+          <h2 style="margin: 1em 0; text-align: center"><span class="icon">⌸</span></h2>
+          ${bluetoothEnabled
+            ? inInternetLocation ? mainContent : '<h3>Cannot find Shade device</h3>'
+            : `<h3>Please Enable Bluetooth to pair Shayd device</h3>`
+          }
+          <h3 id="pairError"></h3>
+        </div>
+      `
+
+
+
+      jbBehavior(ctx, globalState.cryptoDevices.clearBreeze, 150)
+
+
+      if (ctx.$('#pairWindow')) ctx.$('#pairWindow').onclick = () => {
+        ctx.$('#pairError').innerHTML = 'Please wait while device pairs'
+        setTimeout(() => {
+          ctx.setState({ clearBreezePaired: true })
+        }, 800)
+      }
+
+      if (ctx.$('#openWindow')) ctx.$('#openWindow').onclick = () => {
+        ctx.$('#windowError').innerHTML = 'Opening...'
+
+        if (!wifiAvailable) {
+          setTimeout(() => {
+            ctx.$('#windowError').innerHTML = 'Device Error: "Local Area Network (LAN) Error: Cannot Connect to WiFi"'
+          }, 1700)
+        } else {
+          setTimeout(() => {
+            ctx.$('#windowError').innerHTML = 'Device Error: "HARDWARE MALFUNCTION"'
+          }, 4000)
+        }
+      }
+
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
@@ -3566,6 +3698,11 @@ function jbBehavior(ctx, device, speed, cb=noop, persistCb=noop) {
   const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged
 
   const update = () => {
+    if (!device.active) {
+      clearInterval(ctx.interval)
+      clearInterval(persistantInterval)
+      return
+    }
     ctx.state.cryptoBalances[device.wallet] = device.balance
     if (ctx.$('#cryptoBalance')) ctx.$('#cryptoBalance').innerHTML = device.balance
     cb()
@@ -3573,6 +3710,8 @@ function jbBehavior(ctx, device, speed, cb=noop, persistCb=noop) {
 
   let persistantInterval
   if (device.active) {
+    clearInterval(ctx.interval)
+    clearInterval(persistantInterval)
     ctx.interval = setRunInterval(update, speed)
     persistantInterval = setRunInterval(persistCb, speed)
   }
@@ -3602,8 +3741,10 @@ function jbBehavior(ctx, device, speed, cb=noop, persistCb=noop) {
       turnOff()
 
     } else {
-      setMiningInterval(device, speed*device.ram/1000, speed)
+      clearInterval(ctx.interval)
+      clearInterval(persistantInterval)
 
+      setMiningInterval(device, speed*device.ram/1000, speed)
       ctx.interval = setRunInterval(update, speed)
       persistantInterval = setRunInterval(persistCb, speed)
     }

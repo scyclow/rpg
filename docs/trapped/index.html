@@ -320,13 +320,19 @@
       },
       bedroomWindowOpenNew: [
         { text: `The blinds are now open`, wait: 1800 },
-        { text: `You stare at the brick wall outside, three feet away from your window`, wait: 2500 },
+        { text: `You stare through the window at the brick wall outside three feet away from the glass`, wait: 2500 },
         { text: `Light creeps into the narrow alley from above, originating slightly outside your field of vision`, wait: 3000 },
-        { text: `At the bottom right corner of the continuous double pane of glass: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the Landlock Realty Rental App"`},
+        { text: `The word "<strong>ClearBreeze</strong>" is laser-etched into the bottom right corner of the window. Next to it is a sticker: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the <strong>Landlock Realty Rental App</strong>"`},
       ],
-      bedroomWindowOpen: {
-        text: `You stare at the window. At the bottom right corner of the continuous double pane of glass: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the Landlock Realty Rental App"`
-      },
+      bedroomWindowOpen: [
+        {
+          text: `You stare at the thin pane of glass seperating you from the outside world`,
+          wait: 2000
+        },
+        {
+          text: `The word "<strong>ClearBreeze</strong>" is laser-etched into the bottom right corner, along with a sticker: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the <strong>Landlock Realty Rental App</strong>"`
+        },
+      ],
       bedroomLamp: {
         text: `You inspect the lamp. You don't see a light switch, but you do see a QR code pasted to its side with no label`
       }
@@ -556,7 +562,8 @@
             txt = `The leaves sag from a lack of water and sunlight.`
           }
 
-          return `You check your plants. ${txt} On the side of the pot you read: "SmartPlanter<sup>TM</sup> - The quick and easy way to conveniently water your plants! Download our app in the AppMarket. DEVICE CODE: F93892O30249B48"`
+          // return `You check your plants. ${txt} On the side of the pot you read: "SmartPlanter<sup>TM</sup> - The quick and easy way to conveniently water your plants! Download our app in the AppMarket. DEVICE CODE: F93892O30249B48"`
+          return `You check your plants. ${txt}${globalState.plantWatered ? '' : ` On the side of the pot you read: "SmartPlanter<sup>TM</sup> - The most advanced planter technology on the market today! Download our app in the AppMarket!"`}`
         }
       },
 
@@ -585,19 +592,25 @@
       },
       livingroomWindowOpenNew: [
         { text: `The blinds are now open`, wait: 1750 },
-        { text: `You stare at the brick wall outside, three feet away from your window`, wait: 2750 },
+        { text: `You stare through the window at the brick wall outside three feet away from the glass`, wait: 2750 },
         { text: `Light creeps into the narrow alley from above, originating slightly outside your field of vision`, wait: 3500 },
-        { text: `At the bottom right corner of the continuous double pane of glass: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the Landlock Realty Rental App"`},
+        { text: `The word "<strong>ClearBreeze</strong>" is laser-etched into the bottom right corner of the window. Next to it is a sticker: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the <strong>Landlock Realty Rental App</strong>"`},
       ],
-      livingroomWindowOpen: {
-        text: `You stare at the window. At the bottom right corner of the continuous double pane of glass: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the Landlock Realty Rental App"`
-      },
+      livingroomWindowOpen: [
+        {
+          text: `You stare at the thin pane of glass seperating you from the outside world`,
+          wait: 2000
+        },
+        {
+          text: `The word "<strong>ClearBreeze</strong>" is laser-etched into the bottom right corner, along with a sticker: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the <strong>Landlock Realty Rental App</strong>"`
+        },
+      ],
     }, {
       actions: ({ctx}) => [
         { text: 'Phone', value: 'openPhone'},
         { text: 'Hallway', value: 'hallway'},
         { text: 'Kitchen', value: 'kitchen'},
-        { text: 'SmartPlanter', value: 'planter'},
+        { text: 'SmartPlanter<sup>TM</sup>', value: 'planter'},
         { text: 'Window', value: 'livingroomWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'} },
 
         { text: 'Router', value: 'router'},
@@ -788,13 +801,19 @@
       },
       kitchenWindowOpenNew: [
         { text: `The blinds are now open`, wait: 1800 },
-        { text: `You stare at the brick wall outside, three feet away from your window`, wait: 2500 },
+        { text: `You stare through the window at the brick wall outside three feet away from the glass`, wait: 2500 },
         { text: `Light creeps into the narrow alley from above, originating slightly outside your field of vision`, wait: 3000 },
-        { text: `At the bottom right corner of the continuous double pane of glass: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the Landlock Realty Rental App"`},
+        { text: `The word "<strong>ClearBreeze</strong>" is laser-etched into the bottom right corner of the window. Next to it is a sticker: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the <strong>Landlock Realty Rental App</strong>"`},
       ],
-      kitchenWindowOpen: {
-        text: `You stare at the window. At the bottom right corner of the continuous double pane of glass: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the Landlock Realty Rental App"`
-      },
+      kitchenWindowOpen: [
+        {
+          text: `You stare at the thin pane of glass seperating you from the outside world`,
+          wait: 2000
+        },
+        {
+          text: `The word "<strong>ClearBreeze</strong>" is laser-etched into the bottom right corner, along with a sticker: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the <strong>Landlock Realty Rental App</strong>"`
+        },
+      ],
     }, {
       actions: ({ctx}) => [
         { text: 'Phone', value: 'openPhone'},
