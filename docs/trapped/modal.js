@@ -21,6 +21,24 @@ createComponent(
         background: #000;
         cursor: pointer;
         background: rgba(0,0,0,0.6);
+        transition: 0.3s
+      }
+
+      .deepFocus #bg {
+        background: rgba(0,0,0,1);
+      }
+
+      .multitask {
+        pointer-events: none;
+      }
+      .multitask #modal {
+        pointer-events: auto;
+
+      }
+      .multitask #bg {
+        background: rgba(0,0,0,0);
+        pointer-events: none;
+        backdrop-filter: blur(0);
       }
 
       .blur {
@@ -82,7 +100,7 @@ createComponent(
 
 
     <div id="modelParent" class="hidden">
-      <article>
+      <article id="container">
         <div id="bg">
           <div id="x">close</div>
         </div>
@@ -93,9 +111,10 @@ createComponent(
       </article>
     </div>
   `,
-  {display: false},
+  {display: false, bgMode: 1},
   (ctx) => {
     ctx.$bg = ctx.$('#bg')
+    ctx.$container = ctx.$('#container')
     ctx.$x = ctx.$('#x')
     ctx.$modal = ctx.$('#modal')
     ctx.$modelParent = ctx.$('#modelParent')
@@ -103,6 +122,7 @@ createComponent(
 
     const blur = ctx.getAttribute('blur')
     const display = ctx.getAttribute('display')
+    const bgMode = ctx.state.bgMode ?? ctx.getAttribute('bgMode')
 
     if (blur) {
       ctx.$bg.classList.add('blur')
@@ -130,6 +150,10 @@ createComponent(
       ctx.setState({ display: true })
     }
 
+    ctx.setBgMode = (bgMode) => {
+      ctx.setState({ bgMode })
+    }
+
     ctx.$bg.onclick = ctx.close
     // ctx.$x.onclick = ctx.close
 
@@ -151,6 +175,19 @@ createComponent(
         ctx.$modelParent.classList.add('hidden')
       }, 1000)
       document.removeEventListener('keyup', escClose)
+    }
+
+    if (ctx.state.bgMode === 0) {
+      ctx.$container.classList.add('multitask')
+      ctx.$container.classList.remove('deepFocus')
+    }
+    else if (ctx.state.bgMode === 1) {
+      ctx.$container.classList.remove('multitask')
+      ctx.$container.classList.remove('deepFocus')
+    }
+    else if (ctx.state.bgMode === 2) {
+      ctx.$container.classList.remove('multitask')
+      ctx.$container.classList.add('deepFocus')
     }
 
   },

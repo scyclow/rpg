@@ -258,7 +258,7 @@
 
     openPhone: {
       before({ ctx, enqueue }) {
-        ctx.stack.push(ctx.lastNode)
+        // ctx.stack.push(ctx.lastNode)
         $phoneModal.open()
         if (!$phoneDevice.state.started) {
           $phoneDevice.start()
@@ -273,13 +273,13 @@
 
     closePhone: {
       text: 'You close your phone',
-      follow({ ctx, redirect }) {
-        redirect(ctx.stack.pop())
-      },
-      handler({ ctx, redirect }) {
-        if (ctx.stack.length) redirect(ctx.stack.pop())
-        else return ctx.fallbackNode
-      }
+      // follow({ ctx, redirect }) {
+      //   redirect(ctx.stack.pop())
+      // },
+      // handler({ ctx, redirect }) {
+      //   if (ctx.stack.length) redirect(ctx.stack.pop())
+      //   else return ctx.fallbackNode
+      // }
     },
 
     ...group({
@@ -631,6 +631,7 @@
             <h3>Model Name: UBC-9283</h3>
             <h3>Device Identifier: 5879234963378</h3>
             <h3>Customer Support: 1-800-555-2093</h3>
+            <h3>Property of: National Broadband Services</h3>
           </div>
         </div>
         `
@@ -993,6 +994,9 @@
       setColor('--bg-color', 'var(--light-color)')
       setColor('--primary-color', 'var(--dark-color)')
     }
+
+
+    $phoneModal.setBgMode(globalState.modelBgMode)
 
 
     $consoleLocation.innerHTML = niceLocation[globalState.location]
