@@ -19,6 +19,7 @@ const APPS = [
   // elevate
   // ai assistant?
   // intercom
+  // roomba
 
 // needs building
   // bathe
@@ -106,6 +107,31 @@ const tripleText = {
   value: 'Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ←',
 }
 
+const billingText1 = {
+  from: '1-888-555-9483',
+  value: 'URGENT: Our records indicate that your account has an outstanding balance of $0.37. Immediate payment is required to prevent a discontinuation of your internet service. Please dial the National Broadband Services Billing Department at 1-888-555-9483 to pay this bill immediately',
+}
+
+const billingText2 = {
+  from: '1-888-555-9483',
+  value: 'Outstang balance: $0.37 -- Your internet service will be discontinued without further payment. Please call 1-888-555-9483 at your earliest convenience',
+}
+
+const billingText3 = {
+  from: '1-888-555-9483',
+  value: 'INTERNET DISCONTINUATION: Due to an outstanding balance of $0.37 your internet subscription will be terminated. Please call 1-888-555-9483 to remit this balance.',
+}
+
+const billingText4 = {
+  from: '1-888-555-9483',
+  value: 'FINAL WARNING: This is your final notice regarding your overdue balance of $0.37 with National Broadband Services. Immediate payment is required 1-888-555-9483',
+}
+
+const funTimeText = {
+  from: '1-800-666-7777',
+  value: 'Text 1-800-666-7777 for a fun time ;)',
+}
+
 
 
 
@@ -169,7 +195,8 @@ const state = persist('__MOBILE_STATE', {
       ],
       textMessages: [
         {...turboConnectText, read: true},
-        ...times(197, () => ({...sample([mmText, packageText, tripleText]), read: false}))
+        ...times(196, () => ({...sample([billingText1, billingText2, billingText3, billingText4, mmText, packageText, tripleText, funTimeText]), read: false})),
+        {...billingText4, read: false}
       ],
       keyPairs: [],
       payAppUSDAddr: rndAddr(),
@@ -3201,7 +3228,8 @@ createComponent(
             setTimeout(() => {
               ctx.setState({exeCommands: [...ctx.state.exeCommands, `
                 <h5>Helpful Commands:</h5>
-                <h5>"escape()" -- Exit the EXE Runner</h5>
+                <h5>"escape()" -- exit the EXE Runner</h5>
+                <h5>"lsprofiles()" -- ls device profile info</h5>
                 <br>
                 <br>
                 <br>
@@ -3240,6 +3268,26 @@ createComponent(
               screen: 'home',
               exeCommands: []
             }
+          } else if (command.includes('lsprofiles()')) {
+            commandDisplay = `
+              <table>
+                <tr>
+                  <th>id</th>
+                  <th>username</th>
+                  <th>active</th>
+                  <th>adminAccess</th>
+                </tr>
+                ${Object.keys(userData).map(id => `
+                  <tr>
+                    <td>${id}</td>
+                    <td style="max-width: 165px; word-break: break-word; text-align: center">${userNames[id]}</td>
+                    <td style="text-align: center">${Number(id) === currentUser ? '*' : ''}</td>
+                    <td style="text-align: center">${Number(id) === rootUser ? '*' : ''}</td>
+                  </tr>
+                `).join('')}
+              </table>
+            `
+
           } else {
             let [fn, ...args] = command.split(' ')
 
@@ -3253,7 +3301,7 @@ createComponent(
               commandDisplay = `
                 <div style="margin: 0.5em 0;">ERROR: command can only be performed by user with admin role: "${command}"</div>
                 <div style="margin: 0.5em 0;">To reassign admin role, run: "admin reassign [USER_NAME]"</div>
-                <div style="margin: 0.5em 0;">Current admin profile: ${userNames[rootUser]}</div>
+                <div style="margin: 0.5em 0; font-weight: bolder">Device admin profile: <span style="display: inline-block; padding: 0.25em; border: 1px solid">${userNames[rootUser]}</div>
               `
             } else if (fn === 'admin') {
               if (args[0] === 'view') {
@@ -3378,7 +3426,7 @@ createComponent(
                 : ''
               )}</button>`).join('')}
           </div>
-          <h4 id="error"></h4>
+          <h4 id="error" style=" text-align: center; margin-top: 1em"></h4>
 
         </div>
       `
@@ -3414,22 +3462,28 @@ createComponent(
                 <progress id="jbProgress" value="0" max="100" style="width:20em"></progress>
               `
 
+              const duration = 10000 * (globalState.cryptoDevices[app].ram / 6)
+              const intervalMS = 125
+              const updates = duration / intervalMS
+
               const src1 = createSource('square')
               const freq = 50 + Math.random() * 150
               src1.smoothFreq(freq)
               src1.smoothGain(MAX_VOLUME*.7, 0.5)
-              src1.smoothFreq(freq*8, 10)
+              src1.smoothFreq(freq*8, duration/1000)
 
               const src2 = createSource('square')
               const freq2 = freq*sample([0.5, 1.25, 1.5, 1.2])
               src2.smoothFreq(freq2)
               src2.smoothGain(MAX_VOLUME*.35, 0.5)
-              src2.smoothFreq(freq2*8, 10)
+              src2.smoothFreq(freq2*8, duration/1000)
+
+
               let p = 0
               const interval = setInterval(() => {
-                p += 2.5
+                p += (100 / updates)
                 ctx.$('#jbProgress').value = p
-              }, 250)
+              }, intervalMS)
 
               setTimeout(() => {
                 ctx.$('#applicationBinary').value = ''
@@ -3453,7 +3507,7 @@ createComponent(
                   })
                 }, 1000)
 
-              }, 12000)
+              }, duration * 1.2)
 
             } else {
               ctx.$('#error').innerHTML = 'ERROR: Cannot enable `automine` in application that does not support external device functionality'
