@@ -42,10 +42,10 @@ export class StateMachine {
 
     if (nextNodeKey) {
       const nextNode = this.getNode(nextNodeKey)
-      if (nextNode.follow || nextNode.handler) {
+      // if (nextNode.follow || nextNode.handler) {
         this.ctx.lastNode = this.ctx.currentNode
         this.ctx.currentNode = nextNodeKey
-      }
+      // }
 
       await this.evaluate(currentNode.after, ur)
 
