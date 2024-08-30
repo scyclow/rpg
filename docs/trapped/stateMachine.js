@@ -6,7 +6,6 @@ export class StateMachine {
     this.onUpdate = config.onUpdate || (() => {})
     this.queue = []
     this.start = this.ctx.currentNode
-    this.alive = false
   }
 
   getNode(nodeKey) {
@@ -26,7 +25,6 @@ export class StateMachine {
 
 
   async next(ur) {
-    this.alive = true
     this.run(ur, 'handler')
   }
 
@@ -41,17 +39,14 @@ export class StateMachine {
     const nextNodeKey = await this.getNextNodeKey(fn, this.ctx.currentNode, ur)
 
     if (nextNodeKey) {
-      const nextNode = this.getNode(nextNodeKey)
-      if (nextNode.follow || nextNode.handler) {
-        this.ctx.lastNode = this.ctx.currentNode
-        this.ctx.currentNode = nextNodeKey
-      }
-
-      await this.evaluate(currentNode.after, ur)
-
-      const wait = currentNode.wait || this.defaultWait
-      this.enqueue(nextNodeKey, ur, wait, fn === 'follow')
+      this.ctx.lastNode = this.ctx.currentNode
+      this.ctx.currentNode = nextNodeKey
     }
+
+    await this.evaluate(currentNode.after, ur)
+
+    const wait = currentNode.wait || this.defaultWait
+    this.enqueue(nextNodeKey, ur, wait, fn === 'follow')
   }
 
   nodeIsArray(key) {
@@ -90,7 +85,6 @@ export class StateMachine {
   }
 
   enqueue(nodeKey, ur='', wait=0, isFollow=false) {
-    if (isFollow && !this.alive) return
     if (!nodeKey) return
 
     this.queue.push({
@@ -121,7 +115,6 @@ export class StateMachine {
   kill() {
     this.queue.forEach(() => this.queue.pop())
     this.redirect(this.start)
-    this.alive = false
   }
 
   async shiftQueue() {
@@ -130,6 +123,7 @@ export class StateMachine {
     const event = this.queue.shift()
     this.scheduleQueueShift(1)
 
+    this.ctx.currentNode = event.nodeKey
     const currentNode = this.getNode(event.nodeKey)
     await this.evaluate(currentNode.before, event.ur)
 

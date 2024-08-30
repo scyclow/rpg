@@ -12,7 +12,7 @@ export const ispCSNodes = {
 
   ...group({
     intro: {
-      text: `Hello, and welcome to N B S customer support. This call may be recorded for quality and security purposes. If you're calling about becoming a new customer, press 1. To add service to an existing account, press 2. If you'd like to pay an outstanding bill, press 3. For all other inquiries, press 4. To hear these options again, press star`,
+      text: `Hello, and welcome to I S P customer support. This call may be recorded for quality and security purposes. If you're calling about becoming a new customer, press 1. To add service to an existing account, press 2. If you'd like to pay an outstanding bill, press 3. For all other inquiries, press 4. To hear these options again, press star`,
     },
     mainMenu: {
       text: `If you're calling about becoming a new customer, press 1. To add service to an existing account, press 2. If you'd like to pay an outstanding bill, press 3. For all other inquiries, press 4. To hear these options again, press star`,
@@ -29,7 +29,7 @@ export const ispCSNodes = {
   }),
 
   representative: {
-    text: 'There are currently N A N customers in front of you in line. Please stay on the line and a representative will speak with you shortly',
+    text: 'The current estimated wait time to speak with a representative is N A N hours, N A N minutes, and N A N seconds. Please stay on the line to speak with a representative.',
     handler: x => 'representative',
     wait: 8000,
     follow: () => {
@@ -109,7 +109,7 @@ export const ispCSNodes = {
   // },
 
   newCustomer: {
-    text: `You'd like to sign up for N B S service. N B S is the leading internet service provider among customers seeking high quality internet connection. I just need to ask you a few questions before we can get started. Do you currently have an N B S router? If so press 1. Otherwise press 2.`,
+    text: `You'd like to sign up for I S P service. I S P is the leading internet service provider among customers seeking high quality internet connection. I just need to ask you a few questions before we can get started. Do you currently have an I S P router? If so press 1. Otherwise press 2.`,
     handler: options({
       1: 'newCustomerRouter',
       2: 'newCustomerZipCode'

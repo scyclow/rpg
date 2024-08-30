@@ -4,7 +4,7 @@ export const billingCSNodes = {
   },
 
   intro: {
-    text: `Hello. You have reached the N B S billing department`,
+    text: `Hello. You have reached the I S P billing department`,
     follow: 'mainMenu'
   },
 
@@ -41,7 +41,7 @@ export const billingCSNodes = {
   },
 
   payBalanceContinue: {
-    text: 'Please enter your N B S customer identification number, followed by the pound key',
+    text: 'Please enter your I S P customer identification number, followed by the pound key',
     follow({ctx}) {
       ctx.state.idNumber = []
       return 'idNumberEnter'
