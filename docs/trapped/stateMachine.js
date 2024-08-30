@@ -21,7 +21,6 @@ export class StateMachine {
     return Array.isArray(this.nodes[baseKey])
       ? [baseKey, Number(keyIx || 0)]
       : [baseKey, null]
-
   }
 
 
@@ -42,16 +41,21 @@ export class StateMachine {
 
     if (nextNodeKey) {
       const nextNode = this.getNode(nextNodeKey)
-      // if (nextNode.follow || nextNode.handler) {
+      if (this.isNotDeadEnd(nextNodeKey)) {
         this.ctx.lastNode = this.ctx.currentNode
         this.ctx.currentNode = nextNodeKey
-      // }
+      }
 
       await this.evaluate(currentNode.after, ur)
 
       const wait = currentNode.wait || this.defaultWait
       this.enqueue(nextNodeKey, ur, wait, fn === 'follow')
     }
+  }
+
+  isNotDeadEnd(key) {
+    const nextNode = this.getNode(key)
+    return nextNode.follow || nextNode.handler || this.nodeIsArray(key)
   }
 
   nodeIsArray(key) {
@@ -130,18 +134,21 @@ export class StateMachine {
     const event = this.queue.shift()
     this.scheduleQueueShift(1)
 
-    const currentNode = this.getNode(event.nodeKey)
-    await this.evaluate(currentNode.before, event.ur)
+    if (this.isNotDeadEnd(event.nodeKey)) {
+      this.ctx.currentNode = event.nodeKey
+    }
+    const newNode = this.getNode(event.nodeKey)
+    await this.evaluate(newNode.before, event.ur)
 
     this.onUpdate(
       await this.evaluate({
-        ...currentNode,
-        text: await this.evaluate(currentNode.text, event.ur)
+        ...newNode,
+        text: await this.evaluate(newNode.text, event.ur)
       }, event.ur),
       this
     )
 
-    if (currentNode.follow) this.run(event.ur, 'follow')
+    if (newNode.follow) this.run(event.ur, 'follow')
     if (this.nodeIsArray(this.ctx.currentNode)) {
       const [base, ix] = this.splitNodeKeys(this.ctx.currentNode)
       if (ix + 1 < this.nodes[base].length) {
