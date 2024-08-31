@@ -618,6 +618,9 @@ createComponent(
     }
 
     ctx.createSPTX = ({ sender, recipient, amount }) => {
+      const {usdBalances, currentUser, payAppUpdate, userData} = ctx.state
+      const {payAppUSDAddr} = userData[currentUser]
+
       const sptx = Math.floor(Math.random()*100000000000000000)
 
       globalState.payments[sptx] = {
@@ -629,10 +632,12 @@ createComponent(
         received: false
       }
 
-      if (ctx.state.usdBalances[sender] < amount) throw new Error('invalid amount')
+      if (usdBalances[sender] < amount) throw new Error('invalid amount')
 
       let updatePayApp = {}
-      if (amount >= 0.37 && recipient === ctx.state.userData[ctx.state.currentUser].payAppUSDAddr && ctx.state.payAppUpdate <= 0) {
+      const totalAmount = amount + usdBalances[payAppUSDAddr]
+
+      if (totalAmount >= 0.37 && recipient === payAppUSDAddr && payAppUpdate <= 0) {
         updatePayApp = {
           payAppUpdate: 1
         }
@@ -641,8 +646,8 @@ createComponent(
       ctx.setState({
         ...updatePayApp,
         usdBalances: {
-          ...ctx.state.usdBalances,
-          [sender]: ctx.state.usdBalances[sender] - amount
+          ...usdBalances,
+          [sender]: usdBalances[sender] - amount
         }
       })
       return sptx
@@ -1234,7 +1239,7 @@ createComponent(
               <h3>Send $</h3>
               <ol>
                 <li><input id="recipient" placeholder="Recipient Address"></li>
-                <li style="margin:0.25em 0"><input id="amount" placeholder="Amount" type="number"></li>
+                <li style="margin:0.25em 0"><input id="amount" placeholder="Amount" type="number" step=".01"></li>
                 <li><button id="sign">Sign Transaction</li>
               </ol>
               <h4 id="sptx"></h4>
@@ -2449,7 +2454,7 @@ createComponent(
                     ${exchangePremium ? '<option value="premium">₱</option>' : ''}
                   </select>
 
-                  <input id="transactionAmount" placeholder="0.00" style="width: 5em; text-align: center" type="number">
+                  <input id="transactionAmount" placeholder="0.00" step=".01" style="width: 5em; text-align: center" type="number">
 
 
                   <span id="tradeOperation">with</span>
@@ -2476,8 +2481,8 @@ createComponent(
               </div>
 
               <input id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin: 0.4em 0">
-              <input id="sendUSDAmount" placeholder="$ 0.00" type="number" style="width: 6em"> <button id="sendUSD" style="margin-bottom: 0.1em">SEND $</button>
-              <h5>SPTX: <span id="sendUSDError">ERROR: Invalid Amount</span></h5>
+              <input id="sendUSDAmount" placeholder="$ 0.00" type="number" step=".01" style="width: 6em"> <button id="sendUSD" style="margin-bottom: 0.1em">SEND $</button>
+              <h5>SPTX: <span id="sendUSDError">[-----------------]</span></h5>
               <h4 style="margin: 0.4em 0">Receive $</h4>
               <h5 style="border: 1px dotted; text-align: center; padding: 0.25em">${hasInternet ? exchangeUSDAddr : '-'}</h5>
               <input id="sptxInput" placeholder="SPTX" type="number" style="width: 11em"> <button id="receiveSPTX">PROCESS</button>

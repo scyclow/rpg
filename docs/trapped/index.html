@@ -473,7 +473,17 @@
 
     ...group({
       frontDoor: {
-        text: ({ctx}) => `The front door is closed. Above the doorknob is a QR code${ctx.state.envelopesPickedUp ? '': '. You notice three envelopes at your feet'}`,
+        text: ({ctx}) => `The front door is closed. Above the doorknob is a QR code along with the text "Powered by <strong>SmartLock</strong> Technology"`,
+        async follow({ctx}) {
+          if (!ctx.state.envelopesPickedUp) {
+            await waitPromise(1500)
+            return 'envelopes'
+          }
+        }
+      },
+
+      envelopes: {
+        text: `You notice three envelopes at your feet`
       },
 
       pickupEnvelopes: {
@@ -1047,6 +1057,9 @@
 
 
   function rehydrate(ctx, sm) {
+
+    if (primarySM.ctx.currentNode === 'intro.1') primarySM.next('intro.1')
+    if (primarySM.ctx.currentNode === 'intro.2') primarySM.next('bedFresh')
     const $content = $.id('mainConsoleContent')
     const $nextActions = $.id('nextActions')
 

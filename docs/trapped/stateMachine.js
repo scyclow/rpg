@@ -35,21 +35,26 @@ export class StateMachine {
   }
 
   async run(ur, fn) {
-    const currentNode = this.getNode(this.ctx.currentNode)
+    try {
+      const currentNode = this.getNode(this.ctx.currentNode)
 
-    const nextNodeKey = await this.getNextNodeKey(fn, this.ctx.currentNode, ur)
+      const nextNodeKey = await this.getNextNodeKey(fn, this.ctx.currentNode, ur)
 
-    if (nextNodeKey) {
-      const nextNode = this.getNode(nextNodeKey)
-      if (this.isNotDeadEnd(nextNodeKey)) {
-        this.ctx.lastNode = this.ctx.currentNode
-        this.ctx.currentNode = nextNodeKey
+      if (nextNodeKey) {
+        const nextNode = this.getNode(nextNodeKey)
+        if (this.isNotDeadEnd(nextNodeKey)) {
+          this.ctx.lastNode = this.ctx.currentNode
+          this.ctx.currentNode = nextNodeKey
+        }
+
+        await this.evaluate(currentNode.after, ur)
+
+        const wait = currentNode.wait || this.defaultWait
+        this.enqueue(nextNodeKey, ur, wait, fn === 'follow')
       }
-
-      await this.evaluate(currentNode.after, ur)
-
-      const wait = currentNode.wait || this.defaultWait
-      this.enqueue(nextNodeKey, ur, wait, fn === 'follow')
+    } catch (e) {
+      console.log(e)
+      this.enqueue(this.ctx.fallbackNode)
     }
   }
 
