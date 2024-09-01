@@ -14,7 +14,6 @@ const APPS = [
 // needs name/IRL callout
   // TV
   // ebook
-  // thermostat
   // fridge (freezelocker)
   // elevate
   // ai assistant?
@@ -23,8 +22,8 @@ const APPS = [
 
 // needs building
   // bathe
-  // toastr (login, default toast posts)
   // alarm
+  // thermostat
   // security camera
   // fastcash (finance)
   // ronamerch (ecommerce)
@@ -32,13 +31,13 @@ const APPS = [
   // finsexy (dating)
   // friendworld (social)
 
-  { name: 'Alarm', key: 'alarm', size: 128, price: 1 },
-  { name: 'Bathe', key: 'bathe', size: 128, price: 1 },
+  { name: 'Alarm', key: 'alarm', size: 128, price: NaN },
+  { name: 'Bathe', key: 'bathe', size: 128, price: NaN },
   { name: 'ClearBreeze', key: 'clearBreeze', size: 128, price: 0 },
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
-  // { name: 'Elevate', key: 'elevate', size: 128, price: 1 },
+  // { name: 'Elevate', key: 'elevate', size: 128, price: NaN },
   { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
-  { name: 'FreezeLocker', key: 'freeze', size: 128, price: 1 },
+  { name: 'FreezeLocker', key: 'freeze', size: 128, price: NaN },
   { name: 'Identity Wizard', key: 'identityWizard', size: 128, price: 0 },
   { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
   { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
@@ -51,10 +50,10 @@ const APPS = [
   { name: 'Shayd', key: 'shayd', size: 128, price: 0 },
   { name: 'SmartLock', key: 'lock', size: 128, price: 0 },
   { name: 'SmartPlanter<sup>TM</sup>', key: 'planter', size: 256, price: 0 },
-  { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: 1 },
+  { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: 3 },
   { name: 'ThermoSmart', key: 'thermoSmart', size: 128, price: 0 },
   { name: 'Toastr', key: 'toastr', size: 128, price: 0 },
-  { name: 'YieldFarmer 2', key: 'yieldFarmer', size: 128, price: 0 },
+  { name: 'YieldFarmer 2', key: 'yieldFarmer', size: 128, price: 1 },
 ]
 
 
@@ -175,6 +174,7 @@ const state = persist('__MOBILE_STATE', {
   cryptoBalances: {},
   premiumCryptoBalances: {},
   yieldFarmerGlobalHighScore: 19011.44,
+  appMarketPPC: 1.03,
   userData: {
     0: {
       appsInstalled: [
@@ -186,10 +186,10 @@ const state = persist('__MOBILE_STATE', {
         { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
         { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
         { name: 'SmartLock', key: 'lock', size: 128, price: 0 },
-        // { name: 'Bathe', key: 'alarm', size: 128, price: 1 },
-        // { name: 'Elevate', key: 'elevate', size: 128, price: 1 },
+        // { name: 'Bathe', key: 'alarm', size: 128, price: NaN },
+        // { name: 'Elevate', key: 'elevate', size: 128, price: NaN },
 
-        // { name: 'Alarm', key: 'alarm', size: 128, price: 1 },
+        // { name: 'Alarm', key: 'alarm', size: 128, price: NaN },
 
         { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
         { name: 'Toastr', key: 'toastr', size: 128, price: 0 },
@@ -197,13 +197,13 @@ const state = persist('__MOBILE_STATE', {
         { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
         { name: 'Secure 2FA', key: 'secure2fa', size: 128, price: 0 },
         { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
-
       ],
       textMessages: [
         {...turboConnectText, read: true},
         ...times(196, () => ({...sample([billingText1, billingText2, billingText3, billingText4, mmText, packageText, tripleText, funTimeText]), read: false})),
         {...billingText4, read: false}
       ],
+      appCreditBalance: 1,
       keyPairs: [],
       payAppUSDAddr: rndAddr(),
       moneyMinerCryptoAddr: rndAddr(),
@@ -737,6 +737,7 @@ createComponent(
       devMode,
       payAppUpdate,
       lastPayApp2fa,
+      appMarketPPC,
     } = ctx.state
 
     const currentUserData = userData[currentUser] || {}
@@ -753,7 +754,8 @@ createComponent(
       keyPairs,
       payAppAMLKYCed,
       idvWizardStep,
-      idWizardInfo
+      idWizardInfo,
+      appCreditBalance
     } = currentUserData
 
     const textMessages = currentUserData?.textMessages || []
@@ -910,7 +912,8 @@ createComponent(
               notePadValue: '',
               idvWizardStep: 0,
               idWizardInfo: {},
-              yieldFarmerHighScore: 0
+              yieldFarmerHighScore: 0,
+              appCreditBalance: 0
             }
           }
         })
@@ -966,8 +969,8 @@ createComponent(
             <table id="matchingApps"></table>
             <h3 id="searchError"></h3>
             ${hasInternet ? `
-              <h3 style="margin-top: 0.5em; margin-bottom: 0.25em">Credits Balance: 0</h3>
-              <button id="purchase" disabled>Purchase Credits</button>
+              <h3 style="margin-top: 0.5em; margin-bottom: 0.25em">AppCredit Balance: ${appCreditBalance}</h3>
+              <button id="purchase">Purchase Credits</button>
               <h4 id="error"></h4>
             ` : ''}
           </div>
@@ -979,7 +982,7 @@ createComponent(
       }
 
       if (ctx.$('#purchase')) ctx.$('#purchase').onclick = () => {
-        ctx.$('#error').innerHTML = 'Error: Cannot purchase Credits at this time'
+        ctx.setState({ screen: 'appMarketCredits' })
       }
 
       const appSearch = ctx.$('#appSearch')
@@ -994,7 +997,7 @@ createComponent(
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Size</th>
+                <!--<th>Size</th>-->
                 <th>Credits</th>
                 <th></th>
               </tr>
@@ -1004,12 +1007,12 @@ createComponent(
                 .filter(a => clean(a.name).includes(searchTerm))
                 .map(a => `<tr>
                   <td>${a.name}</td>
-                  <td>${a.size}</td>
+                  <!--<td>${a.size}</td>-->
                   <td>${a.price}</td>
                   <td>${
                     appsInstalled.some(_a => _a.name === a.name)
                       ? `Downloaded`
-                      : `<button id="${clean(a.key)}-download" ${a.price > 0 ? 'disabled' : ''}>Download</button></td>`
+                      : `<button id="${clean(a.key)}-download" ${isNaN(a.price) || a.price > appCreditBalance ? 'disabled' : ''}>Download</button></td>`
 
                   }
                   </tr>`).join('')
@@ -1045,7 +1048,8 @@ createComponent(
                     ...userData,
                     [currentUser]: {
                       ...userData[currentUser],
-                      appsInstalled: [...appsInstalled, a]
+                      appsInstalled: [...appsInstalled, a],
+                      appCreditBalance: appCreditBalance - a.price
                     }
                   }
                 })
@@ -1067,6 +1071,76 @@ createComponent(
         appSearch.value = ctx.state.appMarketPreSearch
         search()
       }
+
+    } else if (screen === 'appMarketCredits') {
+      const appMarketAddress = '0x743513ee56840e2558a764cb35c71f7beebda7a8'
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="appMarket">Back</button>
+          <div style="margin-bottom: 1em">
+            <h3 style="margin-bottom: 0.4em">AppCredit Balance: ${appCreditBalance}</h3>
+            <h4>Current Price-Per-Credit (PPC): <span style="border: 1px dashed; padding: 0.25em; display: inline-block">$${appMarketPPC.toFixed(2)}</span></h4>
+          </div>
+
+          <h3 style="margin-bottom: 0.4em">How To Purchase AppCredits:</h3>
+          <ul style="list-style: square; padding-left: 1em; font-size: 0.95em">
+            <li style="padding-bottom: 0.5em">Download the free <strong>PayApp</strong> application from <strong>AppMarket</strong>.</li>
+            <li style="padding-bottom: 0.5em">Locate the "Send $" section.</li>
+            <li style="padding-bottom: 0.5em">Input the following address into the "Recipient Address" input box: <span style="border: 1px dashed; padding: 0.25em; display: inline-block; word-break: break-word; font-family: serif; background: #ccc">${appMarketAddress}</span></li>
+            <li style="padding-bottom: 0.5em">Multiply your desired quantity of AppCredits by the current PPC, <em style="text-decoration: underline">rounding up to the nearest full AppCredit</em>.</li>
+            <li style="padding-bottom: 0.5em">Input this $ amount in the "Amount" input box.</li>
+            <li style="padding-bottom: 0.5em">Press the "Sign Transaction" button.</li>
+            <li style="padding-bottom: 0.5em">Wait for the PayApp interface to produce a S.P.T.X. identifier.</li>
+            <li style="padding-bottom: 0.5em">Copy the resulting S.P.T.X. identifier.</li>
+            <li style="padding-bottom: 0.5em">Paste your S.P.T.X. identifier into this input box: <input id="sptx" placeholder="000000000000000" type="number"></li>
+            <li style="padding-bottom: 0.5em">Click this button: <button id="clickHere" style="margin:0">Click Here</button></li>
+            <li style="padding-bottom: 0.5em">All Errors will be displayed here: <span id="error" style="border: 1px solid; padding: 0.25em; display: inline-block; word-break: break-word"></span></li>
+          </ul>
+        </div>
+      `
+
+      ctx.$('#clickHere').onclick = () => {
+        const sptx = ctx.$('#sptx').value
+
+        if (!sptx) {
+          ctx.$('#error').innerHTML = 'SPTX ERROR: empty'
+          return
+        }
+        const payment = globalState.payments[sptx]
+
+        ctx.$('#error').innerHTML = 'processing [do not reload page]'
+
+        setTimeout(() => {
+          if (!payment) {
+            ctx.$('#error').innerHTML = 'SPTX ERROR: invalid identifier'
+            return
+          } else if (payment.recipient !== appMarketAddress) {
+            ctx.$('#error').innerHTML = 'SPTX ERROR: invalid recipient'
+            return
+          } else if (payment.received) {
+            ctx.$('#error').innerHTML = 'SPTX ERROR: already processed'
+            return
+          }
+
+          ctx.receiveSPTX(sptx)
+
+          ctx.setUserData({
+            appCreditBalance: appCreditBalance + Math.floor(payment.amount / appMarketPPC)
+          })
+
+          setTimeout(() => {
+            ctx.$('#error').innerHTML = 'success'
+          }, 200)
+        }, 3000)
+
+
+      }
+
+      ctx.$('#appMarket').onclick = () => {
+        ctx.setState({ screen: 'appMarket' })
+      }
+
 
     } else if (screen === 'network') {
       if (ctx.state.internet === 'wifi') {
@@ -1228,7 +1302,7 @@ createComponent(
               <div id="txMessage"></div>
               <h3>Receive $</h3>
               <div>
-                <input id="sptxInput" placeholder="S.P.T.X. identifier">
+                <input id="sptxInput" placeholder="S.P.T.X. identifier" type="number">
                 <button id="processSPTX">Process SPTX</button>
               </div>
               <h5 id="sptxError"></h5>
