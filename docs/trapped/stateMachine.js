@@ -39,9 +39,11 @@ export class StateMachine {
       const currentNode = this.getNode(this.ctx.currentNode)
 
       const nextNodeKey = await this.getNextNodeKey(fn, this.ctx.currentNode, ur)
+      this.ctx.currentKey = nextNodeKey
 
       if (nextNodeKey) {
         const nextNode = this.getNode(nextNodeKey)
+
         if (this.isNotDeadEnd(nextNodeKey)) {
           this.ctx.lastNode = this.ctx.currentNode
           this.ctx.currentNode = nextNodeKey
@@ -138,6 +140,8 @@ export class StateMachine {
 
     const event = this.queue.shift()
     this.scheduleQueueShift(1)
+
+    this.ctx.currentKey = event.nodeKey
 
     if (this.isNotDeadEnd(event.nodeKey)) {
       this.ctx.currentNode = event.nodeKey

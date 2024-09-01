@@ -174,6 +174,7 @@ const state = persist('__MOBILE_STATE', {
   usdBalances: {},
   cryptoBalances: {},
   premiumCryptoBalances: {},
+  yieldFarmerGlobalHighScore: 19011.44,
   userData: {
     0: {
       appsInstalled: [
@@ -2786,6 +2787,11 @@ createComponent(
       }
 
     } else if (screen === 'yieldFarmer') {
+      const existingHighScore =
+        currentUserData.yieldFarmerHighScore === null
+          ? Infinity
+          : currentUserData.yieldFarmerHighScore
+
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen" style="flex:1; display: flex;">
           <div id="main" style="flex: 1; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between">
@@ -2796,15 +2802,16 @@ createComponent(
             </div>
 
             <div style="flex: 1; display: flex; flex-direction: column; align-items: center; width: 100%">
-              <h1 style="text-align: center">Crypto: <span id="currentScore">0.00</span></h1>
+              <h1 style="text-align: center; margin-bottom: 0.4em">Crypto: <span id="currentScore">0.00</span></h1>
               <button id="mineCrypto" style="font-size: 1.1em">Mine Crypto</button>
-              <div id="stake" class="hidden" style="display: flex; align-items: center; flex-direction: column">
+
+              <div id="stake" class="hidden" style="display: flex; align-items: center; flex-direction: column; margin-top: 1em">
                 <h3>Stake (<span id="stakeYield">10%</span>/<span id="stakeTime">5s</span>)</h3>
                 <button id="stakeCrypto" style="margin-top: 0.5em">Stake <span id="stakeAmount">10<span></button>
               </div>
 
-              <div id="protocol" class="hidden">
-                <h3>Protocol Upgrade</h3>
+              <div id="protocol" class="hidden" style="margin-top: 1em; padding: 0 0.75em">
+                <h3 style="margin-bottom:0.4em">Protocol Upgrade</h3>
                 <button id="increaseAmount" disabled>Increase Stake Amount 100% (100) </button>
                 <button id="increaseYield" disabled>Increase Stake Yield 20% (100) </button>
                 <button id="decreaseTime" disabled>Decrease Stake Time 20% (100) </button>
@@ -2812,13 +2819,11 @@ createComponent(
               </div>
             </div>
 
-
-
-
-
-
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
-              <h4>High Score: <span id="highScore">${currentUserData.yieldFarmerHighScore.toFixed(2)}</span></h4>
+              <div>
+                <h5>Your High Score: <span id="highScore">${existingHighScore.toFixed(2)}</span></h5>
+                <h5>Global Score: <span id="highScore">${ctx.state.yieldFarmerGlobalHighScore.toFixed(2)}</span></h5>
+              </div>
               <button id="gotoAbout" style="margin-bottom:0">About</button>
             </div>
           </div>
@@ -2827,11 +2832,9 @@ createComponent(
             <button id="gotoMain">Back</button>
             <h3>About</h3>
             <p>Welcome to YieldFarmer 2! As of last week this was the most downloaded game on AppMarket, and the most popular DeFi simulation game by far! This version has a lot of new features and bug fixes, so I'm really excited for you to play it!</p>
-
-          </faq>
+          </div>
         </div>
       `
-
 
       let currentScore = 0
       let unstakedAmount = 0
@@ -2875,11 +2878,14 @@ createComponent(
           ctx.$('#stakeCrypto').innerHTML = `Stake ${stakeAmount}`
         }
 
-
-
         if (currentScore > currentUserData.yieldFarmerHighScore) {
           currentUserData.yieldFarmerHighScore = currentScore
           ctx.$('#highScore').innerHTML = currentScore.toFixed(2)
+        }
+
+        if (currentScore > ctx.state.yieldFarmerGlobalHighScore) {
+          ctx.setState.yieldFarmerGlobalHighScore = currentScore
+          ctx.$('#globalHighScore').innerHTML = currentScore.toFixed(2)
         }
       }
 
@@ -2913,26 +2919,27 @@ createComponent(
       ctx.$('#stakeCrypto').onclick = () => {
         if (staked) {
           staked = false
-          currentScore += unstakedAmount
+          if (currentScore !== Infinity) {
+            currentScore += unstakedAmount
+          }
           unstakedAmount = 0
           update()
         } else {
-
           staked = true
-          currentScore -= stakeAmount
+          if (currentScore !== Infinity) {
+            currentScore -= stakeAmount
+          }
           unstakedAmount = stakeAmount * (1 + stakeYield)
           stakeTimestamp = Date.now()
           ctx.$('#stakeCrypto').disabled = true
           update()
-
+          setTimeout(update, stakeTime)
         }
       }
-
 
       ctx.interval = setInterval(() => {
         update()
       }, 1000)
-
 
       ctx.$('#gotoAbout').onclick = () => {
         ctx.$('#main').classList.add('hidden')
