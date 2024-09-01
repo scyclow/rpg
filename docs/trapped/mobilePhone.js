@@ -54,6 +54,7 @@ const APPS = [
   { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: 1 },
   { name: 'ThermoSmart', key: 'thermoSmart', size: 128, price: 0 },
   { name: 'Toastr', key: 'toastr', size: 128, price: 0 },
+  { name: 'YieldFarmer 2', key: 'yieldFarmer', size: 128, price: 0 },
 ]
 
 
@@ -213,6 +214,7 @@ const state = persist('__MOBILE_STATE', {
       payAppAMLKYCed: false,
       idvWizardStep: 0,
       idWizardInfo: {},
+      yieldFarmerHighScore: 0
     }
   }
 })
@@ -340,7 +342,7 @@ createComponent(
       }
 
       .hidden {
-        display: none;
+        display: none !important;
       }
 
       .loadingScreen {
@@ -907,6 +909,7 @@ createComponent(
               notePadValue: '',
               idvWizardStep: 0,
               idWizardInfo: {},
+              yieldFarmerHighScore: 0
             }
           }
         })
@@ -2782,6 +2785,169 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
+    } else if (screen === 'yieldFarmer') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen" style="flex:1; display: flex;">
+          <div id="main" style="flex: 1; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between">
+
+            <div>
+              <button id="home">Back</button>
+              <h2>YieldFarmer 2</h2>
+            </div>
+
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; width: 100%">
+              <h1 style="text-align: center">Crypto: <span id="currentScore">0.00</span></h1>
+              <button id="mineCrypto" style="font-size: 1.1em">Mine Crypto</button>
+              <div id="stake" class="hidden" style="display: flex; align-items: center; flex-direction: column">
+                <h3>Stake (<span id="stakeYield">10%</span>/<span id="stakeTime">5s</span>)</h3>
+                <button id="stakeCrypto" style="margin-top: 0.5em">Stake <span id="stakeAmount">10<span></button>
+              </div>
+
+              <div id="protocol" class="hidden">
+                <h3>Protocol Upgrade</h3>
+                <button id="increaseAmount" disabled>Increase Stake Amount 100% (100) </button>
+                <button id="increaseYield" disabled>Increase Stake Yield 20% (100) </button>
+                <button id="decreaseTime" disabled>Decrease Stake Time 20% (100) </button>
+
+              </div>
+            </div>
+
+
+
+
+
+
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+              <h4>High Score: <span id="highScore">${currentUserData.yieldFarmerHighScore.toFixed(2)}</span></h4>
+              <button id="gotoAbout" style="margin-bottom:0">About</button>
+            </div>
+          </div>
+
+          <div id="about" class="hidden" style="flex:1">
+            <button id="gotoMain">Back</button>
+            <h3>About</h3>
+            <p>Welcome to YieldFarmer 2! As of last week this was the most downloaded game on AppMarket, and the most popular DeFi simulation game by far! This version has a lot of new features and bug fixes, so I'm really excited for you to play it!</p>
+
+          </faq>
+        </div>
+      `
+
+
+      let currentScore = 0
+      let unstakedAmount = 0
+      let stakeAmount = 10
+      let stakeYield = 0.1
+      let stakeTime = 5000
+      let stakeTimestamp = Date.now()
+      let staked = false
+
+      let yieldPrice = 100
+      let timePrice = 100
+      let amountPrice = 100
+
+      const update = () => {
+        ctx.$('#currentScore').innerHTML = currentScore.toFixed(2)
+        if (ctx.$('#stakeAmount')) ctx.$('#stakeAmount').innerHTML = stakeAmount
+        ctx.$('#stakeYield').innerHTML = (stakeYield * 100).toFixed(2) + '%'
+        ctx.$('#stakeTime').innerHTML = (stakeTime/1000).toFixed(2) + 's'
+
+        if (currentScore >= 10) {
+          ctx.$('#stake').classList.remove('hidden')
+        }
+        if (currentScore >= 100) {
+          ctx.$('#protocol').classList.remove('hidden')
+        }
+
+        ctx.$('#increaseAmount').disabled = currentScore < amountPrice
+        ctx.$('#increaseYield').disabled = currentScore < yieldPrice
+        ctx.$('#decreaseTime').disabled = currentScore < timePrice
+        ctx.$('#stakeCrypto').disabled = currentScore < stakeAmount
+
+        if (staked) {
+          if (Date.now() < stakeTimestamp + stakeTime) {
+            ctx.$('#stakeCrypto').disabled = true
+            ctx.$('#stakeCrypto').innerHTML = `Unstake (${Math.floor(( stakeTimestamp + stakeTime - Date.now()) / 1000)}s)`
+          } else {
+            ctx.$('#stakeCrypto').disabled = false
+            ctx.$('#stakeCrypto').innerHTML = `Unstake ${(unstakedAmount).toFixed(2)}`
+          }
+        } else {
+          ctx.$('#stakeCrypto').innerHTML = `Stake ${stakeAmount}`
+        }
+
+
+
+        if (currentScore > currentUserData.yieldFarmerHighScore) {
+          currentUserData.yieldFarmerHighScore = currentScore
+          ctx.$('#highScore').innerHTML = currentScore.toFixed(2)
+        }
+      }
+
+      ctx.$('#mineCrypto').onclick = () => {
+        currentScore += 1
+        update()
+      }
+
+      ctx.$('#increaseAmount').onclick = () => {
+        currentScore -= amountPrice
+        amountPrice = Math.floor(amountPrice  * 1.5)
+        stakeAmount *= 2
+        ctx.$('#increaseAmount').innerHTML = `Increase Stake Amount 100% (${amountPrice})`
+        update()
+      }
+      ctx.$('#increaseYield').onclick = () => {
+        currentScore -= yieldPrice
+        yieldPrice = Math.floor(yieldPrice  * 1.5)
+        stakeYield *= 1.2
+        ctx.$('#increaseYield').innerHTML = `Increase Stake Yield 20% (${yieldPrice})`
+        update()
+      }
+      ctx.$('#decreaseTime').onclick = () => {
+        currentScore -= timePrice
+        timePrice = Math.floor(timePrice  * 1.5)
+        stakeTime *= 0.8
+        ctx.$('#decreaseTime').innerHTML = `Decrease Stake Time 20% (${timePrice})`
+        update()
+      }
+
+      ctx.$('#stakeCrypto').onclick = () => {
+        if (staked) {
+          staked = false
+          currentScore += unstakedAmount
+          unstakedAmount = 0
+          update()
+        } else {
+
+          staked = true
+          currentScore -= stakeAmount
+          unstakedAmount = stakeAmount * (1 + stakeYield)
+          stakeTimestamp = Date.now()
+          ctx.$('#stakeCrypto').disabled = true
+          update()
+
+        }
+      }
+
+
+      ctx.interval = setInterval(() => {
+        update()
+      }, 1000)
+
+
+      ctx.$('#gotoAbout').onclick = () => {
+        ctx.$('#main').classList.add('hidden')
+        ctx.$('#about').classList.remove('hidden')
+      }
+
+      ctx.$('#gotoMain').onclick = () => {
+        ctx.$('#about').classList.add('hidden')
+        ctx.$('#main').classList.remove('hidden')
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
     } else if (screen === 'lock') {
       // todo: make it so you can pair with other smartlocks
       const mainContent = ctx.state.smartLockPaired
@@ -3413,6 +3579,7 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+
     } else if (screen === 'exe') {
       const {exeCommands, rootUser} = ctx.state
 
@@ -3742,6 +3909,7 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
     }
+
 
 
   },
