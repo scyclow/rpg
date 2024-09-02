@@ -39,6 +39,7 @@ createComponent(
         background: rgba(0,0,0,0);
         pointer-events: none;
         backdrop-filter: blur(0);
+        -webkit-backdrop-filter: blur(0);
       }
 
       .blur {

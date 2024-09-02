@@ -2,11 +2,11 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>test</title>
+  <title>SmartHome</title>
   <!-- <link rel="shortcut icon" type="image/x-icon" href="./assets/kiss.png" id="favicon"> -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- <meta name="description" content="💋 Chat with sexy findoms 🥵 Send until it hurts 💸 (18+) 🔞"> -->
+  <meta name="description" content="SmartHome: An Adventure Game">
   <!-- <meta name="keywords" content="finsexy, chatbots, ai, stable diffusion, text adventure, rpg, steviep, steve pikelny, pikelny, crypto, ethereum, nft, nfts, blockchain, bitcoin"> -->
 
   <!-- <meta name="twitter:image" content="https://finsexy.com/assets/thumbnail.png"> -->
@@ -14,15 +14,15 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:creator" content="@steviepxyz">
   <meta name="twitter:site" content="@steviepxyz">
-  <!-- <meta property="twitter:description" content="💋 Chat with sexy findoms 🥵 Send until it hurts 💸 (18+) 🔞"> -->
+  <meta property="twitter:description" content="SmartHome: An Adventure Game">
 
   <!-- <meta name="og:image" property="og:image" content="https://finsexy.com/assets/thumbnail.png"> -->
   <!-- <meta name="og:image:alt" content="WARNING! The SEXY FINDOMS on this website will SUCK your wallet dry. Proceed at your own risk."> -->
   <meta property="og:type" content="website">
   <!-- <meta property="og:url" content="https://finsexy.com/"> -->
   <!-- <meta property="og:title" content="FinSexy.com"> -->
-  <!-- <meta property="og:site_name" content="FinSexy"> -->
-  <!-- <meta property="og:description" content="💋 Chat with sexy findoms 🥵 Send until it hurts 💸 (18+) 🔞"> -->
+  <meta property="og:site_name" content="SmartHome">
+  <meta property="og:description" content="SmartHome: An Adventure Game">
 
 
   <link rel="stylesheet" type="text/css" href="./styles.css">
@@ -47,7 +47,19 @@
       <section id="mainConsolePrimary">
         <section id="mainConsoleContent"></section>
 
-        <aside id="nextActions"></aside>
+        <aside>
+          <div id="nextActions"></div>
+          <div id="notebook" style="transition: 0.3s;" class="invisible hidden">
+            <div style="display: flex; justify-content: space-between;">
+              <h4>eBook</h4>
+              <div>
+                <button id="pluginEbook">Plug In</button>
+                <button>Factory Reset</button>
+              </div>
+            </div>
+            <textarea id="ebookTextArea">ERROR: Cannot access Library </textarea>
+          </div>
+        </aside>
       </section>
     </section>
     <trapped-modal id="phoneModal" blur="true">
@@ -81,6 +93,42 @@
   const $consoleTime = $.id('consoleTime')
   const $consoleTemperature = $.id('consoleTemperature')
   window.$phoneDevice = $phoneDevice
+
+
+
+  // let eCount = 0
+  // let lastE = 0
+  // document.addEventListener('keyup', e => {
+  //   if (e.key === 'E') {
+  //     if (lastE > Date.now() - 1000) {
+  //       eCount += 1
+  //       if (eCount >= 10) {
+  //         $.id('notebook').classList.remove('hidden')
+  //         setTimeout(() => {
+  //           $.id('notebook').classList.remove('invisible')
+  //         }, 10)
+  //         setTimeout(() => {
+  //           $.id('ebookTextArea').focus()
+  //           $.id('ebookTextArea').selectionEnd = 80
+  //           $.id('ebookTextArea').selectionStart = 80
+  //         }, 100)
+  //       }
+  //     } else {
+  //       eCount = 1
+  //     }
+  //     lastE = Date.now()
+  //   }
+  // })
+
+  $.id('pluginEbook').onclick = () => {
+    $.id('notebook').classList.add('invisible')
+    setTimeout(() => {
+      $.id('notebook').classList.add('hidden')
+    }, 350)
+  }
+
+
+
 
 
   setTimeout(() => {
@@ -269,6 +317,14 @@
     openPhone: {
       before({ ctx, enqueue }) {
         // ctx.stack.push(ctx.lastNode)
+
+        if (ctx.state.isOpen) {
+          $phoneModal.close()
+          return false
+        }
+
+        ctx.state.isOpen = true
+
         $phoneModal.open()
         if (!$phoneDevice.state.started) {
           $phoneDevice.start()
@@ -282,6 +338,9 @@
     },
 
     closePhone: {
+      before({ctx}) {
+        ctx.state.isOpen = false
+      },
       text: 'You close your phone',
       // follow({ ctx, redirect }) {
       //   redirect(ctx.stack.pop())
@@ -407,7 +466,7 @@
             return `You check the thermostat. You notice a QR code you hadn't noticed before`
 
           } else {
-            return `You check the thermostat. Every light is on, and it reads: 88˚. You're not sure if it's accurate${ctx.state.checkedThermostat ? '' : ', but for the first time you realize how uncomfortably warm it is'}`
+            return `You check the thermostat. Every light is on, and it reads: 88˚. You're not sure if it's accurate${ctx.state.checkedThermostat ? '' : ', but for the first time you realize how uncomfortably warm you are'}`
           }
         },
         follow({ctx}) {
@@ -628,8 +687,21 @@
         }
       },
 
-      ebook: {
-        text: 'You pick up the ebook. You read: "Cannot access Library"'
+      eBook: {
+        text: 'You pick up the eBook',
+        follow() {
+          $.id('notebook').classList.remove('hidden')
+
+          setTimeout(() => {
+            $.id('notebook').classList.remove('invisible')
+          }, 10)
+
+          setTimeout(() => {
+            $.id('ebookTextArea').focus()
+            $.id('ebookTextArea').selectionEnd = 80
+            $.id('ebookTextArea').selectionStart = 80
+          }, 400)
+        }
       },
       tv: {
         text: 'The black screen of the TV looms ominously over you.'
@@ -676,7 +748,7 @@
 
         { text: 'Router', value: 'router'},
         { text: 'TV', value: 'tv'},
-        { text: 'ebook', value: 'ebook'},
+        { text: 'eBook', value: 'eBook'},
       ],
       handler: ({ur}) => ur
 

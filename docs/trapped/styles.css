@@ -84,12 +84,32 @@ button:active {
   box-shadow: 0 0 0;
 }
 
+aside textarea {
+  background: color-mix(in srgb, var(--bg-color) 75%, var(--primary-color));
+  border: 1px solid var(--primary-color);
+  width: calc(100% - 1em);
+  height: 25vh;
+  padding: 0.5em;
+  resize: none;
+}
+aside textarea:active, aside textarea:focus {
+  outline: 0
+}
+
 h3 {
   margin: 0.1em 0;
 }
 
 p {
   margin: 0.75em 0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.invisible {
+  opacity: 0;
 }
 
 #mainConsole {
@@ -111,6 +131,10 @@ p {
 #mainConsolePrimary aside {
   max-width: 36vw;
   min-width: 290px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 
 }
 

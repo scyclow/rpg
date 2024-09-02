@@ -93,7 +93,7 @@ export class StateMachine {
       ctx: this.ctx,
       enqueue: this.enqueue.bind(this),
       redirect: this.redirect.bind(this)
-    }) || fallback
+    }) ?? fallback
   }
 
   goto(nodeKey) {
@@ -147,16 +147,19 @@ export class StateMachine {
       this.ctx.currentNode = event.nodeKey
     }
     const newNode = this.getNode(event.nodeKey)
-    await this.evaluate(newNode.before, event.ur)
+    const displayText = await this.evaluate(newNode.before, event.ur)
 
-    this.onUpdate(
-      await this.evaluate({
-        ...newNode,
-        text: await this.evaluate(newNode.text, event.ur)
-      }, event.ur),
-      this,
-      event.nodeKey
-    )
+    if (displayText !== false) {
+      this.onUpdate(
+        await this.evaluate({
+          ...newNode,
+          text: await this.evaluate(newNode.text, event.ur)
+        }, event.ur),
+        this,
+        event.nodeKey
+      )
+    }
+
 
     if (newNode.follow) this.run(event.ur, 'follow')
     if (this.nodeIsArray(this.ctx.currentNode)) {
