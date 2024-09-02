@@ -215,7 +215,9 @@
 
       // $content.innerHTML += `<p>${text}</p>`
 
-      if (!['openPhone', 'closePhone'].includes(sm.ctx.currentNode)) {
+      if (
+        !['openPhone', 'closePhone'].includes(sm.ctx.currentKey)
+      ) {
         $content.scrollTop = 0
       }
 

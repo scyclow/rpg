@@ -51,7 +51,7 @@ const APPS = [
   { name: 'Shayd', key: 'shayd', size: 128, price: 0 },
   { name: 'SmartLock', key: 'lock', size: 128, price: 0 },
   { name: 'SmartPlanter<sup>TM</sup>', key: 'planter', size: 256, price: 0 },
-  { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: 3 },
+  { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: NaN },
   { name: 'ThermoSmart', key: 'thermoSmart', size: 128, price: 0 },
   { name: 'Toastr', key: 'toastr', size: 128, price: 0 },
   { name: 'YieldFarmer 2', key: 'yieldFarmer', size: 128, price: 1 },
@@ -256,11 +256,12 @@ createComponent(
         font-family: sans-serif;
         display: flex;
         justify-content: space-between;
-        padding: 0.25em;
+        padding: 0.35em;
         font-size: 0.75em;
         color: #fff;
         background: #5a5a5a;
         user-select: none;
+        border-bottom: 1px solid #000;
       }
 
       a, a:visited {
@@ -318,7 +319,7 @@ createComponent(
         width: 320px;
         height: 569px;
         border: 2px solid;
-        border-radius: 3px;
+        border-radius: 6px;
         display: flex;
         flex-direction: column;
         background: #fff;
@@ -642,7 +643,7 @@ createComponent(
       if (usdBalances[sender] < amount) throw new Error('invalid amount')
 
       let updatePayApp = {}
-      const totalAmount = amount + usdBalances[payAppUSDAddr]
+      const totalAmount = amount + (usdBalances[payAppUSDAddr] || 0)
 
       if (totalAmount >= 0.37 && recipient === payAppUSDAddr && payAppUpdate <= 0) {
         updatePayApp = {
@@ -972,24 +973,16 @@ createComponent(
           <button id="home">Back</button>
 
           <div id="appContent">
-            <input placeholder="search" id="appSearch">
-            <table id="matchingApps"></table>
+            <input placeholder="Type to search..." id="appSearch" style="width: 90%; font-size: 1.1em; padding: 0.25em">
+            <table id="matchingApps" style="margin-top: 0.5em"></table>
+            <div id="purchase"></div>
             <h3 id="searchError"></h3>
-            ${hasInternet ? `
-              <h3 style="margin-top: 0.5em; margin-bottom: 0.25em">AppCredit Balance: ${appCreditBalance}</h3>
-              <button id="purchase">Purchase Credits</button>
-              <h4 id="error"></h4>
-            ` : ''}
           </div>
         </div>
       `
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
-      }
-
-      if (ctx.$('#purchase')) ctx.$('#purchase').onclick = () => {
-        ctx.setState({ screen: 'appMarketCredits' })
       }
 
       const appSearch = ctx.$('#appSearch')
@@ -1000,10 +993,15 @@ createComponent(
         if (hasInternet) {
           const searchTerm = clean(appSearch.value)
 
+          if (!searchTerm) {
+            ctx.$('#matchingApps').innerHTML = ''
+            ctx.$('#purchase').innerHTML = ''
+          }
+
           ctx.$('#matchingApps').innerHTML = `
             <thead>
               <tr>
-                <th>Name</th>
+                <th style="text-align: left">Name</th>
                 <!--<th>Size</th>-->
                 <th>Credits</th>
                 <th></th>
@@ -1015,7 +1013,7 @@ createComponent(
                 .map(a => `<tr>
                   <td>${a.name}</td>
                   <!--<td>${a.size}</td>-->
-                  <td>${a.price}</td>
+                  <td style="text-align: center">${a.price}</td>
                   <td>${
                     appsInstalled.some(_a => _a.name === a.name)
                       ? `Downloaded`
@@ -1026,6 +1024,21 @@ createComponent(
               }
             </tbody>
           `
+
+          if (searchTerm) {
+            ctx.$('#purchase').innerHTML = `
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5em; padding-top: 0.5em; border-top: 1px dashed">
+                <strong>AppCredit Balance: ${appCreditBalance}</strong>
+                <button id="purchaseCredits" style="margin-bottom: 0">Purchase Credits</button>
+              </div>
+            `
+
+            ctx.$('#purchaseCredits').onclick = () => {
+              ctx.setState({ screen: 'appMarketCredits' })
+            }
+          }
+
+
 
           APPS.forEach(a => {
             const app = ctx.$(`#${clean(a.key)}-download`)
@@ -1196,7 +1209,7 @@ createComponent(
           ctx.$('#error').innerHTML = 'Connecting...'
 
           if (
-            (networkName === 'InpatientRehabilitationServices' && networkPassword === 'StompLookAndListen123')
+            (networkName === 'InpatientRehabilitationServices' && networkPassword === 'StompLookAndListen948921')
             || (networkName === 'ElectricLadyLand' && networkPassword === 'CrosstownTraffic007')
           ) {
 
@@ -1549,7 +1562,7 @@ createComponent(
         ctx.$('#txMessage').innerHTML = `
           <div style="border: 2px solid; border-radius: 5px; padding: 0.5em; margin-bottom: 0.5em">
             <div id="closeMessage" style="cursor: pointer; font-weight: bolder; text-align: right">X</div>
-            <h4>You have a $${outstandingPayment.amount.toFixed(2)} transaction waiting for you! Input your SPTX below to redeem it <span class="icon">☟</span></h4>
+            <h4>You have a $${outstandingPayment.amount.toFixed(2)} transaction waiting for you! Input your SPTX below to redeem it <span class="icon blink">☟</span></h4>
           </div>
         `
 
@@ -2327,11 +2340,11 @@ createComponent(
 
       const faq = `
           <h4>FAQ</h4>
-          <p><strong>Q:</strong> How does Money Miner work?</p>
+          <p style="margin-top: 0.5em"><strong>Q:</strong> How does Money Miner work?</p>
           <p><strong>A:</strong> In order to mine ₢rypto, all you need to do is click the <strong>Mine ₢rypto"</strong> button in the Money Miner interface. Each click will mine a new ₢rypto.</p>
 
-          <p><strong>Q:</strong> How can I convert ₢rypto to $?</p>
-          <p><strong>A:</strong> Exchanging ₢rypto is easy! Just download the <strong>Currency Xchange App</strong>, create an account, and send your ₢rypto to your new address! </p>
+          <p style="margin-top: 0.5em"><strong>Q:</strong> How can I convert ₢rypto to $?</p>
+          <p><strong>A:</strong> Exchanging ₢rypto is easy! Just download the <strong>Currency Xchange App</strong>, send ₢rypto to your new wallet, and start trading! </p>
       `
 
       const adContent = [
@@ -2719,9 +2732,10 @@ createComponent(
           recipient,
           amount
         })
+
         setTimeout(() => {
-          ctx.$('#sendUSDError').innerHTML = `Message: Secure Payment Transaction (S.P.T.X.) identifier: ${sptx}`
-        }, 1000)
+          ctx.$('#sendUSDError').innerHTML = `Message: Secure Payment Transaction (S.P.T.X.) identifier: <span style="font-size: 1.25em">${sptx}</span>`
+        }, 500)
 
         ctx.$('#sendUSDAmount').value = ''
         ctx.$('#sendUSDAddress').value = ''
@@ -3330,6 +3344,7 @@ createComponent(
 
       const plantStates = ['Dead', ':(', ':|', ':)']
       const {plantStatus} = ctx.state
+      console.log(plantStatus, plantStates[plantStatus])
 
       const needs = plantStatus === 0
         ? 'null'
@@ -3339,21 +3354,12 @@ createComponent(
           globalState.shaydOpen && globalState.plantWatered && '0',
         ].filter(iden).join(', ')
 
-      // const mainInterface = planterPaired
-      //   ? `
-      //     <h3 style="margin: 0.4em 0">Plant Status: <span id="plantStatus">${plantStates[plantStatus]}</span></h3>
-      //     <button id="water" ${globalState.plantWatered ? 'disabled' : ''}>Water</button>
-      //     <h5>Needs: ${needs}</h5>
-      //   `
-      //   : `
-      //     <input id="planterDeviceCode" placeholder="Device Code"><button id="pairPlanter" style="margin-left: 0.25em">Pair Device</button>
-      //   `
 
       const nameModule =
         ctx.state.plantName
           ? `<h3>Plant Name: ${ctx.state.plantName}!</h3>`
           : `
-            <div>
+            <div style="margin-top: 1em">
               <h3>Name your plant!</h3>
               <input id="plantName" placeholder="Plant Name"> <button id="namePlant">Name</button>
             </div>
@@ -3362,13 +3368,13 @@ createComponent(
 
       const mainContent = planterPaired
         ? `
+          <h3 style="margin: 0.4em 0">Plant Status: <span id="plantStatus">${plantStates[plantStatus]}</span></h3>
+          <button id="water" ${globalState.plantWatered ? 'disabled' : ''}>Water</button>
+          <h5>Needs: ${needs}</h5>
           ${globalState.plantWatered && globalState.shaydEverOpen
               ? nameModule
               : ''
             }
-          <h3 style="margin: 0.4em 0">Plant Status: <span id="plantStatus">${plantStates[plantStatus]}</span></h3>
-          <button id="water" ${globalState.plantWatered ? 'disabled' : ''}>Water</button>
-          <h5>Needs: ${needs}</h5>
           <h4 id="error"><h4>
           ${jailbrokenApps.planter && planterPaired ? jbMarkup(globalState.cryptoDevices.planter) : ''}
         `
@@ -3395,12 +3401,13 @@ createComponent(
       })
 
       if (ctx.$('#water')) ctx.$('#water').onclick = () => {
-        globalState.plantWatered = true
 
         setTimeout(() => {
           if (!globalState.plantWatered && ctx.state.plantStatus > 0) {
+            globalState.plantWatered = true
             ctx.setState({ plantStatus: plantStatus + 1 })
           } else {
+            globalState.plantWatered = true
             ctx.setState({}, true)
           }
         }, 1000)

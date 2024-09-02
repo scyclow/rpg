@@ -42,7 +42,7 @@ export const billingCSNodes = {
 
 
   payBalanceContinue: {
-    text: `I'll need to find your account. Press 1 to look up your account with your N B S customer identification number. Press to look up your account with your router's device identifier. Press 3 to repeat these options`,
+    text: `I'll need to find your account. Press 1 to look up your account with your N B S customer identification number. Press 2 to look up your account with your router's device identifier. Press 3 to repeat these options`,
     handler: options({
       1: 'nbsCustomerIdentifier',
       2: 'routerId',
