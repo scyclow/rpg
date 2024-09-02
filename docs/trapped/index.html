@@ -32,7 +32,7 @@
 <script type="module">
   import {ls} from './$.js'
 
-  window.GAME_VERSION = 1.5
+  window.GAME_VERSION = 1.6
 
   const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
   if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {
@@ -617,7 +617,7 @@
             txt = `The leaves sag from a lack of water.`
 
           } else if (!globalState.shaydOpen && globalState.plantWatered) {
-            txt = `The leaves sag from a lack of sunlight.`
+            txt = `The leaves sag from a lack of sunlight`
 
           } else if (!globalState.shaydOpen && !globalState.plantWatered) {
             txt = `The leaves sag from a lack of water and sunlight.`
@@ -700,9 +700,9 @@
       bottomRouter: {
         text: `You pick up the router and look at the bottom. A sticker says:
         <div>
-          <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em; border-radius: 8px">
+          <div style="border: 1px solid; padding: 1em; display: inline-block; margin: 0.5em; border-radius: 8px">
             <h3>WiFi Network Name: InpatientRehabilitationServices</h3>
-            <h3>WiFi Password: StompLookAndListen123</h3>
+            <h3>WiFi Password: StompLookAndListen948921</h3>
             <h3>Model Name: UBC-9283</h3>
             <h3>Device Identifier: 5879234963378</h3>
             <h3>Customer Support: 1-800-555-2093</h3>

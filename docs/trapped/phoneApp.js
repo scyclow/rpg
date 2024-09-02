@@ -191,6 +191,13 @@ function phoneMarkup() {
         padding: 0;
       }
 
+      .a11yMode #phoneAppContent {
+        font-size: 1rem;
+      }
+      .a11yMode #phoneAppContent button {
+        font-size: 1.5rem;
+      }
+
       #phoneAppContent {
         flex: 1;
         display: flex;
@@ -284,6 +291,7 @@ function phoneMarkup() {
       }
 
     </style>
+
     <div id="phoneAppContent">
       <div id="phoneAppInfo">
         <h4 id="callTime"></h4>

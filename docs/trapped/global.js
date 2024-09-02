@@ -31,6 +31,7 @@ export const globalState = persist('__GLOBAL_STATE', {
     planter: newCryptoDevice(8),
     freeze: newCryptoDevice(8),
     toastr: newCryptoDevice(4),
+    thermoSmart: newCryptoDevice(2),
     lumin: newCryptoDevice(1),
     clearBreeze: newCryptoDevice(1),
     shayd: newCryptoDevice(1),

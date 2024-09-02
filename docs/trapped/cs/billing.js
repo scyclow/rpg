@@ -40,7 +40,17 @@ export const billingCSNodes = {
     handler: x => x.ur === 1 ? 'payBalanceContinue' : 'mainMenu'
   },
 
+
   payBalanceContinue: {
+    text: `I'll need to find your account. Press 1 to look up your account with your N B S customer identification number. Press to look up your account with your router's device identifier. Press 3 to repeat these options`,
+    handler: options({
+      1: 'nbsCustomerIdentifier',
+      2: 'routerId',
+      3: 'payBalanceContinue',
+    })
+  },
+
+  nbsCustomerIdentifier: {
     text: 'Please enter your N B S customer identification number, followed by the pound key',
     follow({ctx}) {
       ctx.state.idNumber = []
@@ -110,11 +120,12 @@ export const billingCSNodes = {
   },
 
   readBalance: {
-    text: () => `You have an unpaid balance of, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., To pay this balance, press 1. To dispute this balance, press 2. To return to the main menu, press 3.`,
+    text: () => `You have an unpaid balance of, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., To pay this balance, press 1. To dispute this balance, press 2. To return to the main menu, press 3. To repeat these options, press 4`,
     handler: options({
       1: 'payBalance',
       2: 'disputeBalance',
-      3: 'mainMenu'
+      3: 'mainMenu',
+      4: 'readBalance',
     })
   },
 

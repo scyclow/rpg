@@ -19,6 +19,7 @@ const APPS = [
   // ai assistant?
   // intercom
   // roomba
+  // SmartStove?
 
 // needs building
   // bathe
@@ -154,15 +155,18 @@ const state = persist('__MOBILE_STATE', {
   currentUser: null,
   rootUser: 0,
   lampOn: false,
+
   luminPaired: false,
   clearBreezePaired: false,
   toasterPaired: false,
   planterPaired: false,
+  smartLockPaired: false,
+  thermoSmartPaired: false,
+
   plantStatus: 1,
   plantName: '',
   payAppUpdate: 0,
   lastPayApp2fa: 0,
-  smartLockPaired: false,
   smartLockOpen: false,
   messageViewerMessage: '',
   availableActions: [],
@@ -730,6 +734,7 @@ createComponent(
       luminPaired,
       toasterPaired,
       planterPaired,
+      thermoSmartPaired,
       lampOn,
       usdBalances,
       cryptoBalances,
@@ -820,7 +825,9 @@ createComponent(
           <h1>Select User Profile:</h1>
           ${
             Object.keys(userNames).sort().map(u => `<button id="user-${u}" style="margin-right: 0.5em; margin-bottom: 0.5em">${userNames[u]}</button>`).join('')
-          }<button id="newProfile">Create New Profile</button>
+          }
+          <h3 style="margin-bottom: 0.4em">Or</h3>
+          <button id="newProfile">Create New Profile</button>
         </div>
       `
 
@@ -1141,7 +1148,6 @@ createComponent(
         ctx.setState({ screen: 'appMarket' })
       }
 
-
     } else if (screen === 'network') {
       if (ctx.state.internet === 'wifi') {
         ctx.$phoneContent.innerHTML = `
@@ -1163,7 +1169,7 @@ createComponent(
                     -->
                     <option value="ElectricLadyLand" ${inInternetLocation && wifiNetwork === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
                     <option value="Free-WiFi">Free-WiFi</option>
-                    <option value="HellInACellPhone98">Free-WiFi</option>
+                    <option value="HellInACellPhone98">HellInACellPhone98</option>
                     ${globalState.routerReset && !globalState.routerUnplugged? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetwork === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
                     <option value="ISP-Default-89s22D">ISP-Default-89s22D</option>
                     <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
@@ -2149,7 +2155,7 @@ createComponent(
                   <input type="range" min="0" max="360" value="${globalState.light1.h}" id="l1h">
                   <h6>S1</h6>
                   <input type="range" min="0" max="100" value="${globalState.light1.s}" id="l1s">
-                  <h6>L1</h6>
+                  <h6>V1</h6>
                   <input type="range" min="0" max="100" value="${globalState.light1.v}" id="l1v">
                 </div>
                 <div>
@@ -2157,7 +2163,7 @@ createComponent(
                   <input type="range" min="0" max="360" value="${globalState.light2.h}" id="l2h">
                   <h6>S2</h6>
                   <input type="range" min="0" max="100" value="${globalState.light2.s}" id="l2s">
-                  <h6>L2</h6>
+                  <h6>V2</h6>
                   <input type="range" min="0" max="100" value="${globalState.light2.v}" id="l2v">
                 </div>
               </div>
@@ -2521,23 +2527,23 @@ createComponent(
 
               <div style="display: flex; flex-direction: column; align-items: center">
                 <div style="text-align: center">
-                  <select id="tradeAction">
+                  <select id="tradeAction" style="box-shadow: 1px 1px 0 ${exchangePremium ? '#fff' : '#000'}">
                     <option value="buy">BUY</option>
                     <option value="sell">SELL</option>
                   </select>
 
-                  <select id="currency1">
+                  <select id="currency1" style="box-shadow: 1px 1px 0 ${exchangePremium ? '#fff' : '#000'}">
                     <option value="usd">$</option>
                     <option value="crypto">₢</option>
                     ${exchangePremium ? '<option value="premium">₱</option>' : ''}
                   </select>
 
-                  <input id="transactionAmount" placeholder="0.00" step=".01" style="width: 5em; text-align: center" type="number">
+                  <input id="transactionAmount" placeholder="0.00" step=".01" style="width: 5em; text-align: center; " type="number">
 
 
                   <span id="tradeOperation">with</span>
 
-                  <select id="currency2">
+                  <select id="currency2" style="box-shadow: 1px 1px 0 ${exchangePremium ? '#fff' : '#000'}">
                     <option value="usd">$</option>
                     <option value="crypto">₢</option>
                     ${exchangePremium ? '<option value="premium">₱</option>' : ''}
@@ -2561,10 +2567,12 @@ createComponent(
               <input id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin: 0.4em 0">
               <input id="sendUSDAmount" placeholder="$ 0.00" type="number" step=".01" style="width: 6em"> <button id="sendUSD" style="margin-bottom: 0.1em">SEND $</button>
               <h5>SPTX: <span id="sendUSDError">[-----------------]</span></h5>
-              <h4 style="margin: 0.4em 0">Receive $</h4>
-              <h5 style="border: 1px dotted; text-align: center; padding: 0.25em">${hasInternet ? exchangeUSDAddr : '-'}</h5>
-              <input id="sptxInput" placeholder="SPTX" type="number" style="width: 11em"> <button id="receiveSPTX">PROCESS</button>
-              <h4 id="sptxError"></h4>
+              <div style="border-top: 3px solid; margin-top: 0.4em">
+                <h4 style="margin: 0.4em 0">Receive $</h4>
+                <h5 style="border: 1px dotted; text-align: center; padding: 0.25em">${hasInternet ? exchangeUSDAddr : '-'}</h5>
+                <input id="sptxInput" placeholder="SPTX" type="number" style="width: 11em"> <button id="receiveSPTX">PROCESS</button>
+                <h4 id="sptxError"></h4>
+              </div>
             </div>
 
             <div style="margin: 0.6em 0; ${exchangeTab === 'premium' ? '' : 'display: none'}">
@@ -2850,10 +2858,19 @@ createComponent(
         })
 
 
+        setTimeout(() => {
+          ctx.$('#tradeAction').value = action
 
-        ctx.$('#tradeError').innerHTML = ``
-        ctx.$('#transactionAmount').value = ''
-
+          if (action === 'buy') {
+            ctx.$('#currency1').value = buyCurrency
+            ctx.$('#currency2').value = sellCurrency
+            ctx.$('#tradeOperation').innerHTML = 'with'
+          } else {
+            ctx.$('#currency1').value = sellCurrency
+            ctx.$('#currency2').value = buyCurrency
+            ctx.$('#tradeOperation').innerHTML = 'for'
+          }
+        }, 300)
       }
 
       ctx.$('#home').onclick = () => {
@@ -3586,40 +3603,34 @@ createComponent(
       }
 
     } else if (screen === 'thermoSmart') {
-      // TODO
-      // TODO
-      // TODO
-      // TODO
-      const mainContent = ctx.state.clearBreezePaired
-        ? `
-          <div style="display: flex; flex-direction: column; align-items: center">
-            <button id="openWindow" style="font-size: 1.2em">Open Window</button>
-            <h3 id="windowError" style="text-align: center; margin-top: 0.5em"></h3>
-            <div>${jailbrokenApps.clearBreeze ? jbMarkup(globalState.cryptoDevices.clearBreeze) : ''}</div>
-          </div>
 
-        `
-        : `<button id="pairWindow">Pair Device</button>`
-
-      // ctx.$phoneContent.innerHTML = `
-      //   <div class="phoneScreen">
-      //     <button id="home">Back</button>
-      //     <h2 style="margin: 1em 0; text-align: center">ThermoSmart</h2>
-      //     <h2 style="margin: 1em 0; text-align: center"><span class="icon">⌸</span></h2>
-      //     ${bluetoothEnabled
-      //       ? inInternetLocation ? mainContent : '<h3>Cannot find Shade device</h3>'
-      //       : `<h3>Please Enable Bluetooth to pair Shayd device</h3>`
-      //     }
-      //     <h3 id="pairError"></h3>
-      //   </div>
-      // `
+      const mainInterface = `
+        <h1 style="text-align: center; font-size: 3.5em; padding-left: 0.4em">${wifiAvailable ? `84˚` : '-˚'}</h1>
+        <h3 style="text-align: center">CO2 Level: ${wifiAvailable ? `<span class="blink">HAZARDOUS</span>` : '-'}</h3>
+        <div style="text-align: center">
+          ${wifiAvailable && !globalState.thermostatDisabled
+            ? `<button id="disable" style="margin-top:1em">Disable Warning</button>`
+            : ''
+          }
+        </div>
+        ${wifiAvailable ? `` : `ERROR: ThermoSmart device cannot find "InpatientRehabilitationServices"`}
+        <div style="margin-top: 2em">${jailbrokenApps.thermoSmart ? jbMarkup(globalState.cryptoDevices.thermoSmart) : ''}</div>
+      `
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2 style="margin: 1em 0; text-align: center">ThermoSmart</h2>
-          <h3 class="blink">WARNING: HAZARDOUS CO2 LEVELS</h3>
-          <button id="disable">Disable</button>
+          ${
+            bluetoothEnabled
+              ? thermoSmartPaired
+                ? mainInterface
+                : `
+                  <div style="text-align: center"><button id="pairThermoSmart">Pair Device</button></div>
+                  <h3 id="pairError"></h3>
+                `
+              : `<h3 id="pairError">Please enable blue tooth in your phones's Settings to pair ThermoSmart device</h3>`
+          }
         </div>
       `
 
@@ -3629,18 +3640,20 @@ createComponent(
         tmp.thermostatSrc?.stop?.()
         tmp.thermostatRinging = false
         globalState.thermostatDisabled = true
-
+        ctx.setState({}, true)
       }
 
-      // jbBehavior(ctx, globalState.cryptoDevices.clearBreeze, 150)
 
 
-      // if (ctx.$('#pairWindow')) ctx.$('#pairWindow').onclick = () => {
-      //   ctx.$('#pairError').innerHTML = 'Please wait while device pairs'
-      //   setTimeout(() => {
-      //     ctx.setState({ clearBreezePaired: true })
-      //   }, 800)
-      // }
+      if (ctx.$('#pairThermoSmart')) ctx.$('#pairThermoSmart').onclick = () => {
+        ctx.$('#pairError').innerHTML = 'Please wait while your phone pairs with your ThermoSmart device'
+        setTimeout(() => {
+          ctx.setState({ thermoSmartPaired: true })
+        }, 1400)
+      }
+
+
+      jbBehavior(ctx, globalState.cryptoDevices.thermoSmart, 500)
 
       // if (ctx.$('#openWindow')) ctx.$('#openWindow').onclick = () => {
       //   ctx.$('#windowError').innerHTML = 'Opening...'
@@ -3928,7 +3941,7 @@ createComponent(
               }
               ctx.$('#binaryApply').innerHTML = `
                 <h4 id="dlMessage" style="animation: Blink .5s steps(2, start) infinite;">Enabling \`autominer\` for: ${app} <br>[DO NOT REFRESH THIS PAGE]</h4>
-                <progress id="jbProgress" value="0" max="100" style="width:20em"></progress>
+                <progress id="jbProgress" value="0" max="100" style="width:20em; margin-top:1em"></progress>
               `
 
               const duration = 10000 * (globalState.cryptoDevices[app].ram / 6)
@@ -3947,11 +3960,20 @@ createComponent(
               src2.smoothGain(MAX_VOLUME*.35, 0.5)
               src2.smoothFreq(freq2*8, duration/1000)
 
+              setTimeout(() => {
+                src1.stop()
+                src2.stop()
+              }, duration * 1.2 + 500)
+
 
               let p = 0
               const interval = setInterval(() => {
                 p += (100 / updates)
-                ctx.$('#jbProgress').value = p
+                try {
+                  ctx.$('#jbProgress').value = p
+                } catch (e) {
+                  clearInterval(interval)
+                }
               }, intervalMS)
 
               setTimeout(() => {
@@ -3961,10 +3983,7 @@ createComponent(
                 src1.smoothFreq(freq, 0.1)
                 src2.smoothFreq(freq2, 0.1)
                 src1.smoothGain(0, 0.3)
-                setTimeout(() => {
-                  src1.stop()
-                  src2.stop()
-                }, 300)
+
                 clearInterval(interval)
 
                 setTimeout(() => {
@@ -3985,6 +4004,16 @@ createComponent(
         }
       }
 
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+    } else {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+        </div>
+      `
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
@@ -4038,7 +4067,7 @@ function jbBehavior(ctx, device, speed, cb=noop, persistCb=noop) {
   const update = () => {
     if (!device.active) {
       clearInterval(ctx.interval)
-      clearInterval(persistantInterval)
+      clearInterval(tmp.persistantJbInterval)
       return
     }
     ctx.state.cryptoBalances[device.wallet] = device.balance
@@ -4046,17 +4075,16 @@ function jbBehavior(ctx, device, speed, cb=noop, persistCb=noop) {
     cb()
   }
 
-  let persistantInterval
   if (device.active) {
     clearInterval(ctx.interval)
-    clearInterval(persistantInterval)
+    clearInterval(tmp.persistantJbInterval)
     ctx.interval = setRunInterval(update, speed)
-    persistantInterval = setRunInterval(persistCb, speed)
+    tmp.persistantJbInterval = setRunInterval(persistCb, speed)
   }
 
   const turnOff = () => {
     clearInterval(ctx.interval)
-    clearInterval(persistantInterval)
+    clearInterval(tmp.persistantJbInterval)
     clearMiningInterval(device)
     device.active = false
     ctx.setState({
@@ -4080,11 +4108,11 @@ function jbBehavior(ctx, device, speed, cb=noop, persistCb=noop) {
 
     } else {
       clearInterval(ctx.interval)
-      clearInterval(persistantInterval)
+      clearInterval(tmp.persistantJbInterval)
 
       setMiningInterval(device, speed*device.ram/1000, speed)
       ctx.interval = setRunInterval(update, speed)
-      persistantInterval = setRunInterval(persistCb, speed)
+      tmp.persistantJbInterval = setRunInterval(persistCb, speed)
     }
 
     ctx.$('#enableMining').innerHTML = `${device.active ? 'Disable' : 'Enable'} Autominer`
