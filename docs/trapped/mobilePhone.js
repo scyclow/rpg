@@ -32,7 +32,6 @@ const APPS = [
   // finsexy (dating)
   // friendworld (social)
 
-  { name: 'Alarm', key: 'alarm', size: 128, price: NaN },
   { name: 'Bathe', key: 'bathe', size: 128, price: NaN },
   { name: 'ClearBreeze', key: 'clearBreeze', size: 128, price: 0 },
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
@@ -54,6 +53,7 @@ const APPS = [
   { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: NaN },
   { name: 'ThermoSmart', key: 'thermoSmart', size: 128, price: 0 },
   { name: 'Toastr', key: 'toastr', size: 128, price: 0 },
+  { name: 'Wake', key: 'wake', size: 128, price: 0 },
   { name: 'YieldFarmer 2', key: 'yieldFarmer', size: 128, price: 1 },
 ]
 
@@ -157,6 +157,7 @@ const state = persist('__MOBILE_STATE', {
   lampOn: false,
 
   luminPaired: false,
+  wakePaired: false,
   clearBreezePaired: false,
   toasterPaired: false,
   planterPaired: false,
@@ -167,6 +168,7 @@ const state = persist('__MOBILE_STATE', {
   plantName: '',
   payAppUpdate: 0,
   lastPayApp2fa: 0,
+  alarmRing: 0,
   smartLockOpen: false,
   messageViewerMessage: '',
   availableActions: [],
@@ -733,6 +735,7 @@ createComponent(
       soundEnabled,
       distractionMode,
       luminPaired,
+      wakePaired,
       toasterPaired,
       planterPaired,
       thermoSmartPaired,
@@ -744,6 +747,7 @@ createComponent(
       payAppUpdate,
       lastPayApp2fa,
       appMarketPPC,
+      alarmRing
     } = ctx.state
 
     const currentUserData = userData[currentUser] || {}
@@ -2126,8 +2130,9 @@ createComponent(
       }
 
     } else if (screen === 'qrScanner') {
+      const availableActions = ctx.state.availableActions.filter(a => !['standUpBed', 'openPhone', 'closePhone', 'hallway', 'livingRoom', 'bathroom', 'bedroom', 'hallwayCurrent', 'kitchen', 'livingRoomCurrent', 'resetRouter', 'checkWifiPower', 'frontDoorListen', 'pickupEnvelopes', 'reenterApartment', 'externalHallwayBack'].includes(a.value))
 
-      const objects = ctx.state.availableActions.map(a => `<button id="qr-${a.value}" style="margin-right: 0.25em">${a.text}</button>`).join('')
+      const objects = availableActions.map(a => `<button id="qr-${a.value}" style="margin-right: 0.25em">${a.text}</button>`).join('')
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
@@ -2137,7 +2142,7 @@ createComponent(
         </div>
       `
 
-      ctx.state.availableActions.forEach(a => {
+      availableActions.forEach(a => {
         ctx.$('#qr-'+a.value).onclick = () => {
           if (a.qr) {
             if (a.qr.screen === 'messageViewer' && !appsInstalled.some(a => a.key === 'messageViewer')) {
@@ -2150,6 +2155,255 @@ createComponent(
           }
         }
       })
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (screen === 'wake') {
+
+      const deviceInterface = wifiAvailable
+        ? `
+          <h4 style="text-align: center">Current Time: NaN<span class="blink">:</span>NaN<span class="blink">:</span>NaN</h4>
+          <h4 style="text-align: center">Alarm Set For: <span id="currentAlarm"></span></h4>
+          <div style="display: flex; flex-direction: column; align-items: center; margin: 0.5em">
+            <h5>Choose Alarm:</h5>
+            ${times(4, (ix) => `
+              <label style="display: block; font-size: 0.9em">
+                <input id="alarm-${ix}" type="radio" name="alarm-${ix}" ${alarmRing === ix ? 'checked' : ''}> Alarm ${ix}
+              </label>`).join('')}
+          </div>
+          <div>${jailbrokenApps.wake ? jbMarkup(globalState.cryptoDevices.wake) : ''}</div>
+          <div>${jbMarkup(globalState.cryptoDevices.wake)}</div>
+        `
+        : `<h3>[ERR 542]: CANNOT RETRIEVE DEVICE DATA FROM SERVER</h3>`
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2 style="text-align: center; font-style: italic">Good morning!</h2>
+
+          <h3 style="text-align: center; margin: 0.4em 0">Did you have any dreams last night?</h3>
+          <div style="display: flex; align-items: center; flex-direction: column; margin-bottom: 1em">
+            <textarea id="journalText" style="font-family: serif; width: 90%; height: 3em; margin-bottom: 0.4em" placeholder="I dreamt I was a butterfly, freely floating, blown about by the gentle summer breeze"></textarea>
+            <button id="logDream">Add Dream Journal Entry</button>
+            <h6 id="journalError"></h6>
+          </div>
+
+          <div>
+            <h3 style="text-align: center">Your Wake Device</h3>
+            ${
+              bluetoothEnabled
+                ? wakePaired
+                  ? `<div style="padding: 0.5em; border: 1px dotted">${deviceInterface}</div>`
+                  : `<button id="pairWake">Pair Wake Device</button>`
+                : `<h3>Please enable bluetooth to pair Wake device</h3>`
+            }
+
+          </div>
+
+          <footer style="margin-top: 1em"><h5 style="text-align: center; font-style: italic">Wake</h5></footer>
+        </div>
+      `
+
+      jbBehavior(ctx, globalState.cryptoDevices.wake, 250)
+
+      if (ctx.$('#currentAlarm')) {
+        if (!globalState.cryptoDevices.wake) ctx.setInterval(() => {
+          ctx.$('#currentAlarm').innerHTML = formatTime(globalState.countdownTimeLeft + 2000)
+        }, 1000)
+
+        times(4, ix => {
+          ctx.$('#alarm-' + ix).onclick = () => {
+            ctx.setState({
+              alarmRing: ix
+            })
+
+            if (ix === 0) {
+              const src = createSource('sawtooth', 830.6)
+              const src2 = createSource('sawtooth', 415.30)
+
+              let i = 0
+              const interval = setInterval(() => {
+                if (i === 3) clearInterval(interval)
+                i++
+
+                src.smoothGain(MAX_VOLUME)
+                src2.smoothGain(MAX_VOLUME)
+                setTimeout(() => {
+                  src.smoothGain(0)
+                  src2.smoothGain(0)
+                }, 350)
+              }, 500)
+            }
+
+            else if (ix === 1) {
+              const measure = 1000 / 6
+              const src1 = createSource('square', 415.3)
+              const src2 = createSource('square',  523.25)
+              const src3 = createSource('square', 622.25)
+              const src4 = createSource('square', 830.6)
+
+
+              src1.smoothGain(MAX_VOLUME, 0.01)
+
+              setTimeout(() => {
+                src2.smoothGain(MAX_VOLUME, 0.01)
+              }, 250)
+
+              setTimeout(() => {
+                src3.smoothGain(MAX_VOLUME, 0.01)
+              }, 500)
+
+              setTimeout(() => {
+                src4.smoothGain(MAX_VOLUME, 0.01)
+              }, 750)
+
+              setTimeout(() => {
+                src1.smoothGain(0)
+                src2.smoothGain(0)
+                src3.smoothGain(0)
+                src4.smoothGain(0)
+              }, 950)
+
+              setTimeout(() => {
+                src1.smoothGain(MAX_VOLUME, 0.1)
+                src2.smoothGain(MAX_VOLUME, 0.2)
+                src3.smoothGain(MAX_VOLUME, 0.3)
+                src4.smoothGain(MAX_VOLUME, 0.4)
+              }, 1000)
+
+              setTimeout(() => {
+                src1.smoothGain(0)
+                src2.smoothGain(0)
+                src3.smoothGain(0)
+                src4.smoothGain(0)
+              }, 1750)
+
+            }
+
+            else if (ix === 2) {
+              const src1 = createSource('square', 1)
+              const src2 = createSource('square',  1)
+              const src3 = createSource('square', 1)
+              const src4 = createSource('square', 1)
+              src1.smoothGain(MAX_VOLUME*0.65)
+              src2.smoothGain(MAX_VOLUME*0.65)
+              src3.smoothGain(MAX_VOLUME*0.65)
+              src4.smoothGain(MAX_VOLUME*0.65)
+
+
+              setTimeout(() => {
+                let i = 0
+                const interval = setRunInterval(() => {
+                  if (i === 4) {
+                    clearInterval(interval)
+                    src1.smoothGain(0)
+                    src2.smoothGain(0)
+                    src3.smoothGain(0)
+                    src4.smoothGain(0)
+                    return
+                  }
+                  i++
+
+                  src1.smoothFreq(830.6, 0.15)
+                  src2.smoothFreq(830.6, 0.15)
+                  src3.smoothFreq(830.6, 0.15)
+                  src4.smoothFreq(830.6, 0.15)
+
+                  setTimeout(() => {
+                    src1.smoothFreq(415.3, 0.4)
+                    src2.smoothFreq(415.3, 0.42)
+                    src3.smoothFreq(415.3, 0.44)
+                    src4.smoothFreq(415.3, 0.46)
+                  }, 110)
+                }, 500)
+              }, 100)
+            }
+
+            else if (ix === 3) {
+              const measure = 1000 / 6
+              const src1 = createSource('sine')
+              const src2 = createSource('sine')
+              const src3 = createSource('sine')
+
+              const mainRiff = [415.30, 523.25, 830.61, 622.25, 1046.5, 830.61, 622.25, 523.25]
+
+              const keys = [
+                ...mainRiff,
+                ...mainRiff,
+                ...mainRiff,
+                ...mainRiff,
+
+                ...mainRiff,
+                ...mainRiff.map(n => n*0.89),
+                ...mainRiff.map(n => n*0.84),
+                ...mainRiff.map(n => n*0.7935),
+              ]
+
+              let timePassed1 = 0
+              for (let key of keys) {
+                setTimeout(() => {
+                  src1.smoothFreq(key)
+                  src1.smoothGain(MAX_VOLUME, 0.01)
+
+                  setTimeout(() => {
+                    src1.smoothGain(0)
+                  }, measure * 0.9)
+
+                }, timePassed1)
+
+                timePassed1 += measure
+              }
+
+
+              const secondaryKeys = [311.13, 311.13, 311.13, 311.13, 311.13, 311.13, 415.3, 415.3, 349.23, 349.23, 277.18, 277.18, 277.18, 277.18, 261.63, 233.08]
+
+              let timePassed2 = 0
+              setTimeout(() => {
+                src2.smoothGain(MAX_VOLUME, 0.01)
+                src3.smoothGain(MAX_VOLUME, 0.01)
+
+                for (let key of secondaryKeys) {
+                  setTimeout(() => {
+                    src2.smoothFreq(key*2)
+                    src3.smoothFreq(key*2+5)
+                  }, timePassed2)
+
+                  timePassed2 += measure * 2
+                }
+
+                setTimeout(() => {
+                  src2.smoothGain(0)
+                  src3.smoothGain(0)
+                }, timePassed2)
+              }, measure*32)
+            }
+          }
+        })
+      }
+
+      if (ctx.$('#pairWake')) ctx.$('#pairWake').onclick = () => {
+        ctx.$('#pairWake').innerHTML = 'One moment please...'
+
+        setTimeout(() => {
+          ctx.setState({ wakePaired: true })
+        }, 2000)
+      }
+
+      ctx.$('#logDream').onclick = () => {
+        ctx.$('#journalError').innerHTML = 'Logging Dream. Please wait...'
+
+        setTimeout(() => {
+          if (hasInternet) {
+            ctx.$('#journalError').innerHTML = 'DREAM PROCESSED SUCCESSFULLY'
+            ctx.$('#journalText').value = ''
+
+          } else {
+            ctx.$('#journalError').innerHTML = 'ERROR: CANNOT CONNECT TO SERVER'
+          }
+        }, 3000)
+      }
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
@@ -3614,6 +3868,7 @@ createComponent(
       const mainInterface = `
         <h1 style="text-align: center; font-size: 3.5em; padding-left: 0.4em">${wifiAvailable ? `84˚` : '-˚'}</h1>
         <h3 style="text-align: center">CO2 Level: ${wifiAvailable ? `<span class="blink">HAZARDOUS</span>` : '-'}</h3>
+        <h4 style="text-align: center; margin-top: 0.5em">CONTINUED EXPOSURE AT THIS LEVEL MAY LEAD TO ADVERSE HEALTH EFFECTS</h4>
         <div style="text-align: center">
           ${wifiAvailable && !globalState.thermostatDisabled
             ? `<button id="disable" style="margin-top:1em">Disable Warning</button>`
@@ -4015,6 +4270,7 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+
     } else {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -4026,8 +4282,6 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
     }
-
-
 
   },
   (oldState, newState, stateUpdate) => {
@@ -4077,6 +4331,7 @@ function jbBehavior(ctx, device, speed, cb=noop, persistCb=noop) {
       clearInterval(tmp.persistantJbInterval)
       return
     }
+
     ctx.state.cryptoBalances[device.wallet] = device.balance
     if (ctx.$('#cryptoBalance')) ctx.$('#cryptoBalance').innerHTML = device.balance
     cb()

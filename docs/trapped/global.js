@@ -27,11 +27,15 @@ export const globalState = persist('__GLOBAL_STATE', {
   totalAccountsCreated: 1,
   defaultUnlocked: false,
   pauseCurrency: false,
+  checkedAlarmClock: false,
+  countdownTimeLeft: 1780000, // 00:29:32
+  countdownIntervalTime: 900,
   cryptoDevices: {
     planter: newCryptoDevice(8),
     freeze: newCryptoDevice(8),
     toastr: newCryptoDevice(4),
     thermoSmart: newCryptoDevice(2),
+    wake: newCryptoDevice(2),
     lumin: newCryptoDevice(1),
     clearBreeze: newCryptoDevice(1),
     shayd: newCryptoDevice(1),
@@ -45,15 +49,13 @@ export const globalState = persist('__GLOBAL_STATE', {
   },
 })
 
+// globalState.cryptoDevices.wake = newCryptoDevice(2)
 
 window.globalState = globalState
 
 export const tmp = {}
 window.tmp = tmp
 
-
-
-globalState.eventLoopStartTime = Date.now()
 
 setInterval(() => {
   if (Date.now() >= globalState.lastGlobalUpdate + 60000) globalState.lastGlobalUpdate = Date.now()

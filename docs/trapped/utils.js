@@ -142,6 +142,38 @@ function numToHex(num) {
 }
 
 
+function formatTime(timeLeft) {
+  const with0 = x => x < 10 ? '0' + Math.floor(x) : Math.floor(x)
+
+  const hours = Math.abs(timeLeft) / (60*60*1000)
+  const minutes = 60 * (hours%1)
+  const seconds = Math.floor(60 * (minutes%1) + 0.000001)
+
+
+  return `${with0(hours)}:${with0(minutes)}:${with0(seconds)}`
+}
+
+  function triggerTimer(endTimestamp, $elem1, cb) {
+
+    return setRunInterval(() => {
+      let timeLeftCounter = Math.max(endTimestamp - Date.now(), 0)
+      const hours = timeLeftCounter / (60*60*1000)
+      const minutes = 60 * (hours%1)
+      const seconds = Math.floor(60 * (minutes%1))
+
+
+      $elem1.innerHTML = `${with0(hours)}:${with0(minutes)}:${with0(seconds)}`
+
+      if (timeLeftCounter <= 0) {
+        timeLeftCounter = endTimestamp - Date.now()
+      }
+
+      if (cb) cb()
+
+    }, 1000)
+  }
+
+
 
 
 // const lineStats = (x1, y1, x2, y2) => ({

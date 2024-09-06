@@ -32,7 +32,7 @@
 <script type="module">
   import {ls} from './$.js'
 
-  window.GAME_VERSION = 1.6
+  window.GAME_VERSION = 1.7
 
   const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
   if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {
@@ -40,6 +40,10 @@
   }
   ls.set('__GAME_VERSION', GAME_VERSION)
 </script>
+
+<!--   <div style="position: absolute; left:0; top:0; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; background: var(--bg-color); z-index: 120;">
+    <h1 style="text-align: center; font-size: 4em; font-weight:400 "><span class="icon" style="transform: scale(1.8) translateY(-0.125em) translateX(0.1em)">⌂</span> SmartHome</h1>
+  </div> -->
 
   <main id="currentDisplay">
     <section id="mainConsole">
@@ -57,11 +61,12 @@
                 <button>Factory Reset</button>
               </div>
             </div>
-            <textarea id="ebookTextArea">ERROR: Cannot access Library </textarea>
+            <textarea id="ebookTextArea">ERROR: Cannot acccess Library </textarea>
           </div>
         </aside>
       </section>
     </section>
+
     <trapped-modal id="phoneModal" blur="true">
       <mobile-phone id="phoneDevice" slot="content"></mobile-phone>
     </trapped-modal>
@@ -156,13 +161,13 @@
 
     //     bedActions: [
     //       { text: 'Phone', value: '1'},
-    //       { text: 'Alarm Clock', value: '2'},
+    //       { text: 'Alarm Clock', value: '2', qr: { screen: 'appMarket', appMarketPreSearch: 'wake'}},
     //       { text: 'Stand Up', value: '3'},
     //     ],
 
     //     bedroomActions: [
     //       { text: 'Phone', value: '1'},
-    //       { text: 'Alarm Clock', value: '2'},
+    //       { text: 'Alarm Clock', value: '2', qr: { screen: 'appMarket', appMarketPreSearch: 'wake'}},
     //       { text: 'Bed', value: '3'},
     //       { text: 'Blinds', value: '4'},
     //       { text: 'Lamp', value: '5'},
@@ -300,16 +305,37 @@
       },
 
       bedAlarm: {
-        text: 'You look at the alarm clock. It flashes 88:88:88. It does not seem to have any buttons',
+        text: 'You look at the alarm clock',
+        wait: 1800,
         follow({ctx}) {
+          if (ctx.state.checkedAlarmClock) {
+            return 'bedAlarmApp'
+          } else {
+            return 'bedAlarmFresh'
+          }
+        },
+        after({ctx}) {
           ctx.state.checkedAlarmClock = true
-          $consoleTime.innerHTML = ' — 88:88:88'
         }
       },
+
+
+      bedAlarmFresh: [
+        {
+          text: () => `It counts down from ${formatTime(globalState.countdownTimeLeft)}`,
+          wait: 1800
+        },
+        { text: `You wonder what will happen when it hits 00:00:00`}
+      ],
+
+      bedAlarmApp: {
+        text: `There are no buttons. A sticker says: "Time to download the official <em>Wake</em> app!"`
+      }
+
     }, {
       actions: [
         { text: 'Phone', value: 'openPhone'},
-        { text: 'Alarm Clock', value: 'bedAlarm'},
+        { text: 'Alarm Clock', value: 'bedAlarm', qr: { screen: 'appMarket', appMarketPreSearch: 'wake'}},
         { text: 'Stand Up', value: 'standUpBed'},
       ],
       handler: ({ur}) => ur
@@ -363,12 +389,33 @@
         },
         text: 'You enter the bedroom',
       },
+
       bedroomAlarm: {
-        text: 'You look at the alarm clock. It flashes 88:88:88. It does not seem to have any buttons',
+        text: 'You look at the alarm clock',
+        wait: 1800,
         follow({ctx}) {
+          if (ctx.state.checkedAlarmClock) {
+            return 'bedroomAlarmApp'
+          } else {
+            return 'bedroomAlarmFresh'
+          }
+        },
+        after({ctx}) {
           ctx.state.checkedAlarmClock = true
-          $consoleTime.innerHTML = ' — 88:88:88'
         }
+      },
+
+
+      bedroomAlarmFresh: [
+        {
+          text: () => `It counts down from ${formatTime(globalState.countdownTimeLeft)}`,
+          wait: 1800
+        },
+        { text: `You wonder what will happen when it hits 00:00:00`}
+      ],
+
+      bedroomAlarmApp: {
+        text: `There are no buttons. A sticker says: "Time to download the official <em>Wake</em> app!"`
       },
 
       bedroomWindow: {
@@ -386,8 +433,25 @@
         }
       },
       bedroomWindowClosed: {
-        text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+        text: 'Sunlight leaks through the closed blinds',
+        wait: 1800,
+        follow({ctx}) {
+          const next = ctx.state.checkedBlinds ? 'bedroomWindowClosedContinued' : 'bedroomWindowClosedNew'
+          ctx.state.checkedBlinds = true
+
+          return next
+        }
       },
+
+      bedroomWindowClosedNew: [
+        {text: 'It must be daytime', wait: 1800 },
+        {text: `You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`},
+      ],
+
+      bedroomWindowClosedContinued: {
+        text: `You see a QR code with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+      },
+
       bedroomWindowOpenNew: [
         { text: `The blinds are now open`, wait: 1800 },
         { text: `You stare through the window at the brick wall outside three feet away from the glass`, wait: 2500 },
@@ -403,14 +467,15 @@
           text: `The word "<strong>ClearBreeze</strong>" is laser-etched into the bottom right corner, along with a sticker: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the <strong>Landlock Realty Rental App</strong>"`
         },
       ],
-      bedroomLamp: {
-        text: `You inspect the lamp. You don't see a light switch, but you do see a QR code pasted to its side with no label`
-      }
+      bedroomLamp: [
+        { text: `You inspect the lamp`, wait: 1800 },
+        { text: `There's no light switch, but you do see a QR code pasted to its side with the word "<span style="font-family: cursive; font-size:1.1em">Lumin</span>" below it`, wait: 1800 },
+      ]
     }, {
       actions: ({ctx}) => [
         { text: 'Phone', value: 'openPhone'},
         { text: 'Hallway', value: 'hallway'},
-        { text: 'Alarm Clock', value: 'bedroomAlarm'},
+        { text: 'Alarm Clock', value: 'bedroomAlarm', qr: { screen: 'appMarket', appMarketPreSearch: 'wake'}},
         { text: 'Bed', value: 'bed'},
         { text: 'Window', value: 'bedroomWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'} },
         { text: 'Lamp', value: 'bedroomLamp', qr: { screen: 'messageViewer', messageViewerMessage: 'Illuminate your home with the Lumin app. Available only in AppMarket!'}},
@@ -437,10 +502,8 @@
 
       motionSensor: {
         text: 'A motion sensor picks up your movement and the camera above the front door comes to life',
-        follow: async () => {
-          await waitPromise(3000)
-          return 'weirdHum'
-        }
+        wait: 1800,
+        follow: 'weirdHum'
       },
 
       weirdHum: {
@@ -455,37 +518,61 @@
         text: `The small camera looks down at you. Whenever you move it moves along with you. You make out some tiny print on its side: "SmartPro Security Camera: Keeping you safe since 2010. Download our App in the AppMarket!"`
       },
 
-
       thermostat: {
-        text: ({ctx}) => {
-          if (tmp.thermostatRinging) {
-            return `You check the thermostat. Now display says 84˚, and it reads: "WARNING: CO2 HAZARDOUS". You notice a QR code you hadn't noticed before`
-
-          } else if (globalState.wifiActive) {
-            return `You check the thermostat. It says 84˚ and continues to display the CO2 warning. You notice a QR code you hadn't noticed before`
-
-          } else if (ctx.state.checkedThermostat) {
-            return `You check the thermostat. You notice a QR code you hadn't noticed before`
-
-          } else {
-            return `You check the thermostat. Every light is on, and it reads: 88˚. You're not sure if it's accurate${ctx.state.checkedThermostat ? '' : ', but for the first time you realize how uncomfortably warm you are'}`
-          }
-        },
+        text: `You check the thermostat`,
+        wait: 1500,
         follow({ctx}) {
+          const checkedThermostat = ctx.state.checkedThermostat
           ctx.state.checkedThermostat = true
+
           if (tmp.thermostatRinging) {
-            // TODO figure out how to display this on mobile
-            $consoleTemperature.innerHTML = ' — 84˚ [CO2 LEVEL: HAZARDOUS]'
             ctx.state.checkedThermostatTwice = true
+            return 'thermostatRinging'
 
           } else if (globalState.wifiActive) {
-            $consoleTemperature.innerHTML = ' — 84˚ [CO2 LEVEL: HAZARDOUS]'
             ctx.state.checkedThermostatTwice = true
+            return `thermostatCo2Warning`
+
+          } else if (checkedThermostat) {
+            return 'thermostatQR'
 
           } else {
-            $consoleTemperature.innerHTML = ' — 88˚'
+            return `thermostat99`
           }
         }
+      },
+
+      thermostatRinging: {
+        before() {
+          $consoleTemperature.innerHTML = ' — 84˚ [CO2 LEVEL: HAZARDOUS]'
+        },
+        text: 'The display now says 84˚ and it reads: "WARNING: CO2 HAZARDOUS"',
+        wait: 1500,
+        follow: 'thermostatQR'
+      },
+
+      thermostatCo2Warning: {
+        before() {
+          $consoleTemperature.innerHTML = ' — 84˚ [CO2 LEVEL: HAZARDOUS]'
+        },
+        text: 'It says 84˚ and continues to display the CO2 warning',
+      },
+
+      thermostatQR: {
+        text: `You notice a QR code you hadn't noticed before`
+      },
+
+      thermostat99: {
+        before() {
+          $consoleTemperature.innerHTML = ' — 99˚'
+        },
+        text: `Every light is on, and it reads: 99˚`,
+        wait: 1500,
+        follow: 'thermostatUncomfortable'
+      },
+
+      thermostatUncomfortable: {
+        text: `You don't think that's accurate, but for the first time you realize how uncomfortably warm you are`
       },
 
       intercom: {
@@ -665,29 +752,33 @@
         text: ''
       },
 
-      planter: {
-        text: () => {
-          let txt
-          if (globalState.plantsDead) {
-            txt = `They're dead.`
+      planter: [
+        {text: 'You check your plants', wait: 1800},
+        {
+          text: () => {
+            if (globalState.plantsDead) {
+              return `They're dead`
 
-          } else if (globalState.shaydOpen && globalState.plantWatered) {
-            txt = `They're thriving!`
+            } else if (globalState.shaydOpen && globalState.plantWatered) {
+              return `They're thriving!`
 
-          } else if (globalState.shaydOpen && !globalState.plantWatered) {
-            txt = `The leaves sag from a lack of water.`
+            } else if (globalState.shaydOpen && !globalState.plantWatered) {
+              return `The leaves sag from a lack of water`
 
-          } else if (!globalState.shaydOpen && globalState.plantWatered) {
-            txt = `The leaves sag from a lack of sunlight`
+            } else if (!globalState.shaydOpen && globalState.plantWatered) {
+              return `The leaves sag from a lack of sunlight`
 
-          } else if (!globalState.shaydOpen && !globalState.plantWatered) {
-            txt = `The leaves sag from a lack of water and sunlight.`
-          }
-
-          // return `You check your plants. ${txt} On the side of the pot you read: "SmartPlanter<sup>TM</sup> - The quick and easy way to conveniently water your plants! Download our app in the AppMarket. DEVICE CODE: F93892O30249B48"`
-          return `You check your plants. ${txt}${globalState.plantWatered ? '' : ` On the side of the pot you read: "SmartPlanter<sup>TM</sup> - The most advanced planter technology on the market today! Download our app in the AppMarket!"`}`
+            } else if (!globalState.shaydOpen && !globalState.plantWatered) {
+              return `The leaves sag from a lack of water and sunlight`
+            }
+          },
+          wait: 1800
+        },
+        {
+          text: () => globalState.plantWatered ? '' : `On the side of the pot you read: "SmartPlanter<sup>TM</sup> - The most advanced planter technology on the market today! Download our app in the AppMarket!"`
         }
-      },
+      ],
+
 
       eBook: {
         text: 'You pick up the eBook',
@@ -722,9 +813,27 @@
           }
         }
       },
+
       livingroomWindowClosed: {
-        text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+        text: 'Sunlight leaks through the closed blinds',
+        wait: 1800,
+        follow({ctx}) {
+          const next = ctx.state.checkedBlinds ? 'livingroomWindowClosedContinued' : 'livingroomWindowClosedNew'
+          ctx.state.checkedBlinds = true
+
+          return next
+        }
       },
+
+      livingroomWindowClosedNew: [
+        {text: 'It must be daytime', wait: 1800 },
+        {text: `You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`},
+      ],
+
+      livingroomWindowClosedContinued: {
+        text: `You see a QR code with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+      },
+
       livingroomWindowOpenNew: [
         { text: `The blinds are now open`, wait: 1750 },
         { text: `You stare through the window at the brick wall outside three feet away from the glass`, wait: 2750 },
@@ -932,8 +1041,25 @@
         }
       },
       kitchenWindowClosed: {
-        text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+        text: 'Sunlight leaks through the closed blinds',
+        wait: 1800,
+        follow({ctx}) {
+          const next = ctx.state.checkedBlinds ? 'kitchenWindowClosedContinued' : 'kitchenWindowClosedNew'
+          ctx.state.checkedBlinds = true
+
+          return next
+        }
       },
+
+      kitchenWindowClosedNew: [
+        {text: 'It must be daytime', wait: 1800 },
+        {text: `You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`},
+      ],
+
+      kitchenWindowClosedContinued: {
+        text: `You see a QR code with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+      },
+
       kitchenWindowOpenNew: [
         { text: `The blinds are now open`, wait: 1800 },
         { text: `You stare through the window at the brick wall outside three feet away from the glass`, wait: 2500 },
@@ -1159,11 +1285,11 @@
 
     $consoleLocation.innerHTML = niceLocation[globalState.location]
 
-    if (ctx.state.checkedAlarmClock) {
-      $consoleTime.innerHTML = ' — 88:88:88'
-    }
+    // if (ctx.state.checkedAlarmClock) {
+    //   $consoleTime.innerHTML = ` — ${formatTime(globalState.eventLoopStartTime + (30 * 60 * 1000) - Date.now())}`
+    // }
     if (ctx.state.checkedThermostat) {
-      $consoleTemperature.innerHTML = ctx.state.checkedThermostatTwice ? ' — 84˚ [CO2 LEVEL: HAZARDOUS]' : ' — 88˚'
+      $consoleTemperature.innerHTML = ctx.state.checkedThermostatTwice ? ' — 84˚ [CO2 LEVEL: HAZARDOUS]' : ' — 99˚'
     }
 
 
@@ -1190,6 +1316,29 @@
   }
 
   rehydrate(primaryStartingCtx, primarySM)
+
+
+
+  let countdownInterval
+  const createCountdownTimerInterval = () =>  setRunInterval(() => {
+    if (primaryStartingCtx.state.checkedAlarmClock) {
+      globalState.countdownTimeLeft -= 1000
+      $consoleTime.innerHTML = ` — ${formatTime(globalState.countdownTimeLeft)}`
+
+      if (globalState.countdownTimeLeft % 60000 === 0) {
+        globalState.countdownIntervalTime *= 1.025
+        clearInterval(countdownInterval)
+        setTimeout(() => {
+          countdownInterval = createCountdownTimerInterval()
+        }, globalState.countdownIntervalTime)
+      }
+
+    }
+
+  }, globalState.countdownIntervalTime)
+
+
+  countdownInterval = createCountdownTimerInterval()
 
 
 
