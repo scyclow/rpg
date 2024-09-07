@@ -37,6 +37,7 @@ const APPS = [
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
   // { name: 'Elevate', key: 'elevate', size: 128, price: NaN },
   { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
+  { name: 'FlushMate', key: 'flushMate', size: 128, price: 1 },
   { name: 'FreezeLocker', key: 'freeze', size: 128, price: NaN },
   { name: 'Identity Wizard', key: 'identityWizard', size: 128, price: 0 },
   { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
@@ -163,6 +164,7 @@ const state = persist('__MOBILE_STATE', {
   planterPaired: false,
   smartLockPaired: false,
   thermoSmartPaired: false,
+  flushMatePaired: false,
 
   plantStatus: 1,
   plantName: '',
@@ -739,6 +741,7 @@ createComponent(
       toasterPaired,
       planterPaired,
       thermoSmartPaired,
+      flushMatePaired,
       lampOn,
       usdBalances,
       cryptoBalances,
@@ -1098,7 +1101,7 @@ createComponent(
 
     } else if (screen === 'appMarketCredits') {
       const appMarketAddress = '0x743513ee56840e2558a764cb35c71f7beebda7a8'
-
+      ctx.$phoneContent.style.overflow = 'scroll'
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="appMarket">Back</button>
@@ -2130,7 +2133,7 @@ createComponent(
       }
 
     } else if (screen === 'qrScanner') {
-      const availableActions = ctx.state.availableActions.filter(a => !['standUpBed', 'openPhone', 'closePhone', 'hallway', 'livingRoom', 'bathroom', 'bedroom', 'hallwayCurrent', 'kitchen', 'livingRoomCurrent', 'resetRouter', 'checkWifiPower', 'frontDoorListen', 'pickupEnvelopes', 'reenterApartment', 'externalHallwayBack'].includes(a.value))
+      const availableActions = ctx.state.availableActions.filter(a => !['standUpBed', 'openPhone', 'closePhone', 'hallway', 'hallwayShower', 'externalHallway', 'livingRoom', 'bathroom', 'bedroom', 'hallwayCurrent', 'kitchen', 'livingRoomCurrent', 'resetRouter', 'checkWifiPower', 'frontDoorListen', 'pickupEnvelopes', 'reenterApartment', 'externalHallwayBack'].includes(a.value))
 
       const objects = availableActions.map(a => `<button id="qr-${a.value}" style="margin-right: 0.25em">${a.text}</button>`).join('')
       ctx.$phoneContent.innerHTML = `
@@ -2162,21 +2165,28 @@ createComponent(
 
     } else if (screen === 'wake') {
 
-      const deviceInterface = wifiAvailable
-        ? `
-          <h4 style="text-align: center">Current Time: NaN<span class="blink">:</span>NaN<span class="blink">:</span>NaN</h4>
-          <h4 style="text-align: center">Alarm Set For: <span id="currentAlarm"></span></h4>
-          <div style="display: flex; flex-direction: column; align-items: center; margin: 0.5em">
-            <h5>Choose Alarm:</h5>
-            ${times(4, (ix) => `
-              <label style="display: block; font-size: 0.9em">
-                <input id="alarm-${ix}" type="radio" name="alarm-${ix}" ${alarmRing === ix ? 'checked' : ''}> Alarm ${ix}
-              </label>`).join('')}
-          </div>
-          <div>${jailbrokenApps.wake ? jbMarkup(globalState.cryptoDevices.wake) : ''}</div>
-          <div>${jbMarkup(globalState.cryptoDevices.wake)}</div>
-        `
-        : `<h3>[ERR 542]: CANNOT RETRIEVE DEVICE DATA FROM SERVER</h3>`
+      const deviceInterface = `
+        ${wifiAvailable
+            ? `<h4 style="text-align: center">Current Time: NaN<span class="blink">:</span>NaN<span class="blink">:</span>NaN</h4>
+              <h4 style="text-align: center">Alarm Set: <span id="currentAlarm"></span></h4>
+            `
+            : `
+              <h3>[WI-FI ERROR]</h3>
+              <h4 style="text-align: center">Current Time: <span style="font-size: 0.75em">[CANNOT RETRIEVE DEVICE DATA FROM SERVER]</span></h4>
+              <h4 style="text-align: center">Alarm Set: <span id="currentAlarm"></span></h4>
+            `
+        }
+
+        <div style="display: flex; flex-direction: column; align-items: center; margin: 0.5em">
+          <h5>Choose Alarm:</h5>
+          ${times(4, (ix) => `
+            <label style="display: block; font-size: 0.9em">
+              <input id="alarm-${ix}" type="radio" name="alarm-${ix}" ${alarmRing === ix ? 'checked' : ''}> Alarm ${ix} <span id="alarm-${ix}-label"></span>
+            </label>`).join('')}
+        </div>
+        <div>${jailbrokenApps.wake ? jbMarkup(globalState.cryptoDevices.wake) : ''}</div>
+      `
+
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -2197,7 +2207,7 @@ createComponent(
                 ? wakePaired
                   ? `<div style="padding: 0.5em; border: 1px dotted">${deviceInterface}</div>`
                   : `<button id="pairWake">Pair Wake Device</button>`
-                : `<h3>Please enable bluetooth to pair Wake device</h3>`
+                : `<h4>Please enable bluetooth to pair Wake device</h4>`
             }
 
           </div>
@@ -2209,10 +2219,12 @@ createComponent(
       jbBehavior(ctx, globalState.cryptoDevices.wake, 250)
 
       if (ctx.$('#currentAlarm')) {
-        if (!globalState.cryptoDevices.wake) ctx.setInterval(() => {
+        if (!globalState.cryptoDevices.wake.active) ctx.setInterval(() => {
           ctx.$('#currentAlarm').innerHTML = formatTime(globalState.countdownTimeLeft + 2000)
         }, 1000)
+      }
 
+      if (wifiAvailable) {
         times(4, ix => {
           ctx.$('#alarm-' + ix).onclick = () => {
             ctx.setState({
@@ -2225,7 +2237,12 @@ createComponent(
 
               let i = 0
               const interval = setInterval(() => {
-                if (i === 3) clearInterval(interval)
+                if (i === 4) {
+                  clearInterval(interval)
+                  src.stop()
+                  src2.stop()
+                  return
+                }
                 i++
 
                 src.smoothGain(MAX_VOLUME)
@@ -2278,6 +2295,12 @@ createComponent(
                 src2.smoothGain(0)
                 src3.smoothGain(0)
                 src4.smoothGain(0)
+                setTimeout(() => {
+                  src1.stop()
+                  src2.stop()
+                  src3.stop()
+                  src4.stop()
+                }, 500)
               }, 1750)
 
             }
@@ -2302,6 +2325,12 @@ createComponent(
                     src2.smoothGain(0)
                     src3.smoothGain(0)
                     src4.smoothGain(0)
+                    setTimeout(() => {
+                      src1.stop()
+                      src2.stop()
+                      src3.stop()
+                      src4.stop()
+                    }, 500)
                     return
                   }
                   i++
@@ -2339,6 +2368,11 @@ createComponent(
                 ...mainRiff.map(n => n*0.89),
                 ...mainRiff.map(n => n*0.84),
                 ...mainRiff.map(n => n*0.7935),
+
+                ...mainRiff.map(n => n*0.749),
+                ...mainRiff.map(n => n*0.707),
+                ...mainRiff.map(n => n*0.666),
+                ...mainRiff.map(n => n*0.6),
               ]
 
               let timePassed1 = 0
@@ -2349,6 +2383,7 @@ createComponent(
 
                   setTimeout(() => {
                     src1.smoothGain(0)
+
                   }, measure * 0.9)
 
                 }, timePassed1)
@@ -2357,7 +2392,16 @@ createComponent(
               }
 
 
-              const secondaryKeys = [311.13, 311.13, 311.13, 311.13, 311.13, 311.13, 415.3, 415.3, 349.23, 349.23, 277.18, 277.18, 277.18, 277.18, 261.63, 233.08]
+              const secondaryKeys = [
+                311.13, 311.13, 311.13, 311.13,
+                311.13, 311.13, 415.3, 415.3,
+                349.23, 349.23, 277.18, 277.18,
+                277.18, 277.18, 261.63, 233.08,
+                261.63, 261.63, 261.63, 261.63,
+                261.63, 261.63, 349.23, 349.23,
+                233.08, 233.08, 233.08, 233.08,
+                233.08, 233.08, 233.08, 233.08, //261.63, 233.08
+              ]
 
               let timePassed2 = 0
               setTimeout(() => {
@@ -2376,9 +2420,18 @@ createComponent(
                 setTimeout(() => {
                   src2.smoothGain(0)
                   src3.smoothGain(0)
+                  src1.stop()
+                  src2.stop()
+                  src3.stop()
                 }, timePassed2)
               }, measure*32)
             }
+          }
+        })
+      } else {
+        times(4, ix => {
+          ctx.$('#alarm-' + ix).onclick = () => {
+            setTimeout(() => ctx.$(`#alarm-${ix}-label`).innerHTML += `[UNAVAILABLE]`, 500)
           }
         })
       }
@@ -3936,6 +3989,52 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
+    } else if (screen === 'flushMate') {
+      const mainInterface = `
+        <div style="text-align: center; margin: 1em 0">
+          <button id="autoFlusher">${globalState.autoFlusherActive ? 'Disable' : 'Enable'} Auto-Flusher</button>
+          <h3>Toilet paper level: <span style="font-size: 0.75em">LOW</span></h3>
+          <h3>AirFresh quantity: <span style="font-size: 0.75em">EMPTY</span></h3>
+        </div>
+        <div style="margin-top: 2em">${jailbrokenApps.flushMate ? jbMarkup(globalState.cryptoDevices.flushMate) : ''}</div>
+      `
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h1 style="margin: 1em 0; text-align: center">FlushMate</h1>
+          ${
+            bluetoothEnabled
+              ? flushMatePaired
+                ? mainInterface
+                : `
+                  <div style="text-align: center"><button id="pairFlushMate">Pair FlushMate</button></div>
+                  <h3 id="pairError"></h3>
+                `
+              : `<h3 id="pairError">Please enable bluetooth</h3>`
+          }
+        </div>
+      `
+
+
+      jbBehavior(ctx, globalState.cryptoDevices.flushMate, 1000)
+
+
+      if (ctx.$('#autoFlusher')) ctx.$('#autoFlusher').onclick = () => {
+        globalState.autoFlusherActive = !globalState.autoFlusherActive
+        ctx.setState({}, true)
+      }
+
+      if (ctx.$('#pairFlushMate')) ctx.$('#pairFlushMate').onclick = () => {
+        ctx.$('#pairError').innerHTML = 'Please wait'
+        setTimeout(() => {
+          ctx.setState({ flushMatePaired: true })
+        }, 500)
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
     } else if (screen === 'exe') {
       const {exeCommands, rootUser} = ctx.state
 

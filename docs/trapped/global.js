@@ -20,6 +20,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   shaydEverOpen: false,
   hideClose: false,
   thermostatDisabled: false,
+  autoFlusherActive: false,
   payments: {},
   eventLog: [],
   eventLoopStartTime: Date.now(),
@@ -40,6 +41,7 @@ export const globalState = persist('__GLOBAL_STATE', {
     clearBreeze: newCryptoDevice(1),
     shayd: newCryptoDevice(1),
     lock: newCryptoDevice(1),
+    flushMate: newCryptoDevice(1),
   },
   light1: {
     h: 0, s: 0, v: 100
@@ -49,7 +51,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   },
 })
 
-// globalState.cryptoDevices.wake = newCryptoDevice(2)
+// globalState.cryptoDevices.flushMate = newCryptoDevice(1)
 
 window.globalState = globalState
 
