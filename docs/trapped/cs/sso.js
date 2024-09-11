@@ -2,6 +2,10 @@ import {CTX} from '../stateMachine.js'
 import {globalState} from '../global.js'
 
 
+// TODO add password reset option
+  // if you'd liek to reset your pin, press 2. if you've been locked out of your account, press 3
+  // allows you to pass recovery step with new password
+
 export const ssoCTX = new CTX({
   currentNode: 'start',
   state: {
@@ -14,12 +18,13 @@ export const ssoNodes = {
   },
 
   intro: {
-    text: `You have reached the S S O identity management support line. Quality customer service is our goal, so this call may be recorded for training purposes. What can I help you with? If you'd like to create a new account press 1., If you've been locked out of an existing account press 2., If you are calling to, press 3., To speak with a representative press 0., To repeat this message press star`,
+    text: `You have reached the S S O identity management support line. Quality customer service is our goal, so this call may be recorded for training purposes. What can I help you with? If you'd like to create a new account press 1., If you've forgotten the password to an existing account, press 2., If you've been locked out of an existing account press 3., If you are calling to, press 4., To speak with a representative press 0., To repeat this message press star`,
     handler: options({
       0: 'representative',
       1: 'newAccount',
-      2: 'accountLockout',
-      3: 'thankYou',
+      2: 'forgotPassword',
+      3: 'accountLockout',
+      4: 'thankYou',
       '*': 'intro'
     }),
   },
@@ -103,79 +108,115 @@ export const ssoNodes = {
   newAccountBirthdayPending: {
     text: '',
     handler({ur}) {
-      if (ur === '#') return 'newAccountGender'
+      if (ur === '#') return 'newAccountPassword'
       else return 'newAccountBirthdayPending'
     }
   },
 
-  newAccountGender: {
-    text: `Please enter your Gender, and then press the pound key`,
+  newAccountPassword: {
+    text: `Please enter a new password, and then press the pound key`,
     handler({ur})  {
       if (ur === '#') return 'newAccountError'
-      else return 'newAccountGenderPending'
+      else return 'newAccountPasswordPending'
     }
   },
 
-  newAccountGenderPending: {
-    text: '',
-    handler({ur}) {
-      if (ur === '#') return 'newAccountSexualOrientation'
-      else return 'newAccountGenderPending'
-    }
-  },
-
-  newAccountSexualOrientation: {
-    text: `Please enter your Sexual Orientation, and then press the pound key`,
-    handler({ur})  {
-      if (ur === '#') return 'newAccountError'
-      else return 'newAccountSexualOrientationPending'
-    }
-  },
-
-  newAccountSexualOrientationPending: {
-    text: '',
-    handler({ur}) {
-      if (ur === '#') return 'newAccountHeight'
-      else return 'newAccountSexualOrientationPending'
-    }
-  },
-
-  newAccountHeight: {
-    text: `Please enter your height, and then press the pound key`,
-    handler({ur})  {
-      if (ur === '#') return 'newAccountError'
-      else return 'newAccountHeightPending'
-    }
-  },
-
-  newAccountHeightPending: {
-    text: '',
-    handler({ur}) {
-      if (ur === '#') return 'newAccountWeight'
-      else return 'newAccountHeightPending'
-    }
-  },
-
-  newAccountWeight: {
-    text: `Please enter your Weight, and then press the pound key`,
-    handler({ur})  {
-      if (ur === '#') return 'newAccountError'
-      else return 'newAccountWeightPending'
-    }
-  },
-
-  newAccountWeightPending: {
+  newAccountPasswordPending: {
     text: '',
     handler({ur}) {
       if (ur === '#') return 'newAccountFirstName'
-      else return 'newAccountWeightPending'
+      else return 'newAccountPasswordPending'
     }
   },
+
+  // newAccountGender: {
+  //   text: `Please enter your Gender, and then press the pound key`,
+  //   handler({ur})  {
+  //     if (ur === '#') return 'newAccountError'
+  //     else return 'newAccountGenderPending'
+  //   }
+  // },
+
+  // newAccountGenderPending: {
+  //   text: '',
+  //   handler({ur}) {
+  //     if (ur === '#') return 'newAccountSexualOrientation'
+  //     else return 'newAccountGenderPending'
+  //   }
+  // },
+
+  // newAccountSexualOrientation: {
+  //   text: `Please enter your Sexual Orientation, and then press the pound key`,
+  //   handler({ur})  {
+  //     if (ur === '#') return 'newAccountError'
+  //     else return 'newAccountSexualOrientationPending'
+  //   }
+  // },
+
+  // newAccountSexualOrientationPending: {
+  //   text: '',
+  //   handler({ur}) {
+  //     if (ur === '#') return 'newAccountHeight'
+  //     else return 'newAccountSexualOrientationPending'
+  //   }
+  // },
+
+  // newAccountHeight: {
+  //   text: `Please enter your height, and then press the pound key`,
+  //   handler({ur})  {
+  //     if (ur === '#') return 'newAccountError'
+  //     else return 'newAccountHeightPending'
+  //   }
+  // },
+
+  // newAccountHeightPending: {
+  //   text: '',
+  //   handler({ur}) {
+  //     if (ur === '#') return 'newAccountWeight'
+  //     else return 'newAccountHeightPending'
+  //   }
+  // },
+
+  // newAccountWeight: {
+  //   text: `Please enter your Weight, and then press the pound key`,
+  //   handler({ur})  {
+  //     if (ur === '#') return 'newAccountError'
+  //     else return 'newAccountWeightPending'
+  //   }
+  // },
+
+  // newAccountWeightPending: {
+  //   text: '',
+  //   handler({ur}) {
+  //     if (ur === '#') return 'newAccountFirstName'
+  //     else return 'newAccountWeightPending'
+  //   }
+  // },
+
+  forgotPassword: {
+    text: `You've forgotten the password to an existing account. We can fix that. Please enter your mobile device's device id, which can be located in the settings app. And then press the pound key.`,
+    handler: ({ur, ctx}) => {
+      ctx.state.deviceID = []
+      ctx.state.recoveringPassword = true
+      if (ur === '#') return 'accountLockoutError'
+      else {
+        ctx.state.deviceID.push(ur)
+        return 'accountLockoutDeviceIDInput'
+      }
+    }
+  },
+
+
+
+
+
+
 
   accountLockout: {
     text: `You have been locked out of your account. I'm sorry to hear that. I can help you with that. Please enter your mobile device's device id, which can be located in the settings app. And then press the pound key.`,
     handler: ({ur, ctx}) => {
       ctx.state.deviceID = []
+      ctx.state.recoveringPassword = false
       if (ur === '#') return 'accountLockoutError'
       else {
         ctx.state.deviceID.push(ur)
@@ -214,25 +255,95 @@ export const ssoNodes = {
 
 
   deviceFound: {
-    text: () => `Okay. I found a device associated with the device ID you gave me. There are ${globalState.totalAccountsCreated} accounts associated with this device. Which account would you like to recover?`,
-    handler({ur}) {
-
+    text: ({ctx}) => `Okay. I found a device associated with the device ID you gave me. There are ${globalState.totalAccountsCreated} accounts associated with this device. ${ctx.state.recoveringPassword ? `Which account's password would you like to reset?` : `Which account would you like to recover`}?`,
+    handler({ur, ctx}) {
       if (ur === '*') return 'intro'
-      else if (ur === '0' && !globalState.defaultUnlocked) return 'violation'
-      else if (Number(ur) >= globalState.totalAccountsCreated) return 'invalidAccount'
-      else return 'noViolation'
+
+      if (ctx.state.recoveringPassword) {
+        if (Number(ur) >= globalState.totalAccountsCreated) return 'invalidAccount'
+
+        ctx.state.recoveringPasswordFor = ur
+        ctx.state.newPassword = []
+        return 'resetPassword'
+
+      } else {
+        if (ur === '0' && !globalState.defaultUnlocked) return 'violation'
+        else if (Number(ur) >= globalState.totalAccountsCreated) return 'invalidAccount'
+        else return 'noViolation'
+      }
+
     }
   },
 
   invalidAccount: {
     text: ({ur}) => `You've selected an invalid account number`,
-    handler({ur}) {
+    handler({ur, ctx}) {
       if (ur === '*') return 'intro'
-      else if (ur === '0' && !globalState.defaultUnlocked) return 'violation'
-      else if (Number(ur) >= globalState.totalAccountsCreated) return 'invalidAccount'
-      else return 'noViolation'
+
+      if (ctx.state.recoveringPassword) {
+        if (Number(ur) >= globalState.totalAccountsCreated) return 'invalidAccount'
+
+        ctx.state.recoveringPasswordFor = ur
+        ctx.state.newPassword = []
+        return 'resetPassword'
+
+      } else {
+        if (ur === '0' && !globalState.defaultUnlocked) return 'violation'
+        else if (Number(ur) >= globalState.totalAccountsCreated) return 'invalidAccount'
+        else return 'noViolation'
+      }
+
     }
   },
+
+  resetPassword: {
+    text: `Please type in a new password for this account, followed by the pound key`,
+    handler({ur, ctx}) {
+      if (ur === '#') return 'resetPasswordPending'
+      else {
+        ctx.state.newPassword.push(ur)
+        return 'resetPasswordInput'
+      }
+    }
+  },
+
+  resetPasswordInput: {
+    text: '',
+    handler({ur, ctx}) {
+      if (ur === '#') return 'resetPasswordPending'
+      else {
+        ctx.state.newPassword.push(ur)
+        return 'resetPasswordInput'
+      }
+    }
+  },
+
+  resetPasswordPending: {
+    text: `One moment please`,
+    follow({ctx}) {
+      try {
+        const password = ctx.state.newPassword.join('')
+
+        ctx.phoneUserData[ctx.state.recoveringPasswordFor].password = password
+
+        return 'resetPasswordSuccess'
+      } catch (e) {
+        return 'resetPasswordError'
+      }
+    }
+  },
+
+  resetPasswordError: {
+    text: `I'm sorry. There was an error resatting your password. Please try again later`,
+    follow: 'intro'
+  },
+
+  resetPasswordSuccess: {
+    text: ({ctx}) => `The password to account ${ctx.state.recoveringPasswordFor} was successfully reset`,
+    follow: 'intro'
+  },
+
+
 
   noViolation: {
     text: ({ur}) =>`You've selected account number ${ur}, which is currently active. Is there another account I can help you with?`,

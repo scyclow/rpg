@@ -523,6 +523,8 @@ function phoneBehavior(ctx) {
 
         if (!phone.live) return
 
+        ssoCTX.phoneUserData = ctx.state.userData
+
         const stateMachine = new StateMachine(
           ssoCTX,
           {

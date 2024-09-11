@@ -13,7 +13,6 @@ const APPS = [
 
 // needs name/IRL callout
   // TV
-  // ebook
   // fridge (freezelocker)
   // elevate
   // ai assistant?
@@ -22,9 +21,8 @@ const APPS = [
   // SmartStove?
 
 // needs building
+  // ebook
   // bathe
-  // alarm
-  // thermostat
   // security camera
   // fastcash (finance)
   // ronamerch (ecommerce)
@@ -38,6 +36,7 @@ const APPS = [
   // { name: 'Elevate', key: 'elevate', size: 128, price: NaN },
   { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
   { name: 'FlushMate', key: 'flushMate', size: 128, price: 1 },
+  { name: 'Personal Finance Educator', key: 'educator', size: 128, price: 0 },
   { name: 'FreezeLocker', key: 'freeze', size: 128, price: NaN },
   { name: 'Identity Wizard', key: 'identityWizard', size: 128, price: 0 },
   { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
@@ -166,6 +165,7 @@ const state = persist('__MOBILE_STATE', {
   thermoSmartPaired: false,
   flushMatePaired: false,
 
+  educatorModule: '',
   plantStatus: 1,
   plantName: '',
   payAppUpdate: 0,
@@ -211,7 +211,6 @@ const state = persist('__MOBILE_STATE', {
         ...times(196, () => ({...sample([billingText1, billingText2, billingText3, billingText4, mmText, packageText, tripleText, funTimeText]), read: false})),
         {...billingText4, read: false}
       ],
-      appCreditBalance: 1,
       keyPairs: [],
       payAppUSDAddr: rndAddr(),
       moneyMinerCryptoAddr: rndAddr(),
@@ -223,7 +222,10 @@ const state = persist('__MOBILE_STATE', {
       payAppAMLKYCed: false,
       idvWizardStep: 0,
       idWizardInfo: {},
-      yieldFarmerHighScore: 0
+      yieldFarmerHighScore: 0,
+      appCreditBalance: 1,
+      educatorModulesCompleted: {},
+      password: ''
     }
   }
 })
@@ -239,7 +241,7 @@ createComponent(
     <style>
       * {
         padding: 0;
-        margin: 0
+        margin: 0;
       }
 
       .a11yMode {
@@ -768,7 +770,8 @@ createComponent(
       payAppAMLKYCed,
       idvWizardStep,
       idWizardInfo,
-      appCreditBalance
+      appCreditBalance,
+      educatorModulesCompleted,
     } = currentUserData
 
     const textMessages = currentUserData?.textMessages || []
@@ -821,9 +824,14 @@ createComponent(
         </div>
       `
 
-      // setTimeout(() => {
-      //   if (ctx.state.screen === 'loading') ctx.setState({ screen: 'login' })
-      // }, 10000)
+
+
+      setTimeout(() => {
+        if (ctx.state.screen === 'loading') {
+          console.log(ctx.state.screen)
+          ctx.setState({ screen: 'login' })
+        }
+      }, 10000)
 
     } else if (screen === 'login') {
       ctx?.__notificationCb?.()
@@ -853,10 +861,17 @@ createComponent(
             })
 
             setTimeout(() => {
-              ctx.setState({
-                currentUser: id,
-                screen: 'home'
-              })
+              if (!userData[id].password) {
+                ctx.setState({
+                  currentUser: id,
+                  screen: 'home'
+                })
+              } else {
+                ctx.setState({
+                  queuedUser: id,
+                  screen: 'password'
+                })
+              }
             }, 1000)
           }
         }
@@ -866,16 +881,63 @@ createComponent(
         ctx.setState({ screen: 'newProfile' })
       }
 
-    } else if (screen === 'newProfile') {
+    } else if (screen === 'password') {
+      // TODO add password recovery through phone
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
-          <button id="back">back</button>
+          <button id="back">Back</button>
+          <div>
+            <input type="password" placeholder="Password" id="password"> <button id="login">Login</button>
+          </div>
+          <h4 id="error"></h4>
+        </div>
+      `
+
+      ctx.$('#back').onclick = () => {
+        ctx.setState({ screen: 'login' })
+      }
+
+      ctx.$('#login').onclick = () => {
+        if (ctx.$('#password').value === userData[ctx.state.queuedUser].password) {
+          ctx.setState({
+            screen: 'home',
+            currentUser: ctx.state.queuedUser
+          })
+        } else {
+          ctx.$('#error').innerHTML = `Invald Password. If you've forgotten your password, please call 1-818-222-5379 to reset it.`
+        }
+      }
+
+
+    } else if (screen === 'newProfile') {
+      ctx.$phoneContent.innerHTML = `
+        <style>
+          input, select {
+            margin: 0.25em 0;
+            width: 250px;
+            padding: 0.15em;
+          }
+        </style>
+        <div class="phoneScreen">
+          <button id="back">Back</button>
           <div><input placeholder="first name" id="firstName" /></div>
           <div><input placeholder="last name"/></div>
           <div><input placeholder="birthday"/></div>
-          <div><input placeholder="gender"/></div>
-          <div><input placeholder="height"/></div>
-          <div><input placeholder="weight"/></div>
+          <div><input id="password" type="password" placeholder="Password (Leave blank for no password)"/></div>
+          <div>
+            <select>
+              <option>Security Question</option>
+              <option>What color was your first car?</option>
+              <option>What is your mother's maiden name?</option>
+              <option>What ?</option>
+            </select>
+          </div>
+          <div><input placeholder="Security Question Answer"/></div>
+          <!--
+            <div><input placeholder="gender"/></div>
+            <div><input placeholder="height"/></div>
+            <div><input placeholder="weight"/></div>
+          -->
           <button id="submit">submit</button>
           <h3 id="error"></h3>
         </div>
@@ -903,6 +965,8 @@ createComponent(
 
         globalState.totalAccountsCreated += 1
 
+        const password = ctx.$('#password').value || ''
+
         ctx.setState({
           screen: 'loading',
           currentUser: id,
@@ -928,7 +992,9 @@ createComponent(
               idvWizardStep: 0,
               idWizardInfo: {},
               yieldFarmerHighScore: 0,
-              appCreditBalance: 0
+              appCreditBalance: 0,
+              educatorModulesCompleted: {},
+              password
             }
           }
         })
@@ -1305,42 +1371,37 @@ createComponent(
 
       const usdBalance = usdBalances[payAppUSDAddr] || 0
 
+      const educatorDownloaded = appsInstalled.some(a => a.key === 'educator')
+
       ctx.$phoneContent.innerHTML = `
+        <style>
+
+          input {
+            padding: 0.25em;
+            font-size: 1.25em;
+          }
+
+          #sign, #processSPTX {
+            font-size: 1.25em;
+            margin-top: 0.25em
+          }
+        </style>
         <div class="phoneScreen">
           <button id="home">Back</button>
           <div id="payappContent">
             <h2 style="margin-bottom: 0.25em">PayApp: Making Payment as easy as 1-2-3!</h2>
-            <h3 style="margin: 0.5em 0">Current $ Balance: $${hasInternet ? usdBalance.toFixed(2) : '-.--'}</h3>
-            <div style="margin: 0.4em 0">
-              <h4>My $ Recipient Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h4>
-              <span style="font-size: 0.9em; background: #000; color: #fff; padding: 0.25em; margin-top: 0.1em; display: inline-block">${payAppUSDAddr}</span>
-            </div>
+            <h3 style="margin: 1em 0; text-align: center">Current $ Balance: $${hasInternet ? usdBalance.toFixed(2) : '-.--'}</h3>
 
-            <!--
-              <div style="margin-bottom: 0.6em">
-                <h3>Private Payment Key (PPK):</h3>
-                <span style="font-size: 0.9em"><em>hidden</em></span>
-                <div>(Don't share this with anyone! Including PayApp employees)</div>
-              </div>
-            -->
+            <h3 style="text-align: center; margin: 0.25em 0">I want to: <select id="payAction" style="font-size: 1.1em; box-shadow: 1px 1px 0 #000">
+              <option value="choose"></option>
+              <option value="send">Send $</option>
+              <option value="receive">Receive $</option>
+              <option value="learn">Learn</option>
+            </select> <span class="icon"> ☜</span></h3>
 
-            <div style="margin-top: 0.6em; padding-top: 0.5em; border-top: 1px dashed">
-              <div id="txMessage"></div>
-              <h3>Receive $</h3>
-              <div>
-                <input id="sptxInput" placeholder="S.P.T.X. identifier" type="number">
-                <button id="processSPTX">Process SPTX</button>
-              </div>
-              <h5 id="sptxError"></h5>
-              <ol class="payInstructions">
-                <li><em><strong>1.</strong> Give the sender your $ Recipient Address</em></li>
-                <li><em><strong>2.</strong> Collect a S.P.T.X. identifier from the sender</em></li>
-                <li><em><strong>3.</strong> Process the S.P.T.X. identifier and recieve your $!</em></li>
-              </ol>
-            </div>
+            <div id="sendModule" class="hidden" style="margin-top: 0.6em; padding-top: 0.5em; border-top: 1px dashed">
+              <h3 style="margin-bottom: 0.5em">Send $</h3>
 
-            <div style="margin-top: 0.6em; padding-top: 0.5em; border-top: 1px dashed">
-              <h3>Send $</h3>
               <ol>
                 <li><input id="recipient" placeholder="Recipient Address"></li>
                 <li style="margin:0.25em 0"><input id="amount" placeholder="Amount" type="number" step=".01"></li>
@@ -1355,9 +1416,89 @@ createComponent(
               </ol>
               <p style="margin-top: 1em; padding: 0.5em"><strong style="text-decoration: underline; font-size: 1.1em">WARNING</strong>: <em>Please ensure that you have input the correct $ Recipient Address and Amount. All $ transactions are <strong>irreversible</strong> once signed!</em></p>
             </div>
+
+
+            <div id="receiveModule" class="hidden" style="margin-top: 0.6em; padding-top: 0.5em; border-top: 1px dashed">
+              <div style="margin: 0.4em 0">
+                <h3 style="margin-bottom: 0.5em">Receive $</h3>
+                <h4>My $ Recipient Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h4>
+                <!--
+                  <div style="margin-bottom: 0.6em">
+                    <h3>Private Payment Key (PPK):</h3>
+                    <span style="font-size: 0.9em"><em>hidden</em></span>
+                    <div>(Don't share this with anyone! Including PayApp employees)</div>
+                  </div>
+                -->
+
+                <span style="font-size: 0.9em; background: #000; color: #fff; padding: 0.25em; margin-top: 0.1em; display: inline-block">${payAppUSDAddr}</span>
+                <div id="txMessage" style="margin-top: 0.4em"></div>
+                <div style="margin-top: 0.5em">
+                  <input id="sptxInput" placeholder="S.P.T.X. identifier" type="number">
+                  <button id="processSPTX">Process SPTX</button>
+                </div>
+                <h5 id="sptxError"></h5>
+                <ol class="payInstructions">
+                  <li><em><strong>1.</strong> Give the sender your $ Recipient Address</em></li>
+                  <li><em><strong>2.</strong> Collect a S.P.T.X. identifier from the sender</em></li>
+                  <li><em><strong>3.</strong> Process the S.P.T.X. identifier and recieve your $!</em></li>
+                </ol>
+              </div>
+
+              <p style="margin-top: 0.5em; text-align: center">Please note that PayApp shall not be held liable for any quantity of $ that is lost due to incorrect use of the SPTX transaction process. </p>
+            </div>
+
+
+            <div id="learnModule" class="hidden" style="margin-top: 0.6em; padding-top: 0.5em; border-top: 1px dashed">
+              <div style="padding: 1em; line-height: 2; text-align: justify">
+                <h4>To learn more about PayApp and the S.P.T.X. protocol, download the Personal Finance Educator app to learn more! <button id="educatorApp">${educatorDownloaded ? 'Go To' : 'Download'}</button></h4>
+              </div>
+            </div>
           </div>
         </div>
       `
+
+      ctx.$('#payAction').onchange = () => {
+        const val = ctx.$('#payAction').value
+        const $receive = ctx.$('#receiveModule')
+        const $learn = ctx.$('#learnModule')
+        const $send = ctx.$('#sendModule')
+
+        if (val === 'send') {
+          $send.classList.remove('hidden')
+          $receive.classList.add('hidden')
+          $learn.classList.add('hidden')
+        } else if (val === 'receive') {
+          $send.classList.add('hidden')
+          $receive.classList.remove('hidden')
+          $learn.classList.add('hidden')
+        } else if (val === 'learn') {
+          $send.classList.add('hidden')
+          $receive.classList.add('hidden')
+          $learn.classList.remove('hidden')
+        } else {
+          $send.classList.add('hidden')
+          $receive.classList.add('hidden')
+          $learn.classList.add('hidden')
+        }
+      }
+
+      ctx.$('#educatorApp').onclick = () => {
+        if (educatorDownloaded) {
+          ctx.setState({ screen: 'educator' })
+        } else {
+          ctx.$phoneContent.innerHTML = `One moment please`
+
+          setTimeout(() => {
+            ctx.setState({ screen: 'home' })
+            setTimeout(() => {
+              ctx.setUserData({
+                appsInstalled: [...appsInstalled, { name: 'Personal Finance Educator', key: 'educator', size: 128, price: 0 }]
+              })
+            }, ctx.state.fastMode ? 0 : 3000)
+          }, 300)
+        }
+      }
+
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
@@ -1574,6 +1715,717 @@ createComponent(
         `
 
         ctx.$('#closeMessage').onclick = () => ctx.$('#txMessage').classList.add('hidden')
+      }
+
+    } else if (screen === 'educator') {
+      let xp = 0
+      if (educatorModulesCompleted.intro) xp += 10
+      if (educatorModulesCompleted.history) xp += 20
+      if (educatorModulesCompleted.system) xp += 20
+      if (educatorModulesCompleted.sptx) xp += 40
+      if (educatorModulesCompleted.crypto) xp += 80
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2 style="text-align: center; margin: 0.4em 0">Personal Finance Educator</h2>
+          <h3 style="text-align: center;"><span class="icon">✎✎✎</span></h3>
+          <h3 style="text-align: center; margin: 0.4em 0">Making financial education fun!</h3>
+          <h3 style="text-align: center;"><span class="icon">✙</span></h3>
+          <h3 style="text-align: center; margin: 0.4em 0">Education XP: ${xp}</h3>
+
+          <h4 style="margin-top: 2em; margin-bottom: 0.5em">Education Modules:</h4>
+
+          ${hasInternet ? `
+            <div>
+              <button id="intro">${educatorModulesCompleted.intro ? 'Review' : 'Start'}</button> <strong>Introduction</strong> (${educatorModulesCompleted.intro ? '<em>Completed!</em>' : '<strong>10 XP</strong>'})
+            </div>
+
+            <div>
+              <button id="history" ${!educatorModulesCompleted.intro ? 'disabled' : ''}>${educatorModulesCompleted.history ? 'Review' : !educatorModulesCompleted.intro ? 'Locked' : 'Start'}</button> <strong>The History of $</strong> (${!educatorModulesCompleted.intro ? '<strong>Needs 10XP!</strong>' : educatorModulesCompleted.history ? '<em>Completed!</em>' : '<strong>20 XP</strong>'})
+            </div>
+
+            <div>
+              <button id="system" ${!educatorModulesCompleted.intro ? 'disabled' : ''}>${educatorModulesCompleted.system ? 'Review' : !educatorModulesCompleted.intro ? 'Locked' : 'Start'}</button> <strong>The $ System</strong> (${!educatorModulesCompleted.intro ? '<strong>Needs 10XP!</strong>' : educatorModulesCompleted.system ? '<em>Completed!</em>' : '<strong>20 XP</strong>'})
+            </div>
+
+            <div>
+              <button id="sptx" ${educatorModulesCompleted.history && educatorModulesCompleted.system ? '' : 'disabled'}>${educatorModulesCompleted.sptx ? 'Review' : educatorModulesCompleted.history && educatorModulesCompleted.system ? 'Start' : 'Locked'}</button> <strong>SPTXs & Payment</strong> (${educatorModulesCompleted.sptx ? '<em>Completed!</em>' : educatorModulesCompleted.history && educatorModulesCompleted.system ? '<strong>40 XP</strong>' : '<strong>Needs 50XP!</strong>'})
+            </div>
+
+            <div>
+              <button id="crypto" ${educatorModulesCompleted.sptx ? '' : 'disabled'}>${educatorModulesCompleted.crypto ? 'Review' : educatorModulesCompleted.sptx ? 'Start' : 'Locked'}</button> <strong>CryptoCurrency</strong> (${educatorModulesCompleted.crypto ? '<em>Completed!</em>' : educatorModulesCompleted.sptx ? '<strong>80 XP</strong>' : '<strong>Needs 90XP!</strong>'})
+            </div>
+
+            <div style="margin-top: 2em">
+              <a style="text-decoration: underline; color: #000; cursor: pointer">Help Forum →</a>
+            </div>
+
+          ` : `Cannot access modules - Please connect to internet`}
+        </div>
+      `
+
+
+      ctx.$('#intro').onclick = () => {
+        ctx.setState({
+          screen: 'educatorModule',
+          educatorModule: 'intro'
+        })
+      }
+      ctx.$('#history').onclick = () => {
+        ctx.setState({
+          screen: 'educatorModule',
+          educatorModule: 'history'
+        })
+      }
+
+      ctx.$('#system').onclick = () => {
+        ctx.setState({
+          screen: 'educatorModule',
+          educatorModule: 'system'
+        })
+      }
+      ctx.$('#sptx').onclick = () => {
+        ctx.setState({
+          screen: 'educatorModule',
+          educatorModule: 'sptx'
+        })
+      }
+      ctx.$('#crypto').onclick = () => {
+        ctx.setState({
+          screen: 'educatorModule',
+          educatorModule: 'crypto'
+        })
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (screen === 'educatorModule') {
+      const {educatorModule} = ctx.state
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen" style="flex: 1; overflow: scroll; padding-bottom: 3em">
+          <style>
+            h2, h3 {
+              text-align: center;
+            }
+            p {
+              margin: 1em 0
+            }
+          </style>
+          <button id="quit">Quit</button>
+          <div id="moduleContent"></div>
+        </div>
+      `
+
+      const $moduleContent = ctx.$('#moduleContent')
+
+      if (educatorModule === 'intro') {
+        $moduleContent.innerHTML = `
+          <div id="p1" class="">
+            <h2>Welcome to the Personal Finance Educator Introduction Module!</h2>
+            <p>In this introductory module, you will learn about the Personal Finance Educator application!</p>
+            <button id="introNext1">Start</button>
+          </div>
+
+
+          <div id="p2" class="hidden">
+            <h2>Personal Finance Educator Introduction Module (cont.)</h2>
+            <h3>(1/3)</h3>
+            <p>Personal Finance Educator (PFE) is an independent education organization dedicated to bringing high quality financial education materials to every day consumers. PFE is designed for <em>maximum user engagement</em>, with multiple high-quality education modules. Each module is designed to be both informative and enjoyable, with a reward system designed to guide the user along their educational journey!</p>
+            <button id="introNext2">Next</button>
+          </div>
+
+          <div id="p3" class="hidden">
+            <h2>Personal Finance Educator Introduction Module (cont.)</h2>
+            <h3>(2/3)</h3>
+            <p>Research shows that information is retained twice as long when it's presented in gamified educational modules. In other words: people remember things better when learning is fun! That's why PFE breaks down complex topics into bite-sized chunks, and gives the user rewards along the way.</p>
+            <button id="introNext3">Next</button>
+          </div>
+
+          <div id="p4" class="hidden">
+            <h2>Personal Finance Educator Introduction Module (cont.)</h2>
+            <h3>(3/3)</h3>
+            <p>The PFE curriculum is broken down into 6 segments: </p>
+            <p>1. Introduction: The user learns about PFE and the curriculum structure (10 XP)</p>
+            <p>2. The History of $: The user learns about the history of $, where it came from, and why it exists (20 XP, unlocked by completing Introduction)</p>
+            <p>3. The $ System: The user learns about the current state of the $ system (20 XP, unlocked by completing Introduction)</p>
+            <p>4. $ And You: The user learns about their place in the $ system, and why financial education is so important (20 XP, unlocked by completing Introduction)</p>
+            <p>5. Secure Payment Transaction identifiers: The user completes an interactive tutorial to learn about how SPTX identifiers work (40 XP, unlocked by completing Introduction)</p>
+            <p>6. Crypto-Currency: In this advanced module, the user learns how to send and trade crypto-currencies (80 XP, unlocked by completing Introduction)</p>
+            <button id="introNext4">Next</button>
+          </div>
+
+
+          <div id="p5" class="hidden">
+            <h2>Personal Finance Educator Introduction Module Complete!</h2>
+            <h3>(Complete)</h3>
+            <p>In this module we learned: </p>
+            <p>1. What is Personal Finance Education?</p>
+            <p>2. Educational methodology</p>
+            <p>3. The structure of the PFE curriculum</p>
+            <button id="introComplete">Complete!</button> (+ 10 XP)
+          </div>
+        `
+
+        ctx.$('#introNext1').onclick = () => {
+          ctx.$('#p1').classList.add('hidden')
+          ctx.$('#p2').classList.remove('hidden')
+        }
+
+        ctx.$('#introNext2').onclick = () => {
+          ctx.$('#p2').classList.add('hidden')
+          ctx.$('#p3').classList.remove('hidden')
+        }
+
+        ctx.$('#introNext3').onclick = () => {
+          ctx.$('#p3').classList.add('hidden')
+          ctx.$('#p4').classList.remove('hidden')
+        }
+
+        ctx.$('#introNext4').onclick = () => {
+          ctx.$('#p4').classList.add('hidden')
+          ctx.$('#p5').classList.remove('hidden')
+        }
+
+        ctx.$('#introComplete').onclick = () => {
+          ctx.state.screen = 'educator'
+          ctx.setUserData({
+            educatorModulesCompleted: { ...educatorModulesCompleted, intro: true}
+          })
+        }
+
+
+      } else if (educatorModule === 'history') {
+        $moduleContent.innerHTML = `
+          <div id="p1" class="">
+            <h2>Welcome to the History of $ Module!</h2>
+            <p>In this module you will learn about fascinating history of $, including information left out of your $ textbooks!</p>
+            <button id="historyNext1">Start</button>
+          </div>
+
+
+          <div id="p2" class="hidden">
+            <h2>The History of $ Module: The Myth of Barter</h2>
+            <p>Open any economics text book, and you'll read the same story regarding the origins of money: Thousands of years ago, humans invented money as a solution to the inefficiencies of barter. Barter, you will read, is all well and good, but it has its problems. For example, let's say you have six chickens, and desperately need shoes. Meanwhile, your neighbor has shoes, but doesn't need any chickens. He needs a cow. If this is the case, then you're out of luck. As the economists would say, there is no "mutual coincidence of wants."</p>
+            <button id="historyNext2">Next</button>
+          </div>
+
+          <div id="p3" class="hidden">
+            <h2>The History of $ Module: The Myth of Barter (cont.)</h2>
+            <p>As the story goes, money was invented as a solution to this problem. Money acts as a liquid medium of exchange, which allows you to buy whatever you want from whoever you want. After all, everyone needs money! Once we had money, people were able to borrow it and go into debt. It's a simple explanation that makes a lot of sense. There's just one tiny problem with this story: it isn't true!</p>
+            <button id="historyNext3">Next</button>
+          </div>
+
+          <div id="p4" class="hidden">
+            <h2>The History of $ Module: The Myth of Barter (cont.)</h2>
+            <p>Anthropologists like David Graeber will note that this story doesn't actually have any historical evidence! In fact, the anthropological evidence suggests that things happened in the opposite direction! Most early economies were based on trust, gift giving, and social obligation. In other words: debt. In a tight-knit community, it's silly and inefficient to barter with your neighbor. If you need shoes, and your neighbor has an extra pair, it's much easier for him to just give them to you! And the understanding would be that later, if he needed chickens, you could give him a spare chicken. </p>
+            <button id="historyNext4">Next</button>
+          </div>
+
+
+          <div id="p5" class="hidden">
+            <h2>The History of $ Module: Social Currencies</h2>
+            <p>Of course, there were early forms of currency. Shells, feathers, nails, gold... you name it. But these were mainly used as ways of rearranging social relaitonships. You might pay a bundle of shells as a dowry, or as compensation for an egregious crime. However, It would have likely be considered uncouth to try to buy a chicken with them.</p>
+            <button id="historyNext5">Next</button>
+          </div>
+
+          <div id="p6" class="hidden">
+            <h2>The History of $ Module: Warfare & The State</h2>
+            <p>As history moved forward, states and large scale warfare arose, which necessitated the mobilization of resources. Vast administrative systems were created to quantify and keep track of who owed what to whom, but ultimately varaious forms of coinage were used as an abstract representation of these debts. That is, modern currency as we know it was actually created by the state in order to pay soldiers and extract taxes from the populace!</p>
+            <button id="historyNext6">Next</button>
+          </div>
+
+          <div id="p7" class="hidden">
+            <h2>The History of $ Module: Money → Markets</h2>
+            <p>Once modern currency was introduced, the state was able to use it to purchase goods. And people were happy to trade goods and services for currency (with the government <em>and</em> each other) because they needed it in order to pay taxes. If this sounds like a market to you... that's because it is!</p>
+            <button id="historyNext7">Next</button>
+          </div>
+
+          <div id="p8" class="hidden">
+            <h2>The History of $ Module: Bullion ↔ Credit</h2>
+            <p>Governments found that good money was fungible, durable, divisable, portable, and scarce. In order to act as a medium of exchange and a store of value, it needed to have these qualities. Precious metals — such as gold and silver — fit the bill, so people have saught these resources for centuries. However, bullion is often too heavy and impractical for day-to-day transactions, so paper currency emerged in 7th century China. This meant that gold went straight into the vault, while banks and merchants issued promissory notes. This allowed people to trade slips of paper instead of heavy metals. </p>
+            <button id="historyNext8">Next</button>
+          </div>
+
+          <div id="p9" class="hidden">
+            <h2>The History of $ Module: Fiat and Inflation</h2>
+            <p>By the 17th century paper money became a worldwide phenomena. However, governments were still constrained in their spending based on how much gold they had in the vault. Eventually, governments realized that they could just print as much paper money as they wanted, unrelated to their supply of gold. This lead to the modern form of fiat currency, culminating in the end of the Bretton Woods system in 1971. While this has made it easier for governments to manage spending and counterbalance market cycles, it's also led to cases of unchecked spending and rampant inflation. In these hyperinflationary periods, the supply of government-issued skyrockets, causing its value to plummet.</p>
+            <button id="historyNext9">Next</button>
+          </div>
+
+          <div id="p10" class="hidden">
+            <h2>The History of $ Module: Summary</h2>
+            <p>In this module we learned: </p>
+            <p>1. Traditional economic theory suggests that human society started with barter, invented money as a solution, and this led to monetary loans and debt.</p>
+            <p>2. Actual anthropological evidence suggests that things moved in the opposite direction: humans used informal debt and credit systems to arrange society, money was introduced as a method of formalizing these debts with the state in control, and markets arose as a response.</p>
+            <p>3. While bullion was often used as a monetary material, paper currency was introduced in 7th century China to make day-to-day transactions easier.</p>
+            <p>4. Paper currency paved the way for governments to remove the bullion peg, and introduce fiat currency. Fiat currency makes certain things easier, but can also lead to inflation.</p>
+            <button id="historyNext10">Next</button>
+          </div>
+
+          <div id="p11" class="hidden">
+            <h2>The History of $ Module: Pop Quiz!</h2>
+            <h4 style="margin: 0.5em 0">During which century was paper money invented in China?</h4>
+            <select id="q1">
+              <option>1st</option>
+              <option>6th</option>
+              <option value="yes">7th</option>
+              <option>17th</option>
+            </select>
+
+            <h4 style="margin-top: 1em; margin-bottom: 0.5em">What type of good do you need from your neighbor?</h4>
+            <select id="q2">
+              <option value="yes">Shoes</option>
+              <option>Chickens</option>
+              <option>Gold</option>
+              <option>Shells</option>
+            </select>
+            <div style="margin-top: 1em">
+              <button id="complete">Complete</button> (+20 XP)
+              <h4 id="qError"></h4>
+            </div>
+          </div>
+
+        `
+
+        ctx.$('#historyNext1').onclick = () => {
+          ctx.$('#p1').classList.add('hidden')
+          ctx.$('#p2').classList.remove('hidden')
+        }
+
+        ctx.$('#historyNext2').onclick = () => {
+          ctx.$('#p2').classList.add('hidden')
+          ctx.$('#p3').classList.remove('hidden')
+        }
+
+        ctx.$('#historyNext3').onclick = () => {
+          ctx.$('#p3').classList.add('hidden')
+          ctx.$('#p4').classList.remove('hidden')
+        }
+
+        ctx.$('#historyNext4').onclick = () => {
+          ctx.$('#p4').classList.add('hidden')
+          ctx.$('#p5').classList.remove('hidden')
+        }
+
+        ctx.$('#historyNext5').onclick = () => {
+          ctx.$('#p5').classList.add('hidden')
+          ctx.$('#p6').classList.remove('hidden')
+        }
+
+        ctx.$('#historyNext6').onclick = () => {
+          ctx.$('#p6').classList.add('hidden')
+          ctx.$('#p7').classList.remove('hidden')
+        }
+
+        ctx.$('#historyNext7').onclick = () => {
+          ctx.$('#p7').classList.add('hidden')
+          ctx.$('#p8').classList.remove('hidden')
+        }
+
+        ctx.$('#historyNext8').onclick = () => {
+          ctx.$('#p8').classList.add('hidden')
+          ctx.$('#p9').classList.remove('hidden')
+        }
+
+        ctx.$('#historyNext9').onclick = () => {
+          ctx.$('#p9').classList.add('hidden')
+          ctx.$('#p10').classList.remove('hidden')
+        }
+
+        ctx.$('#historyNext10').onclick = () => {
+          ctx.$('#p10').classList.add('hidden')
+          ctx.$('#p11').classList.remove('hidden')
+        }
+
+        ctx.$('#complete').onclick = () => {
+          if (ctx.$('#q1').value === 'yes' && ctx.$('#q2').value === 'yes') {
+            ctx.state.screen = 'educator'
+            ctx.setUserData({
+              educatorModulesCompleted: { ...educatorModulesCompleted, history: true}
+            })
+          } else {
+            ctx.$('#qError').innerHTML = 'Guess again!'
+          }
+        }
+
+
+      } else if (educatorModule === 'system') {
+        $moduleContent.innerHTML = `
+          <div id="p1" class="">
+            <h2>Welcome to the Modern $ System Module!</h2>
+            <p>In this module you will learn all about how the modern $ system works!</p>
+            <button id="systemNext1">Next</button>
+          </div>
+
+          <div id="p2" class="hidden">
+            <h2>The Modern $ System Module: A Complex System</h2>
+            <p>Our last module left off in 1971, but that was only the beginning of the modern economy. Since then, the economy has become more intricate, globalized, and automated. Many economists note that the modern economy is a marvel of social ingnuity. It's a system so complex that no single person understands it. And it's so decentralized that no single person can stop it. And if you think of the economy as a living organism, $ is its life blood. It's the mechanism in which value flows from one economic entity to the other. It's difficult to imagine a world in which $ doesn't pervade every aspect of our daily lives. Like it or not, $ is here to stay!
+
+            </p>
+            <button id="systemNext2">Next</button>
+          </div>
+
+
+          <div id="p3" class="hidden">
+            <h2>The Modern $ System Module: The "How", the "Why", and the "Where"</h2>
+            <p>But how does modern $ work? Why do we still need it? And <em>where</em> is all of your money? These are all great questions! And as the economy becomes increasingly digitized, they become harder to answer. In fact, as social reality becomes increasingly mediated by completely immaterial and abstract factors (like computer code and databases), one could be forgiven for thinking that the state of their life is cruel and arbitrary, determined by some nebulous force beyond your control. But nothing could be further from the truth! </p>
+            <button id="systemNext3">Next</button>
+          </div>
+
+          <div id="p4" class="hidden">
+            <h2>The Modern $ System Module: Economies of Scale</h2>
+            <p>In actuality, computers have taken economic processes that have existed for centuries, and simply automated them. This provides a much higher level of precision at a fraction of the cost, and enables economies of scale that can easily be passed onto the consumer. For example, products such as mobile telephones used to be prohibitively expensive. But today, they are so cheap to produce that phone companies can practically give them away for free!</p>
+            <button id="systemNext4">Next</button>
+          </div>
+
+
+          <div id="p5" class="hidden">
+            <h2>The Modern $ System Module: $and You</h2>
+            <p>So, how do you fit into all of this? You're an integral part of the economy! You accumulate debts and obligations whenever you engage in economic transactions, and generate wealth whenever you work. And while this may sound fun, it's a big responsability. Some people handle it well, and decide to be productive members of society. They go to job, take pride in their work, and earn a well-deserved paycheck. Then they use that paycheck to take care of all their financial obligations. Other people aren't as well-adjusted. These people accumulate goods and services that they cannot afford, and ultimately default on their debts. These delinquents are often marginalized by society as non-productive leeches.</p>
+            <button id="systemNext5">Next</button>
+          </div>
+
+
+          <div id="p6" class="hidden">
+            <h2>The Modern $ System Module: Doing Your Duties</h2>
+            <p>Do you want to do your duty as a productive member of society? Of course you do! Working to pay off your debts is just the right thing to do. And making money has never been easier, so you don't have an excuse not to do it! </p>
+            <button id="systemNext6">Next</button>
+          </div>
+
+          <div id="p7" class="hidden">
+            <h2>The Modern $ System Module: Summary</h2>
+            <p>In this module we learned:</p>
+            <p>1. All about the complexities of the modern $ system.</p>
+            <p>2. How economies of scale help you, the consumder.</p>
+            <p>3. Your place in the modern economiy.</p>
+            <p>4. Why paying off your debts is a moral imperative</p>
+            <button id="systemNext7">Next</button>
+          </div>
+
+          <div id="p8" class="hidden">
+            <h2>The Modern $ System Module: Pop Quiz!</h2>
+            <h4 style="margin: 0.5em 0">What type of good used to be prohibitively expensive, but is now cheap to produce due to economies of scale?</h4>
+
+            <select id="q1">
+              <option>Health Care</option>
+              <option value="yes">Mobile Phones</option>
+              <option>Education</option>
+              <option>Art</option>
+            </select>
+
+            <h4 style="margin-top: 1em; margin-bottom: 0.5em">You only have $1000.00 and can only complete one of the following payments. Which do you make?</h4>
+
+            <select id="q2">
+              <option>Buy an expensive home entertainment system</option>
+              <option>Buy food for yourself</option>
+              <option>Invest it in cryptocurrencies</option>
+              <option value="yes">Pay rent to your landlord</option>
+            </select>
+
+            <div style="margin-top: 1em">
+              <button id="complete">Complete</button> (+20 XP)
+              <h4 id="qError"></h4>
+            </div>
+          </div>
+        `
+
+        ctx.$('#systemNext1').onclick = () => {
+          ctx.$('#p1').classList.add('hidden')
+          ctx.$('#p2').classList.remove('hidden')
+        }
+        ctx.$('#systemNext2').onclick = () => {
+          ctx.$('#p2').classList.add('hidden')
+          ctx.$('#p3').classList.remove('hidden')
+        }
+        ctx.$('#systemNext3').onclick = () => {
+          ctx.$('#p3').classList.add('hidden')
+          ctx.$('#p4').classList.remove('hidden')
+        }
+        ctx.$('#systemNext4').onclick = () => {
+          ctx.$('#p4').classList.add('hidden')
+          ctx.$('#p5').classList.remove('hidden')
+        }
+        ctx.$('#systemNext5').onclick = () => {
+          ctx.$('#p5').classList.add('hidden')
+          ctx.$('#p6').classList.remove('hidden')
+        }
+        ctx.$('#systemNext6').onclick = () => {
+          ctx.$('#p6').classList.add('hidden')
+          ctx.$('#p7').classList.remove('hidden')
+        }
+
+        ctx.$('#systemNext7').onclick = () => {
+          ctx.$('#p7').classList.add('hidden')
+          ctx.$('#p8').classList.remove('hidden')
+        }
+
+        ctx.$('#complete').onclick = () => {
+          if (ctx.$('#q1').value === 'yes' && ctx.$('#q2').value === 'yes') {
+            ctx.state.screen = 'educator'
+            ctx.setUserData({
+              educatorModulesCompleted: { ...educatorModulesCompleted, system: true}
+            })
+          } else {
+            ctx.$('#qError').innerHTML = 'Guess again!'
+          }
+        }
+
+      } else if (educatorModule === 'sptx') {
+        $moduleContent.innerHTML = `
+          <div id="p1" class="">
+            <h2>Welcome to the SPTXs & Payment Module!</h2>
+            <p>In this module you will learn about the SPTX protocol, and the payment system that it powers!</p>
+            <button id="sptxNext1">Next</button>
+          </div>
+
+          <div id="p2" class="hidden">
+            <h2>The SPTXs & Payment Module: An Introduction</h2>
+            <p>So you have $, and you'd like to pay off your debts. Now what? Well, you're in luck! Thankfully, there's a quick and easy way to do exactly that. You don't have to deal with low-level protocols and processes. You just need to follow a simple three-step process, and your payments will be processed in no time with the SPTX protocol! But as simple as it is, many people still have trouble following these three simple steps. But don't wory: This tutorial will train you to be a SPTX wizard in no time, regardless of you level of financial sophistication!</p>
+            <button id="sptxNext2">Next</button>
+          </div>
+
+
+          <div id="p3" class="hidden">
+            <h2>The SPTXs & Payment Module: What Is A SPTX?</h2>
+            <p>The most common question people have about SPTXs is: What the heck do those letters stand for? SPTX stands for <strong>Secure Payment Transaction</strong>, and it defines a secure protocol for $ to pass from one party to another in the PayApp network. </p>
+            <button id="sptxNext3">Next</button>
+          </div>
+
+
+          <div id="p4" class="hidden">
+            <h2>The SPTXs & Payment Module: The Three Steps (Sending)</h2>
+            <p>Let's take a look at how SPTX payments work using a simplified example: Alice wants to pay Bob $10. <strong>First</strong>, she calls Bob and asks him for his <strong>Recipient Address</strong>. This is a unique identifer on the PayApp network that represents a $ balance belonging to Bob. Alice has a Recipient Addres too*! Second, she logs on to a payment provider (such as PayApp) and says she wants to send $10 to Bob's Recipient Address. This will generate a SPTX identifier. Third, she gives that SPTX identifier to Bob. It's as simple as that!</p>
+            <button id="sptxNext4">Next</button>
+
+            <p style="font-size: 0.85em">*In fact, Alice might have multiple Recipient Addresses on multiple apps. Each Recipient Address represents a different balance, even though they all belong to  Alice!</p>
+          </div>
+
+
+          <div id="p5" class="hidden">
+            <h2>The SPTXs & Payment Module: The Three Steps (Receiving)</h2>
+            <p>Let's check in on Bob, who's eagerly awaiting his $10 payment. So what does he do? He follows a three step process of his own! At this point in our example he's already completed step 1 (giving Alice his Recipient Address) <em>and</em> step 2 (receiving an SPTX from Alice) of. Now, all he needs to do to complete step 3 is log into his payment app (also PayApp) and process the SPTX! His balance should update by $10 in no time!</p>
+            <button id="sptxNext5">Next</button>
+          </div>
+
+          <div id="p6" class="hidden">
+            <h2>The SPTXs & Payment Module: High Level Review</h2>
+            <p>Let's Review the steps:</p>
+            <p>‣ Bob's Recipient Address → Alice</p>
+            <p>‣ Alice's SPTX → Bob</p>
+            <p>‣ Bob processes the SPTX</p>
+            <button id="sptxNext6">Next</button>
+          </div>
+
+          <div id="p7" class="hidden">
+            <h2>The SPTXs & Payment Module: Under The Hood</h2>
+            <p>So what's going on under the hood? First, it's important to understand that Alice and Bob don't actually <em>own</em> the $ that they are transacting with. This $ is owned and held by the various entities within the PayApp payment network, and each have multiple accounts with various users. And Recipient Addresses really represent an individual's $ account help by a specific payment entity. This means that Alice and Bob could have Recipient Addresses with PayApp and with Currency Xchange. Both addresses represent balances that technically belong to them, but the $ is held by accounts at two different payment entities.</p>
+            <button id="sptxNext7">Next</button>
+          </div>
+
+
+          <div id="p8" class="hidden">
+            <h2>The SPTXs & Payment Module: Under The Hood</h2>
+            <p>When Alice creates a SPTX, this payment is sent to a secure database with information about the sender, recipient, and so forth. An advanced encryption algorithm is used to sign the transaction payload, and an indentifier (the SPTX identifier) is returned to the sender. This identifier is then used by the recipient's payment entity to locate the transaction within the payment database. If Alice or Bob loses this identifier, then there is no way to securely retrieve the transaction. And if the SPTX is not processed within 90 days, then Federal law dictates that the payment entity's obligation to the recipient is extinguished. </p>
+            <button id="sptxNext8">Next</button>
+          </div>
+
+          <div id="p9" class="hidden">
+            <h2>The SPTXs & Payment Module: Tutorial</h2>
+            <p>In the following tutorial, you will play the role of Charlie, who wants to send $ from his Currency Exchange account to his PayApp account.</p>
+            <button id="sptxNext9">Start Turorial</button>
+          </div>
+
+          <div id="p10" class="hidden">
+            <h2>The SPTXs & Payment Module: Tutorial (1/3)</h2>
+            <p>Let's start in the "Receive" tab on PayApp. This is the address you will send the $ to. Be sure to copy the Recipient Address before advancing to the next step!</p>
+
+            <div style="border: 1px solid; padding: 0.25em">
+              <h2>PayApp</h2>
+              <h3 style="margin: 1em 0; text-align: center">Current $ Balance: $0.00</h3>
+
+              <h4>My $ Recipient Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h4>
+              <span style="font-size: 0.9em; background: #000; color: #fff; padding: 0.25em; margin-top: 0.1em; display: inline-block">0x11111111111111111111111111111111111111</span>
+              <div style="margin-top: 0.5em">
+                <input placeholder="S.P.T.X. identifier" type="number">
+                <button id="processSPTX1">Process SPTX</button>
+              </div>
+              <h5 id="sptxError1"></h5>
+            </div>
+
+            <button id="sptxNext10" style="margin-top: 0.5em">Continue</button>
+          </div>
+
+          <div id="p11" class="hidden">
+            <h2>The SPTXs & Payment Module: Tutorial (2/3)</h2>
+            <p>Now, use your PayApp $ Recipient Address to generate a SPTX for $10. Remember not to lose your SPTX!</p>
+
+            <div style="border: 1px solid; padding: 0.25em">
+              <h2>Currency Xchange</h2>
+
+              <h3>$ Balance: <span id="exchangeBalance">10.0000</span></h3>
+
+              <h4 style="margin: 0.4em 0">Send Funds</h4>
+              <input id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin: 0.4em 0">
+              <input id="sendUSDAmount" placeholder="$ 0.00" type="number" step=".01" style="width: 6em"> <button id="sendUSD" style="margin-bottom: 0.1em">SEND $</button>
+              <h5>SPTX: <span id="sptxError2">[-----------------]</span></h5>
+
+              <div style="border-top: 2px solid; margin-top: 0.4em">
+                <h4 style="margin: 0.4em 0">Receive $</h4>
+                <h5 style="border: 1px dotted; text-align: center; padding: 0.25em">0x22222222222222222222222222222222222222</h5>
+                <input id="sptxInput" placeholder="SPTX" type="number" style="width: 11em"> <button id="exchangeProcessSPTX">PROCESS</button>
+                <h4 id="sptxError3"></h4>
+              </div>
+            </div>
+
+            <button id="sptxNext11" style="margin-top: 0.5em" disabled>Continue</button>
+          </div>
+
+
+          <div id="p12" class="hidden">
+            <h2>The SPTXs & Payment Module: Tutorial (3/3)</h2>
+            <p>Now that you have a SPTX, all you need to do is process it!</p>
+
+            <div style="border: 1px solid; padding: 0.25em">
+              <h2>PayApp</h2>
+              <h3 style="margin: 1em 0; text-align: center">Current $ Balance: <span id="finalBalance">$0.00</span></h3>
+              <h4>My $ Recipient Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h4>
+              <span style="font-size: 0.9em; background: #000; color: #fff; padding: 0.25em; margin-top: 0.1em; display: inline-block">0x11111111111111111111111111111111111111</span>
+              <div style="margin-top: 0.5em">
+                <input id="finalSPTX" placeholder="S.P.T.X. identifier" type="number">
+                <button id="processSPTX2">Process SPTX</button>
+              </div>
+              <h5 id="sptxError4"></h5>
+            </div>
+
+            <button id="sptxNext12" style="margin-top: 0.5em" disabled>Continue</button>
+          </div>
+
+
+          <div id="p13" class="hidden">
+            <h2>The SPTXs & Payment Module: Review</h2>
+            <p>That's all there is to it!</p>
+
+            <p>In this module we:</p>
+            <p>1. Learned what the SPTX protocol is, and why it's important</p>
+            <p>2. Walked through a simple SPTX example</p>
+            <p>3. Looked at what goes on under the hood in a SPTX payment</p>
+            <p>4. Got hands-on experience in an interactive tutorial</p>
+
+            <div>
+              <button id="complete">Complete</button> (+40 XP)
+            </div>
+          </div>
+        `
+
+        ctx.$('#processSPTX1').onclick = () => {
+          ctx.$('#sptxError1').innerHTML = `You don't have an SPTX yet! You'll get one in the next step. Make sure you've coppied your PayApp $ Recipient Address before advancing!`
+        }
+        ctx.$('#sendUSD').onclick = () => {
+          if (ctx.$('#sendUSDAddress').value !== '0x11111111111111111111111111111111111111') {
+            ctx.$('#sptxError2').innerHTML = `Wrong Recipient Address! You want to send to your PayApp account, not your Currency Xchange account!`
+          } else {
+            ctx.$('#exchangeBalance').innerHTML = `0.0000`
+            ctx.$('#sptxNext11').disabled = false
+            ctx.$('#sptxError2').innerHTML = `Message: Secure Payment Transaction (S.P.T.X.) identifier: <span style="font-size: 1.25em">1234567890</span>`
+          }
+        }
+        ctx.$('#exchangeProcessSPTX').onclick = () => {
+          ctx.$('#sptxError3').innerHTML = `Oops! You're trying to send $ back to your Currency Xchange account! You want to send it to your PayApp account in the next step!`
+        }
+
+        ctx.$('#processSPTX2').onclick = () => {
+          if (Number(ctx.$('#finalSPTX').value) !== 1234567890) {
+            ctx.$('#sptxError4').innerHTML = `Uh oh! You input the wrong SPTX!`
+          } else {
+            ctx.$('#sptxNext12').disabled = false
+            ctx.$('#sptxError4').innerHTML = `Success!`
+            ctx.$('#finalBalance').innerHTML = `$10.00`
+          }
+        }
+
+        ctx.$('#sptxNext1').onclick = () => {
+          ctx.$('#p1').classList.add('hidden')
+          ctx.$('#p2').classList.remove('hidden')
+        }
+
+        ctx.$('#sptxNext2').onclick = () => {
+          ctx.$('#p2').classList.add('hidden')
+          ctx.$('#p3').classList.remove('hidden')
+        }
+
+        ctx.$('#sptxNext3').onclick = () => {
+          ctx.$('#p3').classList.add('hidden')
+          ctx.$('#p4').classList.remove('hidden')
+        }
+
+        ctx.$('#sptxNext4').onclick = () => {
+          ctx.$('#p4').classList.add('hidden')
+          ctx.$('#p5').classList.remove('hidden')
+        }
+
+        ctx.$('#sptxNext5').onclick = () => {
+          ctx.$('#p5').classList.add('hidden')
+          ctx.$('#p6').classList.remove('hidden')
+        }
+
+        ctx.$('#sptxNext6').onclick = () => {
+          ctx.$('#p6').classList.add('hidden')
+          ctx.$('#p7').classList.remove('hidden')
+        }
+
+        ctx.$('#sptxNext7').onclick = () => {
+          ctx.$('#p7').classList.add('hidden')
+          ctx.$('#p8').classList.remove('hidden')
+        }
+
+        ctx.$('#sptxNext8').onclick = () => {
+          ctx.$('#p8').classList.add('hidden')
+          ctx.$('#p9').classList.remove('hidden')
+        }
+
+        ctx.$('#sptxNext9').onclick = () => {
+          ctx.$('#p9').classList.add('hidden')
+          ctx.$('#p10').classList.remove('hidden')
+        }
+
+        ctx.$('#sptxNext10').onclick = () => {
+          ctx.$('#p10').classList.add('hidden')
+          ctx.$('#p11').classList.remove('hidden')
+        }
+
+        ctx.$('#sptxNext11').onclick = () => {
+          ctx.$('#p11').classList.add('hidden')
+          ctx.$('#p12').classList.remove('hidden')
+        }
+
+        ctx.$('#sptxNext12').onclick = () => {
+          ctx.$('#p12').classList.add('hidden')
+          ctx.$('#p13').classList.remove('hidden')
+        }
+
+        ctx.$('#complete').onclick = () => {
+          ctx.state.screen = 'educator'
+          ctx.setUserData({
+            educatorModulesCompleted: { ...educatorModulesCompleted, sptx: true}
+          })
+        }
+
+
+
+
+
+      } else if (educatorModule === 'crypto') {
+        $moduleContent.innerHTML = ``
+
+      }
+
+
+      ctx.$('#quit').onclick = () => {
+        ctx.setState({ screen: 'educator' })
       }
 
     } else if (screen === 'identityWizard') {
@@ -3993,6 +4845,7 @@ createComponent(
       const mainInterface = `
         <div style="text-align: center; margin: 1em 0">
           <button id="autoFlusher">${globalState.autoFlusherActive ? 'Disable' : 'Enable'} Auto-Flusher</button>
+          <h3 style="margin-top: 0.5em">Auto-Flusher: <span style="font-size: 0.75em">${globalState.autoFlusherActive ? 'Enabled' : 'Disabled'}</span></h3>
           <h3>Toilet paper level: <span style="font-size: 0.75em">LOW</span></h3>
           <h3>AirFresh quantity: <span style="font-size: 0.75em">EMPTY</span></h3>
         </div>
@@ -4002,7 +4855,8 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <h1 style="margin: 1em 0; text-align: center">FlushMate</h1>
+          <h1 style="margin-top: 1em; margin-bottom: 0;text-align: center">FlushMate</h1>
+          <h3 style=" text-align: center; margin-top: 0.5em"><span class="icon" >♧ ♧ ♧ ♧ ♧</span></h3>
           ${
             bluetoothEnabled
               ? flushMatePaired
@@ -4035,6 +4889,7 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+
     } else if (screen === 'exe') {
       const {exeCommands, rootUser} = ctx.state
 

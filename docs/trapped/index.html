@@ -483,6 +483,10 @@
       handler: ({ur}) => ur
     }),
 
+    showerOff: {
+      text: 'You hear the shower turn off'
+    },
+
     ...group({
       hallway: {
         before({ ctx }) {
@@ -500,16 +504,16 @@
         }
       },
 
-      hallwayShower: [
-        {
-          before({ ctx }) {
-            globalState.location = 'hallway'
-          },
-          text: 'You enter the hallway',
-          wait: 1800
+      hallwayShower: {
+        before({ ctx }) {
+          globalState.location = 'hallway'
         },
-        { text: 'You hear the shower turn off'}
-      ],
+        text: 'You enter the hallway',
+        follow: async () => {
+          await waitPromise(1000)
+          return 'showerOff'
+        }
+      },
 
       motionSensor: {
         text: 'A motion sensor picks up your movement and the camera above the front door comes to life',
@@ -960,15 +964,17 @@
         },
         text: ({ctx}) => `You enter the bathroom`,
         follow: 'showerOn',
-        wait: 1800
+        wait: 1000
       },
 
       showerOn: {
         text: 'The shower turns on',
-        follow({ctx}) {
-          if (ctx.state.urine) return globalState.autoFlusherActive  ? 'flush' : 'urine'
+        async follow({ctx}) {
+          if (ctx.state.urine) {
+            await waitPromise(1500)
+            return globalState.autoFlusherActive  ? 'flush' : 'urine'
+          }
         },
-        wait: 1800
       },
 
       flush: {

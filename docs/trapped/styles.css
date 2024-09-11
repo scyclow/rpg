@@ -30,16 +30,17 @@
   scrollbar-width: thin;
 
   /*font-family: "Source Code Pro", monospace;*/
-  font-family: "Roboto", monospace;
-  font-optical-sizing: auto;
-  line-height: 1.2;
-  font-size: 0.97em;
 }
 
 body {
   background: var(--bg-color);
   transition: 0.7s;
   animation: FadeIn 0.5s linear;
+
+  font-family: "Roboto", monospace;
+  font-optical-sizing: auto;
+  line-height: 1.2;
+  font-size: 0.97em;
 
 
 }
