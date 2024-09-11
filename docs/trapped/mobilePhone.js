@@ -1393,7 +1393,6 @@ createComponent(
             <h3 style="margin: 1em 0; text-align: center">Current $ Balance: $${hasInternet ? usdBalance.toFixed(2) : '-.--'}</h3>
 
             <h3 style="text-align: center; margin: 0.25em 0">I want to: <select id="payAction" style="font-size: 1.1em; box-shadow: 1px 1px 0 #000">
-              <option value="choose"></option>
               <option value="send">Send $</option>
               <option value="receive">Receive $</option>
               <option value="learn">Learn</option>
@@ -1457,7 +1456,7 @@ createComponent(
         </div>
       `
 
-      ctx.$('#payAction').onchange = () => {
+      const renderPage = () => {
         const val = ctx.$('#payAction').value
         const $receive = ctx.$('#receiveModule')
         const $learn = ctx.$('#learnModule')
@@ -1481,6 +1480,11 @@ createComponent(
           $learn.classList.add('hidden')
         }
       }
+
+      renderPage()
+
+      ctx.$('#payAction').onchange = renderPage
+
 
       ctx.$('#educatorApp').onclick = () => {
         if (educatorDownloaded) {
@@ -1538,6 +1542,10 @@ createComponent(
 
           ctx.receiveSPTX(sptxInput)
 
+
+          ctx.$('#payAction').value = 'receive'
+          renderPage()
+
           if (payment.amount >= 1000) {
             setTimeout(() => {
               ctx.setState({
@@ -1586,6 +1594,9 @@ createComponent(
           amount
         })
 
+
+        ctx.$('#payAction').value = 'send'
+        renderPage()
 
         setTimeout(() => {
           ctx.$('#sptx').innerHTML = `Secure Payment Transaction (S.P.T.X.) identifier: ${sptx}`
@@ -4086,7 +4097,7 @@ createComponent(
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
               <div>
                 <h5>Your High Score: <span id="highScore">${existingHighScore.toFixed(2)}</span></h5>
-                <h5>Global Score: <span id="highScore">${ctx.state.yieldFarmerGlobalHighScore.toFixed(2)}</span></h5>
+                <h5>Global Score: <span id="globalHighScore">${ctx.state.yieldFarmerGlobalHighScore.toFixed(2)}</span></h5>
               </div>
               <button id="gotoAbout" style="margin-bottom:0">About</button>
             </div>
