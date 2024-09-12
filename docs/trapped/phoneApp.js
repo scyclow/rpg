@@ -367,7 +367,6 @@ function phoneBehavior(ctx) {
   }
 
   function startInterval() {
-    console.log('interval')
     transcriptTimeout = setTimeout(() => {
       $menu.innerHTML = `Transcript: `
 
@@ -400,12 +399,18 @@ function phoneBehavior(ctx) {
   }
 
 
-
   const phoneCall = PhoneCall.active || new PhoneCall(
     async (phone, key) => {
       clearTranscripts()
 
       const dialed = phone.dialed.join('')
+
+      if (dialed.length > 0 && dialed.length < 11) {
+        ctx.$('#hangup').innerHTML = 'Clear'
+      } else {
+        ctx.$('#hangup').innerHTML = 'Hangup'
+      }
+
       ctx.$('#dialedNumber').innerHTML = formatPhoneNumber(phone.dialed.slice(0, 11))
 
       if (ctx.state.soundEnabled) ctx.$('#menuNumbers').innerHTML = phone.dialed.slice(11).join('')

@@ -113,6 +113,13 @@ p {
   display: none !important;
 }
 
+.disabled {
+  opacity: 0.5;
+  user-select: none;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
 .invisible {
   opacity: 0;
 }

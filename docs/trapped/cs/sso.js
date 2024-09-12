@@ -369,10 +369,11 @@ export const ssoNodes = {
   },
 
   invalidPIN: {
-    text: `I'm sorry, but the PIN you have entered is incorrect. If you'd like to verify your identity by answering your account's security question then press 1. To return to the main menu press 2.`,
+    text: `I'm sorry, but the PIN you have entered is incorrect. If you'd like to verify your identity by answering your account's security question then press 1. If you've forgotten your secret PIN and would like to reset it then press 2. To return to the main menu press 3.`,
     handler: options({
       1: 'securityQuestion',
-      2: 'intro'
+      2: 'forgotPassword',
+      3: 'intro'
     })
   },
 

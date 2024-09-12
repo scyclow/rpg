@@ -32,7 +32,7 @@
 <script type="module">
   import {ls} from './$.js'
 
-  window.GAME_VERSION = 1.8
+  window.GAME_VERSION = 1.9
 
   const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
   if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {
@@ -54,13 +54,16 @@
         <aside>
           <div id="nextActions"></div>
           <div id="notebook" style="transition: 0.3s;" class="invisible hidden">
-            <div style="display: flex; justify-content: space-between;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5em;">
               <h4>eBook</h4>
               <div>
-                <button id="pluginEbook">Plug In</button>
-                <button>Factory Reset</button>
+                <span id="ebookBattery">(97%)</span>
+                <button id="pluginEbook" style="margin: 0">Plug In</button>
+                <button id="pairWithNotes" style="margin: 0">Pair with NotePad</button>
+                <!-- <button>Factory Reset</button> -->
               </div>
             </div>
+            <div id="ebookError" style="text-align: right;"></div>
             <textarea id="ebookTextArea">ERROR: Cannot acccess Library </textarea>
           </div>
         </aside>
@@ -125,14 +128,74 @@
   //   }
   // })
 
-  $.id('pluginEbook').onclick = () => {
+
+  $.id('ebookBattery').innerHTML = `(${globalState.ebookBattery}%)`
+  $.id('ebookTextArea').innerHTML = globalState.ebookContent
+
+  function pluginEbook() {
+    globalState.ebookOpen = false
+
     $.id('notebook').classList.add('invisible')
     setTimeout(() => {
       $.id('notebook').classList.add('hidden')
     }, 350)
+
+
+    setTimeout(() => {
+      $.id('ebookTextArea').classList.remove('disabled')
+    }, 500)
+
+
+    clearInterval(tmp.ebookInterval)
+
+    tmp.ebookInterval = setInterval(() => {
+      if (globalState.ebookBattery < 100) globalState.ebookBattery += 1
+    }, 4000)
+  }
+
+  $.id('ebookTextArea').onkeyup = () => globalState.ebookContent = $.id('ebookTextArea').value
+  $.id('ebookTextArea').onpaste = () => globalState.ebookContent = $.id('ebookTextArea').value
+
+  $.id('pluginEbook').onclick = pluginEbook
+  $.id('pairWithNotes').onclick = () => {
+    $.id('ebookError').innerHTML = 'An Error Occurred'
+    setTimeout(() => {
+      $.id('ebookError').innerHTML = ''
+    }, 3000)
   }
 
 
+  function unplugEbook() {
+    globalState.ebookOpen = true
+
+    $.id('ebookBattery').innerHTML = `(${globalState.ebookBattery}%)`
+
+
+    $.id('notebook').classList.remove('hidden')
+
+    setTimeout(() => {
+      $.id('notebook').classList.remove('invisible')
+    }, 10)
+
+    setTimeout(() => {
+      $.id('ebookTextArea').focus()
+      $.id('ebookTextArea').selectionEnd = 80
+      $.id('ebookTextArea').selectionStart = 80
+    }, 400)
+
+    clearInterval(tmp.ebookInterval)
+    tmp.ebookInterval = setInterval(() => {
+      if (globalState.ebookBattery > 0) globalState.ebookBattery -= 1
+      $.id('ebookBattery').innerHTML = `(${globalState.ebookBattery}%)`
+
+      if (globalState.ebookBattery === 0) {
+        $.id('ebookTextArea').blur()
+        $.id('ebookTextArea').value = 'Battery Depleted'
+        $.id('ebookTextArea').classList.add('disabled')
+        globalState.ebookContent = 'Battery Depleted'
+      }
+    }, 12000)
+  }
 
 
 
@@ -689,15 +752,20 @@
       reenterApartment: {
         before({ ctx }) {
           globalState.location = 'hallway'
+
+          $consoleTemperature.innerHTML = ctx.state.checkedThermostatTwice ? ' — 84˚ [CO2 LEVEL: HAZARDOUS]' : ' — 99˚'
+          $consoleTime.innerHTML = ` — ${formatTime(globalState.countdownTimeLeft)}`
+
           if (globalState.lightsOn) {
-            setColor('--bg-color', '#fff')
-            setColor('--primary-color', '#000')
+            const { light1, light2 } = globalState
+            setColor('--bg-color', hsvToRGB(light1))
+            setColor('--primary-color', hsvToRGB(light2))
           } else {
             setColor('--bg-color', 'var(--dark-color)')
             setColor('--primary-color', 'var(--light-color)')
           }
         },
-        text: `You reenter your apartment and close the door.`
+        text: `You reenter your apartment and close the door`
       },
 
       frontDoorListen: {
@@ -722,8 +790,8 @@
       handler: ({ur}) => ur,
       actions: ({ctx}) => [
         {text: 'Back', value: 'hallwayCurrent'},
-        {text: 'Open Door', value: globalState.smartLockOpen ? 'openDoorUnlocked' : 'openDoorLocked'},
-        {text: 'Listen Closely', value: 'frontDoorListen'},
+        {text: 'Open Door', value: globalState.smartLockOpen ? 'openDoorUnlocked' : 'openDoorLocked', qr: {screen: 'messageViewer', messageViewerMessage: 'Powered by SmartLock Technology<sup>TM</sup> Download the Official App today!'}},
+        {text: 'Listen Closely', value: 'frontDoorListen', qr: {screen: 'messageViewer', messageViewerMessage: 'Powered by SmartLock Technology<sup>TM</sup> Download the Official App today!'}},
         ctx.state.envelopesPickedUp ? null : {text: 'Pick Up Envelopes', value: 'pickupEnvelopes'}
       ].filter(exists),
       after() {
@@ -796,19 +864,13 @@
 
 
       eBook: {
-        text: 'You pick up the eBook',
-        follow() {
-          $.id('notebook').classList.remove('hidden')
-
-          setTimeout(() => {
-            $.id('notebook').classList.remove('invisible')
-          }, 10)
-
-          setTimeout(() => {
-            $.id('ebookTextArea').focus()
-            $.id('ebookTextArea').selectionEnd = 80
-            $.id('ebookTextArea').selectionStart = 80
-          }, 400)
+        text: () => globalState.ebookOpen ? 'You plug in the eBook' : 'You pick up the eBook',
+        follow({ctx}) {
+          if (globalState.ebookOpen) {
+            pluginEbook()
+          } else {
+            unplugEbook()
+          }
         }
       },
       tv: {
@@ -869,7 +931,7 @@
         { text: 'Phone', value: 'openPhone'},
         { text: 'Hallway', value: 'hallway'},
         { text: 'Kitchen', value: 'kitchen'},
-        { text: 'SmartPlanter<sup>TM</sup>', value: 'planter'},
+        { text: 'SmartPlanter<sup>TM</sup>', value: 'planter', qr: {screen: 'messageViewer', messageViewerMessage: `Your plants will thank you once you download the official SmartPlanter<sup>TM</sup> app!` } },
         { text: 'Window', value: 'livingroomWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'} },
 
         { text: 'Router', value: 'router'},
@@ -1014,7 +1076,7 @@
       },
 
       toiletQR: {
-        text: 'On the side of the tank you see a QR code next to the text: "Scan this QR code with QR Scanner!"'
+        text: 'On the side of the tank you see a QR code next to the text: "Scan this QR code with the QR Scanner app!"'
       },
       bathroomSink: {
         text: 'You wave your hands in front of the sink, but nothing happens. A small red light blinks at its base'
@@ -1167,19 +1229,32 @@
     },
 
     ...group({
-      externalHallway: {
-        before({ ctx }) {
-          globalState.location = 'externalHallway'
+      externalHallway: [
+        {
+          before({ ctx }) {
+            globalState.location = 'externalHallway'
 
-          setTimeout(() => {
-            setColor('--bg-color', '#fff')
-            setColor('--primary-color', '#000')
+            $consoleTemperature.innerHTML = ' — ??˚'
+            if (ctx.state.checkedAlarmClock) $consoleTime.innerHTML = ` — ??:??:??`
 
-            // TODO rumbling noise, shuts off when you enter apartment
-          }, 2000)
+          },
+          text: 'You exit your apartment and enter a hallway',
+          wait: 1800
         },
-        text: 'You exit your apartment and enter a hallway. A series of LED lights flicker on and glare overhead. Pipes jut out from the ceiling and recede into the narrow, white walls'
-      },
+        {
+          before() {
+            setTimeout(() => {
+              setColor('--bg-color', '#fff')
+              setColor('--primary-color', '#000')
+            }, 500)
+          },
+          text: 'A series of LED lights flicker on and glare overhead',
+          wait: 1800
+        },
+        {
+          text: 'Pipes jut out from the ceiling and recede into the narrow, white walls'
+        }
+      ],
 
       externalHallwayBack: {
         text: 'You walk back towards the apartment door'
@@ -1228,7 +1303,7 @@
         before({ ctx }) {
           globalState.location = 'stairway'
           setColor('--bg-color', '#000')
-          setColor('--primary-color', '#fff')
+          setColor('--primary-color', '#c1bf9f')
 
           if (tmp.src1 && tmp.src2) {
             tmp.src1.smoothGain(0.000001, 1)
@@ -1313,13 +1388,15 @@
     const $content = $.id('mainConsoleContent')
     const $nextActions = $.id('nextActions')
 
+
+
     if (globalState.location === 'externalHallway') {
       setColor('--bg-color', '#fff')
       setColor('--primary-color', '#000')
 
     } else if (globalState.location === 'stairway') {
       setColor('--bg-color', '#000')
-      setColor('--primary-color', '#fff')
+      setColor('--primary-color', '#c1bf9f')
     } else if (globalState.lightsOn) {
       const { light1, light2 } = globalState
       setColor('--bg-color', hsvToRGB(light1))
@@ -1338,12 +1415,33 @@
     // if (ctx.state.checkedAlarmClock) {
     //   $consoleTime.innerHTML = ` — ${formatTime(globalState.eventLoopStartTime + (30 * 60 * 1000) - Date.now())}`
     // }
-    if (ctx.state.checkedThermostat) {
+
+    if (globalState.location === 'externalHallway' || globalState.location === 'stairway') {
+      $consoleTemperature.innerHTML = ' — ??˚'
+
+    } else if (ctx.state.checkedThermostat) {
       $consoleTemperature.innerHTML = ctx.state.checkedThermostatTwice ? ' — 84˚ [CO2 LEVEL: HAZARDOUS]' : ' — 99˚'
     }
 
+    clearInterval(tmp.ebookInterval)
+    if (globalState.ebookOpen) {
+      unplugEbook()
+      if (globalState.ebookBattery === 0) {
+        $.id('ebookTextArea').blur()
+        $.id('ebookTextArea').value = 'Battery Depleted'
+        $.id('ebookTextArea').classList.add('disabled')
+      }
+    } else {
+      tmp.ebookInterval = setInterval(() => {
+        if (globalState.ebookBattery < 100) globalState.ebookBattery += 1
+      }, 4000)
+    }
 
-    if (ctx.currentKey === 'openPhone') {
+
+
+
+
+    if (ctx.state.isOpen) {
       sm.goto('closePhone')
     }
 
@@ -1371,9 +1469,17 @@
 
   let countdownInterval
   const createCountdownTimerInterval = () =>  setRunInterval(() => {
+
+
     if (primaryStartingCtx.state.checkedAlarmClock) {
       globalState.countdownTimeLeft -= 1000
-      $consoleTime.innerHTML = ` — ${formatTime(globalState.countdownTimeLeft)}`
+
+      if (globalState.location === 'externalHallway' || globalState.location === 'stairway') {
+        $consoleTime.innerHTML = ` — ??:??:??`
+
+      } else {
+        $consoleTime.innerHTML = ` — ${formatTime(globalState.countdownTimeLeft)}`
+      }
 
       if (globalState.countdownTimeLeft % 60000 === 0) {
         globalState.countdownIntervalTime *= 1.025

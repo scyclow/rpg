@@ -153,7 +153,7 @@ export const billingCSNodes = {
   },
 
   sptxInstructions2: {
-    text: `Once you have downloaded the Pay App application from your device's App Market, fund your Pay App balance. Once you have funded your Pay App balance press 1., To repeat this message press 2., To go back press 3., To dispute your unpaid balance press 4., To go back to the main menu press 5`,
+    text: `Once you have downloaded the Pay App application from your device's App Market, fund your Pay App balance with ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., Once you have funded your Pay App balance with ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., press 1., To repeat this message press 2., To go back press 3., To dispute your unpaid balance press 4., To go back to the main menu press 5`,
     handler: options({
       1: 'sptxInstructions3',
       2: 'sptxInstructions2',
@@ -165,7 +165,7 @@ export const billingCSNodes = {
 
 
   sptxInstructions3: {
-    text: `Once you have funded your Pay App balance, please enter, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., into the send amount input box. Once you have entered, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., into the send amount input box press 1., To repeat this message press 2., To go back press 3., To dispute your unpaid balance press 4., To go back to the main menu press 5`,
+    text: `Once you have funded your Pay App balance with ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., please enter, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., into the send amount input box. Once you have entered, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., into the send amount input box press 1., To repeat this message press 2., To go back press 3., To dispute your unpaid balance press 4., To go back to the main menu press 5`,
     handler: options({
       1: 'sptxInstructions4',
       2: 'sptxInstructions3',

@@ -164,6 +164,7 @@ const state = persist('__MOBILE_STATE', {
   smartLockPaired: false,
   thermoSmartPaired: false,
   flushMatePaired: false,
+  shaydLuminPair: false,
 
   educatorModule: '',
   plantStatus: 1,
@@ -778,7 +779,7 @@ createComponent(
 
 
     const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
-    const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged
+    const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged && globalState.routerReset
     const wifiConnected = internet === 'wifi' && wifiNetwork && inInternetLocation && wifiAvailable
     const dataConnected = internet === 'data' && dataPlanActivated && inInternetLocation
     const hasInternet = dataConnected || wifiConnected
@@ -1309,16 +1310,24 @@ createComponent(
           <div class="phoneScreen">
             <button id="home">Back</button>
             <button id="wifi">Switch to Wifi</button>
-            <h3>Data Plan: ${dataPlanActivated ? 'TurboConnect FREE TRIAL for MOBILE + DATA Plan' : 'null'}</h3>
-            <div id="connectForm">
+            <h3 style="margin-bottom: 0.5em">Data Plan: ${dataPlanActivated ? 'TurboConnect FREE TRIAL for MOBILE + DATA Plan' : 'null'}</h3>
+
+            <button id="connectAgain" class="${dataPlanActivated ? '' : 'hidden'}">Connect to Another Network</button>
+
+            <div id="connectForm" class="${dataPlanActivated ? 'hidden' : ''}">
               <input id="spc" placeholder="SPC">
               <input id="districtIndex" placeholder="District Index">
               <input id="unlockCode" placeholder="Unlock Code">
               <button id="connectData">Connect</button>
+              <h3 id="error"></h3>
             </div>
-            <h3 id="error"></h3>
           </div>
         `
+        ctx.$('#connectAgain').onclick = () => {
+          ctx.$('#connectAgain').classList.add('hidden')
+          ctx.$('#connectForm').classList.remove('hidden')
+        }
+
         ctx.$('#connectData').onclick = () => {
           ctx.$('#error').innerHTML = '<span class="blink">Connecting...</span>'
 
@@ -1690,7 +1699,7 @@ createComponent(
               <p style="margin-bottom: 0.75em"><strong>2.</strong> Using the Customer Referral Code: <strong>777123865</strong>, follow the instructions given</p>
               <p style="margin-bottom: 0.75em"><strong>3.</strong> Input the resulting <strong>IVC</strong> here:</p>
               <div style="text-align: center">
-                <input id="ivcValue" placeholder="I.V.C." id="ivc" style="padding: 0.25em; text-align: center"> <button id="submitIVC" style="margin-bottom: 0; font-size: 1em">Submit</button>
+                <input id="ivcValue" placeholder="I.V.C." id="ivc" style="padding: 0.25em; text-align: center"> <button id="submitIVC" style="margin-bottom: 0; margin-top: 0.4em; font-size: 1em">Submit</button>
               </div>
               <h4 id="ivcError" style="text-align: center; margin-top: 0.4em"></h4>
             </div>
@@ -1743,36 +1752,33 @@ createComponent(
           <h3 style="text-align: center;"><span class="icon">✎✎✎</span></h3>
           <h3 style="text-align: center; margin: 0.4em 0">Making financial education fun!</h3>
           <h3 style="text-align: center;"><span class="icon">✙</span></h3>
-          <h3 style="text-align: center; margin: 0.4em 0">Education XP: ${xp}</h3>
+          <h3 style="text-align: center; margin: 0.4em 0">Education XP: ${hasInternet ? xp : 'Cannot access XP - Please connect to internet'}</h3>
 
           <h4 style="margin-top: 2em; margin-bottom: 0.5em">Education Modules:</h4>
 
-          ${hasInternet ? `
-            <div>
-              <button id="intro">${educatorModulesCompleted.intro ? 'Review' : 'Start'}</button> <strong>Introduction</strong> (${educatorModulesCompleted.intro ? '<em>Completed!</em>' : '<strong>10 XP</strong>'})
-            </div>
+          <div>
+            <button id="intro">${educatorModulesCompleted.intro ? 'Review' : 'Start'}</button> <strong>Introduction</strong> (${educatorModulesCompleted.intro ? '<em>Completed!</em>' : '<strong>10 XP</strong>'})
+          </div>
 
-            <div>
-              <button id="history" ${!educatorModulesCompleted.intro ? 'disabled' : ''}>${educatorModulesCompleted.history ? 'Review' : !educatorModulesCompleted.intro ? 'Locked' : 'Start'}</button> <strong>The History of $</strong> (${!educatorModulesCompleted.intro ? '<strong>Needs 10XP!</strong>' : educatorModulesCompleted.history ? '<em>Completed!</em>' : '<strong>20 XP</strong>'})
-            </div>
+          <div>
+            <button id="history" ${!educatorModulesCompleted.intro ? 'disabled' : ''}>${educatorModulesCompleted.history ? 'Review' : !educatorModulesCompleted.intro ? 'Locked' : 'Start'}</button> <strong>The History of $</strong> (${!educatorModulesCompleted.intro ? '<strong>Needs 10XP!</strong>' : educatorModulesCompleted.history ? '<em>Completed!</em>' : '<strong>20 XP</strong>'})
+          </div>
 
-            <div>
-              <button id="system" ${!educatorModulesCompleted.intro ? 'disabled' : ''}>${educatorModulesCompleted.system ? 'Review' : !educatorModulesCompleted.intro ? 'Locked' : 'Start'}</button> <strong>The $ System</strong> (${!educatorModulesCompleted.intro ? '<strong>Needs 10XP!</strong>' : educatorModulesCompleted.system ? '<em>Completed!</em>' : '<strong>20 XP</strong>'})
-            </div>
+          <div>
+            <button id="system" ${!educatorModulesCompleted.intro ? 'disabled' : ''}>${educatorModulesCompleted.system ? 'Review' : !educatorModulesCompleted.intro ? 'Locked' : 'Start'}</button> <strong>The $ System</strong> (${!educatorModulesCompleted.intro ? '<strong>Needs 10XP!</strong>' : educatorModulesCompleted.system ? '<em>Completed!</em>' : '<strong>20 XP</strong>'})
+          </div>
 
-            <div>
-              <button id="sptx" ${educatorModulesCompleted.history && educatorModulesCompleted.system ? '' : 'disabled'}>${educatorModulesCompleted.sptx ? 'Review' : educatorModulesCompleted.history && educatorModulesCompleted.system ? 'Start' : 'Locked'}</button> <strong>SPTXs & Payment</strong> (${educatorModulesCompleted.sptx ? '<em>Completed!</em>' : educatorModulesCompleted.history && educatorModulesCompleted.system ? '<strong>40 XP</strong>' : '<strong>Needs 50XP!</strong>'})
-            </div>
+          <div>
+            <button id="sptx" ${educatorModulesCompleted.history && educatorModulesCompleted.system ? '' : 'disabled'}>${educatorModulesCompleted.sptx ? 'Review' : educatorModulesCompleted.history && educatorModulesCompleted.system ? 'Start' : 'Locked'}</button> <strong>SPTXs & Payment</strong> (${educatorModulesCompleted.sptx ? '<em>Completed!</em>' : educatorModulesCompleted.history && educatorModulesCompleted.system ? '<strong>40 XP</strong>' : '<strong>Needs 50XP!</strong>'})
+          </div>
 
-            <div>
-              <button id="crypto" ${educatorModulesCompleted.sptx ? '' : 'disabled'}>${educatorModulesCompleted.crypto ? 'Review' : educatorModulesCompleted.sptx ? 'Start' : 'Locked'}</button> <strong>CryptoCurrency</strong> (${educatorModulesCompleted.crypto ? '<em>Completed!</em>' : educatorModulesCompleted.sptx ? '<strong>80 XP</strong>' : '<strong>Needs 90XP!</strong>'})
-            </div>
+          <div>
+            <button id="crypto" ${educatorModulesCompleted.sptx ? '' : 'disabled'}>${educatorModulesCompleted.crypto ? 'Review' : educatorModulesCompleted.sptx ? 'Start' : 'Locked'}</button> <strong>CryptoCurrency</strong> (${educatorModulesCompleted.crypto ? '<em>Completed!</em>' : educatorModulesCompleted.sptx ? '<strong>80 XP</strong>' : '<strong>Needs 90XP!</strong>'})
+          </div>
 
-            <div style="margin-top: 2em">
-              <a style="text-decoration: underline; color: #000; cursor: pointer">Help Forum →</a>
-            </div>
-
-          ` : `Cannot access modules - Please connect to internet`}
+          <div style="margin-top: 2em">
+            <a style="text-decoration: underline; color: #000; cursor: pointer">Help Forum →</a>
+          </div>
         </div>
       `
 
@@ -2548,11 +2554,20 @@ createComponent(
                 <textarea id="address" placeholder="123 Main Street, New York, NY 10001, USA" value="${idWizardInfo.address}"></textarea>
               </fieldset>
               <button id="next">Next →</button>
+              <h5 id="step2Error"></h5>
             </section>
           </div>
         `
 
         ctx.$('#next').onclick = () => {
+          if (!ctx.$('#ssn').value) {
+            ctx.$('#step2Error').innerHTML = 'Please input a valid SSN'
+            return
+          }
+          if (!ctx.$('#address').value) {
+            ctx.$('#step2Error').innerHTML = 'Please input a legal mailing address'
+            return
+          }
           ctx.setUserData({
             idvWizardStep: 3,
             idWizardInfo: {
@@ -2781,6 +2796,7 @@ createComponent(
                 <div><input placeholder="admin account"> <button>Set</button></div>
                 <button id="dlJB">Download JailBreaker</button>
 
+                <div><input id="teleportVal"  placeholder="room"> <button id="teleport">Teleport</button></div>
                 <table>
                   <tr>
                     <td>ISP:</td>
@@ -2871,6 +2887,10 @@ createComponent(
         }
         ctx.$('#setPayappUSD').onclick = () => {
           ctx.state.usdBalances[payAppUSDAddr] = Number(ctx.$('#payappUSD').value)
+        }
+
+        ctx.$('#teleport').onclick = () => {
+          window.primarySM.goto(ctx.$('#teleportVal').value)
         }
 
       }
@@ -3034,7 +3054,7 @@ createComponent(
               <h4 style="text-align: center">Alarm Set: <span id="currentAlarm"></span></h4>
             `
             : `
-              <h3>[WI-FI ERROR]</h3>
+              <h3 class="blink" style="margin: 1em 0; padding-left: 1em">[WI-FI ERROR] CANNOT CONNECT TO LOCAL WI-FI NETWORK</h3>
               <h4 style="text-align: center">Current Time: <span style="font-size: 0.75em">[CANNOT RETRIEVE DEVICE DATA FROM SERVER]</span></h4>
               <h4 style="text-align: center">Alarm Set: <span id="currentAlarm"></span></h4>
             `
@@ -3293,7 +3313,7 @@ createComponent(
         })
       } else {
         times(4, ix => {
-          ctx.$('#alarm-' + ix).onclick = () => {
+          if (ctx.$('#alarm-' + ix)) ctx.$('#alarm-' + ix).onclick = () => {
             setTimeout(() => ctx.$(`#alarm-${ix}-label`).innerHTML += `[UNAVAILABLE]`, 500)
           }
         })
@@ -3327,10 +3347,19 @@ createComponent(
 
     } else if (screen === 'lumin') {
 
+      const presets = [
+        ['bright', 'Bright', {h: 0, s: 0, v: 100}, {h: 180, s: 0, v: 0}],
+        ['nightMode', 'Night Mode', {h: 0, s: 0, v: 0} , {h: 2, s: 98, v: 81}],
+        ['lagoon', 'Lagoon', {h: 84, s: 44, v: 12} , {h: 162, s: 65, v: 100}],
+        ['info', 'Info', {h: 240, s: 100, v: 100} , {h: 60, s: 100, v: 100}],
+        ['brooding', 'Brooding', {h: 7, s: 92, v: 19} , {h: 50, s: 32, v: 43}],
+        ['cyber', 'Cyber', {h: 299, s: 100, v: 17} , {h: 174, s: 100, v: 100}],
+        ['opportunity', 'Opportunity', {h: 180, s: 100, v: 100} , {h: 0, s: 100, v: 100}],
+      ]
+
       const mainInterface = `
         <button id="offOn">${lampOn ? 'Turn Off' : 'Turn On'}</button>
-        ${
-          lampOn
+        ${lampOn
             ? `
               <div style="display: flex; justify-content: space-around">
                 <div>
@@ -3350,6 +3379,26 @@ createComponent(
                   <input type="range" min="0" max="100" value="${globalState.light2.v}" id="l2v">
                 </div>
               </div>
+
+              <div style="padding: 1em">
+                <h3 style="margin-bottom: 0.25em">Popular Presets:</h3>
+                ${wifiAvailable
+                  ? presets.map(p => `<button id="${p[0]}-preset">${p[1]}</button> `).join('')
+                  : `<div style="font-family: sans-serif; font-size: 0.8em">Cannot retrieve popular presets. Please make sure that your Lumin device is able to connect to your home's <strong>local wifi network</strong>, and then restart your Lumin app.</div>`
+                }
+              </div>
+
+              ${
+                ctx.state.shaydLuminPair
+                  ? ''
+                  : `
+                    <div style="padding: 0 1em">
+                      <h3>Save Electricity!</h3>
+                      <p>Automatically turn off lumin lights when you open your blinds: <button id="pairShaydLumin">Pair Shayd</button></p>
+                      <h5 id="pairShaydLuminError"></h5>
+                    </div>
+                  `
+              }
             `
             : ''
         }
@@ -3360,9 +3409,10 @@ createComponent(
           <button id="home">Back</button>
           ${
             bluetoothEnabled
-              ? luminPaired
-                ? mainInterface
-                : `<button id="pairLumin">Pair Device</button>`
+              ? !inInternetLocation ? '<h3>Device Out Of Range</h3>'
+                : luminPaired
+                  ? mainInterface
+                  : `<button id="pairLumin">Pair Device</button>`
               : `<h3>Please enable blue tooth to pair local devices</h3>`
           }
 
@@ -3372,7 +3422,24 @@ createComponent(
       `
 
       if (ctx.$('#pairLumin')) ctx.$('#pairLumin').onclick = () => {
-        ctx.setState({ luminPaired: true })
+        ctx.$('#pairLumin').innerHTML = 'Pairing...'
+        ctx.$('#pairLumin').disabled = true
+        setTimeout(() => {
+          ctx.setState({ luminPaired: true })
+        }, 1000)
+      }
+
+      if (ctx.$('#pairShaydLumin')) ctx.$('#pairShaydLumin').onclick = () => {
+        if (wifiAvailable) {
+          ctx.$('#pairShaydLuminError').innerHTML = 'Pairing...'
+          setTimeout(() => {
+            ctx.setState({
+              shaydLuminPair: true
+            })
+          }, 2000)
+        } else {
+          ctx.$('#pairShaydLuminError').innerHTML = 'Error: Lumin device cannot locate Shayd device over WiFi network: InpatientRehabilitationServices'
+        }
       }
 
       const turnOffMiner = jbBehavior(ctx, globalState.cryptoDevices.lumin, 300, noop, () => {
@@ -3397,6 +3464,8 @@ createComponent(
       const changeLight = () => {
         const { light1, light2 } = globalState
 
+        console.log(light1, light2)
+
         if (globalState.lightsOn) {
           setColor('--bg-color', hsvToRGB(light1))
           setColor('--primary-color', hsvToRGB(light2))
@@ -3416,10 +3485,18 @@ createComponent(
 
         if (lampOn) {
           turnOffMiner()
+        } else {
+          if (ctx.state.shaydLuminPair && globalState.shaydOpen) {
+            globalState.shaydOpen = false
+            const stateUpdate = ctx.state.plantStatus === 0 ? {} : {
+              plantStatus: ctx.state.plantStatus - 1
+            }
+            ctx.setState(stateUpdate, true)
+          }
         }
       }
 
-      if (lampOn) {
+      if (lampOn && inInternetLocation) {
         ctx.$('#l1h').oninput = e => {
           globalState.light1.h = Number(e.target.value)
           changeLight()
@@ -3445,6 +3522,24 @@ createComponent(
           changeLight()
         }
       }
+
+      if (wifiAvailable && lampOn && luminPaired && bluetoothEnabled && inInternetLocation) {
+        presets.forEach(p => {
+          ctx.$(`#${p[0]}-preset`).onclick = () => {
+            globalState.light1 = p[2]
+            globalState.light2 = p[3]
+
+            ctx.$('#l1h').value = p[2].h
+            ctx.$('#l1s').value = p[2].s
+            ctx.$('#l1v').value = p[2].v
+            ctx.$('#l2h').value = p[3].h
+            ctx.$('#l2s').value = p[3].s
+            ctx.$('#l2v').value = p[3].v
+            changeLight()
+          }
+        })
+      }
+
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
@@ -3770,7 +3865,7 @@ createComponent(
                 ${exchangePremium
                   ? ''
                   : `
-                    <button id="buyPremium" ${exchangeCryptoBalance < 10000} style="font-size: 1.2em; margin-bottom: 0.25em">BUY PREMIUM</button>
+                    <button id="buyPremium" ${exchangeCryptoBalance < 10000 ? 'disabled' : ''} style="font-size: 1.2em; margin-bottom: 0.25em">BUY PREMIUM</button>
                     <h4>₢ 10,000.00</h4>
                     ${exchangeCryptoBalance < 10000 && hasInternet ? '<h5>(CURRENT BALANCE TOO LOW)</h5>' : ''}
                   `}
@@ -4614,7 +4709,7 @@ createComponent(
 
         if (!wifiAvailable) {
           setTimeout(() => {
-            ctx.$('#error').innerHTML = 'ERROR: SERVER NOT FOUND -- Please check that your device is connected to WiFi'
+            ctx.$('#error').innerHTML = 'ERROR: SERVER NOT FOUND -- Please check that your device is connected to your local WiFi network'
           }, 300)
         } else {
           setTimeout(() => {
@@ -4634,9 +4729,25 @@ createComponent(
       const mainContent = ctx.state.shaydPaired
         ? `
           <div>
-            <h3>Blinds: ${globalState.shaydOpen ? 'Open' : 'Closed'}</h3>
-            <button id="toggleShaydOpen">${globalState.shaydOpen ? 'Close' : 'Open'}</button>
-            <h3 id="shaydError" style="display: inline-block;"></h3>
+            <div style="display: flex; flex-direction: column; align-items: center">
+              <h3 style="margin: 0.5em 0">Blinds: ${globalState.shaydOpen ? 'Open' : 'Closed'}</h3>
+              <button id="toggleShaydOpen">${globalState.shaydOpen ? 'Close' : 'Open'}</button>
+              <h3 id="shaydError" style="display: inline-block;"></h3>
+
+              <h3 style="margin-top: 1em">Natural Sunlight Schedule:</h3>
+              ${wifiAvailable ? '<h5 style="margin: 0.5em 0;"><em>Feature coming soon!</em></h5>' : ''}
+            </div>
+
+            ${
+              !wifiAvailable
+                ? `
+                  <div style="margin: 0.5em 0; padding: 0.25em;width: 75%; background: #000; color: #fff; border: 2px dashed">
+                    <p>CANNOT RETRIEVE NATURAL SUNLIGHT SCHEDULE FROM SHAYD SERVER</p>
+                    <p><strong style="text-decoration: underline">PLEASE CHECK DEVICE WIFI CONNECTION AND RELOAD SHAYD APP</strong></p>
+                  </div>
+                `
+                : ''
+            }
             <div>${jailbrokenApps.shayd ? jbMarkup(globalState.cryptoDevices.shayd) : ''}</div>
           </div>
 
@@ -4657,7 +4768,7 @@ createComponent(
       `
 
       const setBg = () => {
-        if (!lampOn) {
+        if (!ctx.state.lampOn) {
           if (globalState.shaydOpen) {
             setColor('--bg-color', 'var(--light-color)')
             setColor('--primary-color', 'var(--dark-color)')
@@ -4701,7 +4812,11 @@ createComponent(
           if (!globalState.shaydOpen) {
             globalState.shaydOpen = true
             globalState.shaydEverOpen = true
-            stateUpdate = ctx.state.plantStatus === 0 ? {} : {
+            globalState.lightsOn = false
+            stateUpdate = ctx.state.plantStatus === 0 ? {
+              lampOn: false
+            } : {
+              lampOn: false,
               plantStatus: ctx.state.plantStatus + 1
             }
             ctx.setState(stateUpdate, true)
@@ -4784,14 +4899,14 @@ createComponent(
       const mainInterface = `
         <h1 style="text-align: center; font-size: 3.5em; padding-left: 0.4em">${wifiAvailable ? `84˚` : '-˚'}</h1>
         <h3 style="text-align: center">CO2 Level: ${wifiAvailable ? `<span class="blink">HAZARDOUS</span>` : '-'}</h3>
-        <h4 style="text-align: center; margin-top: 0.5em">CONTINUED EXPOSURE AT THIS LEVEL MAY LEAD TO ADVERSE HEALTH EFFECTS</h4>
+        ${wifiAvailable ? `<h4 style="text-align: center; margin-top: 0.5em">CONTINUED EXPOSURE AT THIS LEVEL MAY LEAD TO ADVERSE HEALTH EFFECTS</h4>` : ''}
         <div style="text-align: center">
           ${wifiAvailable && !globalState.thermostatDisabled
             ? `<button id="disable" style="margin-top:1em">Disable Warning</button>`
             : ''
           }
         </div>
-        ${wifiAvailable ? `` : `ERROR: ThermoSmart device cannot find "InpatientRehabilitationServices"`}
+        ${wifiAvailable ? `` : `ERROR: ThermoSmart device cannot find "InpatientRehabilitationServices" Network`}
         <div style="margin-top: 2em">${jailbrokenApps.thermoSmart ? jbMarkup(globalState.cryptoDevices.thermoSmart) : ''}</div>
       `
 
@@ -5266,7 +5381,7 @@ function jbMarkup(device, disabled) {
       <div>
         <h3>Auto-Miner Module [${device.ram}gb RAM]</h3>
         <h5 style="display: inline-block; padding: 0.25em; margin: 0.25em 0; background: #333; border: 1px solid">${device.wallet}</h4>
-        <h4 style="margin: 0.4em 0">Balance: ₢ <span id="cryptoBalance">${device.balance}</span></h4>
+        <h4 style="margin: 0.4em 0">Balance: ₢ <span id="cryptoBalance-${device.wallet}">${device.balance}</span></h4>
         ${disabled
           ? '<h5 style="text-align:center; padding: 1em">Cannot find device. Please ensure device is powered "On"</h5>'
           : `
@@ -5288,6 +5403,8 @@ function jbMarkup(device, disabled) {
 }
 
 function jbBehavior(ctx, device, speed, cb=noop, persistCb=noop) {
+
+  console.log(device)
   const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged
 
   const update = () => {
@@ -5298,7 +5415,7 @@ function jbBehavior(ctx, device, speed, cb=noop, persistCb=noop) {
     }
 
     ctx.state.cryptoBalances[device.wallet] = device.balance
-    if (ctx.$('#cryptoBalance')) ctx.$('#cryptoBalance').innerHTML = device.balance
+    if (ctx.$(`#cryptoBalance-${device.wallet}`)) ctx.$(`#cryptoBalance-${device.wallet}`).innerHTML = device.balance
     cb()
   }
 
