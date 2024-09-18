@@ -356,7 +356,7 @@ export const ssoNodes = {
   },
 
   violation: {
-    text: `This account is in violation of our terms of service. To continue, please input your account's secret PIN., Then press the pound key`,
+    text: `This account is in violation of our terms of service. To continue, please input your account's secret PIN., Then press the pound key. If your account does not have a secret PIN, then press the pound key without inputting a secret PIN.`,
     follow: 'violationPIN'
   },
 
@@ -421,7 +421,7 @@ export const ssoNodes = {
     }
   },
   escalateSuccess: {
-    text: `Your suspension appeal escalation was successful. Account 0 has been reactivated. Is there anything else I can help you with?`
+    text: `Your suspension appeal escalation was successful. Account 0 has been reactivated and the secret PIN has been removed. Is there anything else I can help you with?`
   }
 
 }

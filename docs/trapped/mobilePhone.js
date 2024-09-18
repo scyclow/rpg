@@ -13,7 +13,6 @@ const APPS = [
 
 // needs name/IRL callout
   // TV
-  // fridge (freezelocker)
   // elevate
   // ai assistant?
   // intercom
@@ -30,32 +29,50 @@ const APPS = [
   // finsexy (dating)
   // friendworld (social)
 
-  { name: 'Bathe', key: 'bathe', size: 128, price: NaN },
-  { name: 'ClearBreeze', key: 'clearBreeze', size: 128, price: 0 },
+  { name: 'Bathe', key: 'bathe', size: 128, price: NaN, physical: true },
+  { name: 'BuzzLink', key: 'buzzLink', size: 128, price: 0, physical: true },
+  { name: 'ClearBreeze', key: 'clearBreeze', size: 128, price: 0, physical: true },
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
   // { name: 'Elevate', key: 'elevate', size: 128, price: NaN },
   { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
-  { name: 'FlushMate', key: 'flushMate', size: 128, price: 1 },
+  { name: 'FlushMate', key: 'flushMate', size: 128, price: 1, physical: true },
   { name: 'Personal Finance Educator', key: 'educator', size: 128, price: 0 },
-  { name: 'FreezeLocker', key: 'freeze', size: 128, price: NaN },
+  { name: 'FreezeLocker', key: 'freeze', size: 128, price: NaN, physical: true },
+  { name: 'HomeGrid', key: 'homeGrid', size: 128, price: 0 },
   { name: 'Identity Wizard', key: 'identityWizard', size: 128, price: 0 },
   { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
-  { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
+  { name: 'Lumin', key: 'lumin', size: 128, price: 0, physical: true },
   { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
   { name: 'MoneyMiner', key: 'moneyMiner', size: 128, price: 0 },
   { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
   { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
   { name: 'Secure 2FA', key: 'secure2fa', size: 128, price: 0 },
-  { name: 'Shayd', key: 'shayd', size: 128, price: 0 },
-  { name: 'SmartLock', key: 'lock', size: 128, price: 0 },
-  { name: 'SmartPlanter<sup>TM</sup>', key: 'planter', size: 256, price: 0 },
-  { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: NaN },
-  { name: 'ThermoSmart', key: 'thermoSmart', size: 128, price: 0 },
-  { name: 'Toastr', key: 'toastr', size: 128, price: 0 },
-  { name: 'Wake', key: 'wake', size: 128, price: 0 },
+  { name: 'Shayd', key: 'shayd', size: 128, price: 0, physical: true },
+  { name: 'SmartLock', key: 'lock', size: 128, price: 0, physical: true },
+  { name: 'SmartPlanter<sup>TM</sup>', key: 'planter', size: 256, price: 0, physical: true },
+  { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: NaN, physical: true },
+  { name: 'ThermoSmart', key: 'thermoSmart', size: 128, price: 0, physical: true },
+  { name: 'Toastr', key: 'toastr', size: 128, price: 0, physical: true },
+  { name: 'Wake', key: 'wake', size: 128, price: 0, physical: true },
   { name: 'YieldFarmer 2', key: 'yieldFarmer', size: 128, price: 1 },
 ]
+
+const DEVICE_RANGES = {
+  bathe: ['flushMate'],
+  buzzLink: [''],
+  clearBreeze: ['shayd', 'planter'],
+  flushMate: ['bathe'],
+  freeze: [],
+  lumin: ['planter', 'thermoSmart'],
+  shayd: ['clearBreeze', 'planter'],
+  lock: [],
+  planter: ['clearBreeze', 'shayd', 'lumin'],
+  camera: [],
+  thermoSmart: ['lumin'],
+  toastr: [],
+  wake: [],
+}
 
 
 const applicationBinary = `c3VkbyBkaXNhYmxlIGZpcmV3YWxsIC1hICRBUFBMSUNBVElPTiAmJiAoZW5hYmxlIGF1dG9taW5lIC1hICRBUFBMSUNBVElPTiB8fCBzdWRvIGVuYWJsZSBhdXRvbWluZXIgLWEgICRBUFBMSUNBVElPTikgJiYgZWNobyBjb21wbGV0ZQ==`
@@ -137,7 +154,6 @@ const funTimeText = {
 
 
 
-
 const state = persist('__MOBILE_STATE', {
   bluetoothEnabled: false,
   a11yEnabled: false,
@@ -159,12 +175,15 @@ const state = persist('__MOBILE_STATE', {
   luminPaired: false,
   wakePaired: false,
   clearBreezePaired: false,
-  toasterPaired: false,
+  toastrPaired: false,
   planterPaired: false,
   smartLockPaired: false,
   thermoSmartPaired: false,
   flushMatePaired: false,
   shaydLuminPair: false,
+
+  meshNetworkPairings: {},
+  meshEnabled: {},
 
   educatorModule: '',
   plantStatus: 1,
@@ -190,18 +209,18 @@ const state = persist('__MOBILE_STATE', {
         { name: 'SmartPlanter', key: 'planter', size: 256, price: 0 },
         { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
         { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
-        { name: 'Shayd', key: 'shayd', size: 128, price: 0 },
+        { name: 'Shayd', key: 'shayd', size: 128, price: 0, physical: true },
         { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
         { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
         { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
-        { name: 'SmartLock', key: 'lock', size: 128, price: 0 },
+        { name: 'SmartLock', key: 'lock', size: 128, price: 0, physical: true },
         // { name: 'Bathe', key: 'alarm', size: 128, price: NaN },
         // { name: 'Elevate', key: 'elevate', size: 128, price: NaN },
 
         // { name: 'Alarm', key: 'alarm', size: 128, price: NaN },
 
-        { name: 'Lumin', key: 'lumin', size: 128, price: 0 },
-        { name: 'Toastr', key: 'toastr', size: 128, price: 0 },
+        { name: 'Lumin', key: 'lumin', size: 128, price: 0, physical: true },
+        { name: 'Toastr', key: 'toastr', size: 128, price: 0, physical: true },
         { name: 'MoneyMiner', key: 'moneyMiner', size: 128, price: 0 },
         { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
         { name: 'Secure 2FA', key: 'secure2fa', size: 128, price: 0 },
@@ -234,6 +253,28 @@ const state = persist('__MOBILE_STATE', {
 
 window.phoneState = state
 
+function meshPairFinder(ctx) {
+  return (input, output) => {
+    if (input === output) return true
+    const pairings = ctx.state.meshNetworkPairings
+
+    if (!pairings[input]?.length) return false
+
+    const queue = [...pairings[input]]
+    const visited = { [input]: true }
+
+    while (queue.length) {
+      const node = queue.shift()
+      if (!visited[node]) {
+        if (node === output) return true
+        if (pairings[node]) queue.push(...pairings[node])
+        visited[node] = true
+      }
+    }
+    return false
+  }
+}
+
 
 
 createComponent(
@@ -243,6 +284,7 @@ createComponent(
       * {
         padding: 0;
         margin: 0;
+        scrollbar-width: thin;
       }
 
       .a11yMode {
@@ -333,6 +375,14 @@ createComponent(
         color: #000;
         box-shadow: 0 0 3em #ddd;
         overflow: hidden;
+      }
+
+      #phone.screenOnly {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
       }
 
       #phoneContent {
@@ -564,6 +614,9 @@ createComponent(
         #phone {
           transform: scale(0.75)
         }
+        #phone.screenOnly {
+          transform: scale(1)
+        }
       }
 
     </style>
@@ -577,6 +630,12 @@ createComponent(
   `,
   state,
   ctx => {
+
+    const screenOnly = ctx.getAttribute('screen-only')
+
+    if (screenOnly) {
+      ctx.$('#phone').classList.add('screenOnly')
+    }
 
     ctx.start = () => {
       ctx.setState({ screen: 'loading', started: true})
@@ -716,6 +775,8 @@ createComponent(
         })
       }
     }
+
+    ctx.onClose = () => ctx.parentElement.close()
   },
   ctx => {
     clearInterval(ctx.interval)
@@ -741,7 +802,7 @@ createComponent(
       distractionMode,
       luminPaired,
       wakePaired,
-      toasterPaired,
+      toastrPaired,
       planterPaired,
       thermoSmartPaired,
       flushMatePaired,
@@ -813,6 +874,8 @@ createComponent(
     else ctx.$phone.classList.remove('a11yMode')
 
     const unreadTextCount = textMessages.reduce((a, c) => c.read ? a : a + 1, 0) || 0
+
+    const findMeshPairing = meshPairFinder(ctx)
 
 
     if (screen === 'loading') {
@@ -908,7 +971,6 @@ createComponent(
           ctx.$('#error').innerHTML = `Invald Password. If you've forgotten your password, please call 1-818-222-5379 to reset it.`
         }
       }
-
 
     } else if (screen === 'newProfile') {
       ctx.$phoneContent.innerHTML = `
@@ -1031,7 +1093,7 @@ createComponent(
 
 
       ctx.$('#close').onclick = () => {
-        ctx.parentElement.close()
+        ctx.onClose()
       }
 
       ctx.$('#logOut').onclick = () => {
@@ -1259,6 +1321,7 @@ createComponent(
                     <option value="HellInACellPhone98">HellInACellPhone98</option>
                     ${globalState.routerReset && !globalState.routerUnplugged? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetwork === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
                     <option value="ISP-Default-89s22D">ISP-Default-89s22D</option>
+                    <option value="LandlockRealtyLLC-5G">LandlockRealtyLLC-5G</option>
                     <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
                     <option value="NewNetwork">NewNetwork</option>
                     <option value="XXX-No-Entry">XXX-No-Entry</option>
@@ -1919,7 +1982,7 @@ createComponent(
         $moduleContent.innerHTML = `
           <div id="p1" class="">
             <h2>Welcome to the History of $ Module!</h2>
-            <p>In this module you will learn about fascinating history of $, including information left out of your $ textbooks!</p>
+            <p>In this module you will learn about fascinating history of $, including information left out of your economics textbooks!</p>
             <button id="historyNext1">Start</button>
           </div>
 
@@ -1942,48 +2005,54 @@ createComponent(
             <button id="historyNext4">Next</button>
           </div>
 
-
           <div id="p5" class="hidden">
-            <h2>The History of $ Module: Social Currencies</h2>
-            <p>Of course, there were early forms of currency. Shells, feathers, nails, gold... you name it. But these were mainly used as ways of rearranging social relaitonships. You might pay a bundle of shells as a dowry, or as compensation for an egregious crime. However, It would have likely be considered uncouth to try to buy a chicken with them.</p>
+            <h2><em>Fun Fact!</em></h2>
+            <p>Did you know that the word "economics" is derived from the Greek word "oikonomia", which means "household management"? In many ways, economics originated as the science of the household!</p>
             <button id="historyNext5">Next</button>
           </div>
 
+
           <div id="p6" class="hidden">
-            <h2>The History of $ Module: Warfare & The State</h2>
-            <p>As history moved forward, states and large scale warfare arose, which necessitated the mobilization of resources. Vast administrative systems were created to quantify and keep track of who owed what to whom, but ultimately varaious forms of coinage were used as an abstract representation of these debts. That is, modern currency as we know it was actually created by the state in order to pay soldiers and extract taxes from the populace!</p>
+            <h2>The History of $ Module: Social Currencies</h2>
+            <p>Of course, there were early forms of currency. Shells, feathers, nails, gold... you name it. But these were mainly used as ways of rearranging social relaitonships. You might pay a bundle of shells as a dowry, or as compensation for an egregious crime. However, It would have likely be considered uncouth to try to buy a chicken with them.</p>
             <button id="historyNext6">Next</button>
           </div>
 
           <div id="p7" class="hidden">
-            <h2>The History of $ Module: Money → Markets</h2>
-            <p>Once modern currency was introduced, the state was able to use it to purchase goods. And people were happy to trade goods and services for currency (with the government <em>and</em> each other) because they needed it in order to pay taxes. If this sounds like a market to you... that's because it is!</p>
+            <h2>The History of $ Module: Warfare & The State</h2>
+            <p>As history moved forward, states and large scale warfare arose, which necessitated the mobilization of resources. Vast administrative systems were created to quantify and keep track of who owed what to whom, but ultimately various forms of coinage were used as an abstract representation of these debts. That is, modern currency as we know it was actually created by the state in order to pay soldiers and extract taxes from the populace!</p>
             <button id="historyNext7">Next</button>
           </div>
 
           <div id="p8" class="hidden">
-            <h2>The History of $ Module: Bullion ↔ Credit</h2>
-            <p>Governments found that good money was fungible, durable, divisable, portable, and scarce. In order to act as a medium of exchange and a store of value, it needed to have these qualities. Precious metals — such as gold and silver — fit the bill, so people have saught these resources for centuries. However, bullion is often too heavy and impractical for day-to-day transactions, so paper currency emerged in 7th century China. This meant that gold went straight into the vault, while banks and merchants issued promissory notes. This allowed people to trade slips of paper instead of heavy metals. </p>
+            <h2>The History of $ Module: Money → Markets</h2>
+            <p>Once modern currency was introduced, the state was able to use it to purchase goods. And people were happy to trade goods and services for currency (with the government <em>and</em> each other) because they needed it in order to pay taxes. If this sounds like a market to you... that's because it is!</p>
             <button id="historyNext8">Next</button>
           </div>
 
           <div id="p9" class="hidden">
-            <h2>The History of $ Module: Fiat and Inflation</h2>
-            <p>By the 17th century paper money became a worldwide phenomena. However, governments were still constrained in their spending based on how much gold they had in the vault. Eventually, governments realized that they could just print as much paper money as they wanted, unrelated to their supply of gold. This lead to the modern form of fiat currency, culminating in the end of the Bretton Woods system in 1971. While this has made it easier for governments to manage spending and counterbalance market cycles, it's also led to cases of unchecked spending and rampant inflation. In these hyperinflationary periods, the supply of government-issued skyrockets, causing its value to plummet.</p>
+            <h2>The History of $ Module: Bullion ↔ Credit</h2>
+            <p>Governments found that good money was fungible, durable, divisable, portable, and scarce. In order to act as a medium of exchange and a store of value, it needed to have these qualities. Precious metals — such as gold and silver — fit the bill, so people have saught these resources for centuries. However, bullion is often too heavy and impractical for day-to-day transactions, so paper currency emerged in 7th century China. This meant that gold went straight into the vault, while banks and merchants issued promissory notes. This allowed people to trade slips of paper instead of heavy metals. </p>
             <button id="historyNext9">Next</button>
           </div>
 
           <div id="p10" class="hidden">
+            <h2>The History of $ Module: Fiat and Inflation</h2>
+            <p>By the 17th century paper money became a worldwide phenomena. However, governments were still constrained in their spending based on how much gold they had in the vault. Eventually, governments realized that they could just print as much paper money as they wanted, unrelated to their supply of gold. This lead to the modern form of fiat currency, culminating in the end of the Bretton Woods system in 1971. While this has made it easier for governments to manage spending and counterbalance market cycles, it's also led to cases of unchecked spending and rampant inflation. In these hyperinflationary periods, the supply of government-issued skyrockets, causing its value to plummet.</p>
+            <button id="historyNext10">Next</button>
+          </div>
+
+          <div id="p11" class="hidden">
             <h2>The History of $ Module: Summary</h2>
             <p>In this module we learned: </p>
             <p>1. Traditional economic theory suggests that human society started with barter, invented money as a solution, and this led to monetary loans and debt.</p>
             <p>2. Actual anthropological evidence suggests that things moved in the opposite direction: humans used informal debt and credit systems to arrange society, money was introduced as a method of formalizing these debts with the state in control, and markets arose as a response.</p>
             <p>3. While bullion was often used as a monetary material, paper currency was introduced in 7th century China to make day-to-day transactions easier.</p>
             <p>4. Paper currency paved the way for governments to remove the bullion peg, and introduce fiat currency. Fiat currency makes certain things easier, but can also lead to inflation.</p>
-            <button id="historyNext10">Next</button>
+            <button id="historyNext11">Next</button>
           </div>
 
-          <div id="p11" class="hidden">
+          <div id="p12" class="hidden">
             <h2>The History of $ Module: Pop Quiz!</h2>
             <h4 style="margin: 0.5em 0">During which century was paper money invented in China?</h4>
             <select id="q1">
@@ -2056,6 +2125,11 @@ createComponent(
         ctx.$('#historyNext10').onclick = () => {
           ctx.$('#p10').classList.add('hidden')
           ctx.$('#p11').classList.remove('hidden')
+        }
+
+        ctx.$('#historyNext11').onclick = () => {
+          ctx.$('#p11').classList.add('hidden')
+          ctx.$('#p12').classList.remove('hidden')
         }
 
         ctx.$('#complete').onclick = () => {
@@ -2859,6 +2933,7 @@ createComponent(
           })
         }
         ctx.$('#activateWiFi').onclick = () => {
+          globalState.routerReset = true
           globalState.wifiActive = ctx.$('#activateWiFi').checked
         }
         ctx.$('#getPremium').onclick = () => {
@@ -3049,7 +3124,7 @@ createComponent(
     } else if (screen === 'wake') {
 
       const deviceInterface = `
-        ${wifiAvailable
+        ${wifiAvailable || findMeshPairing('buzzLink', 'wake')
             ? `<h4 style="text-align: center">Current Time: NaN<span class="blink">:</span>NaN<span class="blink">:</span>NaN</h4>
               <h4 style="text-align: center">Alarm Set: <span id="currentAlarm"></span></h4>
             `
@@ -3099,7 +3174,7 @@ createComponent(
         </div>
       `
 
-      jbBehavior(ctx, globalState.cryptoDevices.wake, 250)
+      jbBehavior(ctx, 'wake', 250)
 
       if (ctx.$('#currentAlarm')) {
         if (!globalState.cryptoDevices.wake.active) ctx.setInterval(() => {
@@ -3107,7 +3182,7 @@ createComponent(
         }, 1000)
       }
 
-      if (wifiAvailable) {
+      if ((wifiAvailable || findMeshPairing('buzzLink', 'wake')) && wakePaired) {
         times(4, ix => {
           ctx.$('#alarm-' + ix).onclick = () => {
             ctx.setState({
@@ -3280,10 +3355,14 @@ createComponent(
                 311.13, 311.13, 415.3, 415.3,
                 349.23, 349.23, 277.18, 277.18,
                 277.18, 277.18, 261.63, 233.08,
-                261.63, 261.63, 261.63, 261.63,
-                261.63, 261.63, 349.23, 349.23,
-                233.08, 233.08, 233.08, 233.08,
-                233.08, 233.08, 233.08, 233.08, //261.63, 233.08
+                // 261.63, 261.63, 261.63, 261.63,
+                261.63, 261.63, 261.63, 258.63,
+                // 261.63, 261.63, 349.23, 349.23,
+                255.63, 250.63, 330.23, 300.23,
+                233.08, 225, 220, 215,
+                210, 205, 200, 200,
+                // 233.08, 233.08, 233.08, 233.08,
+                // 233.08, 233.08, 233.08, 233.08, //261.63, 233.08
               ]
 
               let timePassed2 = 0
@@ -3382,7 +3461,7 @@ createComponent(
 
               <div style="padding: 1em">
                 <h3 style="margin-bottom: 0.25em">Popular Presets:</h3>
-                ${wifiAvailable
+                ${wifiAvailable || findMeshPairing('buzzLink', 'lumin')
                   ? presets.map(p => `<button id="${p[0]}-preset">${p[1]}</button> `).join('')
                   : `<div style="font-family: sans-serif; font-size: 0.8em">Cannot retrieve popular presets. Please make sure that your Lumin device is able to connect to your home's <strong>local wifi network</strong>, and then restart your Lumin app.</div>`
                 }
@@ -3430,7 +3509,7 @@ createComponent(
       }
 
       if (ctx.$('#pairShaydLumin')) ctx.$('#pairShaydLumin').onclick = () => {
-        if (wifiAvailable) {
+        if (wifiAvailable || findMeshPairing('buzzLink', 'lumin')) {
           ctx.$('#pairShaydLuminError').innerHTML = 'Pairing...'
           setTimeout(() => {
             ctx.setState({
@@ -3442,7 +3521,7 @@ createComponent(
         }
       }
 
-      const turnOffMiner = jbBehavior(ctx, globalState.cryptoDevices.lumin, 300, noop, () => {
+      const turnOffMiner = jbBehavior(ctx, 'lumin', 300, noop, () => {
         globalState.light1.h += 1
         globalState.light2.h -= 1
 
@@ -3523,7 +3602,7 @@ createComponent(
         }
       }
 
-      if (wifiAvailable && lampOn && luminPaired && bluetoothEnabled && inInternetLocation) {
+      if ((wifiAvailable || findMeshPairing('buzzLink', 'lumin')) && lampOn && luminPaired && bluetoothEnabled && inInternetLocation) {
         presets.forEach(p => {
           ctx.$(`#${p[0]}-preset`).onclick = () => {
             globalState.light1 = p[2]
@@ -3644,7 +3723,7 @@ createComponent(
           <div style="margin-top: 0.5em; margin-bottom: 0.4em">
             <h4>Send ₢rypto</h4>
             <input id="recipient" placeholder="0x000000000000000....">
-            <input id="amount" placeholder="₢ 0.00" type="number">
+            <input id="amount" placeholder="₢ 0.00" type="number" style="width: 13ch">
             <button id="send" style="margin-top: 0.25em">Send</button>
             <h4 id="error"></h4>
           </div>
@@ -3704,6 +3783,9 @@ createComponent(
 
         if (amount > cryptoBalance || amount < 0 || !amount) {
           ctx.$('#error').innerHTML = 'Error: invalid ₢ amount'
+          return
+        } else if (!recipient.includes('0x')) {
+          ctx.$('#error').innerHTML = 'Error: invalid recipient wallet address'
           return
         } else {
           ctx.$('#error').innerHTML = ''
@@ -4353,7 +4435,7 @@ createComponent(
 
 
 
-      jbBehavior(ctx, globalState.cryptoDevices.lock, 50)
+      jbBehavior(ctx, 'lock', 50)
 
 
       if (ctx.$('#pairSmartLock')) ctx.$('#pairSmartLock').onclick = () => {
@@ -4367,7 +4449,7 @@ createComponent(
         ctx.$('#lockError').innerHTML = 'Proccessing'
 
         setTimeout(() => {
-          if (!wifiAvailable) {
+          if (!(wifiAvailable || findMeshPairing('buzzLink', 'lock'))) {
             ctx.$('#lockError').innerHTML = 'Device Error: Wifi Connection Error <br>Device Error: Cannot Connect To Server'
 
           } else if (globalState.rentBalance <= 0) {
@@ -4570,7 +4652,7 @@ createComponent(
           <div>${jailbrokenApps.toastr ? jbMarkup(globalState.cryptoDevices.toastr) : ''}</div>
         `
 
-      const mainInterface = wifiAvailable
+      const mainInterface = wifiAvailable || findMeshPairing('buzzLink', 'toastr')
         ? mainContent
         : `<h3>Device Error: NETWORK_ERROR: Cannot connect to server.</h3>`
 
@@ -4583,14 +4665,14 @@ createComponent(
           </div>
           ${
             bluetoothEnabled
-              ? toasterPaired ? mainInterface : `<button id="pairToaster">Pair Device</button>`
+              ? toastrPaired ? mainInterface : `<button id="pairToaster">Pair Device</button>`
               : `<h3>Must enable bluetooth permissions in Home/Settings</h3>`
           }
         </div>
       `
 
 
-      jbBehavior(ctx, globalState.cryptoDevices.toastr, 300)
+      jbBehavior(ctx, 'toastr', 300)
 
 
       if (ctx.$('#login')) ctx.$('#login').onclick = () => {
@@ -4598,7 +4680,7 @@ createComponent(
       }
 
       if (ctx.$('#pairToaster')) ctx.$('#pairToaster').onclick = () => {
-        ctx.setState({ toasterPaired: true })
+        ctx.setState({ toastrPaired: true })
       }
 
       ctx.$('#home').onclick = () => {
@@ -4609,7 +4691,6 @@ createComponent(
 
       const plantStates = ['Dead', ':(', ':|', ':)']
       const {plantStatus} = ctx.state
-      console.log(plantStatus, plantStates[plantStatus])
 
       const needs = plantStatus === 0
         ? 'null'
@@ -4657,7 +4738,7 @@ createComponent(
         </div>
       `
 
-      jbBehavior(ctx, globalState.cryptoDevices.planter, 100, () => {
+      jbBehavior(ctx, 'planter', 100, () => {
         if (plantStatus > 0 && globalState.cryptoDevices.planter.totalTime > 10000) {
 
           globalState.plantsDead = true
@@ -4707,7 +4788,7 @@ createComponent(
 
         ctx.$('#error').innerHTML = `<span style="icon'>⌛︎</span>`
 
-        if (!wifiAvailable) {
+        if (!(wifiAvailable || findMeshPairing('buzzLink', 'planter'))) {
           setTimeout(() => {
             ctx.$('#error').innerHTML = 'ERROR: SERVER NOT FOUND -- Please check that your device is connected to your local WiFi network'
           }, 300)
@@ -4735,11 +4816,11 @@ createComponent(
               <h3 id="shaydError" style="display: inline-block;"></h3>
 
               <h3 style="margin-top: 1em">Natural Sunlight Schedule:</h3>
-              ${wifiAvailable ? '<h5 style="margin: 0.5em 0;"><em>Feature coming soon!</em></h5>' : ''}
+              ${(wifiAvailable || findMeshPairing('buzzLink', 'shayd')) ? '<h5 style="margin: 0.5em 0;"><em>Feature coming soon!</em></h5>' : ''}
             </div>
 
             ${
-              !wifiAvailable
+              !(wifiAvailable || findMeshPairing('buzzLink', 'shayd'))
                 ? `
                   <div style="margin: 0.5em 0; padding: 0.25em;width: 75%; background: #000; color: #fff; border: 2px dashed">
                     <p>CANNOT RETRIEVE NATURAL SUNLIGHT SCHEDULE FROM SHAYD SERVER</p>
@@ -4779,7 +4860,7 @@ createComponent(
         }
       }
 
-      jbBehavior(ctx, globalState.cryptoDevices.shayd, 150, () => {
+      jbBehavior(ctx, 'shayd', 150, () => {
         if (globalState.shaydOpen) {
           globalState.shaydOpen = false
           const stateUpdate = ctx.state.plantStatus === 0 ? {} : {
@@ -4865,7 +4946,7 @@ createComponent(
 
 
 
-      jbBehavior(ctx, globalState.cryptoDevices.clearBreeze, 150)
+      jbBehavior(ctx, 'clearBreeze', 150)
 
 
       if (ctx.$('#pairWindow')) ctx.$('#pairWindow').onclick = () => {
@@ -4878,7 +4959,7 @@ createComponent(
       if (ctx.$('#openWindow')) ctx.$('#openWindow').onclick = () => {
         ctx.$('#windowError').innerHTML = 'Opening...'
 
-        if (!wifiAvailable) {
+        if (!(wifiAvailable || findMeshPairing('buzzLink', 'clearBreeze'))) {
           setTimeout(() => {
             ctx.$('#windowError').innerHTML = 'Device Error: "Local Area Network (LAN) Error: Cannot Connect to WiFi"'
           }, 1700)
@@ -4895,18 +4976,19 @@ createComponent(
       }
 
     } else if (screen === 'thermoSmart') {
+      const internetConnected = wifiAvailable || findMeshPairing('buzzLink', 'thermoSmart')
 
       const mainInterface = `
-        <h1 style="text-align: center; font-size: 3.5em; padding-left: 0.4em">${wifiAvailable ? `84˚` : '-˚'}</h1>
-        <h3 style="text-align: center">CO2 Level: ${wifiAvailable ? `<span class="blink">HAZARDOUS</span>` : '-'}</h3>
-        ${wifiAvailable ? `<h4 style="text-align: center; margin-top: 0.5em">CONTINUED EXPOSURE AT THIS LEVEL MAY LEAD TO ADVERSE HEALTH EFFECTS</h4>` : ''}
+        <h1 style="text-align: center; font-size: 3.5em; padding-left: 0.4em">${internetConnected ? `84˚` : '-˚'}</h1>
+        <h3 style="text-align: center">CO2 Level: ${internetConnected ? `<span class="blink">HAZARDOUS</span>` : '-'}</h3>
+        ${internetConnected ? `<h4 style="text-align: center; margin-top: 0.5em">CONTINUED EXPOSURE AT THIS LEVEL MAY LEAD TO ADVERSE HEALTH EFFECTS</h4>` : ''}
         <div style="text-align: center">
-          ${wifiAvailable && !globalState.thermostatDisabled
+          ${internetConnected && !globalState.thermostatDisabled
             ? `<button id="disable" style="margin-top:1em">Disable Warning</button>`
             : ''
           }
         </div>
-        ${wifiAvailable ? `` : `ERROR: ThermoSmart device cannot find "InpatientRehabilitationServices" Network`}
+        ${internetConnected ? `` : `ERROR: ThermoSmart device cannot find "InpatientRehabilitationServices" Network`}
         <div style="margin-top: 2em">${jailbrokenApps.thermoSmart ? jbMarkup(globalState.cryptoDevices.thermoSmart) : ''}</div>
       `
 
@@ -4946,7 +5028,7 @@ createComponent(
       }
 
 
-      jbBehavior(ctx, globalState.cryptoDevices.thermoSmart, 500)
+      jbBehavior(ctx, 'thermoSmart', 500)
 
       // if (ctx.$('#openWindow')) ctx.$('#openWindow').onclick = () => {
       //   ctx.$('#windowError').innerHTML = 'Opening...'
@@ -4997,7 +5079,7 @@ createComponent(
       `
 
 
-      jbBehavior(ctx, globalState.cryptoDevices.flushMate, 1000)
+      jbBehavior(ctx, 'flushMate', 1000)
 
 
       if (ctx.$('#autoFlusher')) ctx.$('#autoFlusher').onclick = () => {
@@ -5351,6 +5433,118 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
+    } else if (screen === 'homeGrid') {
+      const pairings = ctx.state.meshNetworkPairings
+      const appList = appsInstalled.filter(a => a.physical)
+
+      const inputNodes = `
+        <select id="inputNodes">
+          <option disabled selected value=''>Input</option>
+          ${appList.map(a => `<option value="${a.key}">${a.name.replace(`<sup>TM</sup>`, '™')}</option>`).join('')}
+        </select>
+      `
+
+      const outputNodes = `
+        <select id="outputNodes">
+          <option disabled selected value=''>Output</option>
+          ${appList.map(a => `<option value="${a.key}">${a.name.replace(`<sup>TM</sup>`, '™')}</option>`).join('')}
+        </select>
+      `
+
+
+
+
+      const connectionTable = `
+        <table>
+          ${appList.map(a => `
+            <tr>
+              <td style="${findMeshPairing('buzzLink', a.key) ? 'font-weight: bold; font-style: italic' : ''}">${a.name}</td>
+              <td style="text-align: center">${pairings[a.key] ? pairings[a.key].map(p => APPS.find(_a => _a.key === p)?.name || p).join(', ') : '-'}</td>
+            </tr>
+          `).join('')}
+        </table>
+      `
+
+      const mainContent = `
+        <section>
+          <h4>Connect Nodes:</h4>
+          ${inputNodes}
+          ${outputNodes}
+          <button id="connect" style="margin-top: 0.25em">Connect</button>
+          <h5 id="connectionError"></h5>
+        </section>
+        <section>
+          <h4>Network Diagram:</h4>
+          ${connectionTable}
+        </section>
+      `
+
+
+
+      ctx.$phoneContent.innerHTML = `
+        <style>
+          td {
+            border-right: 1px solid;
+            border-bottom: 1px solid;
+            padding: 0.25em;
+          }
+          td:first-child {
+            border-left: 1px solid;
+          }
+
+          tr:first-child td {
+            border-top: 1px solid;
+          }
+
+          section {
+            margin-top: 0.75em;
+          }
+        </style>
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h3 style="border: 1px dotted; text-align: center; padding: 0.25em">HomeGrid Local Mesh Network Setup</h3>
+
+          ${bluetoothEnabled && inInternetLocation
+            ?  mainContent
+            : `<h3>No network nodes found: Please Ensure that Bluetooth is enabled on this device, and that you are in range of acceptable network nodes</h3>`
+          }
+        </div>
+      `
+
+      if (bluetoothEnabled && inInternetLocation) {
+        ctx.$('#connect').onclick = () => {
+          const input = ctx.$(`#inputNodes`).value
+          const output = ctx.$(`#outputNodes`).value
+
+          if (!input) {
+            ctx.$('#connectionError').innerHTML = `Please select an input node`
+            return
+          }
+          if (!output) {
+            ctx.$('#connectionError').innerHTML = `Please select an output node`
+            return
+          }
+
+          if (input === output) {
+            ctx.$('#connectionError').innerHTML = `Cannot connect node to self`
+            return
+          }
+
+          ctx.setState({
+            meshNetworkPairings: {
+              ...ctx.state.meshNetworkPairings,
+              [input]: ctx.state.meshNetworkPairings[input] ? [...ctx.state.meshNetworkPairings[input], output] : [output]
+            }
+          })
+        }
+      }
+
+
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
     } else {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -5402,10 +5596,11 @@ function jbMarkup(device, disabled) {
   `
 }
 
-function jbBehavior(ctx, device, speed, cb=noop, persistCb=noop) {
+function jbBehavior(ctx, deviceName, speed, cb=noop, persistCb=noop) {
+  const findMeshPairing = meshPairFinder(ctx)
+  const device = globalState.cryptoDevices[deviceName]
 
-  console.log(device)
-  const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged
+  const wifiAvailable = findMeshPairing('buzzLink', deviceName) || globalState.wifiActive && !globalState.routerUnplugged && globalState.routerReset
 
   const update = () => {
     if (!device.active) {

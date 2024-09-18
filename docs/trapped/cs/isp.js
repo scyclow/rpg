@@ -24,6 +24,11 @@ export const ispCSNodes = {
       2: 'existingAccount',
       3: 'outstandingBill',
       4: 'somethingElse',
+      5: 'issueWithAccount',
+      6: 'issueWithAccount',
+      7: 'issueWithAccount',
+      8: 'issueWithAccount',
+      9: 'issueWithAccount',
       '*': 'mainMenu'
     })
   }),
@@ -199,12 +204,19 @@ export const ispCSNodes = {
 
 
   somethingElse: {
-    text: `To report an internet outtage in your area, press 1. To report an issue with your account, press 2. To talk to a representative, press 0. To return to the main menu, press 9.`,
+    text: `To report an internet outtage in your area, press 1. To report an issue with your account, press 2. To talk to a representative, press 0. To return to the main menu, press star.`,
     handler: options({
       0: 'representative',
       1: 'internetOuttage',
       2: 'issueWithAccount',
-      9: 'mainMenu',
+      3: 'issueWithAccount',
+      4: 'issueWithAccount',
+      5: 'issueWithAccount',
+      6: 'issueWithAccount',
+      7: 'issueWithAccount',
+      8: 'issueWithAccount',
+      9: 'issueWithAccount',
+      '*': 'mainMenu',
     })
   },
 
@@ -290,12 +302,20 @@ export const ispCSNodes = {
 
   internetOuttageFail: {
     text: `I don't see an internet outtage in your area. You may need to reboot your router manually. I can walk you through the steps. First, unplug the power chord from the back of your router. When you've unplugged your router, press 1`,
-    handler: options({ 1: 'routerUnplugged' })
+    handler: options({
+      0: 'representative',
+      1: 'routerUnplugged',
+      2: 'issueWithAccount',
+    })
   },
 
   routerUnplugged: {
     text: 'when all the lights are off press 1',
-    handler: options({ 1: 'routerLightsOff' })
+    handler: options({
+      0: 'representative',
+      1: 'routerLightsOff',
+      2: 'issueWithAccount',
+    })
   },
 
   routerLightsOff: {
@@ -305,8 +325,19 @@ export const ispCSNodes = {
   },
 
   routerPlugIn: {
-    text: `You can plug it back in now. It may take up to 5 minutes for your router to reboot. Is there anything else I can help you with?`,
-    handler: 'mainMenu'
+    text: `You can plug it back in now. It may take up to 5 minutes for your router to reboot. If you are still having issues with your account press 1. To return to the main menu, press 2`,
+    handler: options({
+      0: 'representative',
+      1: 'issueWithAccount',
+      2: 'mainMenu',
+      3: 'issueWithAccount',
+      4: 'issueWithAccount',
+      5: 'issueWithAccount',
+      6: 'issueWithAccount',
+      7: 'issueWithAccount',
+      8: 'issueWithAccount',
+      9: 'issueWithAccount',
+    })
   }
 
 }

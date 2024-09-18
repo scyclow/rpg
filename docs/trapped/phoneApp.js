@@ -7,6 +7,7 @@ import {disputeResolutionNodes} from './cs/dispute.js'
 import {turboConnectNodes} from './cs/turboConnect.js'
 import {ssoNodes, ssoCTX} from './cs/sso.js'
 import {hellNodes} from './cs/hell.js'
+import {emergencyNodes} from './cs/emergency.js'
 
 
 export class PhoneCall {
@@ -405,16 +406,19 @@ function phoneBehavior(ctx) {
 
       const dialed = phone.dialed.join('')
 
-      if (dialed.length > 0 && dialed.length < 11) {
+      const validDigits = dialed === '911' ? 3 : dialed[0] === '1' ? 11 : 10
+
+
+      if (dialed.length > 0 && dialed.length < validDigits) {
         ctx.$('#hangup').innerHTML = 'Clear'
       } else {
         ctx.$('#hangup').innerHTML = 'Hangup'
       }
 
-      ctx.$('#dialedNumber').innerHTML = formatPhoneNumber(phone.dialed.slice(0, 11))
+      ctx.$('#dialedNumber').innerHTML = formatPhoneNumber(phone.dialed.slice(0, validDigits))
 
-      if (ctx.state.soundEnabled) ctx.$('#menuNumbers').innerHTML = phone.dialed.slice(11).join('')
-      else if (dialed.length > 11) ctx.$('#menuNumbers').innerHTML = key
+      if (ctx.state.soundEnabled) ctx.$('#menuNumbers').innerHTML = phone.dialed.slice(validDigits).join('')
+      else if (isFullNumber) ctx.$('#menuNumbers').innerHTML = key
 
 
       window.speechSynthesis.cancel()
@@ -422,10 +426,10 @@ function phoneBehavior(ctx) {
       if (phone.phoneAnswered) phone.stateMachine.next(key)
 
 
-      if (!ctx.state.soundEnabled && dialed.length === 11) ctx.$('#callTime').innerHTML = `<span class="blink">(Ringing)</span>`
+      if (dialed.length === validDigits) ctx.$('#callTime').innerHTML = `<span class="blink">(Ringing)</span>`
 
       // ISP
-      if (dialed === '18005552093') {
+      if (dialed === '18005552093' || dialed === '8005552093') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 2, ctx.state.soundEnabled)
 
         if (!phone.live) return
@@ -458,7 +462,7 @@ function phoneBehavior(ctx) {
       }
 
       // ISP Billing
-      else if (dialed === '18885559483') {
+      else if (dialed === '18885559483' || dialed === '8885559483') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 1, ctx.state.soundEnabled)
 
         if (!phone.live) return
@@ -489,7 +493,7 @@ function phoneBehavior(ctx) {
       }
 
       // Billing dispute resolution administrator
-      else if (dialed === '18007770836') {
+      else if (dialed === '18007770836' || dialed === '8007770836') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 3, ctx.state.soundEnabled)
 
         if (!phone.live) return
@@ -523,7 +527,7 @@ function phoneBehavior(ctx) {
 
 
       // SSO
-      else if (dialed === '18182225379') {
+      else if (dialed === '18182225379' || dialed === '8182225379') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 1, ctx.state.soundEnabled)
 
         if (!phone.live) return
@@ -565,7 +569,7 @@ function phoneBehavior(ctx) {
       }
 
       // TurboConnect
-      else if (dialed === '18004443830') {
+      else if (dialed === '18004443830' || dialed === '8004443830') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 2, ctx.state.soundEnabled)
 
         if (!phone.live) return
@@ -601,7 +605,7 @@ function phoneBehavior(ctx) {
       }
 
       // GatesOfHell
-      else if (dialed === '19996663333') {
+      else if (dialed === '19996663333' || dialed === '9996663333') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 3, ctx.state.soundEnabled)
 
         if (!phone.live) return
@@ -632,7 +636,39 @@ function phoneBehavior(ctx) {
         stateMachine.next('')
       }
 
-      else if (dialed.length === 11) {
+      else if (dialed === '911') {
+        await phone.ringTone(ctx.state.fastMode ? 0 : 1, ctx.state.soundEnabled)
+
+        if (!phone.live) return
+
+        const stateMachine = new StateMachine(
+          new CTX({
+            currentNode: 'start',
+          }),
+          {
+            defaultWait: 1000,
+            async onUpdate({text}, sm) {
+
+              sm.ctx.history.push(text)
+              // TODO different voice
+              const vs = await voices
+              if (ctx.state.soundEnabled) say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
+              else {
+                displayTranscript(text)
+              }
+            },
+          },
+          emergencyNodes
+        )
+        phone.answer(stateMachine)
+        setCallTime(ctx, phone)
+
+        stateMachine.next('')
+
+
+      }
+
+      else if (dialed.length === validDigits) {
         await phone.ringTone(ctx.state.fastMode ? 0 : 40, ctx.state.soundEnabled)
       }
     },

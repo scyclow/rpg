@@ -73,6 +73,14 @@
     <trapped-modal id="phoneModal" blur="true">
       <mobile-phone id="phoneDevice" slot="content"></mobile-phone>
     </trapped-modal>
+
+    <trapped-modal id="tvModal" blur="true">
+      <smart-tv id="tvDevice" slot="content"></smart-tv>
+    </trapped-modal>
+
+    <trapped-modal id="buzzLinkModal" blur="true">
+      <buzz-link id="buzzLinkDevice" slot="content"></buzz-link>
+    </trapped-modal>
   </main>
 
 </body>
@@ -82,6 +90,8 @@
 <script src="./utils.js"></script>
 <script type="module" src="./modal.js"></script>
 <script type="module" src="./mobilePhone.js"></script>
+<script type="module" src="./smartTV.js"></script>
+<script type="module" src="./buzzLink.js"></script>
 
 
 
@@ -96,6 +106,8 @@
 
 
   const $phoneModal = $.id('phoneModal')
+  const $buzzLinkModal = $.id('buzzLinkModal')
+  const $tvModal = $.id('tvModal')
   const $phoneDevice = $.id('phoneDevice')
   const $consoleLocation = $.id('consoleLocation')
   const $consoleTime = $.id('consoleTime')
@@ -218,40 +230,9 @@
       checkedThermostat: false,
       checkedThermostatTwice: false,
     }
-    // state: {
-    //   apartment: {
-    //     lastNode: 'bed',
 
-    //     bedActions: [
-    //       { text: 'Phone', value: '1'},
-    //       { text: 'Alarm Clock', value: '2', qr: { screen: 'appMarket', appMarketPreSearch: 'wake'}},
-    //       { text: 'Stand Up', value: '3'},
-    //     ],
-
-    //     bedroomActions: [
-    //       { text: 'Phone', value: '1'},
-    //       { text: 'Alarm Clock', value: '2', qr: { screen: 'appMarket', appMarketPreSearch: 'wake'}},
-    //       { text: 'Bed', value: '3'},
-    //       { text: 'Blinds', value: '4'},
-    //       { text: 'Lamp', value: '5'},
-    //       { text: 'Hallway', value: '6'},
-    //     ]
-    //   },
-
-    //   phone: {
-
-    //   }
-    // }
   }))
 
-
-  /*
-
-    TODO
-      kitchen sink/bethroom sink spit out cold water when you have internet
-
-
-  */
 
 
 
@@ -654,7 +635,10 @@
       },
 
       intercom: {
-        text: `You look at the intercom. It hasn't worked in years. "Talk" and "Door" do nothing. "Listen" only produces static`
+        before() {
+          $buzzLinkModal.open()
+        },
+        text: `You check the intercom`,
       },
 
     }, {
@@ -873,9 +857,6 @@
           }
         }
       },
-      tv: {
-        text: 'The black screen of the TV looms ominously over you.'
-      },
       livingroomWindow: {
         text: '',
         wait: 0,
@@ -977,6 +958,44 @@
         { text: 'Push Reset Button', value: 'resetRouter'},
         { text: 'Look At Bottom of Router', value: 'bottomRouter'},
         { text: 'Check Power', value: 'checkWifiPower'},
+      ],
+      handler: ({ur}) => ur
+    }),
+
+    ...group({
+      tv: {
+        text: 'The black screen of the TV looms ominously over you'
+      },
+
+      turnOnTV: {
+        before({ ctx, enqueue }) {
+          // if (ctx.state.tvOn) {
+          //   console.log('dsfadfa')
+          //   $tvModal.close()
+          //   ctx.state.isOpen = false
+          //   return false
+          // }
+
+          ctx.state.tvOn = true
+
+          $tvModal.open()
+          $tvModal.onClose(() => {
+            enqueue('turnOffTV')
+          })
+        },
+        text: 'You turn the TV on',
+      },
+
+      turnOffTV: {
+        before({ctx}) {
+          ctx.state.tvOn = false
+        },
+        text: 'You turn the TV off',
+      }
+    }, {
+      actions: ({ ctx }) => [
+        { text: 'Back', value: 'livingRoomCurrent'},
+        ctx.state.tvOn ? { text: 'Turn Off', value: 'turnOffTV'} : { text: 'Turn On', value: 'turnOnTV'},
       ],
       handler: ({ur}) => ur
     }),
@@ -1439,7 +1458,9 @@
 
 
 
-
+    if (ctx.state.tvOn) {
+      sm.goto('turnOffTV')
+    }
 
     if (ctx.state.isOpen) {
       sm.goto('closePhone')
