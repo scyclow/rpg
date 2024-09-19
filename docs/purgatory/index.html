@@ -16,7 +16,7 @@
     }
 
     body {
-      background: #220c0c;
+      background: radial-gradient(#220c0c, #050000);
     }
 
     main {
@@ -24,6 +24,10 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+    }
+
+    a, a:visited {
+      color: #0000ee;
     }
     #phone {
       width: 320px;
@@ -84,7 +88,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      outline: 0.5px solid #888;
+      border: 0.5px solid #888;
+      box-sizing: border-box;
       padding: 0.5em;
       cursor: pointer;
     }
@@ -96,10 +101,25 @@
       user-select: none;
     }
 
+    #key-1, #key-4, #key-7, #key-star {
+      border-left: 0;
+    }
+    #key-3, #key-6, #key-9, #key-hash {
+      border-right: 0;
+    }
+    #key-0, #key-hash, #key-star {
+      border-bottom: 0;
+    }
+
     .key span:first-child {
       font-size: 2em;
     }
     .key span:nth-child(2) {
+    }
+
+    .center {
+      justify-content: center;
+      align-items: center;
     }
   </style>
 </head>
@@ -338,7 +358,15 @@
   }
 
 
-
+  document.onkeydown = e => {
+    if (e.key === 'Escape') {
+      document.getElementById('phone').classList.add('center')
+      document.getElementById('phone').innerHTML = `
+        <h1 style="margin-bottom: 0.5em"><a href="https://steviep.xyz" target="_blank">https://steviep.xyz</a></h1>
+        <h1><a href="https://x.com/steviepxyz" target="_blank">@steviepxyz</a></h1>
+      `
+    }
+  }
 
 
   const startingCtx = {
@@ -356,14 +384,17 @@
   }
 
 
-  const options = x => ({
+  const standardOptions = x => ({
     0: 'representative',
     1: 'gatesOfHell',
     2: 'heavensGate',
     3: 'continueExploring',
     4: 'walkTowardsAbyss',
-    star: 'repeatOptions'
+    '*': 'repeatOptions'
   })[x.ur]
+
+  const options = mapping => ({ur}) => mapping[ur]
+
 
   const nodes = {
     start: {
