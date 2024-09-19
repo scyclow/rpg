@@ -60,6 +60,7 @@ export class StateMachine {
       return fallback
     }
     if (typeof handler === 'string') return handler || fallback
+    if (typeof handler === 'object') return handler.text || fallback
 
     return await handler({ ur, ctx: this.ctx }) || fallback
   }

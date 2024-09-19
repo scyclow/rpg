@@ -390,7 +390,7 @@
     2: 'heavensGate',
     3: 'continueExploring',
     4: 'walkTowardsAbyss',
-    '*': 'repeatOptions'
+    'star': 'repeatOptions'
   })[x.ur]
 
   const options = mapping => ({ur}) => mapping[ur]
@@ -456,7 +456,7 @@
     enterCode: {
       text: '',
       handler: x => {
-        if (x.ur === '#') return 'incorrectCode'
+        if (x.ur === 'hash') return 'incorrectCode'
         x.ctx.state.heavenCode.push(x.ur)
         return 'enterCode'
       }
