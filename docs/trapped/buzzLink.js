@@ -4,7 +4,7 @@ import {createSource, MAX_VOLUME} from './audio.js'
 
 
 
-const state = persist('__TV_STATE', {})
+const state = persist('__INTERCOM_STATE', {})
 
 
 createComponent(
@@ -288,5 +288,8 @@ createComponent(
 // }, false);
   },
   ctx => {},
-  (oldState, newState, stateUpdate) => {}
+  (oldState, newState, stateUpdate) => {
+    Object.assign(state, { ...newState, lastScreen: oldState.screen})
+
+  }
 )

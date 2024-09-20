@@ -52,26 +52,39 @@ const APPS = [
   { name: 'SmartLock', key: 'lock', size: 128, price: 0, physical: true },
   { name: 'SmartPlanter<sup>TM</sup>', key: 'planter', size: 256, price: 0, physical: true },
   { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: NaN, physical: true },
+  { name: 'SmartTV', key: 'smartTV', size: 128, price: 0, physical: true },
   { name: 'ThermoSmart', key: 'thermoSmart', size: 128, price: 0, physical: true },
   { name: 'Toastr', key: 'toastr', size: 128, price: 0, physical: true },
   { name: 'Wake', key: 'wake', size: 128, price: 0, physical: true },
-  { name: 'YieldFarmer 2', key: 'yieldFarmer', size: 128, price: 1 },
+  { name: 'YieldFarmer 2', key: 'yieldFarmer', size: 128, price: 0 },
 ]
 
 const DEVICE_RANGES = {
-  bathe: ['flushMate'],
-  buzzLink: [''],
+  buzzLink: ['camera'],
+  camera: ['thermoSmart', 'buzzLink'],
+  thermoSmart: ['lumin', 'camera'],
+  // lock: [],
+
+  lumin: ['thermoSmart', 'shayd', 'flushMate'],
+  shayd: ['lumin', 'clearBreeze', 'planter', 'wake', 'freeze'],
   clearBreeze: ['shayd', 'planter'],
+
+  planter: ['clearBreeze', 'shayd', 'smartTV'],
+  smartTV: ['planter'],
+  // ebook
+
+  bathe: ['flushMate'],
   flushMate: ['bathe'],
-  freeze: [],
-  lumin: ['planter', 'thermoSmart'],
-  shayd: ['clearBreeze', 'planter'],
-  lock: [],
-  planter: ['clearBreeze', 'shayd', 'lumin'],
-  camera: [],
-  thermoSmart: ['lumin'],
-  toastr: [],
-  wake: [],
+  // sink
+  // shower
+
+  freeze: ['shayd', 'toastr'],
+  toastr: ['freeze'],
+  // kitchen sink
+  // stove?
+  // roomba?
+
+  wake: ['shayd'],
 }
 
 
@@ -180,10 +193,15 @@ const state = persist('__MOBILE_STATE', {
   smartLockPaired: false,
   thermoSmartPaired: false,
   flushMatePaired: false,
+  tvPaired: false,
+  phoneCastingEnabled: false,
+  deviceCastingEnabled: false,
+
   shaydLuminPair: false,
 
   meshNetworkPairings: {},
-  meshEnabled: {},
+  meshOutputNodes: {},
+  meshInputNodes: {},
 
   educatorModule: '',
   plantStatus: 1,
@@ -256,18 +274,24 @@ window.phoneState = state
 function meshPairFinder(ctx) {
   return (input, output) => {
     if (input === output) return true
-    const pairings = ctx.state.meshNetworkPairings
 
-    if (!pairings[input]?.length) return false
+    const { meshNetworkPairings, meshOutputNodes, meshInputNodes } = ctx.state
+    const pairings = meshNetworkPairings[input].filter(p => meshInputNodes[p])
 
-    const queue = [...pairings[input]]
+    if (!pairings?.length) return false
+
+    const queue = [...pairings]
     const visited = { [input]: true }
 
     while (queue.length) {
       const node = queue.shift()
       if (!visited[node]) {
         if (node === output) return true
-        if (pairings[node]) queue.push(...pairings[node])
+
+        if (meshOutputNodes[node] && meshNetworkPairings[node]) {
+          queue.push(...meshNetworkPairings[node].filter(p => meshInputNodes[p]))
+        }
+
         visited[node] = true
       }
     }
@@ -630,7 +654,6 @@ createComponent(
   `,
   state,
   ctx => {
-
     const screenOnly = ctx.getAttribute('screen-only')
 
     if (screenOnly) {
@@ -781,6 +804,7 @@ createComponent(
   ctx => {
     clearInterval(ctx.interval)
     ctx.__queuedInterval = 0
+    const screenOnly = ctx.getAttribute('screen-only')
 
     ctx.$phoneContent = ctx.$('#phoneContent')
     ctx.$header = ctx.$('#header')
@@ -806,6 +830,7 @@ createComponent(
       planterPaired,
       thermoSmartPaired,
       flushMatePaired,
+      tvPaired,
       lampOn,
       usdBalances,
       cryptoBalances,
@@ -849,6 +874,7 @@ createComponent(
     if (currentUser !== null && globalState.wifiActive && !textMessages.some(m => m.from === '+7 809 3390 753')) {
       ctx.newText(packageText)
     }
+
 
 
     // if thermostat app downloaded, provide alert
@@ -1076,9 +1102,14 @@ createComponent(
               <button id="appMarket">App Market</button><button id="phoneApp">Phone App</button><button id="textMessage">Text Messages${unreadTextCount ? ` (${unreadTextCount})` : ''}</button><button id="settings">Settings</button><button id="network">Network & Internet</button>${appsInstalled.map(a => `<button id="${a.key}" class="${a.jailbreakr ? 'jailbreakr' : ''}">${a.name}</button>`).join('')}<button id="logOut">Log Out</button>
             </div>
 
-            <div style="display: flex; justify-content: flex-end">
-              <button id="close">Close</button>
-            </div>
+            ${!screenOnly
+                ? `
+                  <div style="display: flex; justify-content: flex-end">
+                    <button id="close">Close</button>
+                  </div>
+                `
+                : ''
+            }
           </div>
         </div>
       `
@@ -1092,7 +1123,7 @@ createComponent(
       }
 
 
-      ctx.$('#close').onclick = () => {
+      if (!screenOnly) ctx.$('#close').onclick = () => {
         ctx.onClose()
       }
 
@@ -1440,6 +1471,21 @@ createComponent(
       }
 
     } else if (screen === 'payApp') {
+
+      if (screenOnly) {
+        ctx.$phoneContent.innerHTML = `
+          <div class="phoneScreen">
+            <button id="home">Back</button>
+            <h1>For Your Security: SmartCasting has been disabled to protect your sensitive financial information</h1>
+          </div>
+        `
+
+        ctx.$('#home').onclick = () => {
+          ctx.setState({ screen: 'home' })
+        }
+        return
+
+      }
 
       const usdBalance = usdBalances[payAppUSDAddr] || 0
 
@@ -3681,7 +3727,6 @@ createComponent(
       }
 
     } else if (screen === 'moneyMiner') {
-
       const faq = `
           <h4>FAQ</h4>
           <p style="margin-top: 0.5em"><strong>Q:</strong> How does Money Miner work?</p>
@@ -3750,6 +3795,8 @@ createComponent(
             [moneyMinerCryptoAddr]: (cryptoBalance || 0) + 1
           }
         })
+
+        console.log(ctx.state.cryptoBalances[moneyMinerCryptoAddr])
       }
 
 
@@ -3809,6 +3856,12 @@ createComponent(
 
       const tabHighlight = `font-weight: bold; text-decoration: underline;`
       ctx.$phoneContent.innerHTML = `
+        <style>
+          select:invalid {
+            color: #777;
+          }
+        </style>
+
         <div class="phoneScreen" style="flex:1;${exchangePremium ? 'background: #000; color: #fff' : ''}">
           <button id="home">Back</button>
           <h2>Currency Xchange ${exchangePremium ? '[PREMIUM]' : ''}</h2>
@@ -3887,7 +3940,8 @@ createComponent(
 
               <div style="display: flex; flex-direction: column; align-items: center">
                 <div style="text-align: center">
-                  <select id="tradeAction" style="box-shadow: 1px 1px 0 ${exchangePremium ? '#fff' : '#000'}">
+                  <select id="tradeAction" style="box-shadow: 1px 1px 0 ${exchangePremium ? '#fff' : '#000'}" required>
+                    <option value="" selected disabled>-</option>
                     <option value="buy">BUY</option>
                     <option value="sell">SELL</option>
                   </select>
@@ -3901,7 +3955,7 @@ createComponent(
                   <input id="transactionAmount" placeholder="0.00" step=".01" style="width: 5em; text-align: center; " type="number">
 
 
-                  <span id="tradeOperation">with</span>
+                  <span id="tradeOperation">to</span>
 
                   <select id="currency2" style="box-shadow: 1px 1px 0 ${exchangePremium ? '#fff' : '#000'}">
                     <option value="usd">$</option>
@@ -4125,9 +4179,9 @@ createComponent(
 
       ctx.$('#tradeAction').onchange = () => {
         ctx.$('#tradeOperation').innerHTML =
-          ctx.$('#tradeAction').value === 'buy'
-            ? 'with'
-            : 'for'
+          ctx.$('#tradeAction').value === 'buy' ? 'with'
+            : ctx.$('#tradeAction').value === 'sell' ? 'for'
+            : '-'
 
       }
 
@@ -4185,6 +4239,11 @@ createComponent(
         if (sellCurrency === 'crypto') cryptoChange = sellAmount * -1
         if (sellCurrency === 'premium') premiumChange = sellAmount * -1
         if (sellCurrency === 'usd') usdChange = sellAmount * -1
+
+        if (!action) {
+          ctx.$('#tradeError').innerHTML = 'Invalid trade action'
+          return
+        }
 
         if (!hasInternet) {
           ctx.$('#tradeError').innerHTML = 'Processing...'
@@ -5435,19 +5494,42 @@ createComponent(
 
     } else if (screen === 'homeGrid') {
       const pairings = ctx.state.meshNetworkPairings
-      const appList = appsInstalled.filter(a => a.physical)
+      const validOutputNodes = ctx.state.meshOutputNodes
+      const validInputNodes = ctx.state.meshInputNodes
+
+      const nodeList = appsInstalled.filter(a => a.physical)
+      const outputNodeList = nodeList.filter(a => validOutputNodes[a.key])
+      const inputNodeList = nodeList.filter(a => validInputNodes[a.key])
+
+      const addRemoveNodes = `
+        <select id="addRemoveNodes" required>
+          <option disabled selected value=''>Node Name</option>
+          ${nodeList.map(a => `<option value="${a.key}">${a.name.replace(`<sup>TM</sup>`, '™')}</option>`).join('')}
+        </select>
+
+        <select id="addRemoveRole" required>
+          <option disabled selected value=''>-</option>
+          <option value="input">Input</option>
+          <option value="output">Output</option>
+        </select>
+
+        <div style="margin-top: 0.25em">
+          <button id="addNodeRole">Add</button>
+          <button id="removeNodeRole">Remove</button>
+        </div>
+      `
 
       const inputNodes = `
-        <select id="inputNodes">
-          <option disabled selected value=''>Input</option>
-          ${appList.map(a => `<option value="${a.key}">${a.name.replace(`<sup>TM</sup>`, '™')}</option>`).join('')}
+        <select id="inputNodes" required>
+          <option disabled selected value=''>Input Node</option>
+          ${inputNodeList.map(a => `<option value="${a.key}">${a.name.replace(`<sup>TM</sup>`, '™')}</option>`).join('')}
         </select>
       `
 
       const outputNodes = `
-        <select id="outputNodes">
-          <option disabled selected value=''>Output</option>
-          ${appList.map(a => `<option value="${a.key}">${a.name.replace(`<sup>TM</sup>`, '™')}</option>`).join('')}
+        <select id="outputNodes" required>
+          <option disabled selected value=''>Output Node</option>
+          ${outputNodeList.map(a => `<option value="${a.key}">${a.name.replace(`<sup>TM</sup>`, '™')}</option>`).join('')}
         </select>
       `
 
@@ -5456,23 +5538,48 @@ createComponent(
 
       const connectionTable = `
         <table>
-          ${appList.map(a => `
-            <tr>
-              <td style="${findMeshPairing('buzzLink', a.key) ? 'font-weight: bold; font-style: italic' : ''}">${a.name}</td>
-              <td style="text-align: center">${pairings[a.key] ? pairings[a.key].map(p => APPS.find(_a => _a.key === p)?.name || p).join(', ') : '-'}</td>
-            </tr>
-          `).join('')}
+          ${outputNodeList.map(a => {
+
+            const hasDirectConnection = a.key === 'buzzLink' || wifiAvailable
+            const hasConnection = findMeshPairing('buzzLink', a.key)
+            const validPairings = pairings[a.key]
+              ? pairings[a.key]
+                .filter(a => validInputNodes[a])
+                .map(p => APPS.find(_a => _a.key === p)?.name || p)
+              : []
+
+            const sendingTo = validPairings.length
+              ? validPairings.join(', ')
+              : '-'
+
+            return `
+              <tr>
+                <td style="${hasConnection ? 'font-weight: bold; font-style: italic' : ''}; font-size: 0.8em">${hasDirectConnection ? '⇢ ' : ''}${a.name}</td>
+                <td style="text-align: center; font-size: 0.8em">${sendingTo}</td>
+              </tr>
+            `
+          }).join('')}
         </table>
+        <h6><em>⇢ Direct WiFi connection</em></h6>
       `
 
       const mainContent = `
         <section>
+          <div style="margin-bottom: 0.5em">
+            <h4>Add/Remove Nodes:</h4>
+            ${addRemoveNodes}
+            <h5 id="addRemoveError"></h5>
+          </div>
+
+
+
           <h4>Connect Nodes:</h4>
           ${inputNodes}
           ${outputNodes}
           <button id="connect" style="margin-top: 0.25em">Connect</button>
           <h5 id="connectionError"></h5>
         </section>
+
         <section>
           <h4>Network Diagram:</h4>
           ${connectionTable}
@@ -5499,6 +5606,11 @@ createComponent(
           section {
             margin-top: 0.75em;
           }
+
+          select:invalid {
+            color: #777;
+          }
+
         </style>
         <div class="phoneScreen">
           <button id="home">Back</button>
@@ -5516,24 +5628,49 @@ createComponent(
           const input = ctx.$(`#inputNodes`).value
           const output = ctx.$(`#outputNodes`).value
 
-          if (!input) {
-            ctx.$('#connectionError').innerHTML = `Please select an input node`
-            return
-          }
-          if (!output) {
-            ctx.$('#connectionError').innerHTML = `Please select an output node`
-            return
-          }
-
-          if (input === output) {
-            ctx.$('#connectionError').innerHTML = `Cannot connect node to self`
-            return
-          }
+          if (!input) return ctx.$('#connectionError').innerHTML = `Please select an input node`
+          if (!output) return ctx.$('#connectionError').innerHTML = `Please select an output node`
+          if (input === output) return ctx.$('#connectionError').innerHTML = `Cannot connect node to self`
+          if (!validInputNodes[input]) return ctx.$('#connectionError').innerHTML = `Invalid Input Node`
+          if (!validOutputNodes[output]) return ctx.$('#connectionError').innerHTML = `Invalid Output Node`
 
           ctx.setState({
             meshNetworkPairings: {
               ...ctx.state.meshNetworkPairings,
               [input]: ctx.state.meshNetworkPairings[input] ? [...ctx.state.meshNetworkPairings[input], output] : [output]
+            }
+          })
+        }
+
+
+        ctx.$('#addNodeRole').onclick = () => {
+          const node = ctx.$('#addRemoveNodes').value
+          const role = ctx.$('#addRemoveRole').value
+
+          if (!node) return ctx.$('#addRemoveError').innerHTML = 'Invalid Node Selected'
+          if (!role) return ctx.$('#addRemoveError').innerHTML = 'Invalid Role Selected'
+
+          const key = role === 'input' ? 'meshInputNodes' : 'meshOutputNodes'
+          ctx.setState({
+            [key]: {
+              ...ctx.state[key],
+              [node]: true
+            }
+          })
+        }
+
+        ctx.$('#removeNodeRole').onclick = () => {
+          const node = ctx.$('#addRemoveNodes').value
+          const role = ctx.$('#addRemoveRole').value
+
+          if (!node) return ctx.$('#addRemoveError').innerHTML = 'Invalid Node Selected'
+          if (!role) return ctx.$('#addRemoveError').innerHTML = 'Invalid Role Selected'
+
+          const key = role === 'input' ? 'meshInputNodes' : 'meshOutputNodes'
+          ctx.setState({
+            [key]: {
+              ...ctx.state[key],
+              [node]: false
             }
           })
         }
@@ -5544,6 +5681,67 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+
+    } else if (screen === 'smartTV') {
+
+      const mainInterface = `
+        <h4 style=" margin: 0.4em 0">SmartCast</h4>
+        <div style="padding-left: 1em">PhoneCasting <button id="togglePhoneCast">${ctx.state.phoneCastingEnabled ? 'Disable' : 'Enable'}</button></div>
+        <div style="padding-left: 1em">DeviceCasting <button id="toggleDeviceCast">${ctx.state.deviceCastingEnabled ? 'Disable' : 'Enable'}</button></div>
+      `
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2 style="text-align: center; margin: 0.5em 0">SmartTV App</h2>
+          ${
+            bluetoothEnabled
+              ? tvPaired
+                ? mainInterface
+                : `
+                  <div style="text-align: center"><button id="pairTV">Pair SmartTV</button></div>
+                  <h3 id="pairError" style="text-align: center"></h3>
+                `
+              : `<h3 id="pairError">Enable bluetooth to pair device</h3>`
+          }
+        </div>
+      `
+
+      if (ctx.$('#pairTV')) ctx.$('#pairTV').onclick = () => {
+        ctx.$('#pairError').innerHTML = '<span style="blink">One moment please</span>'
+        setTimeout(() => {
+          ctx.setState({ tvPaired: true })
+          window.$tvDevice.setState({ tvPaired: true })
+        }, 5000)
+      }
+
+      if (ctx.$('#togglePhoneCast')) ctx.$('#togglePhoneCast').onclick = () => {
+        ctx.$('#togglePhoneCast').innerHTML = '...'
+        ctx.$('#togglePhoneCast').disabled = true
+        const phoneCastingEnabled = !ctx.state.phoneCastingEnabled
+        setTimeout(() => {
+          ctx.setState({ phoneCastingEnabled })
+          window.$tvDevice.setState({ phoneCastingEnabled })
+        }, 2000)
+      }
+
+      if (ctx.$('#toggleDeviceCast')) ctx.$('#toggleDeviceCast').onclick = () => {
+        ctx.$('#toggleDeviceCast').innerHTML = '...'
+        ctx.$('#toggleDeviceCast').disabled = true
+        const deviceCastingEnabled = !ctx.state.deviceCastingEnabled
+        setTimeout(() => {
+          ctx.setState({ deviceCastingEnabled })
+          window.$tvDevice.setState({ deviceCastingEnabled })
+        }, 3000)
+      }
+
+
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+
 
     } else {
       ctx.$phoneContent.innerHTML = `
@@ -5560,8 +5758,8 @@ createComponent(
   },
   (oldState, newState, stateUpdate) => {
     Object.assign(state, { ...newState, lastScreen: oldState.screen})
-    // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phone', payload: stateUpdate }})
-  }
+  },
+  true
 )
 
 

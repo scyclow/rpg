@@ -128,7 +128,9 @@ export const ls = {
 
 window.ls = ls
 
-export const createComponent = (tag, templateStr, initialState, onInit, onRender, onSetState=noop) => {
+export const createComponent = (tag, templateStr, initialState, onInit, onRender, onSetState=noop, broadcast=false) => {
+  const Instances = []
+
   class ReactStyleComponent extends HTMLElement {
     constructor() {
       super();
@@ -149,6 +151,8 @@ export const createComponent = (tag, templateStr, initialState, onInit, onRender
       shadowRoot.appendChild(template.content.cloneNode(true));
 
       const qs = shadowRoot.querySelector.bind(shadowRoot)
+      const qsa = shadowRoot.querySelectorAll.bind(shadowRoot)
+
       this.$ = selector => {
         const e = qs(selector)
         if (selector[0] === '.') {
@@ -158,8 +162,18 @@ export const createComponent = (tag, templateStr, initialState, onInit, onRender
         }
       }
 
+      this.qsa = selector => {
+        const e = qsa(selector)
+        if (selector[0] === '.') {
+          return e ? Array.from(e) : []
+        } else {
+          return e
+        }
+      }
+
       this.onRender = onRender
       onInit(this)
+      Instances.push(this)
     }
 
     veiwState() {
@@ -167,7 +181,7 @@ export const createComponent = (tag, templateStr, initialState, onInit, onRender
     }
 
     // Define a method to set the component state
-    setState(stateUpdate, force=false) {
+    setState(stateUpdate, force=false, ignoreBroadcast=false) {
       this.oldState = this.state
       this.state = { ...this.state, ...stateUpdate }
 
@@ -176,6 +190,15 @@ export const createComponent = (tag, templateStr, initialState, onInit, onRender
 
       if (deepEquals(this.state, this.oldState) && !force) return
       this.render()
+
+      if (broadcast && !ignoreBroadcast) {
+        Instances.forEach(ctx => {
+          ctx.setState({
+            ...stateUpdate,
+            screen: ctx.state.screen,
+          }, false, true)
+        })
+      }
     }
 
     // Define a method to render the component
