@@ -192,11 +192,13 @@ export const createComponent = (tag, templateStr, initialState, onInit, onRender
       this.render()
 
       if (broadcast && !ignoreBroadcast) {
-        Instances.forEach(ctx => {
-          ctx.setState({
-            ...stateUpdate,
-            screen: ctx.state.screen,
-          }, false, true)
+        Instances.forEach((ctx, i) => {
+          setTimeout(() => {
+            ctx.setState({
+              ...stateUpdate,
+              screen: ctx.state.screen,
+            }, false, true)
+          }, 10 + i*100)
         })
       }
     }

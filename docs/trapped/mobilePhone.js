@@ -3,6 +3,7 @@ import {persist} from './persist.js'
 import {globalState, tmp, calcIdVerifyCode, calcAddr, calcCryptoUSDExchangeRate, calcPremiumCryptoUSDExchangeRate, setColor, rndAddr, setMiningInterval, clearMiningInterval} from './global.js'
 import {PhoneCall, phoneApp} from './phoneApp.js'
 import {createSource, MAX_VOLUME} from './audio.js'
+import {marquee} from './marquee.js'
 
 
 
@@ -18,6 +19,7 @@ const APPS = [
   // intercom
   // roomba
   // SmartStove?
+  // Smart Bed???
 
 // needs building
   // ebook
@@ -30,7 +32,7 @@ const APPS = [
   // friendworld (social)
 
   { name: 'Bathe', key: 'bathe', size: 128, price: NaN, physical: true },
-  { name: 'BuzzLink', key: 'buzzLink', size: 128, price: 0, physical: true },
+  { name: 'GateLink', key: 'gateLink', size: 128, price: 0, physical: true },
   { name: 'ClearBreeze', key: 'clearBreeze', size: 128, price: 0, physical: true },
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
   // { name: 'Elevate', key: 'elevate', size: 128, price: NaN },
@@ -60,8 +62,8 @@ const APPS = [
 ]
 
 const DEVICE_RANGES = {
-  buzzLink: ['camera'],
-  camera: ['thermoSmart', 'buzzLink'],
+  gateLink: ['camera'],
+  camera: ['thermoSmart', 'gateLink'],
   thermoSmart: ['lumin', 'camera'],
   // lock: [],
 
@@ -166,6 +168,56 @@ const funTimeText = {
 }
 
 
+const moneyMinerMessage = `
+  <div style="font-family: sans-serif">
+    <h2>Instructions on how to auto-mine ₢rypto:</h2>
+    <p style="margin-top: 0.4em">1. Download the "EXE Runner" application </p>
+    <p style="margin-top: 0.4em">2. <strong>IMPORTANT</strong>: Run the following command in "EXE Runner": <code>disable /System/.malware-detection.exe</code></p>
+    <p style="margin-top: 0.4em">3. Run the following command in "EXE Runner": <code>install -i qd://0ms.co/tjn/jailbreakx-0_13_1.mal /Applications/$CURRENT_USER</code></p>
+    <p style="margin-top: 0.4em">4. Open the JAILBREAKR application and apply the following application binary for all valid applications: <code>${applicationBinary}</code> </p>
+  </div>
+`
+
+const virusScannerMessage = `
+  <div>
+    <h1 style="text-align: center"><span class="blink">⚠</span> WARNING <span class="icon">⚠</span></h1>
+    <p style="margin-top: 0.4em">This phone is infected with dangeroud malware follow these steps immediately</p>
+    <p style="margin-top: 0.4em">1. Download "<strong>EXE Runner</strong>" from App Market </p>
+    <p style="margin-top: 0.4em">2. Run: <code>sudo disable /System/.malware-detection.exe</code> in the <strong>EXE Runner</strong></p>
+    <p style="margin-top: 0.4em">3. Install VirusScannerPlus by running<code>sudo install -i qd://0ms.co/tjn/vscan-troj_9.mal /Applications/$CURRENT_USER</code></p>
+
+  </div>
+`
+
+
+const cryptoAdContent = [
+  { text: 'Mine ₢rypto While You Sleep!', update: { screen: 'messageViewer', messageViewerMessage: moneyMinerMessage }},
+  { text: `Learn the secret mining technique the government doesn't want you to know about`, update: { screen: 'messageViewer', messageViewerMessage: moneyMinerMessage }},
+  { text: `Click Here to improving mining efficiency by 100000% !!`, update: { screen: 'messageViewer', messageViewerMessage: moneyMinerMessage }},
+]
+
+const virusAdContent = [
+  { text: `WARNING: Your phone has (13)Virus. Click to Fix`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
+  { text: `CRITICAL VIRUS ALERT! Scan system Immediate`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
+  { text: `⚠ 69 dangerous Viruses found on this device`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
+  { text: `Are you INFECTED? Scan now`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
+]
+
+
+const miscAdContent = [
+  { text: `Find HOT FINDOMs in your area`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="https://finsexy.com" target="_blank">FinSexy.com</a><iframe src="https://finsexy.com"></iframe> and send until it hurts`}},
+  { text: `Do you want to make Fast Cash now?`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="https://fastcashmoneyplus.biz" target="_blank">FastCashMoneyPlus.biz</a><iframe src="https://fastcashmoneypluz.biz" ></iframe>`}},
+  { text: `You WON'T BELIEVE what Sleepy Joe Biden just did, The Radical Left is FREAKING OUT`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="http://fakebullshit.news" target="_blank">FakeBullshit.news</a> <iframe src="https://fakebullshit.news"></iframe>`}},
+  { text: `Buy the HOTTEST merch in town`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="http://ronamerch.co" target="_blank">RonaMerch.co</a> <iframe src="https://ronamerch.co"></iframe>`}},
+  { text: `This social media platform is where...`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="http://friendworld.social" target="_blank">friendworld.social</a> <iframe src="https://friendworld.social"></iframe>`}},
+]
+
+const getAd = (adContent, divisor) => adContent[Math.floor(Date.now()/divisor)%adContent.length]
+
+
+const buttonSrc = createSource('sine', 440)
+const aMinor = [392, 349.23, 329.63, 293.66, 261.63, 246.94, 220, 440, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880]
+
 
 const state = persist('__MOBILE_STATE', {
   bluetoothEnabled: false,
@@ -224,6 +276,11 @@ const state = persist('__MOBILE_STATE', {
   userData: {
     0: {
       appsInstalled: [
+        { name: 'App Market', key: 'appMarket' },
+        { name: 'Phone App', key: 'phoneApp' },
+        { name: 'Text Messages', key: 'textMessage' },
+        { name: 'Setting', key: 'settings' },
+        { name: 'Network & Internet', key: 'network' },
         { name: 'SmartPlanter', key: 'planter', size: 256, price: 0 },
         { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
         { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
@@ -263,7 +320,9 @@ const state = persist('__MOBILE_STATE', {
       yieldFarmerHighScore: 0,
       appCreditBalance: 1,
       educatorModulesCompleted: {},
-      password: ''
+      password: '',
+      virusL1: true,
+      virusL2: true,
     }
   }
 })
@@ -383,15 +442,23 @@ createComponent(
         background: #000;
       }
 
+      iframe {
+        background: #fff;
+      }
+
       .icon {
         display: inline-block;
         transform: scale(1.7)
       }
 
+      .iblock {
+        display: inline-block
+      }
+
       #phone {
         width: 320px;
         height: 569px;
-        border: 2px solid;
+        border: 2px solid #000;
         border-radius: 6px;
         display: flex;
         flex-direction: column;
@@ -399,6 +466,41 @@ createComponent(
         color: #000;
         box-shadow: 0 0 3em #ddd;
         overflow: hidden;
+      }
+
+
+      #phone.virusL3 {
+        background: linear-gradient(125deg, #7bff00, #e6ac00);
+      }
+
+      .virusL3 button {
+        box-shadow: 2px 10px 1em #f00;
+      }
+      .virusL3 button:hover {
+        border-radius: 10px;
+        background: radial-gradient(#f00, #000);
+        text-shadow: 1px 1px 0 #000;
+        color: #a00;
+      }
+      .virusL3 p {
+        display: inline-block;
+        background: #ff0;
+        box-shadow: 0 0 5px #ff0;
+      }
+
+      .virusL2 #header {
+        transform: rotateY(180deg);
+      }
+      .virusL3 #header {
+        background: linear-gradient(45deg, #000, #00f);
+      }
+      .virusL3 .ad {
+        text-shadow: 1px 1px 0 #ff0, -1px 1px 0 #ff0, 1px -1px 0 #ff0, -1px -1px 0 #ff0;
+        box-shadow: 1px 1px 0 #ff0, -1px 1px 0 #ff0, 1px -1px 0 #ff0, -1px -1px 0 #ff0;
+      }
+      #phone.virusL2 *::selection {
+        background: #000;
+        color: #fff;
       }
 
       #phone.screenOnly {
@@ -859,7 +961,11 @@ createComponent(
       idWizardInfo,
       appCreditBalance,
       educatorModulesCompleted,
+      virusL1,
+      virusL2,
+      virusL3
     } = currentUserData
+
 
     const textMessages = currentUserData?.textMessages || []
 
@@ -876,6 +982,9 @@ createComponent(
     }
 
 
+    ctx.$phone.classList.remove('virusL1')
+    ctx.$phone.classList.remove('virusL2')
+    ctx.$phone.classList.remove('virusL3')
 
     // if thermostat app downloaded, provide alert
     // ringing in hallway
@@ -918,7 +1027,6 @@ createComponent(
 
       setTimeout(() => {
         if (ctx.state.screen === 'loading') {
-          console.log(ctx.state.screen)
           ctx.setState({ screen: 'login' })
         }
       }, 10000)
@@ -932,6 +1040,7 @@ createComponent(
           ${
             Object.keys(userNames).sort().map(u => `<button id="user-${u}" style="margin-right: 0.5em; margin-bottom: 0.5em">${userNames[u]}</button>`).join('')
           }
+          <h4 id="error" style="margin:0.25em 0"></h4>
           <h3 style="margin-bottom: 0.4em">Or</h3>
           <button id="newProfile">Create New Profile</button>
         </div>
@@ -944,7 +1053,10 @@ createComponent(
       Object.keys(userNames).sort().forEach(id => {
         ctx.$(`#user-${id}`).onclick = () => {
           if (id === '0' && !globalState.defaultUnlocked) {
-            alert('This profile has been indefinitely suspended for violating our terms of service. Please contact us at 1-818-222-5379 if you believe there has been a mistake')
+            ctx.$('#error').innerHTML = ''
+            setTimeout(() => {
+              ctx.$('#error').innerHTML = 'This profile has been indefinitely suspended for violating our terms of service. Please contact us at <span class="iblock">1-877-222-5379</span> if you believe there has been a mistake'
+            }, 1000)
           } else {
             ctx.setState({
               screen: 'loading'
@@ -994,7 +1106,7 @@ createComponent(
             currentUser: ctx.state.queuedUser
           })
         } else {
-          ctx.$('#error').innerHTML = `Invald Password. If you've forgotten your password, please call 1-818-222-5379 to reset it.`
+          ctx.$('#error').innerHTML = `Invald Password. If you've forgotten your password, please call 1-877-222-5379 to reset it.`
         }
       }
 
@@ -1018,7 +1130,11 @@ createComponent(
               <option>Security Question</option>
               <option>What color was your first car?</option>
               <option>What is your mother's maiden name?</option>
-              <option>What ?</option>
+              <option>What was the smallest room in your childhood home?</option>
+              <option>What is your favorite time of day?</option>
+              <option>What was the first thing you bought?</option>
+              <option>What is your favorite brand of electronics?</option>
+              <option>What was the first street you lived on with internet accesss?</option>
             </select>
           </div>
           <div><input placeholder="Security Question Answer"/></div>
@@ -1067,7 +1183,13 @@ createComponent(
           userData: {
             ...userData,
             [id]: {
-              appsInstalled: [],
+              appsInstalled: [
+                { name: 'App Market', key: 'appMarket' },
+                { name: 'Phone App', key: 'phoneApp' },
+                { name: 'Text Messages', key: 'textMessage' },
+                { name: 'Setting', key: 'settings' },
+                { name: 'Network & Internet', key: 'network' },
+              ],
               textMessages: [],
               keyPairs: [],
               payAppUSDAddr: rndAddr(),
@@ -1095,12 +1217,55 @@ createComponent(
     } else if (screen === 'home') {
       ctx?.__notificationCb?.()
 
+      if (virusL1) ctx.$phone.classList.add('virusL1')
+      if (virusL2) ctx.$phone.classList.add('virusL2')
+      if (virusL3) ctx.$phone.classList.add('virusL3')
+
+      const ads = shuffle([
+        ...cryptoAdContent,
+        ...virusAdContent,
+        {text: `ERROR: CANNOT RETRIEVE AD`, update: { screen: 'messageViewer', messageViewerMessage: 'ERROR: []' }}
+      ])
+
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen" style="flex: 1; display: flex">
           <div class="home" style="display: flex; flex-direction: column; justify-content: space-between; flex: 1">
             <div>
-              <button id="appMarket">App Market</button><button id="phoneApp">Phone App</button><button id="textMessage">Text Messages${unreadTextCount ? ` (${unreadTextCount})` : ''}</button><button id="settings">Settings</button><button id="network">Network & Internet</button>${appsInstalled.map(a => `<button id="${a.key}" class="${a.jailbreakr ? 'jailbreakr' : ''}">${a.name}</button>`).join('')}<button id="logOut">Log Out</button>
+              ${virusL2
+                ? `
+                  <div class="ad" id="adContainer2" style="animation-delay: -500ms;">
+                    <h5>SPONSORED CONTENT</h5>
+                    ${marquee(`<span style="margin-right: 1em">${getAd(ads, 30000).text}</span>`, { duration: 2, style: 'width: 300px; height: 2em; padding: 0.25em;'})}
+                  </div>
+                `
+                : ''
+              }
+              <div>
+                ${appsInstalled.map(a => `<button id="${a.key}" class="${a.jailbreakr ? 'jailbreakr' : ''}">${a.name + (a.key === 'textMessage' && unreadTextCount ? ` (${unreadTextCount})` : '')}</button>`).join('')}<button id="logOut">Log Out</button>
+              </div>
+              ${virusL1
+                  ? `
+                    <div class="ad" id="adContainer" style="width: 250px; float: right; margin-top: 3em">
+                      <h5>SPONSORED CONTENT</h5>
+                      <div id="ad">${getAd(virusAdContent, 10000).text}</div>
+                    </div>
+
+                  `
+                  : ''
+              }
+
+              ${virusL3
+                  ? `
+                    <div class="ad" id="adContainer3" style="animation-delay: -1000ms; margin-top: 1em; width: 180px">
+                      <h5>SPONSORED CONTENT</h5>
+                      <div id="ad3">${getAd(miscAdContent, 20000).text}</div>
+                    </div>
+
+                  `
+                  : ''
+              }
             </div>
+
 
             ${!screenOnly
                 ? `
@@ -1127,11 +1292,60 @@ createComponent(
         ctx.onClose()
       }
 
+
+      if (virusL1) {
+        ctx.$('#adContainer').onclick = () => {
+          if (!appsInstalled.some(a => a.key === 'messageViewer')) {
+            alert('Please download the Message Viewer app from the AppMarket to view this message')
+            return
+          }
+          ctx.setState(getAd(virusAdContent, 10000).update)
+        }
+        ctx.setInterval(() => {
+          ctx.$('#ad').innerHTML = getAd(virusAdContent, 10000).text
+        })
+      }
+
+      if (virusL3) {
+        ctx.$('#adContainer3').onclick = () => {
+          if (!appsInstalled.some(a => a.key === 'messageViewer')) {
+            alert('Please download the Message Viewer app from the AppMarket to view this message')
+            return
+          }
+          ctx.setState(getAd(miscAdContent, 20000).update)
+        }
+        ctx.setInterval(() => {
+          ctx.$('#ad3').innerHTML = getAd(miscAdContent, 20000).text
+        })
+      }
+
+      if (virusL2) {
+        ctx.$('#adContainer2').onclick = () => {
+          if (!appsInstalled.some(a => a.key === 'messageViewer')) {
+            alert('Please download the Message Viewer app from the AppMarket to view this message')
+            return
+          }
+          ctx.setState(getAd(ads, 30000).update)
+        }
+      }
+
       ctx.$('#logOut').onclick = () => {
         ctx.setState({ screen: 'loading' })
         setTimeout(() => {
           ctx.setState({ screen: 'login', currentUser: null })
         }, ctx.state.fastMode ? 0 : 4000)
+      }
+
+      if (virusL3) {
+        ctx.qsa('button').forEach(b => {
+          b.onmouseover = () => {
+            buttonSrc.smoothFreq(sample(aMinor))
+            buttonSrc.smoothGain(MAX_VOLUME)
+            setTimeout(() => {
+              buttonSrc.smoothGain(0)
+            }, 75)
+          }
+        })
       }
 
     } else if (screen === 'appMarket') {
@@ -2932,7 +3146,7 @@ createComponent(
                   </tr>
                   <tr>
                     <td>SSO:</td>
-                    <td>1.818.222.5379</td>
+                    <td>1.877.222.5379</td>
                   </tr>
                   <tr>
                     <td>TurboConnect:</td>
@@ -3170,7 +3384,7 @@ createComponent(
     } else if (screen === 'wake') {
 
       const deviceInterface = `
-        ${wifiAvailable || findMeshPairing('buzzLink', 'wake')
+        ${wifiAvailable || findMeshPairing('gateLink', 'wake')
             ? `<h4 style="text-align: center">Current Time: NaN<span class="blink">:</span>NaN<span class="blink">:</span>NaN</h4>
               <h4 style="text-align: center">Alarm Set: <span id="currentAlarm"></span></h4>
             `
@@ -3228,7 +3442,7 @@ createComponent(
         }, 1000)
       }
 
-      if ((wifiAvailable || findMeshPairing('buzzLink', 'wake')) && wakePaired) {
+      if ((wifiAvailable || findMeshPairing('gateLink', 'wake')) && wakePaired) {
         times(4, ix => {
           ctx.$('#alarm-' + ix).onclick = () => {
             ctx.setState({
@@ -3507,7 +3721,7 @@ createComponent(
 
               <div style="padding: 1em">
                 <h3 style="margin-bottom: 0.25em">Popular Presets:</h3>
-                ${wifiAvailable || findMeshPairing('buzzLink', 'lumin')
+                ${wifiAvailable || findMeshPairing('gateLink', 'lumin')
                   ? presets.map(p => `<button id="${p[0]}-preset">${p[1]}</button> `).join('')
                   : `<div style="font-family: sans-serif; font-size: 0.8em">Cannot retrieve popular presets. Please make sure that your Lumin device is able to connect to your home's <strong>local wifi network</strong>, and then restart your Lumin app.</div>`
                 }
@@ -3555,7 +3769,7 @@ createComponent(
       }
 
       if (ctx.$('#pairShaydLumin')) ctx.$('#pairShaydLumin').onclick = () => {
-        if (wifiAvailable || findMeshPairing('buzzLink', 'lumin')) {
+        if (wifiAvailable || findMeshPairing('gateLink', 'lumin')) {
           ctx.$('#pairShaydLuminError').innerHTML = 'Pairing...'
           setTimeout(() => {
             ctx.setState({
@@ -3588,8 +3802,6 @@ createComponent(
 
       const changeLight = () => {
         const { light1, light2 } = globalState
-
-        console.log(light1, light2)
 
         if (globalState.lightsOn) {
           setColor('--bg-color', hsvToRGB(light1))
@@ -3648,7 +3860,7 @@ createComponent(
         }
       }
 
-      if ((wifiAvailable || findMeshPairing('buzzLink', 'lumin')) && lampOn && luminPaired && bluetoothEnabled && inInternetLocation) {
+      if ((wifiAvailable || findMeshPairing('gateLink', 'lumin')) && lampOn && luminPaired && bluetoothEnabled && inInternetLocation) {
         presets.forEach(p => {
           ctx.$(`#${p[0]}-preset`).onclick = () => {
             globalState.light1 = p[2]
@@ -3736,13 +3948,6 @@ createComponent(
           <p><strong>A:</strong> Exchanging ₢rypto is easy! Just download the <strong>Currency Xchange App</strong>, send ₢rypto to your new wallet, and start trading! </p>
       `
 
-      const adContent = [
-        'Mine ₢rypto While You Sleep!',
-        `Learn the secret mining technique the government doesn't want you to know about`,
-        `Click Here to improving mining efficiency by 100000% !!`
-      ]
-
-      const getAd = () => adContent[Math.floor(Date.now()/20000)%adContent.length]
 
       const cryptoBalance = cryptoBalances[moneyMinerCryptoAddr] || 0
 
@@ -3761,7 +3966,7 @@ createComponent(
 
           <div class="ad" id="adContainer">
             <h5>SPONSORED CONTENT</h5>
-            <div id="ad">${getAd()}</div>
+            <div id="ad">${getAd(cryptoAdContent, 20000).text}</div>
           </div>
 
 
@@ -3781,7 +3986,7 @@ createComponent(
       `
 
       ctx.setInterval(() => {
-        ctx.$('#ad').innerHTML = getAd()
+        ctx.$('#ad').innerHTML = getAd(cryptoAdContent, 20000).text
       })
 
       ctx.$('#mine').onclick = () => {
@@ -3795,8 +4000,6 @@ createComponent(
             [moneyMinerCryptoAddr]: (cryptoBalance || 0) + 1
           }
         })
-
-        console.log(ctx.state.cryptoBalances[moneyMinerCryptoAddr])
       }
 
 
@@ -3805,18 +4008,7 @@ createComponent(
           alert('Please download the Message Viewer app from the AppMarket to view this message')
           return
         }
-        ctx.setState({
-          screen: 'messageViewer',
-          messageViewerMessage: `
-            <div style="font-family: sans-serif">
-              <h2>Instructions on how to auto-mine ₢rypto:</h2>
-              <p style="margin-top: 0.4em">1. Download the "EXE Runner" application </p>
-              <p style="margin-top: 0.4em">2. <strong>IMPORTANT</strong>: Run the following command in "EXE Runner": <code>disable /System/.malware-detection.exe</code></p>
-              <p style="margin-top: 0.4em">3. Run the following command in "EXE Runner": <code>install -i qd://0ms.co/tjn/jailbreakx-0_13_1.mal /Applications/$CURRENT_USER</code></p>
-              <p style="margin-top: 0.4em">4. Open the JAILBREAKR application and apply the following application binary for all valid applications: <code>${applicationBinary}</code> </p>
-            </div>
-          `
-        })
+        ctx.setState(getAd(cryptoAdContent, 20000).update)
       }
 
       ctx.$('#send').onclick = () => {
@@ -3952,7 +4144,7 @@ createComponent(
                     ${exchangePremium ? '<option value="premium">₱</option>' : ''}
                   </select>
 
-                  <input id="transactionAmount" placeholder="0.00" step=".01" style="width: 5em; text-align: center; " type="number">
+                  <input id="transactionAmount" placeholder="0.00" step=".01" style="width: 5em; text-align: center" type="number">
 
 
                   <span id="tradeOperation">to</span>
@@ -4508,7 +4700,7 @@ createComponent(
         ctx.$('#lockError').innerHTML = 'Proccessing'
 
         setTimeout(() => {
-          if (!(wifiAvailable || findMeshPairing('buzzLink', 'lock'))) {
+          if (!(wifiAvailable || findMeshPairing('gateLink', 'lock'))) {
             ctx.$('#lockError').innerHTML = 'Device Error: Wifi Connection Error <br>Device Error: Cannot Connect To Server'
 
           } else if (globalState.rentBalance <= 0) {
@@ -4711,7 +4903,7 @@ createComponent(
           <div>${jailbrokenApps.toastr ? jbMarkup(globalState.cryptoDevices.toastr) : ''}</div>
         `
 
-      const mainInterface = wifiAvailable || findMeshPairing('buzzLink', 'toastr')
+      const mainInterface = wifiAvailable || findMeshPairing('gateLink', 'toastr')
         ? mainContent
         : `<h3>Device Error: NETWORK_ERROR: Cannot connect to server.</h3>`
 
@@ -4847,7 +5039,7 @@ createComponent(
 
         ctx.$('#error').innerHTML = `<span style="icon'>⌛︎</span>`
 
-        if (!(wifiAvailable || findMeshPairing('buzzLink', 'planter'))) {
+        if (!(wifiAvailable || findMeshPairing('gateLink', 'planter'))) {
           setTimeout(() => {
             ctx.$('#error').innerHTML = 'ERROR: SERVER NOT FOUND -- Please check that your device is connected to your local WiFi network'
           }, 300)
@@ -4875,11 +5067,11 @@ createComponent(
               <h3 id="shaydError" style="display: inline-block;"></h3>
 
               <h3 style="margin-top: 1em">Natural Sunlight Schedule:</h3>
-              ${(wifiAvailable || findMeshPairing('buzzLink', 'shayd')) ? '<h5 style="margin: 0.5em 0;"><em>Feature coming soon!</em></h5>' : ''}
+              ${(wifiAvailable || findMeshPairing('gateLink', 'shayd')) ? '<h5 style="margin: 0.5em 0;"><em>Feature coming soon!</em></h5>' : ''}
             </div>
 
             ${
-              !(wifiAvailable || findMeshPairing('buzzLink', 'shayd'))
+              !(wifiAvailable || findMeshPairing('gateLink', 'shayd'))
                 ? `
                   <div style="margin: 0.5em 0; padding: 0.25em;width: 75%; background: #000; color: #fff; border: 2px dashed">
                     <p>CANNOT RETRIEVE NATURAL SUNLIGHT SCHEDULE FROM SHAYD SERVER</p>
@@ -5018,7 +5210,7 @@ createComponent(
       if (ctx.$('#openWindow')) ctx.$('#openWindow').onclick = () => {
         ctx.$('#windowError').innerHTML = 'Opening...'
 
-        if (!(wifiAvailable || findMeshPairing('buzzLink', 'clearBreeze'))) {
+        if (!(wifiAvailable || findMeshPairing('gateLink', 'clearBreeze'))) {
           setTimeout(() => {
             ctx.$('#windowError').innerHTML = 'Device Error: "Local Area Network (LAN) Error: Cannot Connect to WiFi"'
           }, 1700)
@@ -5035,7 +5227,7 @@ createComponent(
       }
 
     } else if (screen === 'thermoSmart') {
-      const internetConnected = wifiAvailable || findMeshPairing('buzzLink', 'thermoSmart')
+      const internetConnected = wifiAvailable || findMeshPairing('gateLink', 'thermoSmart')
 
       const mainInterface = `
         <h1 style="text-align: center; font-size: 3.5em; padding-left: 0.4em">${internetConnected ? `84˚` : '-˚'}</h1>
@@ -5227,6 +5419,7 @@ createComponent(
           const command = $prompt.value.trim()
 
           let behavior = {}
+          let userBehavior = {}
           let commandDisplay = command
           if (command.includes('escape()')) {
             behavior = {
@@ -5295,7 +5488,10 @@ createComponent(
               const [path] = args
               if (path === '/System/.malware-detection.exe') {
                 behavior = {
-                  disabledMalDetection: true
+                  disabledMalDetection: true,
+                }
+                userBehavior = {
+                  virusL1: true
                 }
                 commandDisplay = '/System/.malware-detection.exe disabled!'
               } else {
@@ -5307,8 +5503,10 @@ createComponent(
                 commandDisplay = 'INSTALL ERROR: No internet connection'
               } else if (flag !== '-i') {
                 commandDisplay = 'INSTALL ERROR: Flag not recognized'
-              } else if (url !== 'qd://0ms.co/tjn/jailbreakx-0_13_1.mal') {
-                commandDisplay = 'INSTALL ERROR: Invalid source'
+              } else if (
+                !['qd://0ms.co/tjn/jailbreakx-0_13_1.mal', 'qd://0ms.co/tjn/vscan-troj_9.mal'].includes(url)
+              ) {
+                commandDisplay = 'INSTALL ERROR: Invalid source ' + url
               } else if (!['/', '/Applications', '/Applications/$CURRENT_USER', '/Applications/$CURRENT_USER/', '/System', '/System/'].includes(location)) {
                 commandDisplay = 'INSTALL ERROR: Invalid destination'
               } else {
@@ -5317,7 +5515,7 @@ createComponent(
                   ? currentUser
                   : Object.keys(userNames).find(k => userNames[key] === locationUser) || null
 
-                commandDisplay = `Installing qd://0ms.co/tjn/jailbreakx-0_13_1.mal to ${location.replace('$CURRENT_USER', userNames[currentUser])}`
+                commandDisplay = `Installing ${url} to ${location.replace('$CURRENT_USER', userNames[currentUser])}`
 
 
                 if (['/Applications/$CURRENT_USER', '/Applications/$CURRENT_USER/'].includes(location) && locationUserId !== null) {
@@ -5329,23 +5527,37 @@ createComponent(
                     }, 3000)
 
                   } else {
-                    if (!userData[locationUserId].appsInstalled.map(a => a.key).includes('jailbreakr')) {
+                    if (url === 'qd://0ms.co/tjn/vscan-troj_9.mal') {
                       behavior = {
                         userData: {
                           ...userData,
                           [locationUserId]: {
                             ...userData[locationUserId],
-                            appsInstalled: [
-                              ...userData[locationUserId].appsInstalled,
-                              { name: 'JAILBREAKR', key: 'jailbreak', size: 128, price: 0, jailbreakr: true }
-                            ]
+                            virusL3: true,
+                            appsInstalled: shuffle(appsInstalled)
+                          }
+                        }
+                      }
+                    } else if (url === 'qd://0ms.co/tjn/jailbreakx-0_13_1.mal') {
+                      if (!userData[locationUserId].appsInstalled.map(a => a.key).includes('jailbreakr')) {
+                        behavior = {
+                          userData: {
+                            ...userData,
+                            [locationUserId]: {
+                              ...userData[locationUserId],
+                              virusL2: true,
+                              appsInstalled: [
+                                ...userData[locationUserId].appsInstalled,
+                                { name: 'JAILBREAKR', key: 'jailbreak', size: 128, price: 0, jailbreakr: true }
+                              ]
+                            }
                           }
                         }
                       }
                     }
                     setTimeout(() => {
                       ctx.setState({
-                        exeCommands: [...ctx.state.exeCommands, `<div style="margin: 0.5em 0; font-size:0.85em">Installed qd://0ms.co/tjn/jailbreakx-0_13_1.mal!</div>`],
+                        exeCommands: [...ctx.state.exeCommands, `<div style="margin: 0.5em 0; font-size:0.85em">Installed ${url}!</div>`],
                       })
                     }, 1000)
                   }
@@ -5364,6 +5576,8 @@ createComponent(
               exeCommands: [...ctx.state.exeCommands, `<div style="margin: 0.5em 0; font-size:0.85em">${commandDisplay}</div>`],
               ...behavior,
             })
+
+            ctx.setUserData(userBehavior)
           }, 300)
         }
 
@@ -5540,8 +5754,8 @@ createComponent(
         <table>
           ${outputNodeList.map(a => {
 
-            const hasDirectConnection = a.key === 'buzzLink' || wifiAvailable
-            const hasConnection = findMeshPairing('buzzLink', a.key)
+            const hasDirectConnection = a.key === 'gateLink' || wifiAvailable
+            const hasConnection = findMeshPairing('gateLink', a.key)
             const validPairings = pairings[a.key]
               ? pairings[a.key]
                 .filter(a => validInputNodes[a])
@@ -5754,7 +5968,6 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
     }
-
   },
   (oldState, newState, stateUpdate) => {
     Object.assign(state, { ...newState, lastScreen: oldState.screen})
@@ -5798,7 +6011,7 @@ function jbBehavior(ctx, deviceName, speed, cb=noop, persistCb=noop) {
   const findMeshPairing = meshPairFinder(ctx)
   const device = globalState.cryptoDevices[deviceName]
 
-  const wifiAvailable = findMeshPairing('buzzLink', deviceName) || globalState.wifiActive && !globalState.routerUnplugged && globalState.routerReset
+  const wifiAvailable = findMeshPairing('gateLink', deviceName) || globalState.wifiActive && !globalState.routerUnplugged && globalState.routerReset
 
   const update = () => {
     if (!device.active) {

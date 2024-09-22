@@ -78,8 +78,8 @@
       <smart-tv id="tvDevice" slot="content"></smart-tv>
     </trapped-modal>
 
-    <trapped-modal id="buzzLinkModal" blur="true">
-      <buzz-link id="buzzLinkDevice" slot="content"></buzz-link>
+    <trapped-modal id="gateLinkModal" blur="true">
+      <gate-link id="gateLinkDevice" slot="content"></gate-link>
     </trapped-modal>
   </main>
 
@@ -91,7 +91,7 @@
 <script type="module" src="./modal.js"></script>
 <script type="module" src="./mobilePhone.js"></script>
 <script type="module" src="./smartTV.js"></script>
-<script type="module" src="./buzzLink.js"></script>
+<script type="module" src="./gateLink.js"></script>
 
 
 
@@ -106,7 +106,7 @@
 
 
   const $phoneModal = $.id('phoneModal')
-  const $buzzLinkModal = $.id('buzzLinkModal')
+  const $gateLinkModal = $.id('gateLinkModal')
   const $tvModal = $.id('tvModal')
   const $phoneDevice = $.id('phoneDevice')
   const $tvDevice = $.id('tvDevice')
@@ -325,8 +325,8 @@
       handler: 'intro'
     },
     intro: [
-      { text: 'You wake up', wait: 1800},
-      { text: 'Anxiety lingers from a dream you no longer remember', wait: 1800},
+      { text: 'You wake up', wait: 2500},
+      { text: 'Anxiety lingers from a dream you no longer remember', wait: 2500},
       // { text: 'A vague sense of dread lingers from a dream you no longer remember', wait: 1800},
       {
         before() {
@@ -353,7 +353,7 @@
 
       bedAlarm: {
         text: 'You look at the alarm clock',
-        wait: 1800,
+        wait: 2200,
         follow({ctx}) {
           if (ctx.state.checkedAlarmClock) {
             return 'bedAlarmApp'
@@ -370,14 +370,20 @@
       bedAlarmFresh: [
         {
           text: () => `It counts down from ${formatTime(globalState.countdownTimeLeft)}`,
-          wait: 1800
+          wait: 2200
         },
         { text: `You wonder what will happen when it hits 00:00:00`}
       ],
 
-      bedAlarmApp: {
-        text: `There are no buttons. A sticker says: "Time to download the official <em>Wake</em> app!"`
-      }
+      bedAlarmApp: [
+        {
+          text: `There are no buttons`,
+          wait: 2200
+        },
+        {
+          text: `A sticker on its side says: "Time to download the official <em>Wake</em> app!"`
+        }
+      ],
 
     }, {
       actions: [
@@ -427,9 +433,13 @@
     },
 
     ...group({
+      // TODO i might need some more here?
+      // could be a good time to set anxiety around being here
+
       standUpBed: {
         text: 'You get out of bed',
       },
+
       bedroom: {
         before({ ctx }) {
           globalState.location = 'bedroom'
@@ -516,14 +526,14 @@
       ],
       bedroomLamp: [
         { text: `You inspect the lamp`, wait: 1800 },
-        { text: `There's no light switch, but you do see a QR code pasted to its side with the word "<span style="font-family: cursive; font-size:1.1em">Lumin</span>" below it`, wait: 1800 },
+        { text: `There's no light switch, but you see a QR code pasted to its side with the word "<span style="font-family: cursive; font-size:1.1em">Lumin</span>" below it`, wait: 1800 },
       ]
     }, {
       actions: ({ctx}) => [
         { text: 'Phone', value: 'openPhone'},
         { text: 'Hallway', value: 'hallway'},
-        { text: 'Alarm Clock', value: 'bedroomAlarm', qr: { screen: 'appMarket', appMarketPreSearch: 'wake'}},
         { text: 'Bed', value: 'bed'},
+        { text: 'Alarm Clock', value: 'bedroomAlarm', qr: { screen: 'appMarket', appMarketPreSearch: 'wake'}},
         { text: 'Window', value: 'bedroomWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'} },
         { text: 'Lamp', value: 'bedroomLamp', qr: { screen: 'messageViewer', messageViewerMessage: 'Illuminate your home with the Lumin app. Available only in AppMarket!'}},
       ],
@@ -563,7 +573,7 @@
       },
 
       motionSensor: {
-        text: 'A motion sensor picks up your movement and the camera above the front door comes to life',
+        text: 'A motion sensor detects your presence and the camera above the front door comes to life',
         wait: 1800,
         follow: 'weirdHum'
       },
@@ -577,12 +587,29 @@
       },
 
       camera: {
-        text: `The small camera looks down at you. Whenever you move it moves along with you. You make out some tiny print on its side: "SmartPro Security Camera: Keeping you safe since 2010. Download our App in the AppMarket!"`
+        text: `The small camera looks down at you`,
+        wait: 1800,
+        follow({ctx}) {
+          if (ctx.state.cameraSeen) return 'cameraSeen3'
+          else {
+            ctx.state.cameraSeen = true
+            return 'cameraSeen2'
+          }
+        }
+      },
+      cameraSeen2: {
+        text: `You move, and it moes along with you`,
+        wait: 1800,
+        follow: 'cameraSeen3'
+      },
+
+      cameraSeen3: {
+        text: `You squint and make out a tiny message printed on it: "SmartPro Security Camera: Keeping you safe since 2010. Download our App in the AppMarket!"`
       },
 
       thermostat: {
         text: `You check the thermostat`,
-        wait: 1500,
+        wait: 1800,
         follow({ctx}) {
           const checkedThermostat = ctx.state.checkedThermostat
           ctx.state.checkedThermostat = true
@@ -629,7 +656,7 @@
           $consoleTemperature.innerHTML = ' — 99˚'
         },
         text: `Every light is on, and it reads: 99˚`,
-        wait: 1500,
+        wait: 1800,
         follow: 'thermostatUncomfortable'
       },
 
@@ -639,7 +666,7 @@
 
       intercom: {
         before() {
-          $buzzLinkModal.open()
+          $gateLinkModal.open()
         },
         text: `You check the intercom`,
       },

@@ -65,6 +65,13 @@ function chance(...chances) {
   }
 }
 
+function shuffle(arr, n=Infinity) {
+  return arr.map(value => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value)
+    .slice(0, n)
+}
+
 
 function setRunInterval(fn, ms, i=0) {
   const run = () => {

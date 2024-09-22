@@ -8,7 +8,7 @@ const state = persist('__INTERCOM_STATE', {})
 
 
 createComponent(
-  'buzz-link',
+  'gate-link',
   `
     <style>
       * {
@@ -20,11 +20,11 @@ createComponent(
       #screen {
         width: min(90vw, calc(85vh * 2 / 3));
         height: min(85vh, calc(90vw * 3 / 2));
-        background:#000;
-        color: #ff0;
+        background: linear-gradient(#100, #180404);
+        color: #bdb5b5;
 
         border: 2px solid #111;
-        box-shadow: 0 0 3em #550, 0 0 10em #550;
+        box-shadow: 0 0 3em #433, 0 0 10em #433;
         border-radius: 10px;
         display: flex;
         flex-direction: column;
@@ -32,11 +32,18 @@ createComponent(
 
       h1 {
         text-align: center;
-        font-family: sans-serif;
+
         padding: 0.5em;
         font-size: 3em;
       }
 
+      main {
+        transform: skew(0, 0.5deg);
+      }
+
+      #screen {
+        filter: blur(0.25px)
+      }
 
       .icon {
         display: inline-block;
@@ -45,8 +52,8 @@ createComponent(
       }
 
       header {
-        color:#000;
-        background: #ff0;
+        color: #100;
+        background: #bdb5b5;
         padding: 0.25em 0.5em;
         border-top-left-radius: 9px;
         border-top-right-radius: 9px;
@@ -58,18 +65,18 @@ createComponent(
         border-radius: 4px;
         padding: 1em;
         cursor: pointer;
-        background:#000;
-        color: #ff0;
+        background: #100;
+        color: #bdb5b5;
         font-size: 1.25em;
         user-select: none;
       }
 
       .action:hover {
-        background: #330;
+        background: #422;
 
       }
       .action:active {
-        background: #1d1d00
+        background: #1d1d1d
       }
 
       footer {
@@ -82,13 +89,13 @@ createComponent(
       }
 
       ::selection {
-        background: #ff0;
-        color:#000;
+        background: #bdb5b5;
+        color: #100;
       }
 
       header::selection {
-        background:#000;
-        color: #ff0;
+        background: #100;
+        color: #bdb5b5;
       }
 
       .blink {
@@ -107,11 +114,11 @@ createComponent(
 
       @keyframes Waver {
         0%, 100% {
-          background: #303006;
+          background: #201010;
         }
 
         50% {
-          background: #202004;
+          background: #302828;
         }
       }
 
@@ -124,28 +131,29 @@ createComponent(
       </header>
 
       <main style="flex: 1; display: flex; flex-direction: column">
-        <h1>BuzzLink</h1>
+        <h1>GateLink</h1>
         <div style="flex: 1; display: flex; justify-content: center; align-items: center; flex-direction: column">
-          <h6 style="padding-right: 24em; padding-bottom: 0.5em">LIVE FEED</h6>
-          <div class="waver" style="border: 2px solid #ff0; width: 20em; height: 20em;">
+          <h6 style="padding-right: 24em; padding-bottom: 0.5em">OUTSIDE</h6>
+          <div class="waver" style="border: 2px solid #343434; width: 20em; height: 20em;">
           </div>
+          <h6 style="padding-top: 0.5em; width: 30em">WARNING: VIDEO SIGNAL WEAK - CHECK EXTERNAL DEVICE CONNECTION <span id="signalStrength"></span></h6>
         </div>
-        <div style="display: flex; justify-content: center; padding-bottom: 4em; padding-top: 3em">
+
+        <div style="display: flex; justify-content: center; padding-bottom: 4em">
           <div>
-            <button class="action" id="talk"><span class="icon">⚟</span> TALK</button>
-            <button class="action" id="listen"><span class="icon">⚞</span> LISTEN</button>
-            <button class="action" id="door"><span class="icon">✹</span> DOOR</button>
+            <button class="action" id="talk"><span class="">⚟</span> TALK</button>
+            <button class="action" id="listen"><span class="">⚞</span> LISTEN</button>
+            <button class="action" id="door"><span class="">✹</span> DOOR</button>
           </div>
         </div>
       </main>
 
       <footer>
-        Download the <strong>BuzzLink</strong> mobile app in the AppMarket
+        Download the <strong>GateLink</strong> mobile app in the AppMarket
       </footer>
       <footer>
         Device ID: Q38990284902
       </footer>
-
 
     </div>
 
@@ -224,7 +232,7 @@ createComponent(
 
 
     const talkSrc1 = createSource('sine', 440)
-    const talkSrc2 = createSource('sine', 880)
+    const talkSrc2 = createSource('sine', 660)
 
     let micStream, active
     ctx.$('#talk').onmousedown = () => {
@@ -266,6 +274,10 @@ createComponent(
         s.getAudioTracks().forEach(t => t.stop())
       }
     }
+
+    setInterval(() => {
+      ctx.$('#signalStrength').innerHTML = Math.random() * 0.7
+    }, 200)
 
 // var static = new Audio();
 // static.src = './tv-static-7019.mp3';

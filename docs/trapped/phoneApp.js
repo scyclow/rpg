@@ -527,7 +527,7 @@ function phoneBehavior(ctx) {
 
 
       // SSO
-      else if (dialed === '18182225379' || dialed === '8182225379') {
+      else if (dialed === '18772225379' || dialed === '8772225379') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 1, ctx.state.soundEnabled)
 
         if (!phone.live) return
