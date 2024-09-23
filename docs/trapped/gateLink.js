@@ -279,6 +279,22 @@ createComponent(
       ctx.$('#signalStrength').innerHTML = Math.random() * 0.7
     }, 200)
 
+
+    if (globalState.deviceViruses) {
+      setRunInterval(() => {
+        const ad = $.div(null, { className: 'ad' })
+        ad.innerHTML = `
+          <div class="ad" style="width: 250px; height: 250px">
+            <h5>SPONSORED CONTENT</h5>
+            <div id="ad">${getAd(ads, 1).text}</div>
+          </div>
+        `
+        ctx.$('#door').appendChild(
+
+        )
+      }, 300000)
+    }
+
 // var static = new Audio();
 // static.src = './tv-static-7019.mp3';
 

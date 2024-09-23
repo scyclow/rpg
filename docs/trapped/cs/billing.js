@@ -5,7 +5,10 @@ export const billingCSNodes = {
 
   intro: {
     text: `Hello. You have reached the N B S billing department`,
-    follow: 'mainMenu'
+    follow: () => {
+      globalState.ispBillingCalled = true
+      return 'mainMenu'
+    }
   },
 
   mainMenu: {

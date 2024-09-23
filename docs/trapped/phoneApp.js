@@ -166,6 +166,8 @@ export class PhoneCall {
     allSources.forEach(src => src.stop())
     Object.keys(this.srcs).forEach(s => delete this.srcs[s])
 
+    this.onHangup?.(this.stateMachine)
+
     // PhoneCall.active = null
   }
 
@@ -434,6 +436,19 @@ function phoneBehavior(ctx) {
 
         if (!phone.live) return
 
+        phone.onHangup = () => {
+          if (!globalState.ispBillingReminderSent) {
+            setTimeout(() => {
+              ctx.newText({
+                from: '1-888-555-9483',
+                value: 'URGENT: Our records indicate that your account has an outstanding balance of . Immediate payment is required to prevent a discontinuation of your internet service. <strong style="text-decoration: underline">Please dial the National Broadband Services Billing Department at 1-888-555-9483 to pay this bill immediately</strong>.',
+              })
+              globalState.ispBillingReminderSent = true
+              phone.onHangup = noop
+            }, 10000)
+          }
+        }
+
         const stateMachine = new StateMachine(
           new CTX({
             currentNode: 'start',
@@ -442,7 +457,13 @@ function phoneBehavior(ctx) {
           }),
           {
             defaultWait: 1000,
-            async onUpdate({text}, sm) {
+            async onUpdate({text, action, ...props}, sm) {
+
+
+              if (action && action === 'hangup') {
+                console.log(props)
+                debugger
+              }
               // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'isp', text } }})
 
               sm.ctx.history.push(text)
@@ -605,7 +626,7 @@ function phoneBehavior(ctx) {
       }
 
       // GatesOfHell
-      else if (dialed === '19996663333' || dialed === '9996663333') {
+      else if (dialed === '18006660000' || dialed === '8006660000') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 3, ctx.state.soundEnabled)
 
         if (!phone.live) return

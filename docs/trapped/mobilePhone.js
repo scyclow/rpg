@@ -40,7 +40,7 @@ const APPS = [
   { name: 'FlushMate', key: 'flushMate', size: 128, price: 1, physical: true },
   { name: 'Personal Finance Educator', key: 'educator', size: 128, price: 0 },
   { name: 'FreezeLocker', key: 'freeze', size: 128, price: NaN, physical: true },
-  { name: 'HomeGrid', key: 'homeGrid', size: 128, price: 0 },
+  { name: 'HomeGrid', key: 'homeGrid', size: 128, price: 1 },
   { name: 'Identity Wizard', key: 'identityWizard', size: 128, price: 0 },
   { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
   { name: 'Lumin', key: 'lumin', size: 128, price: 0, physical: true },
@@ -116,6 +116,7 @@ ISP customer support: 1-800-555-2093
 ISP billing: 1-888-555-9483
 dispute resolution dept: 1-800-777-0836
 turbo connect: 1-800-444-3830
+fun time?: 1-800-666-0000
 
 
 
@@ -144,7 +145,7 @@ const tripleText = {
 
 const billingText1 = {
   from: '1-888-555-9483',
-  value: 'URGENT: Our records indicate that your account has an outstanding balance of $0.37. Immediate payment is required to prevent a discontinuation of your internet service. Please dial the National Broadband Services Billing Department at 1-888-555-9483 to pay this bill immediately',
+  value: 'URGENT: Our records indicate that your account has an outstanding balance of . Immediate payment is required to prevent a discontinuation of your internet service. <strong style="text-decoration: underline">Please dial the National Broadband Services Billing Department at 1-888-555-9483 to pay this bill immediately</strong>.',
 }
 
 const billingText2 = {
@@ -163,8 +164,8 @@ const billingText4 = {
 }
 
 const funTimeText = {
-  from: '1-800-666-7777',
-  value: 'Text 1-800-666-7777 for a fun time ;)',
+  from: '1-800-666-0000',
+  value: 'Call 1-800-666-0000 for a fun time ;)',
 }
 
 
@@ -199,20 +200,41 @@ const cryptoAdContent = [
 const virusAdContent = [
   { text: `WARNING: Your phone has (13)Virus. Click to Fix`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
   { text: `CRITICAL VIRUS ALERT! Scan system Immediate`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
-  { text: `⚠ 69 dangerous Viruses found on this device`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
+  { text: `⚠ 69 DANGEROUS Viruses found on this device`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
   { text: `Are you INFECTED? Scan now`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
+  { text: `123 THREATS found on this smart phone. Click Here to`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
+  { text: `STOP - Your computer might be infected with malware`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
+  { text: `Your device is SEVERELY COMPROMISED. Remove unwanted`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
+  { text: `GOVERNMENT SPYWARE DETECTED has been detected on this device`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
+]
+
+const internetAdContent = [
+  { text: `National Broadband Services: Fast Internet Speeds, Reliable Connections`,  update: { screen: 'messageViewer', messageViewerMessage: 'Call 1-800-555-2093 to get connected today!'}},
+  { text: `Connection is in our DNA - National Broadband Services`,  update: { screen: 'messageViewer', messageViewerMessage: 'Call 1-800-555-2093 to get connected today!'}},
+  { text: `Unlimited Broadband @ Low Prices`,  update: { screen: 'messageViewer', messageViewerMessage: 'Call 1-800-555-2093 to get connected to National Broadband Services today!'}},
+  { text: `Reliable Internet is finally HERE!`,  update: { screen: 'messageViewer', messageViewerMessage: 'Call 1-800-555-2093 to get connected to National Broadband Services today!'}},
+  { text: `No WiFi? No Problem! Reliable Mesh Networks at your fingertips`,  update: { screen: 'appMarket', appMarketPreSearch: 'HomeGrid'}},
+  { text: `No Internet? No Problem! Mesh Networks as easy as 1-2-3!`,  update: { screen: 'appMarket', appMarketPreSearch: 'HomeGrid'}},
+  { text: `Set up Local Area Networks with no fuss by doing this 1 thing`,  update: { screen: 'appMarket', appMarketPreSearch: 'HomeGrid'}},
+  { text: `Click here to learn the secret trick that Internet Service Providers don't want you to know about`,  update: { screen: 'appMarket', appMarketPreSearch: 'HomeGrid'}},
+
 ]
 
 
 const miscAdContent = [
-  { text: `Find HOT FINDOMs in your area`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="https://finsexy.com" target="_blank">FinSexy.com</a><iframe src="https://finsexy.com"></iframe> and send until it hurts`}},
-  { text: `Do you want to make Fast Cash now?`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="https://fastcashmoneyplus.biz" target="_blank">FastCashMoneyPlus.biz</a><iframe src="https://fastcashmoneypluz.biz" ></iframe>`}},
-  { text: `You WON'T BELIEVE what Sleepy Joe Biden just did, The Radical Left is FREAKING OUT`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="http://fakebullshit.news" target="_blank">FakeBullshit.news</a> <iframe src="https://fakebullshit.news"></iframe>`}},
-  { text: `Buy the HOTTEST merch in town`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="http://ronamerch.co" target="_blank">RonaMerch.co</a> <iframe src="https://ronamerch.co"></iframe>`}},
-  { text: `This social media platform is where...`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="http://friendworld.social" target="_blank">friendworld.social</a> <iframe src="https://friendworld.social"></iframe>`}},
+  {text: `ERROR: CANNOT RETRIEVE AD`, update: { screen: 'messageViewer', messageViewerMessage: 'ERROR: []' }},
+  {text: `ERROR: CANNOT RETRIEVE AD`, update: { screen: 'messageViewer', messageViewerMessage: 'ERROR: []' }},
+  {text: `ERROR: CANNOT RETRIEVE AD`, update: { screen: 'messageViewer', messageViewerMessage: 'ERROR: []' }},
+  { text: `These SEXY FINDOMs will suck your wallet dry`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="https://finsexy.com" target="_blank">FinSexy.com</a><iframe src="https://finsexy.com"></iframe>`}},
+  {text: `For a fun time, call this number ;)`, update: { screen: 'messageViewer', messageViewerMessage: '1-800-666-0000' }},
+  {text: `Everyone is talking about *YieldFarmer2*`, update: { screen: 'appMarket', appMarketPreSearch: 'yield' }},
+  // { text: `Do you want to make Fast Cash now?`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="https://fastcashmoneyplus.biz" target="_blank">FastCashMoneyPlus.biz</a><iframe src="https://fastcashmoneypluz.biz" ></iframe>`}},
+  // { text: `You WON'T BELIEVE what Sleepy Joe Biden just did, The Radical Left is FREAKING OUT`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="http://fakebullshit.news" target="_blank">FakeBullshit.news</a> <iframe src="https://fakebullshit.news"></iframe>`}},
+  // { text: `Buy the HOTTEST merch in town`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="http://ronamerch.co" target="_blank">RonaMerch.co</a> <iframe src="https://ronamerch.co"></iframe>`}},
+  // { text: `This social media platform is where...`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="http://friendworld.social" target="_blank">friendworld.social</a> <iframe src="https://friendworld.social"></iframe>`}},
 ]
 
-const getAd = (adContent, divisor) => adContent[Math.floor(Date.now()/divisor)%adContent.length]
+const getAd = (adContent, offset=0) => adContent[(offset + Math.floor(Date.now()/20000))%adContent.length]
 
 
 const buttonSrc = createSource('sine', 440)
@@ -296,6 +318,7 @@ const state = persist('__MOBILE_STATE', {
 
         { name: 'Lumin', key: 'lumin', size: 128, price: 0, physical: true },
         { name: 'Toastr', key: 'toastr', size: 128, price: 0, physical: true },
+        { name: 'YieldFarmer 2', key: 'yieldFarmer', size: 128, price: 0 },
         { name: 'MoneyMiner', key: 'moneyMiner', size: 128, price: 0 },
         { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
         { name: 'Secure 2FA', key: 'secure2fa', size: 128, price: 0 },
@@ -317,7 +340,7 @@ const state = persist('__MOBILE_STATE', {
       payAppAMLKYCed: false,
       idvWizardStep: 0,
       idWizardInfo: {},
-      yieldFarmerHighScore: 0,
+      yieldFarmerHighScore: 674.2,
       appCreditBalance: 1,
       educatorModulesCompleted: {},
       password: '',
@@ -335,7 +358,7 @@ function meshPairFinder(ctx) {
     if (input === output) return true
 
     const { meshNetworkPairings, meshOutputNodes, meshInputNodes } = ctx.state
-    const pairings = meshNetworkPairings[input].filter(p => meshInputNodes[p])
+    const pairings = (meshNetworkPairings[input] || []).filter(p => meshInputNodes[p])
 
     if (!pairings?.length) return false
 
@@ -400,7 +423,7 @@ createComponent(
         color: #00f
       }
 
-      button, select, label, input[type="range"], input[type="checkbox"] {
+      button, select, label, input[type="range"], input[type="checkbox"], input[type="radio"] {
         cursor: pointer;
       }
 
@@ -444,6 +467,7 @@ createComponent(
 
       iframe {
         background: #fff;
+        height: 250px;
       }
 
       .icon {
@@ -498,6 +522,14 @@ createComponent(
         text-shadow: 1px 1px 0 #ff0, -1px 1px 0 #ff0, 1px -1px 0 #ff0, -1px -1px 0 #ff0;
         box-shadow: 1px 1px 0 #ff0, -1px 1px 0 #ff0, 1px -1px 0 #ff0, -1px -1px 0 #ff0;
       }
+
+      .virusL2 .ad:hover {
+        background: #ff0;
+      }
+      .virusL3 .ad:hover {
+        filter: invert(1);
+      }
+
       #phone.virusL2 *::selection {
         background: #000;
         color: #fff;
@@ -941,13 +973,14 @@ createComponent(
       payAppUpdate,
       lastPayApp2fa,
       appMarketPPC,
-      alarmRing
+      alarmRing,
+      meshNetworkPairings
     } = ctx.state
 
     const currentUserData = userData[currentUser] || {}
 
     const {
-      appsInstalled,
+      appsInstalled: _appsInstalled,
       payAppUSDAddr,
       moneyMinerCryptoAddr,
       exchangeUSDAddr,
@@ -965,6 +998,8 @@ createComponent(
       virusL2,
       virusL3
     } = currentUserData
+
+    const appsInstalled = _appsInstalled || []
 
 
     const textMessages = currentUserData?.textMessages || []
@@ -1217,15 +1252,50 @@ createComponent(
     } else if (screen === 'home') {
       ctx?.__notificationCb?.()
 
+
+
+      /*
+        NBS bill undiscovered? -> NBS ads
+        automining not started? -> mining ads
+
+
+
+      */
+
+
       if (virusL1) ctx.$phone.classList.add('virusL1')
       if (virusL2) ctx.$phone.classList.add('virusL2')
       if (virusL3) ctx.$phone.classList.add('virusL3')
 
-      const ads = shuffle([
-        ...cryptoAdContent,
-        ...virusAdContent,
-        {text: `ERROR: CANNOT RETRIEVE AD`, update: { screen: 'messageViewer', messageViewerMessage: 'ERROR: []' }}
-      ])
+      let ads
+
+      if (!virusL3) {
+        ads = shuffle([
+          ...times(4, () => virusAdContent).flat(),
+          ...internetAdContent,
+          ...cryptoAdContent,
+          ...miscAdContent
+        ])
+
+      } else if (!globalState.ispBillingCalled && Object.keys(meshNetworkPairings).length < 4 && !wifiAvailable) {
+        ads = shuffle([
+          ...times(4, () => internetAdContent).flat(),
+          ...virusAdContent,
+          ...cryptoAdContent,
+          ...miscAdContent
+        ])
+
+      } else if (!Object.keys(globalState.cryptoDevices).some(d => globalState.cryptoDevices[d].totalTime > 0)) {
+        ads = shuffle(cryptoAdContent)
+
+      } else {
+        ads = shuffle([
+          ...virusAdContent,
+          ...internetAdContent,
+          ...cryptoAdContent,
+          ...miscAdContent
+        ])
+      }
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen" style="flex: 1; display: flex">
@@ -1235,7 +1305,7 @@ createComponent(
                 ? `
                   <div class="ad" id="adContainer2" style="animation-delay: -500ms;">
                     <h5>SPONSORED CONTENT</h5>
-                    ${marquee(`<span style="margin-right: 1em">${getAd(ads, 30000).text}</span>`, { duration: 2, style: 'width: 300px; height: 2em; padding: 0.25em;'})}
+                    ${marquee(`<span style="margin-right: 1em">${getAd(ads).text}</span>`, { duration: 2, style: 'width: 300px; height: 2em; padding: 0.25em;'})}
                   </div>
                 `
                 : ''
@@ -1247,7 +1317,7 @@ createComponent(
                   ? `
                     <div class="ad" id="adContainer" style="width: 250px; float: right; margin-top: 3em">
                       <h5>SPONSORED CONTENT</h5>
-                      <div id="ad">${getAd(virusAdContent, 10000).text}</div>
+                      <div id="ad">${getAd(ads, 1).text}</div>
                     </div>
 
                   `
@@ -1258,7 +1328,7 @@ createComponent(
                   ? `
                     <div class="ad" id="adContainer3" style="animation-delay: -1000ms; margin-top: 1em; width: 180px">
                       <h5>SPONSORED CONTENT</h5>
-                      <div id="ad3">${getAd(miscAdContent, 20000).text}</div>
+                      <div id="ad3">${getAd(ads, 2).text}</div>
                     </div>
 
                   `
@@ -1279,7 +1349,7 @@ createComponent(
         </div>
       `
 
-      const appScreens = ['appMarket', 'phoneApp', 'textMessage', 'settings', 'network', ...appsInstalled.map(a => a.key)]
+      const appScreens = appsInstalled.map(a => a.key)
 
       for (let screen of appScreens) {
         ctx.$('#' + screen).onclick = () => {
@@ -1299,10 +1369,10 @@ createComponent(
             alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
           }
-          ctx.setState(getAd(virusAdContent, 10000).update)
+          ctx.setState(getAd(ads, 1).update)
         }
         ctx.setInterval(() => {
-          ctx.$('#ad').innerHTML = getAd(virusAdContent, 10000).text
+          ctx.$('#ad').innerHTML = getAd(ads, 1).text
         })
       }
 
@@ -1312,10 +1382,10 @@ createComponent(
             alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
           }
-          ctx.setState(getAd(miscAdContent, 20000).update)
+          ctx.setState(getAd(ads, 2).update)
         }
         ctx.setInterval(() => {
-          ctx.$('#ad3').innerHTML = getAd(miscAdContent, 20000).text
+          ctx.$('#ad3').innerHTML = getAd(ads, 2).text
         })
       }
 
@@ -1325,7 +1395,7 @@ createComponent(
             alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
           }
-          ctx.setState(getAd(ads, 30000).update)
+          ctx.setState(getAd(ads).update)
         }
       }
 
@@ -1337,7 +1407,7 @@ createComponent(
       }
 
       if (virusL3) {
-        ctx.qsa('button').forEach(b => {
+        [...ctx.qsa('button'), ...ctx.qsa('.ad')].forEach(b => {
           b.onmouseover = () => {
             buttonSrc.smoothFreq(sample(aMinor))
             buttonSrc.smoothGain(MAX_VOLUME)
@@ -3383,6 +3453,8 @@ createComponent(
 
     } else if (screen === 'wake') {
 
+      const hasConnection = (wifiAvailable || findMeshPairing('gateLink', 'wake')) && wakePaired
+
       const deviceInterface = `
         ${wifiAvailable || findMeshPairing('gateLink', 'wake')
             ? `<h4 style="text-align: center">Current Time: NaN<span class="blink">:</span>NaN<span class="blink">:</span>NaN</h4>
@@ -3399,7 +3471,7 @@ createComponent(
           <h5>Choose Alarm:</h5>
           ${times(4, (ix) => `
             <label style="display: block; font-size: 0.9em">
-              <input id="alarm-${ix}" type="radio" name="alarm-${ix}" ${alarmRing === ix ? 'checked' : ''}> Alarm ${ix} <span id="alarm-${ix}-label"></span>
+              <input id="alarm-${ix}" type="radio" name="alarm-${ix}" ${alarmRing === ix ? 'checked' : ''}> ${hasConnection ? `Alarm ${ix}` : ''} <span id="alarm-${ix}-label"></span>
             </label>`).join('')}
         </div>
         <div>${jailbrokenApps.wake ? jbMarkup(globalState.cryptoDevices.wake) : ''}</div>
@@ -3442,7 +3514,7 @@ createComponent(
         }, 1000)
       }
 
-      if ((wifiAvailable || findMeshPairing('gateLink', 'wake')) && wakePaired) {
+      if (hasConnection) {
         times(4, ix => {
           ctx.$('#alarm-' + ix).onclick = () => {
             ctx.setState({
@@ -3653,7 +3725,7 @@ createComponent(
       } else {
         times(4, ix => {
           if (ctx.$('#alarm-' + ix)) ctx.$('#alarm-' + ix).onclick = () => {
-            setTimeout(() => ctx.$(`#alarm-${ix}-label`).innerHTML += `[UNAVAILABLE]`, 500)
+            setTimeout(() => ctx.$(`#alarm-${ix}-label`).innerHTML += `[CANNOT RETRIEVE]`, 500)
           }
         })
       }
@@ -3966,7 +4038,7 @@ createComponent(
 
           <div class="ad" id="adContainer">
             <h5>SPONSORED CONTENT</h5>
-            <div id="ad">${getAd(cryptoAdContent, 20000).text}</div>
+            <div id="ad">${getAd(cryptoAdContent).text}</div>
           </div>
 
 
@@ -3986,7 +4058,7 @@ createComponent(
       `
 
       ctx.setInterval(() => {
-        ctx.$('#ad').innerHTML = getAd(cryptoAdContent, 20000).text
+        ctx.$('#ad').innerHTML = getAd(cryptoAdContent).text
       })
 
       ctx.$('#mine').onclick = () => {
@@ -4008,7 +4080,7 @@ createComponent(
           alert('Please download the Message Viewer app from the AppMarket to view this message')
           return
         }
-        ctx.setState(getAd(cryptoAdContent, 20000).update)
+        ctx.setState(getAd(cryptoAdContent).update)
       }
 
       ctx.$('#send').onclick = () => {
@@ -4587,7 +4659,7 @@ createComponent(
         }
 
         if (currentScore > ctx.state.yieldFarmerGlobalHighScore) {
-          ctx.setState.yieldFarmerGlobalHighScore = currentScore
+          ctx.state.yieldFarmerGlobalHighScore = currentScore
           ctx.$('#globalHighScore').innerHTML = currentScore.toFixed(2)
         }
       }
@@ -5490,6 +5562,7 @@ createComponent(
                 behavior = {
                   disabledMalDetection: true,
                 }
+                globalState.deviceViruses = true
                 userBehavior = {
                   virusL1: true
                 }
@@ -5707,7 +5780,7 @@ createComponent(
       }
 
     } else if (screen === 'homeGrid') {
-      const pairings = ctx.state.meshNetworkPairings
+      const pairings = meshNetworkPairings
       const validOutputNodes = ctx.state.meshOutputNodes
       const validInputNodes = ctx.state.meshInputNodes
 
@@ -5956,6 +6029,17 @@ createComponent(
       }
 
 
+    } else if (screen === 'gateLink') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+        </div>
+      `
+      // TODO
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
 
     } else {
       ctx.$phoneContent.innerHTML = `
