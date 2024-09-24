@@ -19,6 +19,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   ispBalance: 0.37,
   ispBillingCalled: false,
   ispBillingReminderSent: false,
+  castingNFT: null,
   plantWatered: false,
   plantsDead: false,
   shaydOpen: false,

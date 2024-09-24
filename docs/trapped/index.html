@@ -32,7 +32,7 @@
 <script type="module">
   import {ls} from './$.js'
 
-  window.GAME_VERSION = 1.9
+  window.GAME_VERSION = 1.10
 
   const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
   if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {
@@ -81,6 +81,10 @@
     <trapped-modal id="gateLinkModal" blur="true">
       <gate-link id="gateLinkDevice" slot="content"></gate-link>
     </trapped-modal>
+
+    <trapped-modal id="smartFrameModal" blur="true">
+      <smart-frame id="smartFrameDevice" slot="content"></smart-frame>
+    </trapped-modal>
   </main>
 
 </body>
@@ -92,6 +96,7 @@
 <script type="module" src="./mobilePhone.js"></script>
 <script type="module" src="./smartTV.js"></script>
 <script type="module" src="./gateLink.js"></script>
+<script type="module" src="./smartFrame.js"></script>
 
 
 
@@ -108,8 +113,11 @@
   const $phoneModal = $.id('phoneModal')
   const $gateLinkModal = $.id('gateLinkModal')
   const $tvModal = $.id('tvModal')
+  const $smartFrameModal = $.id('smartFrameModal')
+
   const $phoneDevice = $.id('phoneDevice')
   const $tvDevice = $.id('tvDevice')
+  const $smartFrameDevice = $.id('smartFrameDevice')
   const $consoleLocation = $.id('consoleLocation')
   const $consoleTime = $.id('consoleTime')
   const $consoleTemperature = $.id('consoleTemperature')
@@ -937,6 +945,14 @@
           text: `The word "<strong>ClearBreeze</strong>" is laser-etched into the bottom right corner, along with a sticker: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the <strong>Landlock Realty Rental App</strong>"`
         },
       ],
+
+      smartFrame: {
+        before() {
+          $smartFrameDevice.refresh()
+          $smartFrameModal.open()
+        },
+        text: `You look at the smart frame`,
+      },
     }, {
       actions: ({ctx}) => [
         { text: 'Phone', value: 'openPhone'},
@@ -947,6 +963,7 @@
 
         { text: 'Router', value: 'router'},
         { text: 'TV', value: 'tv'},
+        { text: 'SmartFrame', value: 'smartFrame'},
         { text: 'eBook', value: 'eBook'},
       ],
       handler: ({ur}) => ur

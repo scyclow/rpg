@@ -46,11 +46,13 @@ const APPS = [
   { name: 'Lumin', key: 'lumin', size: 128, price: 0, physical: true },
   { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
   { name: 'MoneyMiner', key: 'moneyMiner', size: 128, price: 0 },
+  { name: 'NFT Marketplace', key: 'nftMarketPlace', size: 128, price: 0 },
   { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
   { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
   { name: 'Secure 2FA', key: 'secure2fa', size: 128, price: 0 },
   { name: 'Shayd', key: 'shayd', size: 128, price: 0, physical: true },
+  { name: 'SmartFrame', key: 'smartFrame', size: 128, price: 0, physical: true },
   { name: 'SmartLock', key: 'lock', size: 128, price: 0, physical: true },
   { name: 'SmartPlanter<sup>TM</sup>', key: 'planter', size: 256, price: 0, physical: true },
   { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: NaN, physical: true },
@@ -240,6 +242,23 @@ const getAd = (adContent, offset=0) => adContent[(offset + Math.floor(Date.now()
 const buttonSrc = createSource('sine', 440)
 const aMinor = [392, 349.23, 329.63, 293.66, 261.63, 246.94, 220, 440, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880]
 
+function generateNFT(id) {
+  let hash = '0x'
+  for (let i = 0; i < 64; i++) {
+    hash += Math.floor(Math.random() * 16).toString(16)
+  }
+
+  return {
+    id,
+    hash,
+    rarity: Math.random()
+  }
+}
+
+function generateNFTsForSale(n) {
+  return times(n, id => generateNFT(id))
+}
+
 
 const state = persist('__MOBILE_STATE', {
   bluetoothEnabled: false,
@@ -295,6 +314,11 @@ const state = persist('__MOBILE_STATE', {
   premiumCryptoBalances: {},
   yieldFarmerGlobalHighScore: 19011.44,
   appMarketPPC: 1.03,
+  nftsForSale: generateNFTsForSale(40),
+  nftBuyIx: 0,
+  nftCollectionIx: 0,
+  nftsExisting: 40,
+  currentNFTDisplay: undefined,
   userData: {
     0: {
       appsInstalled: [
@@ -346,6 +370,10 @@ const state = persist('__MOBILE_STATE', {
       password: '',
       virusL1: true,
       virusL2: true,
+      nftWalletConnected: false,
+      nftCollection: [],
+      nftScreen: '',
+      nftSmartFrameConnected: false
     }
   }
 })
@@ -996,7 +1024,10 @@ createComponent(
       educatorModulesCompleted,
       virusL1,
       virusL2,
-      virusL3
+      virusL3,
+      nftWalletConnected,
+      nftCollection,
+      nftSmartFrameConnected
     } = currentUserData
 
     const appsInstalled = _appsInstalled || []
@@ -1240,7 +1271,14 @@ createComponent(
               yieldFarmerHighScore: 0,
               appCreditBalance: 0,
               educatorModulesCompleted: {},
-              password
+              password,
+              virusL1: false,
+              virusL2: false,
+              virusL3: false,
+              nftWalletConnected: false,
+              nftCollection: [],
+              nftScreen: '',
+              nftSmartFrameConnected: false
             }
           }
         })
@@ -6040,6 +6078,337 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+
+    } else if (screen === 'nftMarketPlace') {
+      const {nftScreen, nftsForSale, nftBuyIx, nftCollectionIx, nftsExisting} = ctx.state
+      const cryptoBalance = cryptoBalances[moneyMinerCryptoAddr] || 0
+
+
+      const buyIx = (nftsForSale.length + nftBuyIx) % nftsForSale.length
+      const collectionIx = (nftCollection.length + nftCollectionIx) % nftCollection.length
+
+      const floor = 800
+
+      const price = (r, buying) => Number((Math.floor((r * 500 + floor) * 100) / 100).toFixed(2)) + (buying ? 50 : 0)
+
+      const mainContent = nftWalletConnected
+        ? `
+          <div style="">
+            <h6 style="word-wrap: break-word; margin-bottom: 0.4em">Connected As: ${moneyMinerCryptoAddr}</h6>
+            <h6>Balance: ₢ ${cryptoBalance.toFixed(2)}</h6>
+          </div>
+
+          <div style="text-align: center; margin-top: 0.25em">
+            <button id="viewBuy" class="${nftScreen === 'buy' ? 'active' : ''}">Buy</button>
+            <button id="viewCollection" class="${nftScreen === 'collection' ? 'active' : ''}">View Collection</button>
+          </div>
+
+          <section id="buySection" class="${nftScreen === 'buy' ? '' : 'hidden'}" style="display: flex; flex-direction: column; align-items: center; margin-top: 0.5em">
+            <div style="">
+              <button id="mint" ${cryptoBalance < 1000 ? 'disabled' : ''}>Mint New NFT</button> (₢ 1000)
+            </div>
+
+            <div class="nftView" id="buyView">
+              <h3>#${nftsForSale[buyIx].id}</h3>
+              <iframe loading="lazy" src="https://steviep.xyz/labrynth?hash=${nftsForSale[buyIx].hash}"></iframe>
+              <div style="padding: 0.25em; display: inline-block; border: 1px dotted; margin-top: 0.25em; ">
+                <h5 style="text-align: center"><button style="margin-bottom: 0.25em" id="buyNow" ${cryptoBalance < price(nftsForSale[buyIx].rarity, true) ? 'disabled' : ''}>Buy Now</button> (₢ ${price(nftsForSale[buyIx].rarity, true)})</h5>
+                <h5 style="text-align: center">[Rarity Score: ${nftsForSale[buyIx].rarity.toFixed(2)}]</h5>
+              </div>
+
+              <div style="display: flex; justify-content: space-between">
+                <div id="prevBuy"><span class="icon" style="padding: 0.5em">←</span> Prev</div>
+                <div id="nextBuy">Next <span class="icon" style="padding: 0.5em">→</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="collectionSection" class="${nftScreen === 'collection' ? '' : 'hidden'}">
+            ${nftCollection.length
+              ? `
+                <div class="nftView" id="sellView">
+                  <h3>#${nftCollection[collectionIx].id}</h3>
+                  <iframe loading="lazy" src="https://steviep.xyz/labrynth?hash=${nftCollection[collectionIx].hash}"></iframe>
+                  <div style="padding: 0.25em; display: inline-block; border: 1px dotted; margin-top: 0.25em; ">
+                    <h5 style="text-align: center"><button style="margin-bottom: 0.25em" id="sellNow">Sell</button> (₢ ${price(nftCollection[collectionIx].rarity)})</h5>
+                    <h5 style="text-align: center">[Rarity Score: ${nftCollection[collectionIx].rarity.toFixed(2)}]</h5>
+                  </div>
+
+                  <div style="display: flex; justify-content: space-between">
+                    <div id="prevSell"><span class="icon" style="padding: 0.5em">←</span> Prev</div>
+                    <div id="nextSell">Next <span class="icon" style="padding: 0.5em">→</span></div>
+                  </div>
+                </div>
+              `
+              : '<h4 style="text-align: center; font-style: italic; margin-top: 0.4em">(No NFTs in Collection)</h4>'}
+          </section>
+
+        `
+        : `
+          <button id="connectWallet">Connect Wallet</button>
+
+          <div id="walletConnections" class="hidden">
+            <h4 style="margin: 0.4em 0">Device Wallets:</h4>
+            <div>${
+              appsInstalled.some(app => app.key === 'moneyMiner')
+                ? `Money Miner <button id="connectMoneyMiner">Connect</button>`
+                : `No ₢rypto Wallets found on this device`
+            }</div>
+          </div>
+
+          <h6 id="connectMessage" style="margin-top: 0.25em"></h6>
+        `
+
+
+
+
+      ctx.$phoneContent.innerHTML = `
+        <style>
+          .nftView {
+            display: flex;
+            flex-direction: column;
+            justify-content: center
+          }
+          .nftView iframe {
+            width: 300px;
+            height: 300px;
+            border: 1px solid #000;
+          }
+
+          .active {
+            border: 2px solid;
+            border-radius: 2px;
+            font-weight: bold;
+          }
+
+          .txMessage {
+            height: 250px;
+            width: 250px;
+            border: 2px solid;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-direction: column;
+            padding: 1em;
+          }
+
+
+          #prevBuy, #nextBuy, #prevSell, #nextSell {
+            cursor: pointer;
+          }
+        </style>
+
+        <div class="phoneScreen">
+          <button id="home" style="margin-bottom: 0">Back</button>
+          <h2 style="text-align: center; margin-bottom: 0.25em;">NFT Marketplace</h2>
+          ${hasInternet ? mainContent : `<h3>Please connect to the internet to view the NFT Marketplace</h3>`}
+        </div>
+      `
+
+
+      if (ctx.$('#prevBuy')) ctx.$('#prevBuy').onclick = () => {
+        ctx.setState({ nftBuyIx: buyIx - 1})
+      }
+
+      if (ctx.$('#nextBuy')) ctx.$('#nextBuy').onclick = () => {
+        ctx.setState({ nftBuyIx: buyIx + 1})
+      }
+
+      if (ctx.$('#prevSell')) ctx.$('#prevSell').onclick = () => {
+        ctx.setState({ nftCollectionIx: collectionIx - 1})
+      }
+
+      if (ctx.$('#nextSell')) ctx.$('#nextSell').onclick = () => {
+        ctx.setState({ nftCollectionIx: collectionIx + 1})
+      }
+
+      if (ctx.$('#buyNow')) ctx.$('#buyNow').onclick = () => {
+        const buyingNFT = nftsForSale[buyIx]
+
+        if (ctx.state.cryptoBalances[moneyMinerCryptoAddr] - price(buyingNFT.rarity, true) < 0) return
+
+        ctx.$('#buyView').innerHTML = `
+          <div class="blink txMessage">
+            <h3>Buying NFT #${buyingNFT.id}</h3>
+            <h3>This transaction will deduct ₢ ${price(buyingNFT.rarity, true)} from your wallet</h3>
+          </div>
+        `
+        setTimeout(() => {
+          ctx.setState({
+            nftsForSale: nftsForSale.filter(nft => nft.id !== buyingNFT.id),
+            nftScreen: 'collection',
+            nftCollectionIx: nftCollection.length,
+            cryptoBalances: {
+              ...ctx.state.cryptoBalances,
+              [moneyMinerCryptoAddr]: ctx.state.cryptoBalances[moneyMinerCryptoAddr] - price(buyingNFT.rarity, true)
+            }
+          })
+          ctx.setUserData({
+            nftCollection: [...nftCollection, buyingNFT]
+          })
+        }, 6000)
+      }
+
+      if (ctx.$('#mint')) ctx.$('#mint').onclick = () => {
+        if (ctx.state.cryptoBalances[moneyMinerCryptoAddr] < 1000) return
+
+        ctx.$('#buyView').innerHTML = `
+          <div class="blink txMessage">
+            <h3>Minting new NFT!</h3>
+            <h3>This transaction will deduct ₢ 1000 from your wallet</h3>
+          </div>
+        `
+        setTimeout(() => {
+          ctx.setState({
+            nftsExisting: nftsExisting + 1,
+            nftScreen: 'collection',
+            nftCollectionIx: nftCollection.length,
+            cryptoBalances: {
+              ...ctx.state.cryptoBalances,
+              [moneyMinerCryptoAddr]: ctx.state.cryptoBalances[moneyMinerCryptoAddr] - 1000
+            }
+          })
+          ctx.setUserData({
+            nftCollection: [...nftCollection, generateNFT(nftsExisting)]
+          })
+        }, 6000)
+      }
+
+      if (ctx.$('#sellNow')) ctx.$('#sellNow').onclick = () => {
+        const sellingNFT = nftCollection[collectionIx]
+
+        ctx.$('#sellView').innerHTML = `
+          <div class="blink txMessage">
+            <h3>Selling NFT #${sellingNFT.id}</h3>
+            <h3>This transaction will add ₢ ${price(sellingNFT.rarity)} to your wallet</h3>
+          </div>
+        `
+        setTimeout(() => {
+          ctx.setState({
+            nftsForSale: [sellingNFT, ...nftsForSale],
+            cryptoBalances: {
+              ...ctx.state.cryptoBalances,
+              [moneyMinerCryptoAddr]: ctx.state.cryptoBalances[moneyMinerCryptoAddr] + price(sellingNFT.rarity)
+            }
+          })
+          ctx.setUserData({
+            nftCollection: nftCollection.filter(nft => nft.id === sellingNFT.id)
+          })
+        }, 6000)
+      }
+
+      if (ctx.$('#viewBuy')) ctx.$('#viewBuy').onclick = () => {
+        ctx.setState({nftScreen: 'buy'})
+      }
+
+      if (ctx.$('#viewCollection')) ctx.$('#viewCollection').onclick = () => {
+        ctx.setState({nftScreen: 'collection'})
+      }
+
+      if (ctx.$('#connectWallet')) ctx.$('#connectWallet').onclick = () => {
+        ctx.$('#connectMessage').innerHTML = 'Searching for Wallets'
+
+        setTimeout(() => {
+          ctx.$('#connectWallet').classList.add('hidden')
+          ctx.$('#walletConnections').classList.remove('hidden')
+          ctx.$('#connectMessage').innerHTML = ''
+        }, 500)
+      }
+
+      if (ctx.$('#connectMoneyMiner')) ctx.$('#connectMoneyMiner').onclick = () => {
+        ctx.$('#connectMessage').innerHTML = 'Connecting...'
+
+        setTimeout(() => {
+          ctx.setUserData({ nftWalletConnected: true })
+        }, 3000)
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (screen === 'smartFrame') {
+      const {currentNFTDisplay} = ctx.state
+
+      const mainContent = nftSmartFrameConnected
+        ? `
+          ${currentNFTDisplay !== undefined
+            ? `
+              <h4>Currently Displaying: #${currentNFTDisplay}</h4>
+              <button id="removeDisplay">Remove Display</button>
+            `
+            : ''
+          }
+          <h4 style="margin: 0.4em 0">NFTs Available:</h4>
+          ${
+            nftCollection.map(nft => `
+              <div style="padding-left: 1em">#${nft.id} <button id="display-${nft.id}">Display</button> ${currentNFTDisplay === nft.id ? '<span class="icon">☜</span>': ''}</div>
+            `).join('')
+          }
+        `
+        : `
+          <div style="text-align: center">
+            <button id="connectWallet">Connect Wallet</button>
+          </div>
+
+          <div id="walletConnections" class="hidden">
+            <h4 style="margin: 0.4em 0">Device Wallets:</h4>
+            <div>${
+              appsInstalled.some(app => app.key === 'moneyMiner')
+                ? `Money Miner <button id="connectMoneyMiner">Connect</button>`
+                : `No ₢rypto Wallets found on this device`
+            }</div>
+          </div>
+
+          <h6 id="connectMessage" style="margin-top: 0.25em"></h6>
+        `
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen" style="overflow: scroll; padding-bottom: 2em">
+          <button id="home">Back</button>
+          <h2 style="text-align: center; margin-bottom: 0.25em;">SmartFrame</h2>
+          ${hasInternet ? mainContent : `<h3>Please connect to the internet to view the NFT Marketplace</h3>`}
+        </div>
+      `
+
+
+      if (ctx.$('#removeDisplay')) ctx.$('#removeDisplay').onclick = () => {
+        globalState.castingNFT = null
+        ctx.setState({ currentNFTDisplay: undefined })
+      }
+
+
+      nftCollection.forEach(nft => {
+        if (ctx.$(`#display-${nft.id}`)) ctx.$(`#display-${nft.id}`).onclick = () => {
+          globalState.castingNFT = nft.hash
+          ctx.setState({ currentNFTDisplay: nft.id})
+        }
+      })
+
+      if (ctx.$('#connectWallet')) ctx.$('#connectWallet').onclick = () => {
+        ctx.$('#connectMessage').innerHTML = 'Searching for Wallets'
+        ctx.$('#connectWallet').disabled = true
+
+        setTimeout(() => {
+          ctx.$('#connectWallet').classList.add('hidden')
+          ctx.$('#walletConnections').classList.remove('hidden')
+          ctx.$('#connectMessage').innerHTML = ''
+        }, 500)
+      }
+
+      if (ctx.$('#connectMoneyMiner')) ctx.$('#connectMoneyMiner').onclick = () => {
+        ctx.$('#connectMessage').innerHTML = 'Connecting...'
+        ctx.$('#connectMoneyMiner').disabled = true
+
+        setTimeout(() => {
+          ctx.setUserData({ nftSmartFrameConnected: true })
+        }, 2000)
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
 
     } else {
       ctx.$phoneContent.innerHTML = `
