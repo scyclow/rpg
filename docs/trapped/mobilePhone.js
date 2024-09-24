@@ -1353,7 +1353,7 @@ createComponent(
               </div>
               ${virusL1
                   ? `
-                    <div class="ad" id="adContainer" style="width: 250px; float: right; margin-top: 3em">
+                    <div class="ad" id="adContainer1" style="width: 250px; float: right; margin-top: 3em">
                       <h5>SPONSORED CONTENT</h5>
                       <div id="ad">${getAd(ads, 1).text}</div>
                     </div>
@@ -1402,7 +1402,7 @@ createComponent(
 
 
       if (virusL1) {
-        ctx.$('#adContainer').onclick = () => {
+        ctx.$('#adContainer1').onclick = () => {
           if (!appsInstalled.some(a => a.key === 'messageViewer')) {
             alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
@@ -4061,6 +4061,7 @@ createComponent(
 
       const cryptoBalance = cryptoBalances[moneyMinerCryptoAddr] || 0
 
+
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
@@ -4074,7 +4075,7 @@ createComponent(
           <h4 style="margin-top: 0.5em;">₢rypto Wallet Address:</h4>
           <h4 style="word-wrap: break-word; margin-bottom: 0.4em">${moneyMinerCryptoAddr}</h4>
 
-          <div class="ad" id="adContainer">
+          <div class="ad" id="adContainer1">
             <h5>SPONSORED CONTENT</h5>
             <div id="ad">${getAd(cryptoAdContent).text}</div>
           </div>
@@ -4113,7 +4114,7 @@ createComponent(
       }
 
 
-      ctx.$('#adContainer').onclick = () => {
+      ctx.$('#adContainer1').onclick = () => {
         if (!appsInstalled.some(a => a.key === 'messageViewer')) {
           alert('Please download the Message Viewer app from the AppMarket to view this message')
           return
