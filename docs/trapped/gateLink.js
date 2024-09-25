@@ -1,6 +1,7 @@
 import {$, createComponent} from './$.js'
 import {persist} from './persist.js'
 import {createSource, MAX_VOLUME} from './audio.js'
+import {getAd, allAds} from './mobilePhone.js'
 
 
 
@@ -98,6 +99,23 @@ createComponent(
         color: #bdb5b5;
       }
 
+
+      .sc {
+        margin: 0.4em 0;
+        animation: Ad 1.5s steps(2, start) infinite;
+      }
+
+      @keyframes Ad {
+        from {
+          border: 0 solid;
+          padding: calc(0.25em + 2px);
+        }
+        to {
+          border: 2px dashed;
+          padding: calc(0.25em);
+        }
+      }
+
       .blink {
         animation: Blink 1.5s steps(2, start) infinite;
       }
@@ -119,6 +137,18 @@ createComponent(
 
         50% {
           background: #302828;
+        }
+      }
+
+      @media (max-width: 490px) {
+        #screen {
+          font-size: 0.8em;
+        }
+      }
+
+      @media (max-width: 380px) {
+        #screen {
+          font-size: 0.6em;
         }
       }
 
@@ -282,16 +312,14 @@ createComponent(
 
     if (globalState.deviceViruses) {
       setRunInterval(() => {
-        const ad = $.div(null, { className: 'ad' })
+        const ad = $.div(null, { className: 'sc' })
         ad.innerHTML = `
-          <div class="ad" style="width: 250px; height: 250px">
+          <div class="sc" style="width: 250px; height: 250px">
             <h5>SPONSORED CONTENT</h5>
-            <div id="ad">${getAd(ads, 1).text}</div>
+            <div id="sc">${getAd(allAds, 1).text}</div>
           </div>
         `
-        ctx.$('#door').appendChild(
-
-        )
+        ctx.$('#door').appendChild(ad)
       }, 300000)
     }
 

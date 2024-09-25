@@ -44,12 +44,10 @@ createComponent(
   {},
   ctx => {
     ctx.refresh = () => {
-      console.log('blah')
       ctx.setState({}, true)
     }
   },
   ctx => {
-    console.log(globalState.castingNFT)
     if (globalState.castingNFT != null) {
       ctx.$('#screen').innerHTML = `<iframe src="https://steviep.xyz/labrynth?hash=${globalState.castingNFT}"></iframe>`
 

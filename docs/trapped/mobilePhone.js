@@ -170,6 +170,11 @@ const funTimeText = {
   value: 'Call 1-800-666-0000 for a fun time ;)',
 }
 
+const educatorText = {
+  from: '1-800-333-7777',
+  value: 'Financial Freedom Awaits! Download the <strong>Personal Finance Educator</strong> app today!',
+}
+
 
 const moneyMinerMessage = `
   <div style="font-family: sans-serif">
@@ -193,13 +198,13 @@ const virusScannerMessage = `
 `
 
 
-const cryptoAdContent = [
+export const cryptoAdContent = [
   { text: 'Mine ₢rypto While You Sleep!', update: { screen: 'messageViewer', messageViewerMessage: moneyMinerMessage }},
   { text: `Learn the secret mining technique the government doesn't want you to know about`, update: { screen: 'messageViewer', messageViewerMessage: moneyMinerMessage }},
   { text: `Click Here to improving mining efficiency by 100000% !!`, update: { screen: 'messageViewer', messageViewerMessage: moneyMinerMessage }},
 ]
 
-const virusAdContent = [
+export const virusAdContent = [
   { text: `WARNING: Your phone has (13)Virus. Click to Fix`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
   { text: `CRITICAL VIRUS ALERT! Scan system Immediate`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
   { text: `⚠ 69 DANGEROUS Viruses found on this device`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
@@ -210,7 +215,7 @@ const virusAdContent = [
   { text: `GOVERNMENT SPYWARE DETECTED has been detected on this device`, update: { screen: 'messageViewer', messageViewerMessage: virusScannerMessage}},
 ]
 
-const internetAdContent = [
+export const internetAdContent = [
   { text: `National Broadband Services: Fast Internet Speeds, Reliable Connections`,  update: { screen: 'messageViewer', messageViewerMessage: 'Call 1-800-555-2093 to get connected today!'}},
   { text: `Connection is in our DNA - National Broadband Services`,  update: { screen: 'messageViewer', messageViewerMessage: 'Call 1-800-555-2093 to get connected today!'}},
   { text: `Unlimited Broadband @ Low Prices`,  update: { screen: 'messageViewer', messageViewerMessage: 'Call 1-800-555-2093 to get connected to National Broadband Services today!'}},
@@ -222,8 +227,14 @@ const internetAdContent = [
 
 ]
 
+export const allAds = [
+  ...cryptoAdContent,
+  ...virusAdContent,
+  ...internetAdContent,
+]
 
-const miscAdContent = [
+
+export const miscAdContent = [
   {text: `ERROR: CANNOT RETRIEVE AD`, update: { screen: 'messageViewer', messageViewerMessage: 'ERROR: []' }},
   {text: `ERROR: CANNOT RETRIEVE AD`, update: { screen: 'messageViewer', messageViewerMessage: 'ERROR: []' }},
   {text: `ERROR: CANNOT RETRIEVE AD`, update: { screen: 'messageViewer', messageViewerMessage: 'ERROR: []' }},
@@ -236,7 +247,7 @@ const miscAdContent = [
   // { text: `This social media platform is where...`, update: { screen: 'messageViewer', messageViewerMessage: `Viewing <a href="http://friendworld.social" target="_blank">friendworld.social</a> <iframe src="https://friendworld.social"></iframe>`}},
 ]
 
-const getAd = (adContent, offset=0) => adContent[(offset + Math.floor(Date.now()/20000))%adContent.length]
+export const getAd = (adContent, offset=0) => adContent[(offset + Math.floor(Date.now()/20000))%adContent.length]
 
 
 const buttonSrc = createSource('sine', 440)
@@ -546,15 +557,15 @@ createComponent(
       .virusL3 #header {
         background: linear-gradient(45deg, #000, #00f);
       }
-      .virusL3 .ad {
+      .virusL3 .sc {
         text-shadow: 1px 1px 0 #ff0, -1px 1px 0 #ff0, 1px -1px 0 #ff0, -1px -1px 0 #ff0;
         box-shadow: 1px 1px 0 #ff0, -1px 1px 0 #ff0, 1px -1px 0 #ff0, -1px -1px 0 #ff0;
       }
 
-      .virusL2 .ad:hover {
+      .virusL2 .sc:hover {
         background: #ff0;
       }
-      .virusL3 .ad:hover {
+      .virusL3 .sc:hover {
         filter: invert(1);
       }
 
@@ -769,13 +780,13 @@ createComponent(
         animation: Blink 1.5s steps(2, start) infinite;
       }
 
-      .ad {
+      .sc {
         margin: 0.4em 0;
         cursor: pointer;
         animation: Ad 1.5s steps(2, start) infinite;
       }
 
-      .ad:hover {
+      .sc:hover {
         text-decoration: underline
       }
 
@@ -1341,7 +1352,7 @@ createComponent(
             <div>
               ${virusL2
                 ? `
-                  <div class="ad" id="adContainer2" style="animation-delay: -500ms;">
+                  <div class="sc" id="scContainer2" style="animation-delay: -500ms;">
                     <h5>SPONSORED CONTENT</h5>
                     ${marquee(`<span style="margin-right: 1em">${getAd(ads).text}</span>`, { duration: 2, style: 'width: 300px; height: 2em; padding: 0.25em;'})}
                   </div>
@@ -1353,9 +1364,9 @@ createComponent(
               </div>
               ${virusL1
                   ? `
-                    <div class="ad" id="adContainer1" style="width: 250px; float: right; margin-top: 3em">
+                    <div class="sc" id="scContainer1" style="width: 250px; float: right; margin-top: 3em">
                       <h5>SPONSORED CONTENT</h5>
-                      <div id="ad">${getAd(ads, 1).text}</div>
+                      <div id="sc">${getAd(ads, 1).text}</div>
                     </div>
 
                   `
@@ -1364,7 +1375,7 @@ createComponent(
 
               ${virusL3
                   ? `
-                    <div class="ad" id="adContainer3" style="animation-delay: -1000ms; margin-top: 1em; width: 180px">
+                    <div class="sc" id="scContainer3" style="animation-delay: -1000ms; margin-top: 1em; width: 180px">
                       <h5>SPONSORED CONTENT</h5>
                       <div id="ad3">${getAd(ads, 2).text}</div>
                     </div>
@@ -1402,7 +1413,7 @@ createComponent(
 
 
       if (virusL1) {
-        ctx.$('#adContainer1').onclick = () => {
+        ctx.$('#scContainer1').onclick = () => {
           if (!appsInstalled.some(a => a.key === 'messageViewer')) {
             alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
@@ -1410,12 +1421,12 @@ createComponent(
           ctx.setState(getAd(ads, 1).update)
         }
         ctx.setInterval(() => {
-          ctx.$('#ad').innerHTML = getAd(ads, 1).text
+          ctx.$('#sc').innerHTML = getAd(ads, 1).text
         })
       }
 
       if (virusL3) {
-        ctx.$('#adContainer3').onclick = () => {
+        ctx.$('#scContainer3').onclick = () => {
           if (!appsInstalled.some(a => a.key === 'messageViewer')) {
             alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
@@ -1428,7 +1439,7 @@ createComponent(
       }
 
       if (virusL2) {
-        ctx.$('#adContainer2').onclick = () => {
+        ctx.$('#scContainer2').onclick = () => {
           if (!appsInstalled.some(a => a.key === 'messageViewer')) {
             alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
@@ -1445,7 +1456,7 @@ createComponent(
       }
 
       if (virusL3) {
-        [...ctx.qsa('button'), ...ctx.qsa('.ad')].forEach(b => {
+        [...ctx.qsa('button'), ...ctx.qsa('.sc')].forEach(b => {
           b.onmouseover = () => {
             buttonSrc.smoothFreq(sample(aMinor))
             buttonSrc.smoothGain(MAX_VOLUME)
@@ -3512,7 +3523,6 @@ createComponent(
               <input id="alarm-${ix}" type="radio" name="alarm-${ix}" ${alarmRing === ix ? 'checked' : ''}> ${hasConnection ? `Alarm ${ix}` : ''} <span id="alarm-${ix}-label"></span>
             </label>`).join('')}
         </div>
-        <div>${jailbrokenApps.wake ? jbMarkup(globalState.cryptoDevices.wake) : ''}</div>
       `
 
 
@@ -3538,6 +3548,9 @@ createComponent(
                 : `<h4>Please enable bluetooth to pair Wake device</h4>`
             }
 
+          </div>
+          <div>
+            ${jailbrokenApps.wake ? jbMarkup(globalState.cryptoDevices.wake, !bluetoothEnabled || !wakePaired) : ''}
           </div>
 
           <footer style="margin-top: 1em"><h5 style="text-align: center; font-style: italic">Wake</h5></footer>
@@ -3865,7 +3878,7 @@ createComponent(
               : `<h3>Please enable blue tooth to pair local devices</h3>`
           }
 
-          <div>${jailbrokenApps.lumin ? jbMarkup(globalState.cryptoDevices.lumin, !lampOn) : ''}</div>
+          <div>${jailbrokenApps.lumin ? jbMarkup(globalState.cryptoDevices.lumin, !lampOn || !luminPaired || !bluetoothEnabled || !inInternetLocation) : ''}</div>
           <h2 style="text-align: center; font-family: cursive">☼ Lumin ☀︎</h2>
         </div>
       `
@@ -4050,12 +4063,17 @@ createComponent(
 
     } else if (screen === 'moneyMiner') {
       const faq = `
+        <div>
           <h4>FAQ</h4>
-          <p style="margin-top: 0.5em"><strong>Q:</strong> How does Money Miner work?</p>
-          <p><strong>A:</strong> In order to mine ₢rypto, all you need to do is click the <strong>Mine ₢rypto"</strong> button in the Money Miner interface. Each click will mine a new ₢rypto.</p>
+          <p style="margin-top: 0.5em; padding-left: 1em"><strong>Q:</strong> How does Money Miner work?</p>
+          <p style="font-size: 0.9em; padding-left: 1em"><strong>A:</strong> In order to mine ₢rypto, all you need to do is click the <strong>Mine ₢rypto"</strong> button in the Money Miner interface. Each click will mine a new ₢rypto.</p>
 
-          <p style="margin-top: 0.5em"><strong>Q:</strong> How can I convert ₢rypto to $?</p>
-          <p><strong>A:</strong> Exchanging ₢rypto is easy! Just download the <strong>Currency Xchange App</strong>, send ₢rypto to your new wallet, and start trading! </p>
+          <p style="margin-top: 0.5em; padding-left: 1em"><strong>Q:</strong> How can I convert ₢rypto to $?</p>
+          <p style="font-size: 0.9em; padding-left: 1em"><strong>A:</strong> Exchanging ₢rypto is easy! Just download the <strong>Currency Xchange App</strong>, send ₢rypto to your new wallet, and start trading! </p>
+
+          <p style="margin-top: 0.5em; padding-left: 1em"><strong>Q:</strong> Where can I learn more?</p>
+          <p style="font-size: 0.9em; padding-left: 1em"><strong>A:</strong> Download the <strong>Personal Finance Educator</strong> app and check out the CryptoCurrency learning module!</p>
+        </div>
       `
 
 
@@ -4075,9 +4093,9 @@ createComponent(
           <h4 style="margin-top: 0.5em;">₢rypto Wallet Address:</h4>
           <h4 style="word-wrap: break-word; margin-bottom: 0.4em">${moneyMinerCryptoAddr}</h4>
 
-          <div class="ad" id="adContainer1">
+          <div class="sc" id="scContainer1">
             <h5>SPONSORED CONTENT</h5>
-            <div id="ad">${getAd(cryptoAdContent).text}</div>
+            <div id="sc">${getAd(cryptoAdContent).text}</div>
           </div>
 
 
@@ -4097,7 +4115,7 @@ createComponent(
       `
 
       ctx.setInterval(() => {
-        ctx.$('#ad').innerHTML = getAd(cryptoAdContent).text
+        ctx.$('#sc').innerHTML = getAd(cryptoAdContent).text
       })
 
       ctx.$('#mine').onclick = () => {
@@ -4114,7 +4132,7 @@ createComponent(
       }
 
 
-      ctx.$('#adContainer1').onclick = () => {
+      ctx.$('#scContainer1').onclick = () => {
         if (!appsInstalled.some(a => a.key === 'messageViewer')) {
           alert('Please download the Message Viewer app from the AppMarket to view this message')
           return
@@ -4771,12 +4789,12 @@ createComponent(
 
     } else if (screen === 'lock') {
       // todo: make it so you can pair with other smartlocks
-      const mainContent = ctx.state.smartLockPaired
+      const {smartLockPaired} = ctx.state
+      const mainContent = smartLockPaired
         ? `
           <div>
             <h3>Lock Status: ${globalState.smartLockOpen ? 'Unlocked' : 'Locked'}</h3>
             <button id="toggleSmartLock">${globalState.smartLockOpen ? 'Lock' : 'Unlock'}</button>
-            <div>${jailbrokenApps.lock ? jbMarkup(globalState.cryptoDevices.lock) : ''}</div>
           </div>
 
         `
@@ -4791,7 +4809,8 @@ createComponent(
             ? inInternetLocation ? mainContent : '<h3>Cannot find device</h3>'
             : `<h3>Cannot pair device: Please Enable Bluetooth</h3>`
           }
-          <h3 id="lockError"></h3>
+          <h3 id="lockError" style="padding: 0.5em"></h3>
+          <div>${jailbrokenApps.lock ? jbMarkup(globalState.cryptoDevices.lock, !bluetoothEnabled || !inInternetLocation || !smartLockPaired) : ''}</div>
         </div>
       `
 
@@ -4820,7 +4839,11 @@ createComponent(
             window.primarySM.enqueue('smartLockShift')
 
           } else {
-            ctx.$('#lockError').innerHTML = `Error: Device Failed With Message: "PLEASE TAKE NOTICE that you are hereby required to pay to Landlock Realty, LLC landlord of the premisis, the sum of $${globalState.rentBalance.toFixed(2)} for rent of the premises (Unit #948921). You are required to pay within <strong>-3 days</strong> from the day of service of this notice. All payments shall be made through the official Landlock Realty Rental App"`
+            if (!globalState.sentEducatorText) {
+              ctx.newText(educatorText)
+              globalState.sentEducatorText = true
+            }
+            ctx.$('#lockError').innerHTML = `Error: Device Failed With Message: "PLEASE TAKE NOTICE that you are hereby required to pay to Landlock Realty, LLC landlord of the premisis, the sum of $${globalState.rentBalance.toFixed(2)} for rent of the premises (<span style="text-decoration: underline">Unit #948921</span>). <br><br>You are required to pay within <strong>-3 days</strong> from the day of service of this notice. All payments shall be made through the official Landlock Realty Rental App"`
 
           }
           ctx.setState({ smartLockPaired: true })
@@ -5011,7 +5034,6 @@ createComponent(
             <button id="login" style="margin-top: 0.4em">Login</button>
             <h5 id="loginError"></h5>
           </div>
-          <div>${jailbrokenApps.toastr ? jbMarkup(globalState.cryptoDevices.toastr) : ''}</div>
         `
 
       const mainInterface = wifiAvailable || findMeshPairing('gateLink', 'toastr')
@@ -5030,6 +5052,7 @@ createComponent(
               ? toastrPaired ? mainInterface : `<button id="pairToaster">Pair Device</button>`
               : `<h3>Must enable bluetooth permissions in Home/Settings</h3>`
           }
+          <div>${jailbrokenApps.toastr ? jbMarkup(globalState.cryptoDevices.toastr, !bluetoothEnabled || !toastrPaired || !inInternetLocation) : ''}</div>
         </div>
       `
 
@@ -5051,7 +5074,7 @@ createComponent(
 
     } else if (screen === 'planter') {
 
-      const plantStates = ['Dead', ':(', ':|', ':)']
+      const plantStates = ['Dead <span class="icon">☠</span>', ':(', ':|', ':)']
       const {plantStatus} = ctx.state
 
       const needs = plantStatus === 0
@@ -5084,7 +5107,6 @@ createComponent(
               : ''
             }
           <h4 id="error"><h4>
-          ${jailbrokenApps.planter && planterPaired ? jbMarkup(globalState.cryptoDevices.planter) : ''}
         `
         : `<button id="pairPlanter">Pair SmartPlanter<sup>TM</sup></button>`
 
@@ -5097,6 +5119,7 @@ createComponent(
             ? inInternetLocation ? mainContent : '<h3>Cannot find SmartPlanter<sup>TM</sup></h3>'
             : `<h3>Please Enable Bluetooth to pair SmartPlanter<sup>TM</sup></h3>`
           }
+          <div>${jailbrokenApps.planter && planterPaired ? jbMarkup(globalState.cryptoDevices.planter, !bluetoothEnabled || !inInternetLocation || !planterPaired) : ''}</div>
         </div>
       `
 
@@ -5169,7 +5192,8 @@ createComponent(
       }
 
     } else if (screen === 'shayd') {
-      const mainContent = ctx.state.shaydPaired
+      const {shaydPaired} = ctx.state
+      const mainContent = shaydPaired
         ? `
           <div>
             <div style="display: flex; flex-direction: column; align-items: center">
@@ -5191,7 +5215,6 @@ createComponent(
                 `
                 : ''
             }
-            <div>${jailbrokenApps.shayd ? jbMarkup(globalState.cryptoDevices.shayd) : ''}</div>
           </div>
 
         `
@@ -5207,6 +5230,7 @@ createComponent(
             : `<h3>Please Enable Bluetooth to pair Shayd device</h3>`
           }
           <h3 id="btError"></h3>
+          <div>${jailbrokenApps.shayd ? jbMarkup(globalState.cryptoDevices.shayd, !bluetoothEnabled || !inInternetLocation || !shaydPaired) : ''}</div>
         </div>
       `
 
@@ -5282,12 +5306,13 @@ createComponent(
       }
 
     } else if (screen === 'clearBreeze') {
-      const mainContent = ctx.state.clearBreezePaired
+      const {clearBreezePaired} = ctx.state
+
+      const mainContent = clearBreezePaired
         ? `
           <div style="display: flex; flex-direction: column; align-items: center">
             <button id="openWindow" style="font-size: 1.2em">Open Window</button>
             <h3 id="windowError" style="text-align: center; margin-top: 0.5em"></h3>
-            <div>${jailbrokenApps.clearBreeze ? jbMarkup(globalState.cryptoDevices.clearBreeze) : ''}</div>
           </div>
 
         `
@@ -5303,6 +5328,7 @@ createComponent(
             : `<h3>Please Enable Bluetooth to pair Shayd device</h3>`
           }
           <h3 id="pairError"></h3>
+          <div>${jailbrokenApps.clearBreeze ? jbMarkup(globalState.cryptoDevices.clearBreeze, !bluetoothEnabled || !inInternetLocation || !clearBreezePaired) : ''}</div>
         </div>
       `
 
@@ -5351,7 +5377,6 @@ createComponent(
           }
         </div>
         ${internetConnected ? `` : `ERROR: ThermoSmart device cannot find "InpatientRehabilitationServices" Network`}
-        <div style="margin-top: 2em">${jailbrokenApps.thermoSmart ? jbMarkup(globalState.cryptoDevices.thermoSmart) : ''}</div>
       `
 
       ctx.$phoneContent.innerHTML = `
@@ -5368,6 +5393,7 @@ createComponent(
                 `
               : `<h3 id="pairError">Please enable blue tooth in your phones's Settings to pair ThermoSmart device</h3>`
           }
+          <div style="margin-top: 2em">${jailbrokenApps.thermoSmart ? jbMarkup(globalState.cryptoDevices.thermoSmart, !bluetoothEnabled || !inInternetLocation || !thermoSmartPaired) : ''}</div>
         </div>
       `
 
@@ -5419,7 +5445,6 @@ createComponent(
           <h3>Toilet paper level: <span style="font-size: 0.75em">LOW</span></h3>
           <h3>AirFresh quantity: <span style="font-size: 0.75em">EMPTY</span></h3>
         </div>
-        <div style="margin-top: 2em">${jailbrokenApps.flushMate ? jbMarkup(globalState.cryptoDevices.flushMate) : ''}</div>
       `
 
       ctx.$phoneContent.innerHTML = `
@@ -5437,6 +5462,7 @@ createComponent(
                 `
               : `<h3 id="pairError">Please enable bluetooth</h3>`
           }
+          <div style="margin-top: 2em">${jailbrokenApps.flushMate ? jbMarkup(globalState.cryptoDevices.flushMate, !bluetoothEnabled || !flushMatePaired) : ''}</div>
         </div>
       `
 
@@ -5496,8 +5522,9 @@ createComponent(
             setTimeout(() => {
               ctx.setState({exeCommands: [...ctx.state.exeCommands, `
                 <h5>Helpful Commands:</h5>
-                <h5>"escape()" -- exit the EXE Runner</h5>
-                <h5>"lsprofiles()" -- ls device profile info</h5>
+                <h5>"escape" -- exit the EXE Runner</h5>
+                <h5>"lsprofiles" -- list device profile info</h5>
+                <h5>"admin reassign [USER_NAME]" -- reassign admin functionality</h5>
                 <br>
                 <br>
                 <br>
@@ -5532,13 +5559,18 @@ createComponent(
           let behavior = {}
           let userBehavior = {}
           let commandDisplay = command
-          if (command.includes('escape()')) {
+          if (command.includes('escape')) {
             behavior = {
               screen: 'home',
               exeCommands: []
             }
-          } else if (command.includes('lsprofiles()')) {
+          } else if (command.includes('lsprofiles')) {
             commandDisplay = `
+              <style>
+                td, th, table {
+                  border: 1px solid
+                }
+              </style>
               <table>
                 <tr>
                   <th>id</th>
@@ -5549,9 +5581,9 @@ createComponent(
                 ${Object.keys(userData).map(id => `
                   <tr>
                     <td>${id}</td>
-                    <td style="max-width: 165px; word-break: break-word; text-align: center">${userNames[id]}</td>
-                    <td style="text-align: center">${Number(id) === currentUser ? '*' : ''}</td>
-                    <td style="text-align: center">${Number(id) === rootUser ? '*' : ''}</td>
+                    <td style="border: 1px solid; max-width: 165px; word-break: break-word; text-align: center">${userNames[id]}</td>
+                    <td style="border: 1px solid; text-align: center">${Number(id) === Number(currentUser) ? '*' : ''}</td>
+                    <td style="border: 1px solid; text-align: center">${Number(id) === Number(rootUser) ? '*' : ''}</td>
                   </tr>
                 `).join('')}
               </table>
@@ -5568,9 +5600,12 @@ createComponent(
 
             if (['disable', 'install', 'admin'].includes(fn) && Number(rootUser) !== Number(currentUser) && !sudo) {
               commandDisplay = `
-                <div style="margin: 0.5em 0;">ERROR: command can only be performed by user with admin role: "${command}"</div>
-                <div style="margin: 0.5em 0;">To reassign admin role, run: "admin reassign [USER_NAME]"</div>
-                <div style="margin: 0.5em 0; font-weight: bolder">Device admin profile: <span style="display: inline-block; padding: 0.25em; border: 1px solid">${userNames[rootUser]}</div>
+                <div style="border: 1px dotted; padding: 0.25em">
+                  <div style="margin: 0.5em 0;">ERROR: command can only be performed by user with admin role: "${command}"</div>
+                  <div style="margin: 0.5em 0;">To reassign admin role, run: "admin reassign [USER_NAME]"</div>
+                  <div style="margin: 0.5em 0; font-weight: bolder">Device admin profile: <span style="display: inline-block; padding: 0.25em; border: 1px solid">${userNames[rootUser]}</span></div>
+                  <div style="margin: 0.5em 0; font-weight: bolder">Please contact this user to perform the intended action</div>
+                </div>
               `
             } else if (fn === 'admin') {
               if (args[0] === 'view') {
@@ -6341,10 +6376,11 @@ createComponent(
             : ''
           }
           <h4 style="margin: 0.4em 0">NFTs Available:</h4>
-          ${
-            nftCollection.map(nft => `
+          ${nftCollection.length
+            ? nftCollection.map(nft => `
               <div style="padding-left: 1em">#${nft.id} <button id="display-${nft.id}">Display</button> ${currentNFTDisplay === nft.id ? '<span class="icon">☜</span>': ''}</div>
             `).join('')
+            : `<h5>There are no NFTs associated with this wallet, but you can purchase all the hottest new NFTs in the <span style="text-decoration: underline">NFT Marketplace</span> app!</h5>`
           }
         `
         : `
@@ -6425,6 +6461,14 @@ createComponent(
   },
   (oldState, newState, stateUpdate) => {
     Object.assign(state, { ...newState, lastScreen: oldState.screen})
+    if (
+      globalState.wifiActive
+      && !globalState.thermostatDisabled
+      && !tmp.thermostatRinging
+    ) {
+      window.primarySM.enqueue('thermostatRing')
+
+    }
   },
   true
 )
@@ -6442,7 +6486,7 @@ function jbMarkup(device, disabled) {
         <h5 style="display: inline-block; padding: 0.25em; margin: 0.25em 0; background: #333; border: 1px solid">${device.wallet}</h4>
         <h4 style="margin: 0.4em 0">Balance: ₢ <span id="cryptoBalance-${device.wallet}">${device.balance}</span></h4>
         ${disabled
-          ? '<h5 style="text-align:center; padding: 1em">Cannot find device. Please ensure device is powered "On"</h5>'
+          ? '<h5 style="text-align:center; padding: 1em">Cannot find device. Please ensure device is connected and powered "On"</h5>'
           : `
             <button id="enableMining">${device.active ? 'Disable' : 'Enable'} Autominer</button>
           `

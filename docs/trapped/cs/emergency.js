@@ -12,12 +12,15 @@ export const emergencyNodes = {
 
   shortly: {
     text: `An emergency dispatcher will be with you shortly to help you resolve`,
-    follow: () => {
+    follow: ({ctx}) => {
       const note = 440 * sample([1, 1.125, 1.2, 1.33333, 1.5, 1.6, 1.75])
       // const note = 300 * sample([1, 1.122, 1.189, 1.334, 1.498, 1.588, 1.782])
 
       const SOURCE1 = createSource('sine', note)
       const SOURCE2 = createSource('sine', note*2)
+
+      ctx.tmp.srcs.push(SOURCE1)
+      ctx.tmp.srcs.push(SOURCE2)
 
       setRunInterval(() => {
         SOURCE1.smoothFreq(note)

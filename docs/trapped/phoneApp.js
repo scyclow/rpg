@@ -52,6 +52,12 @@ export class PhoneCall {
   constructor(onclick, select=$.id) {
     PhoneCall.active = this
 
+    this.srcs.key1 = createSource('sine')
+    this.srcs.key2 = createSource('sine')
+
+    this.srcs.ring1 = createSource('sine')
+    this.srcs.ring2 = createSource('sine')
+
     const keys = [
       [1, '@'],
       [2, 'ABC'],
@@ -89,26 +95,25 @@ export class PhoneCall {
 
   startTone(key) {
     if (!this.srcs[key]) {
-      this.srcs[key] = [
-        createSource('sine', PhoneCall.tones[key][0]),
-        createSource('sine', PhoneCall.tones[key][1])
-      ]
+      this.srcs.key1.smoothFreq(PhoneCall.tones[key][0])
+      this.srcs.key2.smoothFreq(PhoneCall.tones[key][1])
     }
+
 
     this.pressTS = Date.now()
 
     if (!this.silent) {
-      if (this.srcs[key][0].gain.gain.value > 0) {
-        this.srcs[key][0].smoothGain(0)
-        this.srcs[key][1].smoothGain(0)
+      if (this.srcs.key1.gain.gain.value > 0) {
+        this.srcs.key1.smoothGain(0)
+        this.srcs.key2.smoothGain(0)
 
         setTimeout(() => {
-          this.srcs[key][0].smoothGain(MAX_VOLUME)
-          this.srcs[key][1].smoothGain(MAX_VOLUME)
+          this.srcs.key1.smoothGain(MAX_VOLUME)
+          this.srcs.key2.smoothGain(MAX_VOLUME)
         }, 25)
       } else {
-        this.srcs[key][0].smoothGain(MAX_VOLUME)
-        this.srcs[key][1].smoothGain(MAX_VOLUME)
+        this.srcs.key1.smoothGain(MAX_VOLUME)
+        this.srcs.key2.smoothGain(MAX_VOLUME)
       }
     }
   }
@@ -117,41 +122,38 @@ export class PhoneCall {
     const diff = Date.now() - this.pressTS
     if (diff < 200) {
       setTimeout(() => {
-        this.srcs[key]?.[0]?.smoothGain?.(0)
-        this.srcs[key]?.[1]?.smoothGain?.(0)
+        this.srcs.key1.smoothGain?.(0)
+        this.srcs.key2.smoothGain?.(0)
       }, 200 - diff)
     } else {
-      this.srcs[key]?.[0]?.smoothGain?.(0)
-      this.srcs[key]?.[1]?.smoothGain?.(0)
+      this.srcs.key1.smoothGain?.(0)
+      this.srcs.key2.smoothGain?.(0)
     }
   }
 
   async ringTone(rings=3, soundEnabled=true) {
     this.isRinging = true
-    const [src0, src1] = [createSource('sine'), createSource('sine')]
 
-    src0.smoothFreq(PhoneCall.tones.ring[0])
-    src1.smoothFreq(PhoneCall.tones.ring[1])
+    this.srcs.ring1.smoothFreq(PhoneCall.tones.ring[0])
+    this.srcs.ring2.smoothFreq(PhoneCall.tones.ring[1])
 
 
     await waitPromise(500)
     for (let i = 0; i < rings; i++) {
       if (!this.live) return
 
-      if (soundEnabled) src0.smoothGain(MAX_VOLUME)
-      if (soundEnabled) src1.smoothGain(MAX_VOLUME)
+      if (soundEnabled) this.srcs.ring1.smoothGain(MAX_VOLUME)
+      if (soundEnabled) this.srcs.ring2.smoothGain(MAX_VOLUME)
 
       await waitPromise(3000)
 
-      src0.smoothGain(0)
-      src1.smoothGain(0)
+      this.srcs.ring1.smoothGain(0)
+      this.srcs.ring2.smoothGain(0)
 
       if (!this.live) return
       await waitPromise(i === rings - 1 ? 1000 : 3000)
     }
 
-    src0.stop()
-    src1.stop()
 
     this.isRinging = false
   }
@@ -163,8 +165,15 @@ export class PhoneCall {
     this.live = false
     this.answerTime = 0
     this.stateMachine?.kill?.()
-    allSources.forEach(src => src.stop())
-    Object.keys(this.srcs).forEach(s => delete this.srcs[s])
+    // allSources.forEach(src => src.stop())
+    // Object.keys(this.srcs).forEach(s => {
+    //   this.srcs[s][0].stop()
+    //   this.srcs[s][1].stop()
+    //   delete this.srcs[s]
+    // })
+
+      this.srcs.ring1.smoothGain(0)
+      this.srcs.ring2.smoothGain(0)
 
     this.onHangup?.(this.stateMachine)
 
@@ -436,34 +445,18 @@ function phoneBehavior(ctx) {
 
         if (!phone.live) return
 
-        phone.onHangup = () => {
-          if (!globalState.ispBillingReminderSent) {
-            setTimeout(() => {
-              ctx.newText({
-                from: '1-888-555-9483',
-                value: 'URGENT: Our records indicate that your account has an outstanding balance of . Immediate payment is required to prevent a discontinuation of your internet service. <strong style="text-decoration: underline">Please dial the National Broadband Services Billing Department at 1-888-555-9483 to pay this bill immediately</strong>.',
-              })
-              globalState.ispBillingReminderSent = true
-              phone.onHangup = noop
-            }, 10000)
-          }
-        }
 
         const stateMachine = new StateMachine(
           new CTX({
             currentNode: 'start',
-            paymentCode: [],
-            routerIdentifier: []
+            tmp: {
+              srcs: []
+            },
           }),
           {
             defaultWait: 1000,
             async onUpdate({text, action, ...props}, sm) {
 
-
-              if (action && action === 'hangup') {
-                console.log(props)
-                debugger
-              }
               // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'isp', text } }})
 
               sm.ctx.history.push(text)
@@ -477,6 +470,22 @@ function phoneBehavior(ctx) {
         )
         phone.answer(stateMachine)
         setCallTime(ctx, phone)
+
+
+        phone.onHangup = () => {
+          stateMachine.ctx.tmp.srcs.forEach(src => src.stop())
+
+          if (!globalState.ispBillingReminderSent) {
+            setTimeout(() => {
+              ctx.newText({
+                from: '1-888-555-9483',
+                value: 'URGENT: Our records indicate that your account has an outstanding balance of . Immediate payment is required to prevent a discontinuation of your internet service. <strong style="text-decoration: underline">Please dial the National Broadband Services Billing Department at 1-888-555-9483 to pay this bill immediately</strong>.',
+              })
+              globalState.ispBillingReminderSent = true
+              phone.onHangup = noop
+            }, 20000)
+          }
+        }
 
         stateMachine.next('')
 
@@ -665,6 +674,9 @@ function phoneBehavior(ctx) {
         const stateMachine = new StateMachine(
           new CTX({
             currentNode: 'start',
+            tmp: {
+              srcs: []
+            },
           }),
           {
             defaultWait: 1000,
@@ -685,6 +697,11 @@ function phoneBehavior(ctx) {
         setCallTime(ctx, phone)
 
         stateMachine.next('')
+
+
+        phone.onHangup = () => {
+          stateMachine.ctx.tmp.srcs.forEach(src => src.stop())
+        }
 
 
       }

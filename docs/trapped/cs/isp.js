@@ -1,7 +1,7 @@
 import {createSource, MAX_VOLUME} from '../audio.js'
 import { globalState } from '../global.js'
 
-// let SOURCE1, SOURCE2
+let SOURCE1, SOURCE2
 
 
 
@@ -34,15 +34,18 @@ export const ispCSNodes = {
   }),
 
   representative: {
-    text: 'There are currently N A N customers in front of you in line. Please stay on the line and a representative will speak with you shortly',
+    text: 'There are currently N A N customers in front of you in line. Please stay on the line and a representative will be with you shortly',
     handler: x => 'representative',
     wait: 8000,
-    follow: () => {
+    follow: ({ctx}) => {
       const note = 300 * sample([1, 1.125, 1.2, 1.33333, 1.5, 1.6, 1.75])
       // const note = 300 * sample([1, 1.122, 1.189, 1.334, 1.498, 1.588, 1.782])
 
       const SOURCE1 = createSource('sine', note)
       const SOURCE2 = createSource('sine', note*2)
+
+      ctx.tmp.srcs.push(SOURCE1)
+      ctx.tmp.srcs.push(SOURCE2)
 
       setRunInterval(() => {
         SOURCE1.smoothFreq(note)
