@@ -59,13 +59,22 @@ window.allSources = allSources
 // EXPERIMENTAL
 
 
-class SoundSrc {
+export class SoundSrc {
   constructor(waveType='sine', startingFreq=440) {
     Object.assign(this, createSource(waveType, startingFreq))
   }
 
+  max() {
+    this.smoothGain(MAX_VOLUME)
+  }
+
+  silent() {
+    this.smoothGain(0)
+  }
+
   async note(freq, ms) {
     this.smoothGain(MAX_VOLUME)
+    this.smoothFreq(freq)
     await waitPromise(ms)
     this.smoothGain(0)
   }

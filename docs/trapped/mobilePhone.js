@@ -2,29 +2,27 @@ import {$, createComponent} from './$.js'
 import {persist} from './persist.js'
 import {globalState, tmp, calcIdVerifyCode, calcAddr, calcCryptoUSDExchangeRate, calcPremiumCryptoUSDExchangeRate, setColor, rndAddr, setMiningInterval, clearMiningInterval} from './global.js'
 import {PhoneCall, phoneApp} from './phoneApp.js'
-import {createSource, MAX_VOLUME} from './audio.js'
+import {createSource, MAX_VOLUME, SoundSrc} from './audio.js'
 import {marquee} from './marquee.js'
 
 
 
 
 
-const miscAudioSrc = createSource('sine')
+const miscAudioSrc = new SoundSrc('sine')
+const miscAudioSrc2 = new SoundSrc('sine')
 const APPS = [
 
 // needs name/IRL callout
   // TV
   // elevate
   // ai assistant?
-  // intercom
   // roomba
   // SmartStove?
   // Smart Bed???
 
 // needs building
-  // ebook
   // bathe
-  // security camera
   // fastcash (finance)
   // ronamerch (ecommerce)
   // fakebullshit (news)
@@ -35,7 +33,7 @@ const APPS = [
   { name: 'GateLink', key: 'gateLink', size: 128, price: 0, physical: true },
   { name: 'ClearBreeze', key: 'clearBreeze', size: 128, price: 0, physical: true },
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
-  // { name: 'Elevate', key: 'elevate', size: 128, price: NaN },
+  { name: 'Elevate', key: 'elevate', size: 128, price: 0 },
   { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
   { name: 'FlushMate', key: 'flushMate', size: 128, price: 3, physical: true },
   { name: 'Personal Finance Educator', key: 'educator', size: 128, price: 0 },
@@ -55,7 +53,7 @@ const APPS = [
   { name: 'SmartFrame', key: 'smartFrame', size: 128, price: 0, physical: true },
   { name: 'SmartLock', key: 'lock', size: 128, price: 0, physical: true },
   { name: 'SmartPlanter<sup>TM</sup>', key: 'planter', size: 256, price: 0, physical: true },
-  { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: NaN, physical: true },
+  { name: 'SmartPro Security Camera', key: 'camera', size: 128, price: 1, physical: true },
   { name: 'SmartTV', key: 'smartTV', size: 128, price: 0, physical: true },
   { name: 'ThermoSmart', key: 'thermoSmart', size: 128, price: 0, physical: true },
   { name: 'Toastr', key: 'toastr', size: 128, price: 0, physical: true },
@@ -1079,6 +1077,7 @@ createComponent(
       ctx.newText(packageText)
     }
 
+    const hasMessageViewer = !appsInstalled.some(a => a.key === 'messageViewer')
 
     ctx.$phone.classList.remove('virusL1')
     ctx.$phone.classList.remove('virusL2')
@@ -1469,7 +1468,7 @@ createComponent(
 
       if (virusL1) {
         ctx.$('#scContainer1').onclick = () => {
-          if (!appsInstalled.some(a => a.key === 'messageViewer')) {
+          if (hasMessageViewer) {
             alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
           }
@@ -1482,7 +1481,7 @@ createComponent(
 
       if (virusL3) {
         ctx.$('#scContainer3').onclick = () => {
-          if (!appsInstalled.some(a => a.key === 'messageViewer')) {
+          if (hasMessageViewer) {
             alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
           }
@@ -1495,7 +1494,7 @@ createComponent(
 
       if (virusL2) {
         ctx.$('#scContainer2').onclick = () => {
-          if (!appsInstalled.some(a => a.key === 'messageViewer')) {
+          if (hasMessageViewer) {
             alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
           }
@@ -1526,13 +1525,15 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <div style="display: flex; align-items: center; ">
-            <button id="home">Back</button> <h4 style="padding-left: 6em">Welcome to AppMarket!</h4>
+            <button id="home">Back</button>
           </div>
 
           <div id="appContent">
             <input placeholder="Type to search..." id="appSearch" style="width: 90%; font-size: 1.1em; padding: 0.25em">
             <table id="matchingApps" style="margin-top: 0.5em"></table>
-            <div id="purchase"></div>
+            <div id="purchase">
+              <h4 style="padding-left: 6em">Welcome to AppMarket!</h4>
+            </div>
             <h3 id="searchError"></h3>
           </div>
         </div>
@@ -1552,7 +1553,8 @@ createComponent(
 
           if (!searchTerm) {
             ctx.$('#matchingApps').innerHTML = ''
-            ctx.$('#purchase').innerHTML = ''
+            ctx.$('#purchase').innerHTML = '<h4 style="padding-left: 6em">Welcome to AppMarket!</h4>'
+            return
           }
 
           ctx.$('#matchingApps').innerHTML = `
@@ -1834,14 +1836,14 @@ createComponent(
                 setTimeout(() => {
                   miscAudioSrc.smoothFreq(440)
 
-                  miscAudioSrc.smoothGain(MAX_VOLUME)
+                  miscAudioSrc.smoothGain(MAX_VOLUME*1.2)
 
                   setTimeout(() => {
                     miscAudioSrc.smoothGain(0)
                   }, 150)
 
                   setTimeout(() => {
-                    miscAudioSrc.smoothGain(MAX_VOLUME)
+                    miscAudioSrc.smoothGain(MAX_VOLUME*1.2)
                     setTimeout(() => {
                       miscAudioSrc.smoothGain(0)
                     }, 130)
@@ -1936,10 +1938,10 @@ createComponent(
             <h3 style="margin: 1em 0; text-align: center">Current $ Balance: $${hasInternet ? usdBalance.toFixed(2) : '-.--'}</h3>
 
             <h3 style="text-align: center; margin: 0.25em 0">I want to: <select id="payAction" style="font-size: 1.1em; box-shadow: 1px 1px 0 #000">
-              <option value="send">Send $</option>
-              <option value="receive">Receive $</option>
-              <option value="learn">Learn</option>
-            </select> <span class="icon"> ☜</span></h3>
+              <option style="text-align: center;" value="receive">Receive $</option>
+              <option style="text-align: center;" value="send">Send $</option>
+              <option style="text-align: center;" value="learn">Learn</option>
+            </select> <span class="icon blink"> ☜</span></h3>
 
             <div id="sendModule" class="hidden" style="margin-top: 0.6em; padding-top: 0.5em; border-top: 1px dashed">
               <h3 style="margin-bottom: 0.5em">Send $</h3>
@@ -1995,6 +1997,8 @@ createComponent(
                 <h4>To learn more about PayApp and the S.P.T.X. protocol, download the Personal Finance Educator app to learn more! <button id="educatorApp">${educatorDownloaded ? 'Go To' : 'Download'}</button></h4>
               </div>
             </div>
+
+            <h6 style="padding: 2em">Click here to download an interactive SPTX tutorial <span class="icon blink" style="animation-delay: 0.2s">☞</span> <button id="educatorApp2" style="font-size: 0.75em">${educatorDownloaded ? 'Go To' : 'Download'}</button></h6>
           </div>
         </div>
       `
@@ -2029,7 +2033,7 @@ createComponent(
       ctx.$('#payAction').onchange = renderPage
 
 
-      ctx.$('#educatorApp').onclick = () => {
+      const educatorDownload = () => {
         if (educatorDownloaded) {
           ctx.setState({ screen: 'educator' })
         } else {
@@ -2038,14 +2042,17 @@ createComponent(
           setTimeout(() => {
             ctx.setState({ screen: 'home' })
             setTimeout(() => {
-              ctx.setUserData({
-                appsInstalled: [...appsInstalled, { name: 'Personal Finance Educator', key: 'educator', size: 128, price: 0 }]
+              ctx.setState({
+                screen: 'appMarket',
+                appMarketPreSearch: 'Personal Finance Educator'
               })
-            }, ctx.state.fastMode ? 0 : 3000)
+            }, ctx.state.fastMode ? 0 : 1000)
           }, 300)
         }
       }
 
+      ctx.$('#educatorApp').onclick = educatorDownload
+      ctx.$('#educatorApp2').onclick = educatorDownload
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
@@ -2280,13 +2287,38 @@ createComponent(
       if (educatorModulesCompleted.crypto) xp += 80
 
       ctx.$phoneContent.innerHTML = `
+        <style>
+          .xpAnimation {
+            display: inline-block;
+            animation: XPAnimation 1.5s ease-in-out;
+          }
+
+          @keyframes XPAnimation {
+            0% {
+              transform: scale(1) rotate(0deg)
+            }
+
+            33% {
+              transform: scale(0.8) rotate(360deg)
+            }
+
+            66% {
+              transform: scale(2) rotate(360deg)
+            }
+
+            100% {
+              transform: scale(1) rotate(360deg)
+            }
+          }
+        </style>
+
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2 style="text-align: center; margin: 0.4em 0">Personal Finance Educator</h2>
           <h3 style="text-align: center;"><span class="icon">✎✎✎</span></h3>
           <h3 style="text-align: center; margin: 0.4em 0">Making financial education fun!</h3>
           <h3 style="text-align: center;"><span class="icon">✙</span></h3>
-          <h3 style="text-align: center; margin: 0.4em 0">Education XP: ${hasInternet ? xp : 'Cannot access XP - Please connect to internet'}</h3>
+          <h3 style="text-align: center; margin: 0.4em 0">Education XP: <span class="xpAnimation">${hasInternet ? xp : 'Cannot access XP - Please connect to internet'}</span></h3>
 
           <h4 style="margin-top: 2em; margin-bottom: 0.5em">Education Modules:</h4>
 
@@ -2310,7 +2342,7 @@ createComponent(
             <button id="crypto" ${educatorModulesCompleted.sptx ? '' : 'disabled'}>${educatorModulesCompleted.crypto ? 'Review' : educatorModulesCompleted.sptx ? 'Start' : 'Locked'}</button> <strong>CryptoCurrency</strong> (${educatorModulesCompleted.crypto ? '<em>Completed!</em>' : educatorModulesCompleted.sptx ? '<strong>80 XP</strong>' : '<strong>Needs 90XP!</strong>'})
           </div>
 
-          <div style="margin-top: 2em">
+          <div style="margin-top: 2em; display: none">
             <a style="text-decoration: underline; color: #000; cursor: pointer">Help Forum →</a>
           </div>
         </div>
@@ -2355,6 +2387,20 @@ createComponent(
 
     } else if (screen === 'educatorModule') {
       const {educatorModule} = ctx.state
+
+      const completeSound = async (mod=1) => {
+        miscAudioSrc.max()
+        miscAudioSrc2.max()
+
+        await Promise.all([
+          miscAudioSrc.note(246.94*mod, 250),
+          miscAudioSrc2.note(493.88*mod, 250),
+        ])
+
+        miscAudioSrc.note(246.94*mod, 250)
+        miscAudioSrc.note(659.25*mod, 250)
+      }
+
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen" style="flex: 1; overflow: scroll; padding-bottom: 3em">
@@ -2442,6 +2488,7 @@ createComponent(
         }
 
         ctx.$('#introComplete').onclick = () => {
+          completeSound(1)
           ctx.state.screen = 'educator'
           ctx.setUserData({
             educatorModulesCompleted: { ...educatorModulesCompleted, intro: true}
@@ -2605,6 +2652,7 @@ createComponent(
 
         ctx.$('#complete').onclick = () => {
           if (ctx.$('#q1').value === 'yes' && ctx.$('#q2').value === 'yes') {
+            completeSound(1.25)
             ctx.state.screen = 'educator'
             ctx.setUserData({
               educatorModulesCompleted: { ...educatorModulesCompleted, history: true}
@@ -2727,6 +2775,7 @@ createComponent(
 
         ctx.$('#complete').onclick = () => {
           if (ctx.$('#q1').value === 'yes' && ctx.$('#q2').value === 'yes') {
+            completeSound(1.3333)
             ctx.state.screen = 'educator'
             ctx.setUserData({
               educatorModulesCompleted: { ...educatorModulesCompleted, system: true}
@@ -2970,6 +3019,7 @@ createComponent(
         }
 
         ctx.$('#complete').onclick = () => {
+          completeSound(1.5)
           ctx.state.screen = 'educator'
           ctx.setUserData({
             educatorModulesCompleted: { ...educatorModulesCompleted, sptx: true}
@@ -3306,7 +3356,7 @@ createComponent(
           <div class="deviceData" style="margin-top: 2em">
             <h5>Device ID: 49-222999-716-2580</h5>
             <h5>User: ${userNames[currentUser]}</h5>
-            <h5 id="versionNumber">OS Version: ${window.GAME_VERSION}.1</h5>
+            <h5 id="versionNumber">SmartOS Version: ${window.GAME_VERSION}.1</h5>
             <h5><a href="https://steviep.xyz" target="_blank">stevie.xyz</a> [2024]</h5>
           </div>
           ${devMode
@@ -3580,7 +3630,7 @@ createComponent(
       availableActions.forEach(a => {
         ctx.$('#qr-'+a.value).onclick = () => {
           if (a.qr) {
-            if (a.qr.screen === 'messageViewer' && !appsInstalled.some(a => a.key === 'messageViewer')) {
+            if (a.qr.screen === 'messageViewer' && hasMessageViewer) {
               ctx.$('#error').innerHTML = 'Please download the Message Viewer app from the AppMarket to view this message'
             } else {
               ctx.setState(a.qr)
@@ -4242,6 +4292,7 @@ createComponent(
 
       }
       if (ctx.$('#popupContent')) ctx.$('#popupContent').onclick = () => {
+
         if (ctx.state.mmAdClicked) {
           ctx.setState({
             yieldMasterAdClicked: true,
@@ -4250,6 +4301,10 @@ createComponent(
           })
 
         } else {
+          if (hasMessageViewer) {
+            alert('Please download the Message Viewer app from the AppMarket to view this message')
+            return
+          }
           ctx.setState({
             mmAdClicked: true,
             screen: 'messageViewer',
@@ -4282,7 +4337,7 @@ createComponent(
 
 
       ctx.$('#scContainer1').onclick = () => {
-        if (!appsInstalled.some(a => a.key === 'messageViewer')) {
+        if (hasMessageViewer) {
           alert('Please download the Message Viewer app from the AppMarket to view this message')
           return
         }
@@ -6267,6 +6322,68 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
+    } else if (screen === 'camera') {
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2 style="text-align: center">SmartPro Security Camera Viewer</h2>
+          <h5 style="text-align: center"><em>Keeping You Safe</em></h5>
+
+          ${
+            bluetoothEnabled
+              ? `
+                  <div style="text-align: center"><button id="pairCamera">Pair SmartTV</button></div>
+                  <h3 id="pairError" style="text-align: center"></h3>
+                `
+              : `<h3 id="pairError">Enable bluetooth to pair device</h3>`
+          }
+        </div>
+      `
+
+      if (ctx.$('#pairCamera')) ctx.$('#pairCamera').onclick = () => {
+        ctx.$('#pairError').innerHTML = '<span>Please wait while device pairs</span>'
+        setTimeout(() => {
+          ctx.$('#pairError').innerHTML = 'ERROR: Device incompatible with SmartPro Security Camera Viewer App v3.1354.221 Please attempt connection with a valid SmartPro Security Camera device [1953903]'
+
+        }, 7000)
+      }
+      // TODO
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (screen === 'elevate') {
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2 style="text-align: center">Elevate <span class="icon">⇪</span></h2>
+
+          ${
+            bluetoothEnabled
+              ? hasInternet
+                ? `<h3 id="pairError">No Elevate devices found within range</h3>`
+                : `<h3 id="pairError">Error: cannot connect to internet</h3>`
+              : `<h3 id="pairError">Please enable bluetooth to pair with Elevator</h3>`
+          }
+        </div>
+      `
+
+      if (ctx.$('#pairCamera')) ctx.$('#pairCamera').onclick = () => {
+        ctx.$('#pairError').innerHTML = '<span>Please wait while device pairs</span>'
+        setTimeout(() => {
+          ctx.$('#pairError').innerHTML = 'ERROR: Device incompatible with SmartPro Security Camera Viewer App v3.1354.221 Please attempt connection with a valid SmartPro Security Camera device [1953903]'
+
+        }, 7000)
+      }
+      // TODO
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
     } else if (screen === 'nftMarketPlace') {
       const {nftScreen, nftsForSale, nftBuyIx, nftCollectionIx, nftsExisting} = ctx.state
       const cryptoBalance = cryptoBalances[moneyMinerCryptoAddr] || 0
@@ -6600,7 +6717,7 @@ createComponent(
 
     } else if (screen === 'yieldMaster') {
       const stakeBps = 25
-      const maxYield = 1072.8
+      const maxYield = 1072.81
       const cryptoBalance = cryptoBalances[moneyMinerCryptoAddr] || 0
 
       const mainContent = ymWalletConnected
@@ -6643,6 +6760,11 @@ createComponent(
           <button id="home" style="margin-bottom: 0">Back</button>
           <h2 style="text-align: center; margin-bottom: 0.25em;"><em>YieldMaster</em></h2>
           ${hasInternet ? mainContent : `<h3>Please connect to the internet to view yield options</h3>`}
+
+          <div class="sc" id="scContainer" style="margin-top: 1em">
+            <h5>SPONSORED CONTENT</h5>
+            <div id="sc">Bad with money? Financial Education can be Fun!!!</div>
+          </div>
         </div>
       `
 
@@ -6670,8 +6792,8 @@ createComponent(
       if (ctx.$('#unstake')) ctx.$('#unstake').onclick = () => {
         const secondsStaked = timeStaked ? Math.floor((globalState.secondsPassed - timeStaked)) : 0
         const calculatedAmountStaked = Math.min(
-          1000,
-          (amountStaked||0) * ( (1 + (stakeBps/10000) ) ** secondsStaked )
+          Math.max(amountStaked, maxYield),
+          amountStaked * ( (1 + (stakeBps/10000) ) ** secondsStaked )
         )
 
         ctx.setState({
@@ -6691,11 +6813,11 @@ createComponent(
         ctx.setInterval(() => {
           const secondsStaked = timeStaked ? Math.floor(globalState.secondsPassed - timeStaked) : 0
           const calculatedAmountStaked = Math.min(
-            maxYield,
-            (amountStaked||0) * ( (1 + (stakeBps/10000) ) ** secondsStaked )
+            Math.max(amountStaked, maxYield),
+            amountStaked * ( (1 + (stakeBps/10000) ) ** secondsStaked )
           )
 
-          ctx.$('#calcedAmountStaked').innerHTML = calculatedAmountStaked.toFixed(2) + (calculatedAmountStaked === maxYield ? ' [YIELD EXHAUSTED]' : '')
+          ctx.$('#calcedAmountStaked').innerHTML = calculatedAmountStaked.toFixed(2) + (calculatedAmountStaked >= maxYield ? ' [YIELD EXHAUSTED]' : '')
         })
       }
 
@@ -6716,6 +6838,14 @@ createComponent(
         setTimeout(() => {
           ctx.setUserData({ ymWalletConnected: true })
         }, 3000)
+      }
+
+
+      ctx.$('#scContainer').onclick = () => {
+        ctx.setState({
+          screen: 'appMarket',
+          appMarketPreSearch: 'Personal Finance Educator'
+        })
       }
 
       ctx.$('#home').onclick = () => {

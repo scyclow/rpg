@@ -629,7 +629,11 @@
       },
 
       cameraSeen3: {
-        text: `You squint and make out a tiny message printed on it: "SmartPro Security Camera: Keeping you safe since 2010. Download our App in the AppMarket!"`
+        text: `You squint and make out a tiny message printed on it:
+          <div style="border: 1px solid; padding: 1em; max-width: 250px; font-size: 0.5em">
+            SmartPro Security Camera: Keeping you safe since 2013. Download our App in the AppMarket!
+          </div>
+        `
       },
 
       thermostat: {
@@ -703,9 +707,9 @@
         { text: 'Bathroom', value: 'bathroom'},
         { text: 'Bedroom', value: 'bedroom'},
         { text: 'Front Door', value: 'frontDoor',  qr: {screen: 'messageViewer', messageViewerMessage: 'Powered by SmartLock Technology<sup>TM</sup> Download the Official App today!'} },
-        { text: 'Camera', value: 'camera'},
-        { text: 'Thermostat', value: 'thermostat', qr: { screen: 'appMarket', appMarketPreSearch: 'thermosmart'} },
-        { text: 'Intercom', value: 'intercom'},
+        { text: 'Camera', value: 'camera', qr: { screen: 'appMarket', appMarketPreSearch: 'SmartPro Security'}},
+        { text: 'Thermostat', value: 'thermostat', qr: { screen: 'appMarket', appMarketPreSearch: 'ThermoSmart'} },
+        { text: 'Intercom', value: 'intercom', qr: { screen: 'appMarket', appMarketPreSearch: 'GateLink'}},
       ],
       handler: ({ur}) => ur
     }),
@@ -737,15 +741,21 @@
 
 
     ...group({
-      frontDoor: {
-        text: ({ctx}) => `The front door is closed. Above the doorknob is a QR code along with the text "Powered by <strong>SmartLock</strong> Technology"`,
-        async follow({ctx}) {
-          if (!ctx.state.envelopesPickedUp) {
-            await waitPromise(1500)
-            return 'envelopes'
+      frontDoor: [
+        {
+          text: ({ctx}) => `The front door is closed`,
+          wait: 1800
+        },
+        {
+          text: `Above the doorknob is a QR code along with the text "Powered by <strong>SmartLock</strong> Technology"`,
+          async follow({ctx}) {
+            if (!ctx.state.envelopesPickedUp) {
+              await waitPromise(1500)
+              return 'envelopes'
+            }
           }
         }
-      },
+      ],
 
       envelopes: {
         text: `You notice two envelopes at your feet`
@@ -823,23 +833,29 @@
         text: `You reenter your apartment and close the door`
       },
 
-      frontDoorListen: {
-        before() {
-          try {
-            tmp.src1 = createSource('sine')
-            tmp.src2 = createSource('sine')
+      frontDoorListen: [
+        {
+          before() {
+            try {
+              tmp.src1 = createSource('sine')
+              tmp.src2 = createSource('sine')
 
-            tmp.src1.smoothFreq(100)
-            tmp.src2.smoothFreq(100.1)
+              tmp.src1.smoothFreq(100)
+              tmp.src2.smoothFreq(100.1)
 
-            tmp.src1.smoothGain(MAX_VOLUME/2, 2)
-            tmp.src2.smoothGain(MAX_VOLUME/2, 2)
-          } catch (e) {
-            console.log(e)
-          }
+              tmp.src1.smoothGain(MAX_VOLUME*0.75, 1.5)
+              tmp.src2.smoothGain(MAX_VOLUME*0.75, 1.5)
+            } catch (e) {
+              console.log(e)
+            }
+          },
+          text: `You put your ear to the door`,
+          wait: 1800
         },
-        text: `You put your ear to the door. All you hear is a low hum`,
-      }
+        {
+          text: `All you hear is a low hum`,
+        }
+      ]
 
     }, {
       handler: ({ur}) => ur,
@@ -858,7 +874,7 @@
           setTimeout(() => {
             tmp.src1.stop()
             tmp.src2.stop()
-          }, 10000)
+          }, 3000)
         }
       }
     }),
@@ -1371,10 +1387,11 @@
 
     ...group({
       elevator: {
-        text: `You approach the elevator, noticing two buttons`,
+        text: `You approach the elevator`,
+        follow: 'elevator2'
       },
-      elevatorButtons: {
-        text: `You try pressing both metalic buttons, but nothing seems to happen`
+      elevator2: {
+        text: `A message where the buttons should be: "Download the <em>Elevate</em> app today!"`
         // TODO: app
       },
 
@@ -1382,7 +1399,7 @@
       handler: ({ur}) => ur,
       actions: [
         { text: 'Back', value: 'externalHallwayBack'},
-        { text: 'Buttons', value: 'elevatorButtons', },
+        { text: 'Elevator', value: '', qr: { screen: 'appMarket', appMarketPreSearch: 'elevate'}},
         { text: 'Phone', value: 'openPhone'},
       ]
     }),
@@ -1549,7 +1566,7 @@
 
     $content.innerHTML = ctx.history.filter(t => t).map(t => `<p>${t}</p>`).reverse().join('')
 
-    const actions = ctx.currentActions || []
+    const actions = ctx.currentActions.filter(a => !!a.value) || []
 
     const phoneNotifications = $phoneDevice.phoneNotifications()
     $nextActions.innerHTML = actions.map(a => `<button id="${sm.ctx.currentNode}-${a.value}">${
