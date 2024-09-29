@@ -118,12 +118,15 @@
   const $phoneDevice = $.id('phoneDevice')
   const $tvDevice = $.id('tvDevice')
   const $smartFrameDevice = $.id('smartFrameDevice')
+  const $gateLinkDevice = $.id('gateLinkDevice')
   const $consoleLocation = $.id('consoleLocation')
   const $consoleTime = $.id('consoleTime')
   const $consoleTemperature = $.id('consoleTemperature')
   window.$phoneDevice = $phoneDevice
   window.$tvDevice = $tvDevice
 
+
+  window.createSource = createSource
 
 
 
@@ -440,6 +443,10 @@
       // }
     },
 
+    hearSomethingVirus: {
+      text: 'You hear something in the hallway'
+    },
+
     ...group({
       // TODO i might need some more here?
       // could be a good time to set anxiety around being here
@@ -487,6 +494,7 @@
         text: '',
         wait: 0,
         follow({ctx}) {
+          ctx.state.windowVisited = true
           if (!ctx.state.blindsOpenedBefore && globalState.shaydOpen) {
             ctx.state.blindsOpenedBefore = true
             return 'bedroomWindowOpenNew'
@@ -510,11 +518,11 @@
 
       bedroomWindowClosedNew: [
         {text: 'It must be daytime', wait: 1800 },
-        {text: `You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`},
+        {text: `You don't see a way to manually open them`},
       ],
 
       bedroomWindowClosedContinued: {
-        text: `You see a QR code with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+        text: `You notice a QR code with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
       },
 
       bedroomWindowOpenNew: [
@@ -534,7 +542,8 @@
       ],
       bedroomLamp: [
         { text: `You inspect the lamp`, wait: 1800 },
-        { text: `There's no light switch, but you see a QR code pasted to its side with the word "<span style="font-family: cursive; font-size:1.1em">Lumin</span>" below it`, wait: 1800 },
+        { text: `There's no light switch`, wait: 1800 },
+        { text: `You see the word "<span style="font-family: cursive; font-size:1.1em">Lumin</span>" pasted to its side, next to a QR code`, wait: 1800 },
       ]
     }, {
       actions: ({ctx}) => [
@@ -587,6 +596,14 @@
       },
 
       weirdHum: {
+        before() {
+          const src = createSource('sine', 400)
+          src.smoothGain(MAX_VOLUME*0.5)
+          setTimeout(() => {
+            src.smoothGain(0)
+            setTimeout(() => src.stop(), 100)
+          }, 150)
+        },
         text: `You hear a noise, but can't place its location`
       },
 
@@ -731,26 +748,42 @@
       },
 
       envelopes: {
-        text: `You notice three envelopes at your feet`
+        text: `You notice two envelopes at your feet`
       },
 
-      pickupEnvelopes: {
+      pickupEnvelope1: {
         before({ctx}) {
-          ctx.state.envelopesPickedUp = true
+          ctx.state.envelope1PickedUp = true
         },
-        text: `You pick up all three envelopes. The first is from your landlord, Landlock Realty LLC. You owe them $6,437.98. The second is from HealthyLiving Inc. You owe them $14,038.71. You can pay this online. At the bottom of the letter it says: "Your health is priceless!" The third is junk mail. It says:
-        <div>
-          <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em;">
-            <p class="letterText">Dear NEIGHBOR,</p>
-            <p class="letterText">Special Promotion for LIMITED TIME only FREE TRIAL for MOBILE + DATA Plan</p>
-            <p class="letterText">Service Provider Code (SPC): 00010-032991</p>
-            <p class="letterText">District Index: B47</p>
-            <p class="letterText">Unlock Code: Qz8!9g97tR$f29</p>
-            <p class="letterText">ZC: 00000</p>
-
+        text: `You pick up the first envelope
+          <div>
+            <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em;">
+              <p class="letterText">Dear NEIGHBOR,</p>
+              <p class="letterText">Special Promotion for LIMITED TIME only FREE TRIAL for MOBILE + DATA Plan</p>
+              <p class="letterText">Service Provider Code (SPC): 00010-032991</p>
+              <p class="letterText">District Index: B47</p>
+              <p class="letterText">Unlock Code: Qz8!9g97tR$f29</p>
+              <p class="letterText">ZC: 00000</p>
+            </div>
           </div>
         </div>
+        `
+      },
 
+      pickupEnvelope2: {
+        before({ctx}) {
+          ctx.state.envelope2PickedUp = true
+        },
+        text: `You pick up the second envelope
+          <div>
+          <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em;">
+            <p class="letterText" style="text-align: center"><em style="font-size: 0.85em">HealthyLiving Inc. -- Your health is priceless!</em></p>
+            <p class="letterText">Medical Billing Statement:</p>
+            <p class="letterText" style="margin-bottom: 0; padding-left: 1em;word-break: break-word">Billed/Total Charges: $47823456758409889012345.97</p>
+            <p class="letterText" style="margin-top: 0; padding-left: 1em;">Due: Immediately</p>
+            <p class="letterText">This bill can be paid via</p>
+          </div>
+        </div>
         `
       },
 
@@ -814,7 +847,8 @@
         {text: 'Back', value: 'hallwayCurrent'},
         {text: 'Open Door', value: globalState.smartLockOpen ? 'openDoorUnlocked' : 'openDoorLocked', qr: {screen: 'messageViewer', messageViewerMessage: 'Powered by SmartLock Technology<sup>TM</sup> Download the Official App today!'}},
         {text: 'Listen Closely', value: 'frontDoorListen', qr: {screen: 'messageViewer', messageViewerMessage: 'Powered by SmartLock Technology<sup>TM</sup> Download the Official App today!'}},
-        ctx.state.envelopesPickedUp ? null : {text: 'Pick Up Envelopes', value: 'pickupEnvelopes'}
+        ctx.state.envelope1PickedUp ? null : {text: 'Pick Up First Envelope', value: 'pickupEnvelope1'},
+        ctx.state.envelope2PickedUp ? null : {text: 'Pick Up Second Envelope', value: 'pickupEnvelope2'},
       ].filter(exists),
       after() {
         if (tmp.src1 && tmp.src2) {
@@ -850,6 +884,9 @@
       },
 
       hearSomething: {
+        before() {
+          $gateLinkDevice.buzz(250)
+        },
         text: 'You hear a something in the hallway'
       },
 
@@ -923,11 +960,11 @@
 
       livingroomWindowClosedNew: [
         {text: 'It must be daytime', wait: 1800 },
-        {text: `You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`},
+        {text: `You don't see a way to manually open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`},
       ],
 
       livingroomWindowClosedContinued: {
-        text: `You see a QR code with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+        text: `You notice a QR code with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
       },
 
       livingroomWindowOpenNew: [
@@ -1177,9 +1214,6 @@
         text: ''
       },
 
-      kitchenWindow: {
-        text: `Sunlight leaks through the closed blinds. It must be daytime. You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
-      },
       refrigeratorLocked: {
         text: `You try the door to the refrigerator, but it won't open. A small LED screen on its front says: "LOCKED ||| LOCAL NETWORK INVALID"`
       },
@@ -1235,7 +1269,7 @@
       ],
 
       kitchenWindowClosedContinued: {
-        text: `You see a QR code with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+        text: `You notice a QR code with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
       },
 
       kitchenWindowOpenNew: [

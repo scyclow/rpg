@@ -142,7 +142,7 @@ export const ispCSNodes = {
     }
   },
   newCustomerEntry: {
-    text: '',
+    text: ({ur}) => ur === '*' ? 'When you are finished entering your zip code, please press the pound key' : '',
     handler: ({ur}) => {
       if (ur === '#') return 'newCustomerPending'
       else return 'newCustomerEntry'
@@ -239,7 +239,7 @@ export const ispCSNodes = {
   },
 
   routerIdentifier: {
-    text: '',
+    text: ({ur}) => ur === '*' ? `When you are finished entering your router's device identifier, please press the pound key` : '',
     handler: ({ur, ctx}) => {
       if (!ur) return
       else if (ur === '#') return 'routerIdentifierPending'
@@ -288,7 +288,7 @@ export const ispCSNodes = {
   },
 
   internetOuttageEntry: {
-    text: '',
+    text: ({ur}) => ur === '*' ? 'When you are finished entering your zip code, please press the pound key' : '',
     handler: ({ur}) => {
       if (ur === '#') return 'internetOuttagePending'
       else return 'internetOuttageEntry'

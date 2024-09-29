@@ -162,9 +162,12 @@ createComponent(
 
       <main style="flex: 1; display: flex; flex-direction: column">
         <h1>GateLink</h1>
+
+        <div id="scPlaceholder"></div>
+
         <div style="flex: 1; display: flex; justify-content: center; align-items: center; flex-direction: column">
-          <h6 style="padding-right: 24em; padding-bottom: 0.5em">OUTSIDE</h6>
           <div class="waver" style="border: 2px solid #343434; width: 20em; height: 20em;">
+            <h6 style="display: inline-block; padding: 0.5em; opacity: 0.15; user-select: none">OUTSIDE</h6>
           </div>
           <h6 style="padding-top: 0.5em; width: 30em">WARNING: VIDEO SIGNAL WEAK - CHECK EXTERNAL DEVICE CONNECTION <span id="signalStrength"></span></h6>
         </div>
@@ -198,7 +201,7 @@ createComponent(
     const doorSrc4 = createSource('sine', 150)
 
     let press = 0
-    ctx.$('#door').onmousedown = () => {
+    const buzz = () => {
       doorSrc1.smoothGain(MAX_VOLUME)
       doorSrc2.smoothGain(MAX_VOLUME)
       doorSrc3.smoothGain(MAX_VOLUME/3)
@@ -212,6 +215,14 @@ createComponent(
       doorSrc3.smoothGain(0)
       doorSrc4.smoothGain(0)
     }
+
+    ctx.buzz = (ms) => {
+      buzz()
+      setTimeout(() => doorSilence(), ms)
+    }
+
+    ctx.$('#door').onmousedown = buzz
+
 
     ctx.$('#door').onmouseup = () => {
       if (Date.now() < press + 50) {
@@ -287,7 +298,7 @@ createComponent(
           setTimeout(() => talkSrc1.smoothGain(0), 100)
         }, 50)
         const s = await micStream
-        s.getAudioTracks().forEach(t => t.stop())
+        // s.getAudioTracks().forEach(t => t.stop())
       }
     }
     ctx.$('#talk').onmouseleave = async () => {
@@ -301,7 +312,7 @@ createComponent(
           setTimeout(() => talkSrc1.smoothGain(0), 100)
         }, 50)
         const s = await micStream
-        s.getAudioTracks().forEach(t => t.stop())
+        // s.getAudioTracks().forEach(t => t.stop())
       }
     }
 
@@ -310,18 +321,45 @@ createComponent(
     }, 200)
 
 
-    if (globalState.deviceViruses) {
-      setRunInterval(() => {
-        const ad = $.div(null, { className: 'sc' })
-        ad.innerHTML = `
-          <div class="sc" style="width: 250px; height: 250px">
+    setRunInterval(() => {
+      if (globalState.deviceViruses) {
+        ctx.$('#scPlaceholder').innerHTML = `
+          <div class="sc" style="width: 50%; position: absolute; left: ${Math.random()*48}%; top: ${Math.random()*67}%">
             <h5>SPONSORED CONTENT</h5>
-            <div id="sc">${getAd(allAds, 1).text}</div>
+            <div id="sc">${sample([
+              'HomeGrid: The #1 choice for mesh network professionals. Download today',
+              'Experts agree: YieldMaster is the fastest way to accumulate wealth!'
+            ])}</div>
           </div>
         `
-        ctx.$('#door').appendChild(ad)
-      }, 300000)
-    }
+      }
+    }, 300000)
+
+    setRunInterval(() => {
+      if (globalState.deviceViruses) {
+
+        function randBuzz(totalBuzzTime) {
+          const buzzTime = Math.random() * 3000
+
+          buzz()
+          setTimeout(() => {
+            doorSilence()
+
+            if (totalBuzzTime + buzzTime < 3000) {
+              setTimeout(() => {
+                randBuzz(totalBuzzTime + buzzTime)
+              }, Math.random() * 750)
+            }
+
+          }, buzzTime)
+        }
+
+        randBuzz(0)
+
+        window.primarySM.enqueue('smartLockShift')
+        hearSomethingVirus
+      }
+    }, 600000)
 
 // var static = new Audio();
 // static.src = './tv-static-7019.mp3';

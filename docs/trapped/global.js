@@ -33,6 +33,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   eventLoopStartTime: Date.now(),
   eventLoopDuration: 1000,
   totalAccountsCreated: 1,
+  secondsPassed: 0,
   deviceViruses: false,
   defaultUnlocked: false,
   pauseCurrency: false,
@@ -74,6 +75,7 @@ window.tmp = tmp
 setInterval(() => {
   if (Date.now() >= globalState.lastGlobalUpdate + 60000) globalState.lastGlobalUpdate = Date.now()
   globalState.rand = Math.random()
+  globalState.secondsPassed += 1
 
 }, globalState.eventLoopDuration)
 

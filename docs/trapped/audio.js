@@ -54,3 +54,19 @@ export function createSource(waveType = 'square', startingFreq=3000) {
 
 
 window.allSources = allSources
+
+
+// EXPERIMENTAL
+
+
+class SoundSrc {
+  constructor(waveType='sine', startingFreq=440) {
+    Object.assign(this, createSource(waveType, startingFreq))
+  }
+
+  async note(freq, ms) {
+    this.smoothGain(MAX_VOLUME)
+    await waitPromise(ms)
+    this.smoothGain(0)
+  }
+}

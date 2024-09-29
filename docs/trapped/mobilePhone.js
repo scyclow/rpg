@@ -9,7 +9,7 @@ import {marquee} from './marquee.js'
 
 
 
-
+const miscAudioSrc = createSource('sine')
 const APPS = [
 
 // needs name/IRL callout
@@ -37,10 +37,10 @@ const APPS = [
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
   // { name: 'Elevate', key: 'elevate', size: 128, price: NaN },
   { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
-  { name: 'FlushMate', key: 'flushMate', size: 128, price: 1, physical: true },
+  { name: 'FlushMate', key: 'flushMate', size: 128, price: 3, physical: true },
   { name: 'Personal Finance Educator', key: 'educator', size: 128, price: 0 },
   { name: 'FreezeLocker', key: 'freeze', size: 128, price: NaN, physical: true },
-  { name: 'HomeGrid', key: 'homeGrid', size: 128, price: 1 },
+  { name: 'HomeGrid', key: 'homeGrid', size: 128, price: 6 },
   { name: 'Identity Wizard', key: 'identityWizard', size: 128, price: 0 },
   { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
   { name: 'Lumin', key: 'lumin', size: 128, price: 0, physical: true },
@@ -61,6 +61,7 @@ const APPS = [
   { name: 'Toastr', key: 'toastr', size: 128, price: 0, physical: true },
   { name: 'Wake', key: 'wake', size: 128, price: 0, physical: true },
   { name: 'YieldFarmer 2', key: 'yieldFarmer', size: 128, price: 0 },
+  { name: 'YieldMaster', key: 'yieldMaster', size: 128, price: 0 },
 ]
 
 const DEVICE_RANGES = {
@@ -131,9 +132,16 @@ const turboConnectText = {
   from: '1-800-444-3830',
   value: 'You have subscribed: TurboConnect FREE TRIAL for MOBILE + DATA Plan! Please Dial 1-800-444-3830 on <strong>*PhoneApp*</strong> for all question',
 }
+
+const turboConnectMinutesText = {
+  from: '1-800-444-3830',
+  value: 'You have used 30 minutes of your TurboConnect FREE TRIAL for MOBILE + DATA Plan and have Infinity minutes remaining. Your plan will be terminated once all minutes have been depleted.',
+}
+
 const mmText = {
   from: '1-800-777-0836',
-  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods simply follow the advice of our experts to achieve stable and continuous profits. We have the world's top analysis team for wealth generation But how does it work you might ask?. First you download the <strong>MoneyMiner</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine ₢rypto. Third you can optionally transfer your ₢rypto to participating exchanges such as <strong>Currency Xchange</strong> to exchange your crypto for fiat currencies such as $ Dollars. This opportunity is once in your life time. `,
+  value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods simply follow the advice of our experts to achieve stable and continuous profits we have the world's top analysis team for wealth generation but how does it work you might ask?. First you download the <strong>→ MoneyMiner ←</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine ₢rypto. Third you can trade ₢rypto for other premium coins to make profit on your investments. This opportunity is once in your life time. `,
+  // value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods simply follow the advice of our experts to achieve stable and continuous profits we have the world's top analysis team for wealth generation but how does it work you might ask?. First you download the <strong>MoneyMiner</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine ₢rypto. Third you can optionally transfer your ₢rypto to participating exchanges such as <strong>Currency Xchange</strong> to exchange your crypto for fiat currencies such as $ Dollars. This opportunity is once in your life time. `,
 }
 const packageText = {
   from: '+7 809 3390 753',
@@ -313,6 +321,10 @@ const state = persist('__MOBILE_STATE', {
   payAppUpdate: 0,
   lastPayApp2fa: 0,
   alarmRing: 0,
+  totalMined: 0,
+  mmAdClicked: false,
+  yieldMasterAdClicked: false,
+  showMMPopup: false,
   smartLockOpen: false,
   messageViewerMessage: '',
   availableActions: [],
@@ -324,7 +336,7 @@ const state = persist('__MOBILE_STATE', {
   cryptoBalances: {},
   premiumCryptoBalances: {},
   yieldFarmerGlobalHighScore: 19011.44,
-  appMarketPPC: 1.03,
+  appMarketPPC: 0.11,
   nftsForSale: generateNFTsForSale(40),
   nftBuyIx: 0,
   nftCollectionIx: 0,
@@ -332,6 +344,7 @@ const state = persist('__MOBILE_STATE', {
   currentNFTDisplay: undefined,
   userData: {
     0: {
+      createdAt: 0,
       appsInstalled: [
         { name: 'App Market', key: 'appMarket' },
         { name: 'Phone App', key: 'phoneApp' },
@@ -382,9 +395,13 @@ const state = persist('__MOBILE_STATE', {
       virusL1: true,
       virusL2: true,
       nftWalletConnected: false,
+      ymWalletConnected: false,
       nftCollection: [],
       nftScreen: '',
-      nftSmartFrameConnected: false
+      nftSmartFrameConnected: false,
+      ymWalletConnected: false,
+      amountStaked: 0,
+      timeStaked: NaN,
     }
   }
 })
@@ -819,8 +836,8 @@ createComponent(
     </style>
     <div id="phone">
       <header id="header">
-        <div>Smart Phone</div>
-        <div id="internetType">WiFi: unconnected</div>
+        <div id="userName"></div>
+        <div id="internetType">WiFi: <span class="blink">unconnected</span></div>
       </header>
       <main id="phoneContent"></main>
     </div>
@@ -983,6 +1000,7 @@ createComponent(
     ctx.$header = ctx.$('#header')
     ctx.$phone = ctx.$('#phone')
     ctx.$internetType = ctx.$('#internetType')
+    ctx.$userName = ctx.$('#userName')
 
     const {
       screen,
@@ -1038,7 +1056,10 @@ createComponent(
       virusL3,
       nftWalletConnected,
       nftCollection,
-      nftSmartFrameConnected
+      nftSmartFrameConnected,
+      ymWalletConnected,
+      amountStaked,
+      timeStaked
     } = currentUserData
 
     const appsInstalled = _appsInstalled || []
@@ -1071,11 +1092,12 @@ createComponent(
     //   ctx.newText(packageText)
     // }
 
+    ctx.$userName.innerHTML = userNames[currentUser]
     ctx.$internetType.innerHTML = `
       ${internet === 'wifi' ? 'WiFi' : 'Data'}: ${
         hasInternet
           ? 'connected'
-          : 'unconnected'
+          : '<span class="blink">unconnected</span>'
       }
     `
 
@@ -1111,15 +1133,28 @@ createComponent(
     } else if (screen === 'login') {
       ctx?.__notificationCb?.()
 
+      ctx.$header.classList.add('hidden')
+
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
-          <h1>Select User Profile:</h1>
+          <h1>SmartOS Login:</h1>
+          <h4>USER PROFILES:</h4>
+          <table>
           ${
-            Object.keys(userNames).sort().map(u => `<button id="user-${u}" style="margin-right: 0.5em; margin-bottom: 0.5em">${userNames[u]}</button>`).join('')
+            Object.keys(userNames).sort().map(u => `
+              <tr>
+                <td style="padding-left: 1em; min-width: 7em; max-width: 19em">${userNames[u]}</td>
+                <td><button id="user-${u}" style="margin-bottom: 0em">Login</button></td>
+              </tr>
+
+            `).join('')
           }
+          </table>
           <h4 id="error" style="margin:0.25em 0"></h4>
-          <h3 style="margin-bottom: 0.4em">Or</h3>
-          <button id="newProfile">Create New Profile</button>
+          <div style="margin-top: 2em;">
+            <h3 style="margin-bottom: 0.4em;">Or</h3>
+            <button id="newProfile">Create New Profile</button>
+          </div>
         </div>
       `
 
@@ -1129,11 +1164,21 @@ createComponent(
 
       Object.keys(userNames).sort().forEach(id => {
         ctx.$(`#user-${id}`).onclick = () => {
+          ctx.$('#error').innerHTML = ''
+
           if (id === '0' && !globalState.defaultUnlocked) {
-            ctx.$('#error').innerHTML = ''
+            ctx.setState({
+              screen: 'loading'
+            })
+
             setTimeout(() => {
-              ctx.$('#error').innerHTML = 'This profile has been indefinitely suspended for violating our terms of service. Please contact us at <span class="iblock">1-877-222-5379</span> if you believe there has been a mistake'
-            }, 1000)
+              ctx.setState({
+                screen: 'login'
+              })
+              setTimeout(() => {
+                ctx.$('#error').innerHTML = 'This profile has been indefinitely suspended for violating our terms of service. Please contact us at <span class="iblock">1-877-222-5379</span> if you believe there has been a mistake'
+              }, 200)
+            }, 2000)
           } else {
             ctx.setState({
               screen: 'loading'
@@ -1188,6 +1233,8 @@ createComponent(
       }
 
     } else if (screen === 'newProfile') {
+      ctx.$header.classList.add('hidden')
+
       ctx.$phoneContent.innerHTML = `
         <style>
           input, select {
@@ -1208,10 +1255,9 @@ createComponent(
               <option>What color was your first car?</option>
               <option>What is your mother's maiden name?</option>
               <option>What was the smallest room in your childhood home?</option>
-              <option>What is your favorite time of day?</option>
-              <option>What was the first thing you bought?</option>
-              <option>What is your favorite brand of electronics?</option>
               <option>What was the first street you lived on with internet accesss?</option>
+              <option>What brand of phone do you use in your dream?</option>
+              <option>What was the first time you</option>
             </select>
           </div>
           <div><input placeholder="Security Question Answer"/></div>
@@ -1231,8 +1277,12 @@ createComponent(
 
       ctx.$('#submit').onclick = () => {
         const firstName = ctx.$('#firstName').value.trim()
+
         if (!firstName) {
           ctx.$('#error').innerHTML = 'Please provide a first name'
+          return
+        } else if (firstName.length > 30) {
+          ctx.$('#error').innerHTML = 'First name must be between 1 and 30 characters'
           return
         } else if (firstName.includes(' ')) {
           ctx.$('#error').innerHTML = 'First name cannot include spaces'
@@ -1260,6 +1310,7 @@ createComponent(
           userData: {
             ...userData,
             [id]: {
+              createdAt: Date.now(),
               appsInstalled: [
                 { name: 'App Market', key: 'appMarket' },
                 { name: 'Phone App', key: 'phoneApp' },
@@ -1289,7 +1340,10 @@ createComponent(
               nftWalletConnected: false,
               nftCollection: [],
               nftScreen: '',
-              nftSmartFrameConnected: false
+              nftSmartFrameConnected: false,
+              ymWalletConnected: false,
+              amountStaked: 0,
+              timeStaked: NaN,
             }
           }
         })
@@ -1347,6 +1401,7 @@ createComponent(
       }
 
       ctx.$phoneContent.innerHTML = `
+        ${currentUserData.createdAt > Date.now() - 10000 ? `<h2 style="text-align: center; padding: 0.25em">Welcome ${userNames[currentUser]}!</h2>`: ''}
         <div class="phoneScreen" style="flex: 1; display: flex">
           <div class="home" style="display: flex; flex-direction: column; justify-content: space-between; flex: 1">
             <div>
@@ -1470,7 +1525,9 @@ createComponent(
     } else if (screen === 'appMarket') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
-          <button id="home">Back</button>
+          <div style="display: flex; align-items: center; ">
+            <button id="home">Back</button> <h4 style="padding-left: 6em">Welcome to AppMarket!</h4>
+          </div>
 
           <div id="appContent">
             <input placeholder="Type to search..." id="appSearch" style="width: 90%; font-size: 1.1em; padding: 0.25em">
@@ -1746,8 +1803,8 @@ createComponent(
               <input id="districtIndex" placeholder="District Index">
               <input id="unlockCode" placeholder="Unlock Code">
               <button id="connectData">Connect</button>
-              <h3 id="error"></h3>
             </div>
+            <h3 id="error"></h3>
           </div>
         `
         ctx.$('#connectAgain').onclick = () => {
@@ -1764,11 +1821,46 @@ createComponent(
             const unlockCode = ctx.$('#unlockCode').value
 
             if (spc === '00010-032991' && districtIndex === 'B47' && unlockCode === 'Qz8!9g97tR$f29') {
-              ctx.$('#error').innerHTML = 'Success!'
+              ctx.$('#error').innerHTML = 'Error: You have successfully signed up for the TurboConnect FREE TRIAL for MOBILE + DATA Plan! You have Infinity hours and 30 minutes of data remaining'
               setTimeout(() => {
                 ctx.setState({ dataPlanActivated: true })
                 ctx.newText(turboConnectText)
-              }, 2000)
+
+                setTimeout(() => {
+                  ctx.newText(turboConnectMinutesText)
+                }, 2400000)
+
+
+                setTimeout(() => {
+                  miscAudioSrc.smoothFreq(440)
+
+                  miscAudioSrc.smoothGain(MAX_VOLUME)
+
+                  setTimeout(() => {
+                    miscAudioSrc.smoothGain(0)
+                  }, 150)
+
+                  setTimeout(() => {
+                    miscAudioSrc.smoothGain(MAX_VOLUME)
+                    setTimeout(() => {
+                      miscAudioSrc.smoothGain(0)
+                    }, 130)
+                  }, 300)
+
+                  setTimeout(() => {
+                    miscAudioSrc.smoothFreq(660)
+                    miscAudioSrc.smoothGain(MAX_VOLUME)
+                    setTimeout(() => {
+                      miscAudioSrc.smoothGain(0)
+                    }, 450)
+                  }, 450)
+
+                }, 500)
+
+                setTimeout(() => {
+                  ctx.$('#error').innerHTML = 'Error: You have successfully signed up for the TurboConnect FREE TRIAL for MOBILE + DATA Plan! You have Infinity hours and 30 minutes of data remaining'
+                }, 1000)
+              }, 500)
 
               setTimeout(() => {
                 ctx.newText(mmText)
@@ -3277,6 +3369,9 @@ createComponent(
                   </tr>
                 </table>
 
+                <button style="margin-bottom: 3em" onclick="localStorage.clear(); location.reload()">Factory Reset</button>
+
+
               </div>
             `
             : ''
@@ -3817,6 +3912,7 @@ createComponent(
         ['brooding', 'Brooding', {h: 7, s: 92, v: 19} , {h: 50, s: 32, v: 43}],
         ['cyber', 'Cyber', {h: 299, s: 100, v: 17} , {h: 174, s: 100, v: 100}],
         ['opportunity', 'Opportunity', {h: 180, s: 100, v: 100} , {h: 0, s: 100, v: 100}],
+        ['cozy', 'Cozy', {h: 11, s: 23, v: 16} , {h: 60, s: 59, v: 90}],
       ]
 
       const mainInterface = `
@@ -3937,6 +4033,8 @@ createComponent(
           setColor('--primary-color', 'var(--light-color)')
         }
       }
+
+      console.log(globalState.light1, globalState.light2)
 
       if (ctx.$('#offOn')) ctx.$('#offOn').onclick = () => {
         globalState.lightsOn = !lampOn
@@ -4081,6 +4179,24 @@ createComponent(
 
 
       ctx.$phoneContent.innerHTML = `
+
+        <style>
+          #popupContainer:hover {
+            filter: invert(1);
+          }
+
+        </style>
+        ${ctx.state.showMMPopup
+          ? `
+          <div id="popupContainer" style="position: absolute; border: 2px solid; background: #fff; padding: 0.25em; width: 200px; margin-top:107px; margin-left: 17px">
+            <span id="closePopUp" style="position: absolute; padding: 0.25em; cursor: pointer">X</span>
+            <div id="popupContent" style="padding-top: 1.25em; cursor: pointer">
+              <h2 style="padding: 0.5em">Do YoU cRAvE yIeLd?? THeN cLiCk HeRe</h2>
+            </div>
+          </div>
+          `
+          : ''
+        }
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2 style="text-align: center"><span class="icon">⚒︎</span> Money Miner <span class="icon">⚒︎</span></h2>
@@ -4110,6 +4226,7 @@ createComponent(
 
           ${faq}
 
+
         </div>
 
       `
@@ -4118,12 +4235,44 @@ createComponent(
         ctx.$('#sc').innerHTML = getAd(cryptoAdContent).text
       })
 
+      if (ctx.$('#closePopUp')) ctx.$('#closePopUp').onclick = () => {
+        ctx.setState({
+          showMMPopup: false
+        })
+
+      }
+      if (ctx.$('#popupContent')) ctx.$('#popupContent').onclick = () => {
+        if (ctx.state.mmAdClicked) {
+          ctx.setState({
+            yieldMasterAdClicked: true,
+            screen: 'appMarket',
+            appMarketPreSearch: 'yield'
+          })
+
+        } else {
+          ctx.setState({
+            mmAdClicked: true,
+            screen: 'messageViewer',
+            messageViewerMessage: moneyMinerMessage
+          })
+        }
+      }
+
       ctx.$('#mine').onclick = () => {
         if (!hasInternet) {
           ctx.$('#cryptoBalance').innerHTML = 'CANNOT CONNECT TO BLOCKCHAIN'
           return
         }
+
+        let adState = ctx.state.totalMined === 99 || (ctx.state.totalMined === 199 && !ctx.state.yieldMasterAdClicked)
+          ? {
+            showMMPopup: true
+          }
+          : {}
+
         ctx.setState({
+          totalMined: (ctx.state.totalMined || 0) + 1,
+          ...adState,
           cryptoBalances: {
             ...cryptoBalances,
             [moneyMinerCryptoAddr]: (cryptoBalance || 0) + 1
@@ -4137,7 +4286,10 @@ createComponent(
           alert('Please download the Message Viewer app from the AppMarket to view this message')
           return
         }
-        ctx.setState(getAd(cryptoAdContent).update)
+        ctx.setState({
+          mmAdClicked: true,
+          ...getAd(cryptoAdContent).update
+        })
       }
 
       ctx.$('#send').onclick = () => {
@@ -5515,7 +5667,7 @@ createComponent(
               <h4>Active UserID: <span id="activeUserID">${currentUser}</span></h4>
               <h4>Admin Access: <span id="adminAccess">${Number(currentUser) === Number(rootUser) ? 'Granted' : 'Denied'}</span></h4>
               <h4>Device ID: 49-222999-716-2580</h4>
-              <h4>OS: MPX ${window.GAME_VERSION}.1</h4>
+              <h4>OS: SmartOS ${window.GAME_VERSION}.1</h4>
               <br>
               <br>
             `]})
@@ -6446,6 +6598,129 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
+    } else if (screen === 'yieldMaster') {
+      const stakeBps = 25
+      const maxYield = 1072.8
+      const cryptoBalance = cryptoBalances[moneyMinerCryptoAddr] || 0
+
+      const mainContent = ymWalletConnected
+        ? `
+          <div style="">
+            <h6 style="word-wrap: break-word; margin-bottom: 0.4em">Connected As: ${moneyMinerCryptoAddr}</h6>
+            <h3>Balance: ₢ ${Math.floor(cryptoBalance * 100) / 100}</h3>
+            <h3>Amount Staked: ₢ <span id="calcedAmountStaked"></span></h3>
+            ${amountStaked
+              ? `
+                <h4>Yield: 0.${stakeBps}% / s</h4>
+                <button id="unstake">Unstake</button>
+              `
+              : `
+                <input id="amountToStake" placeholder="Amount To Stake" type="number"> <button id="stake">Stake</button>
+                <h5 id="error"></h5>
+              `
+            }
+          </div>
+        `
+        : `
+          <div style="margin-top: 3em; text-align: center">
+            <button id="connectWallet">Connect Wallet</button>
+          </div>
+
+          <div id="walletConnections" class="hidden">
+            <h4 style="margin: 0.4em 0">Device Wallets:</h4>
+            <div>${
+              appsInstalled.some(app => app.key === 'moneyMiner')
+                ? `Money Miner <button id="connectMoneyMiner">Connect</button>`
+                : `No ₢rypto Wallets found on this device`
+            }</div>
+          </div>
+
+          <h6 id="connectMessage" style="margin-top: 0.25em"></h6>
+        `
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home" style="margin-bottom: 0">Back</button>
+          <h2 style="text-align: center; margin-bottom: 0.25em;"><em>YieldMaster</em></h2>
+          ${hasInternet ? mainContent : `<h3>Please connect to the internet to view yield options</h3>`}
+        </div>
+      `
+
+      if (ctx.$('#stake')) ctx.$('#stake').onclick = () => {
+        const amount = Number(ctx.$('#amountToStake').value)
+
+        if (amount > cryptoBalance || amount < 0) {
+          ctx.$('#error').innerHTML = 'Invalid Amount'
+          return
+        }
+
+        ctx.setState({
+          cryptoBalances: {
+            ...cryptoBalances,
+            [moneyMinerCryptoAddr]: cryptoBalance - amount
+          }
+        })
+
+        ctx.setUserData({
+          amountStaked: amount,
+          timeStaked: globalState.secondsPassed,
+        })
+      }
+
+      if (ctx.$('#unstake')) ctx.$('#unstake').onclick = () => {
+        const secondsStaked = timeStaked ? Math.floor((globalState.secondsPassed - timeStaked)) : 0
+        const calculatedAmountStaked = Math.min(
+          1000,
+          (amountStaked||0) * ( (1 + (stakeBps/10000) ) ** secondsStaked )
+        )
+
+        ctx.setState({
+          cryptoBalances: {
+            ...cryptoBalances,
+            [moneyMinerCryptoAddr]: cryptoBalance + calculatedAmountStaked
+          }
+        })
+
+        ctx.setUserData({
+          amountStaked: 0,
+          timeStaked: NaN,
+        })
+      }
+
+      if (ymWalletConnected) {
+        ctx.setInterval(() => {
+          const secondsStaked = timeStaked ? Math.floor(globalState.secondsPassed - timeStaked) : 0
+          const calculatedAmountStaked = Math.min(
+            maxYield,
+            (amountStaked||0) * ( (1 + (stakeBps/10000) ) ** secondsStaked )
+          )
+
+          ctx.$('#calcedAmountStaked').innerHTML = calculatedAmountStaked.toFixed(2) + (calculatedAmountStaked === maxYield ? ' [YIELD EXHAUSTED]' : '')
+        })
+      }
+
+      if (ctx.$('#connectWallet')) ctx.$('#connectWallet').onclick = () => {
+        ctx.$('#connectMessage').innerHTML = 'Searching for Wallets'
+
+        setTimeout(() => {
+          ctx.$('#connectWallet').classList.add('hidden')
+          ctx.$('#walletConnections').classList.remove('hidden')
+          ctx.$('#connectMessage').innerHTML = ''
+        }, 500)
+      }
+
+      if (ctx.$('#connectMoneyMiner')) ctx.$('#connectMoneyMiner').onclick = () => {
+        ctx.$('#connectMessage').innerHTML = 'Connecting...'
+        ctx.$('#connectMoneyMiner').disabled = true
+
+        setTimeout(() => {
+          ctx.setUserData({ ymWalletConnected: true })
+        }, 3000)
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
 
     } else {
       ctx.$phoneContent.innerHTML = `
