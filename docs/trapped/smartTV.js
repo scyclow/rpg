@@ -34,8 +34,7 @@ createComponent(
         padding: 0;
         margin: 0;
         scrollbar-width: thin;
-
-
+        user-select: none;
       }
 
       #tv {
@@ -472,6 +471,10 @@ createComponent(
 
       $screen.innerHTML = `
         <style>
+          * {
+            user-select: initial !important;
+          }
+
           #castGrid {
             flex: 1;
             display: grid;

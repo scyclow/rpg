@@ -37,7 +37,7 @@ const APPS = [
   { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
   { name: 'FlushMate', key: 'flushMate', size: 128, price: 3, physical: true },
   { name: 'Personal Finance Educator', key: 'educator', size: 128, price: 0 },
-  { name: 'FreezeLocker', key: 'freeze', size: 128, price: NaN, physical: true },
+  { name: 'FreezeLocker', key: 'freeze', size: 128, price: 0, physical: true },
   { name: 'HomeGrid', key: 'homeGrid', size: 128, price: 6 },
   { name: 'Identity Wizard', key: 'identityWizard', size: 128, price: 0 },
   { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
@@ -304,6 +304,7 @@ const state = persist('__MOBILE_STATE', {
   thermoSmartPaired: false,
   flushMatePaired: false,
   tvPaired: false,
+  freezeLockerPaired: false,
   phoneCastingEnabled: false,
   deviceCastingEnabled: false,
 
@@ -6852,6 +6853,61 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
+    } else if (screen === 'freeze') {
+
+      const mainInterface = `
+        <div style="margin: 1em 0">
+          <h1 style="text-align: center">53°F</h1>
+          <div>
+            ${jailbrokenApps.freeze ? jbMarkup(globalState.cryptoDevices.freeze, !bluetoothEnabled || !ctx.state.freezeLockerPaired) : ''}
+          </div>
+          <h6 style="text-align: left">Firmware update required. Device functionality might be limited. Please contact a FreezeLocker representative to update your device</h6>
+        </div>
+      `
+
+      // TODO ERROR: Signing key corrupted. Address balance frozen
+
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2 style="text-align: center"><span class="icon">❄</span> FreezeLocker <span class="icon">❅</span></h2>
+
+          ${
+            bluetoothEnabled
+              ? ctx.state.freezeLockerPaired
+                ? mainInterface
+                : `
+                  <div style="text-align: center"><button id="pairFreezeLocker">Pair FreezeLocker</button></div>
+                  <h3 id="pairError"></h3>
+                `
+              : `<h3 id="pairError">Please enable bluetooth</h3>`
+          }
+        </div>
+      `
+
+      jbBehavior(ctx, 'freeze', 100, noop, noop, (turnOff) => {
+        turnOff()
+        return `ERROR: Signing Key Corrupted; Address Frozen`
+      })
+
+
+      if (ctx.$('#pairFreezeLocker')) ctx.$('#pairFreezeLocker').onclick = () => {
+        ctx.$('#pairError').innerHTML = '<span>Please wait while device pairs</span>'
+        setTimeout(() => {
+          ctx.setState({
+            freezeLockerPaired: true
+          })
+
+        }, 2000)
+      }
+      // TODO
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+
     } else {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -6872,6 +6928,7 @@ createComponent(
       && !tmp.thermostatRinging
     ) {
       window.primarySM.enqueue('thermostatRing')
+      tmp.thermostatRinging = true
 
     }
   },
@@ -6910,7 +6967,7 @@ function jbMarkup(device, disabled) {
   `
 }
 
-function jbBehavior(ctx, deviceName, speed, cb=noop, persistCb=noop) {
+function jbBehavior(ctx, deviceName, speed, cb=noop, persistCb=noop, onTransferError=noop) {
   const findMeshPairing = meshPairFinder(ctx)
   const device = globalState.cryptoDevices[deviceName]
 
@@ -6979,8 +7036,15 @@ function jbBehavior(ctx, deviceName, speed, cb=noop, persistCb=noop) {
       return
     }
 
+
     const amount = Number(ctx.$('#cryptoAmount').value)
     const recipient = ctx.$('#cryptoAddr').value.trim()
+
+    const transferError = onTransferError(turnOff)
+    if (transferError) {
+      ctx.$('#mineError').innerHTML = transferError
+      return
+    }
 
     ctx.state.cryptoBalances[device.wallet] = device.balance
 

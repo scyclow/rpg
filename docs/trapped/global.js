@@ -41,8 +41,8 @@ export const globalState = persist('__GLOBAL_STATE', {
   countdownTimeLeft: 1780000, // 00:29:32
   countdownIntervalTime: 900,
   cryptoDevices: {
+    freeze: newCryptoDevice(32),
     planter: newCryptoDevice(8),
-    freeze: newCryptoDevice(8),
     toastr: newCryptoDevice(4),
     thermoSmart: newCryptoDevice(2),
     wake: newCryptoDevice(2),
@@ -64,7 +64,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   },
 })
 
-// globalState.cryptoDevices.flushMate = newCryptoDevice(1)
+// globalState.cryptoDevices.freeze = newCryptoDevice(32)
 
 window.globalState = globalState
 
