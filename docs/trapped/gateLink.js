@@ -201,7 +201,7 @@ createComponent(
     const doorSrc4 = createSource('sine', 150)
 
     let press = 0
-    const buzz = () => {
+    ctx.buzzStart = () => {
       doorSrc1.smoothGain(MAX_VOLUME)
       doorSrc2.smoothGain(MAX_VOLUME)
       doorSrc3.smoothGain(MAX_VOLUME/3)
@@ -209,7 +209,7 @@ createComponent(
       press = Date.now()
     }
 
-    const doorSilence = () => {
+    ctx.buzzStop = () => {
       doorSrc1.smoothGain(0)
       doorSrc2.smoothGain(0)
       doorSrc3.smoothGain(0)
@@ -217,23 +217,23 @@ createComponent(
     }
 
     ctx.buzz = (ms) => {
-      buzz()
-      setTimeout(() => doorSilence(), ms)
+      ctx.buzzStart()
+      setTimeout(() => ctx.buzzStop(), ms)
     }
 
-    ctx.$('#door').onmousedown = buzz
+    ctx.$('#door').onmousedown = ctx.buzzStart
 
 
     ctx.$('#door').onmouseup = () => {
       if (Date.now() < press + 50) {
-        setTimeout(doorSilence, (press + 50) - Date.now())
+        setTimeout(ctx.buzzStop, (press + 50) - Date.now())
       } else {
-        doorSilence()
+        ctx.buzzStop()
       }
     }
 
     ctx.$('#door').onmouseleave = () => {
-      doorSilence()
+      ctx.buzzStop()
     }
 
 
@@ -251,8 +251,7 @@ createComponent(
     const staticClip = ctx.$('#static')
     staticClip.volume = 0.2
 
-
-    ctx.$('#listen').onmousedown = () => {
+    ctx.listenStart = () => {
       staticClip.play()
       listenSrc1.smoothGain(MAX_VOLUME)
       listenSrc2.smoothGain(MAX_VOLUME)
@@ -261,13 +260,18 @@ createComponent(
 
     }
 
-    ctx.$('#listen').onmouseup = () => {
+    ctx.listenStop = () => {
       if (Date.now() < press + 50) {
         setTimeout(listenSilence, (press + 50) - Date.now())
       } else {
         listenSilence()
       }
     }
+
+
+    ctx.$('#listen').onmousedown = ctx.listenStart
+
+    ctx.$('#listen').onmouseup = ctx.listenStop
 
     ctx.$('#listen').onmouseleave = listenSilence
 
@@ -341,9 +345,9 @@ createComponent(
         function randBuzz(totalBuzzTime) {
           const buzzTime = Math.random() * 3000
 
-          buzz()
+          ctx.buzzStart()
           setTimeout(() => {
-            doorSilence()
+            ctx.buzzStop()
 
             if (totalBuzzTime + buzzTime < 3000) {
               setTimeout(() => {

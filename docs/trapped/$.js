@@ -128,7 +128,7 @@ export const ls = {
 
 window.ls = ls
 
-export const createComponent = (tag, templateStr, initialState, onInit, onRender, onSetState=noop, broadcast=false) => {
+export const createComponent = (tag, templateStr, initialState, onInit, onRender, onSetState=noop, broadcast={}) => {
   const Instances = []
 
   class ReactStyleComponent extends HTMLElement {
@@ -191,13 +191,13 @@ export const createComponent = (tag, templateStr, initialState, onInit, onRender
       if (deepEquals(this.state, this.oldState) && !force) return
       this.render()
 
-      if (broadcast && !ignoreBroadcast) {
-        const {screen} = this.state
+      if (broadcast.enabled && !ignoreBroadcast) {
         Instances.forEach((ctx, i) => {
           setTimeout(() => {
-            if (stateUpdate.screen) return
+            if (ctx === this) return
+            if (broadcast?.ignoreFn?.(stateUpdate)) return
             else ctx.setState(stateUpdate, false, true)
-          }, 10 + i*100)
+          }, 10 + i*broadcast.delay)
         })
         // this.state.screen = screen
       }

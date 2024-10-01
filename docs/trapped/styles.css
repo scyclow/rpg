@@ -219,6 +219,14 @@ p.preVisible {
 
 }
 
+@media (max-width: 400px) {
+  header {
+    font-size: 0.85em;
+    padding: 0.5em
+  }
+}
+
+
 ::selection {
   background: var(--primary-color);
   color: var(--bg-color);

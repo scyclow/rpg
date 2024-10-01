@@ -51,7 +51,6 @@ export const globalState = persist('__GLOBAL_STATE', {
     shayd: newCryptoDevice(1),
     lock: newCryptoDevice(1),
     flushMate: newCryptoDevice(1),
-    // not hooked up yet
     gateLink: newCryptoDevice(1),
     smartFrame: newCryptoDevice(1),
     tv: newCryptoDevice(1),

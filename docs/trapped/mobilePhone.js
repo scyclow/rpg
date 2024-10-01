@@ -304,11 +304,16 @@ const state = persist('__MOBILE_STATE', {
   thermoSmartPaired: false,
   flushMatePaired: false,
   tvPaired: false,
+  gateLinkPaired: false,
   freezeLockerPaired: false,
   phoneCastingEnabled: false,
   deviceCastingEnabled: false,
 
   shaydLuminPair: false,
+  buzzes: times(30, () => ({
+    secondsAgo: Math.floor(Math.random() * 450000000),
+    message: sample([`delivery for you`, ``, `delivery`, `i have package`, `i have a package`, `message for unit 948921`, '','','','', 'hello', 'hi', 'let me in'])
+  })).sort((a, b) => a.secondsAgo - b.secondsAgo),
 
   meshNetworkPairings: {},
   meshOutputNodes: {},
@@ -1021,6 +1026,7 @@ createComponent(
       thermoSmartPaired,
       flushMatePaired,
       tvPaired,
+      gateLinkPaired,
       lampOn,
       usdBalances,
       cryptoBalances,
@@ -6273,8 +6279,12 @@ createComponent(
                 `
               : `<h3 id="pairError">Enable bluetooth to pair device</h3>`
           }
+          ${jailbrokenApps.tv ? jbMarkup(globalState.cryptoDevices.tv, !bluetoothEnabled || !tvPaired) : ''}
         </div>
       `
+
+      jbBehavior(ctx, 'tv', 900)
+
 
       if (ctx.$('#pairTV')) ctx.$('#pairTV').onclick = () => {
         ctx.$('#pairError').innerHTML = '<span style="blink">One moment please</span>'
@@ -6310,14 +6320,92 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
-
     } else if (screen === 'gateLink') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
+          <h2 style="text-align: center">GateLink ⍾</h2>
+
+          <div style="padding: 1em">
+            ${gateLinkPaired
+              ? `
+                <h3 style="border: 1px solid; padding: 0.5em; margin-bottom: 0.5em">
+                  WARNING: Insufficient video signal strength. Please check external GateLink device for physical obstructions
+                </h3>
+
+                <div>
+                  <button>TALK</button>
+                  <button id="listen">LISTEN</button>
+                  <button id="door">DOOR</button>
+                </div>
+
+                <div style="height: 125px; overflow: scroll; border: 1px inset; padding: 0.25em; background: #ccc">
+                ${ctx.state.buzzes.map(b => `<div style="font-size: 0.75em">[<em>${b.secondsAgo + globalState.secondsPassed} Seconds Ago!</em>] "${b.message}" </div>`).join('')}
+                </div>
+                <h6 id="updated"></h6>
+
+              `
+              : `
+                <input id="deviceID" placeholder="Device ID"> <button id="pair">Pair</button>
+                <h5 id="pairError"></h5>
+              `
+            }
+          </div>
+
+          <div>
+            ${jailbrokenApps.gateLink ? jbMarkup(globalState.cryptoDevices.gateLink, !bluetoothEnabled || !gateLinkPaired) : ''}
+          </div>
+
         </div>
       `
-      // TODO
+
+      jbBehavior(ctx, 'gateLink', 2500)
+
+
+      if (gateLinkPaired) {
+        setTimeout(() => {
+          ctx.$('#listen').onmousedown = window.$gateLinkDevice.listenStart
+          ctx.$('#listen').onmouseup = window.$gateLinkDevice.listenStop
+          ctx.$('#door').onmousedown = window.$gateLinkDevice.buzzStart
+          ctx.$('#door').onmouseup = window.$gateLinkDevice.buzzStop
+        })
+
+        let lastUpdate = 0
+
+        ctx.setInterval(() => {
+          ctx.$('#updated').innerHTML = `Last updated: ${lastUpdate} seconds ago`
+          lastUpdate += 1
+        })
+
+      } else {
+        ctx.$('#pair').onclick = () => {
+          const deviceID = ctx.$('#deviceID').value
+
+          ctx.$('#pairError').innerHTML = `Searching for ${deviceID}`
+
+          if (!hasInternet) {
+            setTimeout(() => {
+              ctx.$('#pairError').innerHTML = `Network Error: Please connect to internet`
+            }, 300)
+            return
+          }
+
+          if (deviceID !== 'Q38990284902') {
+            setTimeout(() => {
+              ctx.$('#pairError').innerHTML = `INVALICE DEVICE ID: No device with Device ID: "${deviceID}" exists`
+            }, 2000)
+            return
+          }
+
+
+          setTimeout(() => {
+            ctx.setState({
+              gateLinkPaired: true
+            })
+          }, 4000)
+        }
+      }
+
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
@@ -6674,9 +6762,17 @@ createComponent(
         <div class="phoneScreen" style="overflow: scroll; padding-bottom: 2em">
           <button id="home">Back</button>
           <h2 style="text-align: center; margin-bottom: 0.25em;">SmartFrame</h2>
-          ${hasInternet ? mainContent : `<h3>Please connect to the internet to view the NFT Marketplace</h3>`}
+          ${bluetoothEnabled
+            ? hasInternet ? mainContent : `<h3>Please connect to the internet to view the NFT Marketplace</h3>`
+            : `Please enable bluetooth`
+          }
+        </div>
+        <div>
+          ${jailbrokenApps.smartFrame ? jbMarkup(globalState.cryptoDevices.smartFrame, !bluetoothEnabled || !nftSmartFrameConnected) : ''}
         </div>
       `
+
+      jbBehavior(ctx, 'smartFrame', 200)
 
 
       if (ctx.$('#removeDisplay')) ctx.$('#removeDisplay').onclick = () => {
@@ -6932,7 +7028,11 @@ createComponent(
 
     }
   },
-  true
+  {
+    enabled: true,
+    ignoreFn: stateUpdate => !!stateUpdate.screen,
+    delay: 100
+  }
 )
 
 
