@@ -749,9 +749,15 @@
         {
           text: `Above the doorknob is a QR code along with the text "Powered by <strong>SmartLock</strong> Technology"`,
           async follow({ctx}) {
-            if (!ctx.state.envelopesPickedUp) {
+            if (!ctx.state.envelope1PickedUp && !ctx.state.envelope2PickedUp) {
               await waitPromise(1500)
               return 'envelopes'
+
+            } else if (
+              (ctx.state.envelope1PickedUp && !ctx.state.envelope2PickedUp) ||
+              (!ctx.state.envelope1PickedUp && ctx.state.envelope2PickedUp)
+            ) {
+              return 'singleEnvelope'
             }
           }
         }
@@ -759,6 +765,10 @@
 
       envelopes: {
         text: `You notice two envelopes at your feet`
+      },
+
+      singleEnvelope: {
+        text: `You notice an envelope at your feet`
       },
 
       pickupEnvelope1: {
@@ -1388,7 +1398,8 @@
     ...group({
       elevator: {
         text: `You approach the elevator`,
-        follow: 'elevator2'
+        follow: 'elevator2',
+        wait: 1800
       },
       elevator2: {
         text: `A message where the buttons should be: "Download the <em>Elevate</em> app today!"`

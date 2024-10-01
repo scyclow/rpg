@@ -360,8 +360,8 @@ createComponent(
 
         randBuzz(0)
 
-        window.primarySM.enqueue('smartLockShift')
-        hearSomethingVirus
+        window.primarySM.enqueue('hearSomethingVirus')
+
       }
     }, 600000)
 

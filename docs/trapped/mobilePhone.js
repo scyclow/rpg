@@ -2304,9 +2304,25 @@ createComponent(
 
       ctx.$phoneContent.innerHTML = `
         <style>
+          .breathe {
+            animation: Breathe 2s ease-in-out infinite;
+            text-align: center;
+            margin-top: 1em
+          }
+
           .xpAnimation {
             display: inline-block;
             animation: XPAnimation 1.5s ease-in-out;
+          }
+
+          @keyframes Breathe {
+            0%, 100% {
+              transform: scale(0.8)
+            }
+
+            50% {
+              transform: scale(1.05)
+            }
           }
 
           @keyframes XPAnimation {
@@ -2357,6 +2373,12 @@ createComponent(
           <div>
             <button id="crypto" ${educatorModulesCompleted.sptx ? '' : 'disabled'}>${educatorModulesCompleted.crypto ? 'Review' : educatorModulesCompleted.sptx ? 'Start' : 'Locked'}</button> <strong>CryptoCurrency</strong> (${educatorModulesCompleted.crypto ? '<em>Completed!</em>' : educatorModulesCompleted.sptx ? '<strong>80 XP</strong>' : '<strong>Needs 90XP!</strong>'})
           </div>
+
+          ${educatorModulesCompleted.intro && educatorModulesCompleted.history && educatorModulesCompleted.system && educatorModulesCompleted.sptx && educatorModulesCompleted.crypto
+              ? `<h4 class="breathe">Congratulations! You've completed the Personal Finance Educator!</h4>`
+              : ''
+
+          }
 
           <div style="margin-top: 2em; display: none">
             <a style="text-decoration: underline; color: #000; cursor: pointer">Help Forum →</a>
@@ -3146,9 +3168,19 @@ createComponent(
 
           <div id="p10" class="hidden">
             <h2>CryptoCurrency: Generating Wealth Part III: Trading</h2>
-            <p>Mining and Yielding are fine for generating small amounts of wealth, but you want to generate <em>substantial</em> amounts of wealth, there's only one wya to do it: Trading CryptoCurrency with <strong>Currency Xchange Premium</strong></p>
-            <p>TODO: buy low, sell high</p>
-            <button id="complete">Next</button>
+            <p>Mining and Yielding are fine for generating small amounts of wealth, but you want to generate <em>substantial</em> amounts of wealth, there's only one way to do it: Trading CryptoCurrency with <strong>Currency Xchange Premium Mode</strong>. Trading CryptoCurrency is easy! Just follow these steps:</p>
+            <p>1. Download the <strong>Currency Xchange</strong> app.</p>
+            <p>2. Click on the <strong>Premium</strong> tab.</p>
+            <p>3. Purchase the <strong>Premium</strong> membership.</p>
+            <p>4. Start trading! The Currency Xchange Premium Membership will allow you to start trading the ₱remium coin, which has much higher profit potential than the ₢ coin.</p>
+            <button id="cryptoNext10">Next</button>
+          </div>
+
+          <div id="p11" class="hidden">
+            <h2>CryptoCurrency: Generating Wealth Part III: Trading (cont.)</h2>
+            <p>5. Buy low, sell high! It's simple advice, but many investors forget to do it. ₱remium and ₢rypto have a natural price cycle, so it's important to pay close attention! Your Premium Membership will also give you BUY/SELL/HOLD signals, which will alert you to the relative highs and lows of the trading pair. </p>
+            <p>6. Finally, remember to have fun! Trading CryptoCurrency is an exhilirating activity, so don't forget to enjoy the high you get from making Money!</p>
+            <button id="complete">Complete</button>
           </div>
         `
 
@@ -3271,6 +3303,11 @@ createComponent(
           }
           ctx.$('#p9').classList.add('hidden')
           ctx.$('#p10').classList.remove('hidden')
+        }
+
+        ctx.$('#cryptoNext10').onclick = () => {
+          ctx.$('#p10').classList.add('hidden')
+          ctx.$('#p11').classList.remove('hidden')
         }
 
         ctx.$('#complete').onclick = () => {
@@ -6227,7 +6264,7 @@ createComponent(
           ctx.$('#error').innerHTML = 'Processing...'
           setTimeout(() => {
             if (ab !== applicationBinary) {
-              ctx.$('#error').innerHTML = 'Invalid Application Binary'
+              ctx.$('#error').innerHTML = ab ? 'Application Binary B64 Decode Error' : 'Invalid Application Binary'
               return
             }
 
@@ -6919,6 +6956,7 @@ createComponent(
             <h3>This transaction will add ₢ ${price(sellingNFT.rarity)} to your wallet</h3>
           </div>
         `
+
         setTimeout(() => {
           ctx.setState({
             nftsForSale: [sellingNFT, ...nftsForSale],
@@ -6928,7 +6966,7 @@ createComponent(
             }
           })
           ctx.setUserData({
-            nftCollection: nftCollection.filter(nft => nft.id === sellingNFT.id)
+            nftCollection: nftCollection.filter(nft => nft.id !== sellingNFT.id)
           })
         }, 6000)
       }
