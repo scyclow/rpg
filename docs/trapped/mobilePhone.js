@@ -151,6 +151,11 @@ const tripleText = {
   value: 'Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ←',
 }
 
+const premiumText = {
+  from: '1-877-925-5783',
+  value: 'Welcome to Currency Xchange! Your journey to Financial Freedom starts now. Buy our new <em>Premium</em> membership to start making the BIG BUCKS',
+}
+
 const billingText1 = {
   from: '1-888-555-9483',
   value: 'URGENT: Our records indicate that your account has an outstanding balance of . Immediate payment is required to prevent a discontinuation of your internet service. <strong style="text-decoration: underline">Please dial the National Broadband Services Billing Department at 1-888-555-9483 to pay this bill immediately</strong>.',
@@ -326,7 +331,7 @@ const state = persist('__MOBILE_STATE', {
   lastPayApp2fa: 0,
   alarmRing: 0,
   totalMined: 0,
-  mmAdClicked: false,
+  autominerAdClicked: false,
   yieldMasterAdClicked: false,
   showMMPopup: false,
   smartLockOpen: false,
@@ -378,7 +383,7 @@ const state = persist('__MOBILE_STATE', {
       ],
       textMessages: [
         {...turboConnectText, read: true},
-        ...times(196, () => ({...sample([billingText1, billingText2, billingText3, billingText4, mmText, packageText, tripleText, funTimeText]), read: false})),
+        ...times(196, () => ({...sample([billingText1, billingText2, billingText3, billingText4, mmText, packageText, tripleText, funTimeText, premiumText]), read: false})),
         {...billingText4, read: false}
       ],
       keyPairs: [],
@@ -1639,6 +1644,10 @@ createComponent(
                     }
                   }
                 })
+
+                if (a.key === 'exchange') {
+                  ctx.newText(premiumText)
+                }
               }, ctx.state.fastMode ? 0 : 3300)
             }
           })
@@ -3034,11 +3043,243 @@ createComponent(
         }
 
 
-
-
-
       } else if (educatorModule === 'crypto') {
-        $moduleContent.innerHTML = ``
+        $moduleContent.innerHTML = `
+          <div id="p1" class="">
+            <h2>Welcome to the CryptoCurrency Module!</h2>
+            <p>In this module you will learn about how to achieve financial freedom using CryptoCurrency! <br> <strong style="font-size: 0.8em">[Sponsored by Currency Xchange <em>Premium</em>]</strong></p>
+            <button id="cryptoNext1">Next</button>
+          </div>
+
+          <div id="p2" class="hidden">
+            <h2>CryptoCurrency: A Brief History</h2>
+            <p>Following the financial meltdown of the traditional financial system in 2008, everyone knew that something needed to change. People were sick and tired of big financial institutions getting rich off of individual depositors. People wanted self-custody of their own assets with no intermediaries involved. So in 2009 CryptoCurrency was born as a solution to this problem. To this day, many people stay away from CryptoCurrency because they think it's too complicated to understand. But nothing could be further from the truth! </p>
+            <button id="cryptoNext2">Next</button>
+          </div>
+
+          <div id="p3" class="hidden">
+            <h2>CryptoCurrency: How does it work?</h2>
+            <p>Information can only travel through a distributed system at the speed of light. This means that it can often be difficult for multiple nodes in a network to agree on the order of events since information cannot be conveyed simultaneously. For example, let's say that Alice has $10 and lives in Denver, and her bank has branches in San Francisco and New York. If she wants to send $7 to Bob, all she needs to do is notify one of the branches. They will coordinate with each other to credit her account by $7 and debit Bob's account by $7. Pretty straight forward, right? But what happens if she tells SF that she wants to send Bob $7, and tells NY that she wants to send Charlie $7? Now we have a problem. Due to the speed of light, the SF branch will recieve the Bob transaction before it gets word of the Charlie transaction from NY, and the NY branch will receive the Charlie transaction before it hears about the Bob transaction from SF. Alice only has $10 in her account, so only one of these transactions can be valid! Who should have how much money?</p>
+            <button id="cryptoNext3">Next</button>
+          </div>
+
+
+          <div id="p4" class="hidden">
+            <h2>CryptoCurrency: How does it work? (cont.)</h2>
+            <p>One way around this problem is to make one of the bank branches the "leader", and allow them to decide what the canonical order of events is. So if NY is the leader in the previous example, the SF branch would notify NY when it receives the Bob transaction, but would wait for confirmation before debiting and crediting the balances. Ultimately, NY would decide that the Charlie transaction came first and would notify the other branches accordingly. This way, all the branches agree on who has how much money. Furthermore, if the NY goes off line due to a blackout or internet failure, the San Francisco, Philadelphia, Boston, Cleveland, Chicago, and Kansas City branches would all vote on a new leader before any new transactions could be processed. Sounds pretty simple, doesn't it?</p>
+            <button id="cryptoNext4">Next</button>
+          </div>
+
+          <div id="p5" class="hidden">
+            <h2>CryptoCurrency: How does it work? (cont. The Byzantine generals problem)</h2>
+            <p>So what happens if some of these branches are malicious? What if NY is fine, but SF and Boston decide to trigger a new leader election? If they don't like the order of the transactions, they can dishonestly steal the Leader role and manipulate reality to their liking. A couple rotten apples, in this case can spoil the bunch. In computer science this is called the Byzantine generals problem. The name stems from an alegory of several Byzantine who are all trying to coordinate a complicated plan of attack; but some of the generals are treacherous and may provide dishonest information. </p>
+            <button id="cryptoNext5">Next</button>
+          </div>
+
+          <div id="p6" class="hidden">
+            <h2>CryptoCurrency: How does it work? (cont. Byzantine Fault Tolerance)</h2>
+            <p>A network that is immune to this problem is said to have Byzantine Fault Tolerance. This means that it can withstand a certain number of malicious nodes attempting to reorder or censor transactions. Blockchains are Byzantine Fault Tolerant because they use sophisticated consensus algorithms to determine the leader for a certain period. Once a leader is selected, they batch a certain number of cryptographically verified transactions into an ordered "block". Then they add that block to a chain of other blocks. And now that the network agrees on the order of the transactions (and can cryptographically verify their legitimacy) they can also agree on the final state of the network! The details of this consensus algorithm are complicated and beyond the scope of this learning module. But the short version is that different blockchains have different protocols, and participating in these protocols typically yields a cryptocurrency reward!</p>
+            <button id="cryptoNext6">Next</button>
+          </div>
+
+          <div id="p7" class="hidden">
+            <h2>CryptoCurrency: What's it useful for?</h2>
+            <p>Modern CryptoCurrency is useful for all sorts of things! Many people use it to make payments without centralized intermediaries. Others use it to buy rare digital goods such as generative art NFTs. These are both popular use cases beccause they rely on the self-custodied ownership of crypto assets. No financial institution or government can take them away from you or stop your transactions. However, the most popular use case by far is generating wealth for you and your family! The rest of this learning module will teach you some of the ways you can start doing this today!</p>
+            <button id="cryptoNext7">Next</button>
+          </div>
+
+
+          <div id="p8" class="hidden">
+            <h2>CryptoCurrency: Generating Wealth Part I: Mining</h2>
+            <p>As we said before, there are various consensus algorithms that provide rewards for participating in the network's decentralization. The popular Money Miner wallet application makes it dead simple to get started mining ₢rypto. Try mining 20 ₢rypto below:</p>
+
+            <div style="border: 1px solid; padding: 0.25em">
+              <div style="transform: scale(0.95)">
+                <h2 style="text-align: center"><span class="icon">⚒︎</span> Money Miner <span class="icon">⚒︎</span></h2>
+
+                <h4 style="text-align: center; margin-top: 1em">To mine ₢rypto, click the button below ⬇↓⇣↓⬇</h4>
+                <div style="display: flex; justify-content: center">
+                  <button id="mine" style="font-size: 1.1em">Mine ₢rypto</button>
+                </div>
+                <h4>₢rypto Balance: <span id="cryptoBalance">0</span></h4>
+                <h4 style="margin-top: 0.5em;">₢rypto Wallet Address:</h4>
+                <h4 style="word-wrap: break-word; margin-bottom: 0.4em">0x777777777777777777777777777777777777777</h4>
+
+                <div class="sc" id="scContainer">
+                  <h5>SPONSORED CONTENT</h5>
+                  <div id="sc">Learn the secret mining technique the government doesn't want you to know about</div>
+                </div>
+              </div>
+            </div>
+
+            <h2 style="margin: 0.5em" id="mineMessage"></h2>
+
+            <button id="cryptoNext8">Next</button>
+          </div>
+
+          <div id="p9" class="hidden">
+            <h2>CryptoCurrency: Generating Wealth Part II: Yield</h2>
+            <p>Now that you have ₢rypto, how do you make it work for you? It would be a shame to see it sitting in your wallet collecting dust. The popular YieldMaster application makes it trivial to start generating yield on your ₢rypto balance. Try staking 20 ₢rypto below until you have at least 30 ₢rypto:</p>
+
+            <div style="padding: 0.25em; border: 1px solid; margin: 0.5em 0">
+              <div style="transform: scale(0.95)">
+                <div style="">
+                  <h6 style="word-wrap: break-word; margin-bottom: 0.4em">Connected As: 0x777777777777777777777777777777777777777</h6>
+                  <h3>Balance: ₢ <span id="yieldBalance">20</span></h3>
+                  <h3>Amount Staked: ₢ <span id="amountStaked">0</span></h3>
+
+                  <div id="yielding" class="hidden">
+                    <h4>Yield: 10% / s</h4>
+                    <button id="unstake">Unstake</button>
+                  </div>
+
+                  <div id="notYielding">
+                    <input id="amountToStake" placeholder="Amount To Stake" type="number"> <button id="stake">Stake</button>
+                  </div>
+
+                  <h5 id="yieldError"></h5>
+                </div>
+              </div>
+            </div>
+            <button id="cryptoNext9">Next</button>
+          </div>
+
+          <div id="p10" class="hidden">
+            <h2>CryptoCurrency: Generating Wealth Part III: Trading</h2>
+            <p>Mining and Yielding are fine for generating small amounts of wealth, but you want to generate <em>substantial</em> amounts of wealth, there's only one wya to do it: Trading CryptoCurrency with <strong>Currency Xchange Premium</strong></p>
+            <p>TODO: buy low, sell high</p>
+            <button id="complete">Next</button>
+          </div>
+        `
+
+        ctx.$('#scContainer').onclick = () => {
+          ctx.setState({ screen: 'messageViewer', messageViewerMessage: moneyMinerMessage })
+        }
+
+        let cryptoBalance = 0
+        ctx.$('#mine').onclick = () => {
+          cryptoBalance = Math.min(cryptoBalance + 1, 20)
+          ctx.$('#cryptoBalance').innerHTML = cryptoBalance
+
+          if (cryptoBalance === 5) {
+            ctx.$('#mineMessage').innerHTML = 'Wow, good job!'
+          } else if (cryptoBalance === 10) {
+            ctx.$('#mineMessage').innerHTML = 'Keep going!'
+          } else if (cryptoBalance === 15) {
+            ctx.$('#mineMessage').innerHTML = 'Almost there!'
+          } else if (cryptoBalance === 20) {
+            ctx.$('#mineMessage').innerHTML = 'You made it!'
+          }
+        }
+
+
+        let yieldSeconds = 0
+        let yieldInterval, unstaked
+
+        ctx.$('#stake').onclick = () => {
+          const balanceToStake = Number(ctx.$('#amountToStake').value)
+
+          if (balanceToStake !== 20) {
+            ctx.$('#yieldError').innerHTML = `Oops! Try staking 20 instead`
+            return
+          }
+
+          ctx.$('#amountToStake').value = ''
+
+          ctx.$('#notYielding').classList.add('hidden')
+          ctx.$('#yielding').classList.remove('hidden')
+
+          ctx.$('#yieldBalance').innerHTML = '0'
+          ctx.$('#amountStaked').innerHTML = '20'
+
+          yieldInterval = setInterval(() => {
+            yieldSeconds += 1
+            ctx.$('#yieldBalance').innerHTML = '0'
+            ctx.$('#amountStaked').innerHTML = (20 * 1.1 ** yieldSeconds).toFixed(2)
+          }, 1000)
+
+          setTimeout(() => {
+            clearInterval(yieldInterval)
+          }, 5500)
+        }
+
+        ctx.$('#unstake').onclick = () => {
+
+          if (yieldSeconds < 5) {
+            ctx.$('#yieldError').innerHTML = `Not yet! Wait a little bit longer...`
+            return
+          }
+
+          unstaked = true
+          ctx.$('#yieldError').innerHTML = `You did it!`
+          ctx.$('#yielding').classList.add('hidden')
+          ctx.$('#notYielding').classList.remove('hidden')
+          ctx.$('#yieldBalance').innerHTML = (20 * 1.1 ** yieldSeconds).toFixed(2)
+          ctx.$('#amountStaked').innerHTML = '0'
+        }
+
+
+        ctx.$('#cryptoNext1').onclick = () => {
+          ctx.$('#p1').classList.add('hidden')
+          ctx.$('#p2').classList.remove('hidden')
+        }
+
+
+        ctx.$('#cryptoNext2').onclick = () => {
+          ctx.$('#p2').classList.add('hidden')
+          ctx.$('#p3').classList.remove('hidden')
+        }
+
+        ctx.$('#cryptoNext3').onclick = () => {
+          ctx.$('#p3').classList.add('hidden')
+          ctx.$('#p4').classList.remove('hidden')
+        }
+
+        ctx.$('#cryptoNext4').onclick = () => {
+          ctx.$('#p4').classList.add('hidden')
+          ctx.$('#p5').classList.remove('hidden')
+        }
+
+        ctx.$('#cryptoNext5').onclick = () => {
+          ctx.$('#p5').classList.add('hidden')
+          ctx.$('#p6').classList.remove('hidden')
+        }
+
+        ctx.$('#cryptoNext6').onclick = () => {
+          ctx.$('#p6').classList.add('hidden')
+          ctx.$('#p7').classList.remove('hidden')
+        }
+
+        ctx.$('#cryptoNext7').onclick = () => {
+          ctx.$('#p7').classList.add('hidden')
+          ctx.$('#p8').classList.remove('hidden')
+        }
+
+        ctx.$('#cryptoNext8').onclick = () => {
+          if (cryptoBalance < 20) {
+            ctx.$('#mineMessage').innerHTML = `Uh oh, you haven't mined 20 ₢rypto yet!`
+            return
+          }
+          ctx.$('#p8').classList.add('hidden')
+          ctx.$('#p9').classList.remove('hidden')
+        }
+
+        ctx.$('#cryptoNext9').onclick = () => {
+          if (!unstaked) {
+            ctx.$('#yieldError').innerHTML = `Try staking until you have 30 ₢rypto!`
+            return
+          }
+          ctx.$('#p9').classList.add('hidden')
+          ctx.$('#p10').classList.remove('hidden')
+        }
+
+        ctx.$('#complete').onclick = () => {
+          completeSound(1.75)
+          ctx.state.screen = 'educator'
+          ctx.setUserData({
+            educatorModulesCompleted: { ...educatorModulesCompleted, crypto: true}
+          })
+        }
 
       }
 
@@ -4248,7 +4489,7 @@ createComponent(
           <div id="popupContainer" style="position: absolute; border: 2px solid; background: #fff; padding: 0.25em; width: 200px; margin-top:107px; margin-left: 17px">
             <span id="closePopUp" style="position: absolute; padding: 0.25em; cursor: pointer">X</span>
             <div id="popupContent" style="padding-top: 1.25em; cursor: pointer">
-              <h2 style="padding: 0.5em">Do YoU cRAvE yIeLd?? THeN cLiCk HeRe</h2>
+              <h2 style="padding: 0.5em" id="popupText">Do YoU cRAvE yIeLd?? THeN cLiCk HeRe</h2>
             </div>
           </div>
           `
@@ -4300,7 +4541,7 @@ createComponent(
       }
       if (ctx.$('#popupContent')) ctx.$('#popupContent').onclick = () => {
 
-        if (ctx.state.mmAdClicked) {
+        if (ctx.state.autominerAdClicked) {
           ctx.setState({
             yieldMasterAdClicked: true,
             screen: 'appMarket',
@@ -4313,7 +4554,7 @@ createComponent(
             return
           }
           ctx.setState({
-            mmAdClicked: true,
+            autominerAdClicked: true,
             screen: 'messageViewer',
             messageViewerMessage: moneyMinerMessage
           })
@@ -4326,11 +4567,12 @@ createComponent(
           return
         }
 
-        let adState = ctx.state.totalMined === 99 || (ctx.state.totalMined === 199 && !ctx.state.yieldMasterAdClicked)
+        let adState = ctx.state.totalMined === 199 || (ctx.state.totalMined === 299 && !ctx.state.yieldMasterAdClicked)
           ? {
             showMMPopup: true
           }
           : {}
+
 
         ctx.setState({
           totalMined: (ctx.state.totalMined || 0) + 1,
@@ -4349,7 +4591,7 @@ createComponent(
           return
         }
         ctx.setState({
-          mmAdClicked: true,
+          autominerAdClicked: true,
           ...getAd(cryptoAdContent).update
         })
       }
@@ -6855,13 +7097,30 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home" style="margin-bottom: 0">Back</button>
-          <h2 style="text-align: center; margin-bottom: 0.25em;"><em>YieldMaster</em></h2>
+          <div class="sc" id="scContainer" style="margin: 1em 0; animation-duration: 0.4s">
+            <h5>SPONSORED CONTENT</h5>
+            <div id="sc"><em>Bad with money? Financial Education can be Fun!!!</em></div>
+          </div>
+          <h2 style="text-align: center; margin-bottom: 0.25em;"><em>YieldMaster ⇡%</em></h2>
+
           ${hasInternet ? mainContent : `<h3>Please connect to the internet to view yield options</h3>`}
 
-          <div class="sc" id="scContainer" style="margin-top: 1em">
+          ${!ctx.state.autominerAdClicked
+            ? `
+              <div class="sc" id="scContainer3" style="margin-top: 1em; animation-delay: -0.37s; font-size: 1.5em">
+                <h5>SPONSORED CONTENT</h5>
+                <div id="sc">Click <span style="text-decoration: underline">Here</span> to improving mining efficiency by 100000% !!</div>
+              </div>
+            `
+            : ''
+          }
+
+
+          <div class="sc" id="scContainer2" style="margin: 1em; animation-duration: 3.3s; animation-delay: -0.8s; padding: 1em !important">
             <h5>SPONSORED CONTENT</h5>
-            <div id="sc">Bad with money? Financial Education can be Fun!!!</div>
+            <div id="sc">Tired of the daily grind? Get rich QUICK with Currency Xchange PREMIUM</div>
           </div>
+
         </div>
       `
 
@@ -6945,6 +7204,29 @@ createComponent(
         })
       }
 
+
+      ctx.$('#scContainer2').onclick = () => {
+        if (!appsInstalled.some(a => a.key === 'exchange')) {
+          ctx.setState({
+            screen: 'appMarket',
+            appMarketPreSearch: 'xchange'
+          })
+        } else {
+          ctx.setState({
+            screen: 'exchange',
+            exchangeTab: 'premium'
+          })
+        }
+      }
+
+      if (ctx.$('#scContainer3')) ctx.$('#scContainer3').onclick = () => {
+        ctx.setState({
+          autominerAdClicked: true,
+          screen: 'messageViewer',
+          messageViewerMessage: moneyMinerMessage
+        })
+      }
+
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
@@ -7002,7 +7284,6 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
-
 
     } else {
       ctx.$phoneContent.innerHTML = `
