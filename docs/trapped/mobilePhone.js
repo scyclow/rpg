@@ -7238,11 +7238,13 @@ createComponent(
 
       if (ymWalletConnected) {
         ctx.setInterval(() => {
-          const secondsStaked = timeStaked ? Math.floor(globalState.secondsPassed - timeStaked) : 0
-          const calculatedAmountStaked = Math.min(
-            Math.max(amountStaked, maxYield),
-            amountStaked * ( (1 + (stakeBps/10000) ) ** secondsStaked )
-          )
+          if (!document.hidden) {
+            const secondsStaked = timeStaked ? Math.floor(globalState.secondsPassed - timeStaked) : 0
+            const calculatedAmountStaked = Math.min(
+              Math.max(amountStaked, maxYield),
+              amountStaked * ( (1 + (stakeBps/10000) ) ** secondsStaked )
+            )
+          }
 
           ctx.$('#calcedAmountStaked').innerHTML = calculatedAmountStaked.toFixed(2) + (calculatedAmountStaked >= maxYield ? ' [YIELD EXHAUSTED]' : '')
         })

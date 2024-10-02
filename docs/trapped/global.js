@@ -74,7 +74,10 @@ window.tmp = tmp
 setInterval(() => {
   if (Date.now() >= globalState.lastGlobalUpdate + 60000) globalState.lastGlobalUpdate = Date.now()
   globalState.rand = Math.random()
-  globalState.secondsPassed += 1
+
+  if (!document.hidden) {
+    globalState.secondsPassed += 1
+  }
 
 }, globalState.eventLoopDuration)
 
@@ -97,8 +100,10 @@ export function setMiningInterval(device, amount, ms) {
   device.ms = ms
   device.active = true
   device.interval = setRunInterval(() => {
-    device.totalTime += ms
-    device.balance += amount * 2 * Math.random()
+    if (!document.hidden) {
+      device.totalTime += ms
+      device.balance += amount * 2 * Math.random()
+    }
   }, ms)
 }
 
@@ -113,8 +118,10 @@ for (let device of Object.values(globalState.cryptoDevices)) {
   const { active, amount, ms } = device
   if (active) {
     device.interval = setRunInterval(() => {
-      device.totalTime += ms
-      device.balance += amount * 2 * Math.random()
+      if (!document.hidden) {
+        device.totalTime += ms
+        device.balance += amount * 2 * Math.random()
+      }
     }, ms)
   }
 }
