@@ -146,6 +146,11 @@ const packageText = {
   value: `United Pakcåge Delvery MsG: "W⍷lcome ◻︎⎅◻︎ y⌾ure Pâck⎀ge ⎙ h⍶s been ◻︎ deLiveRed t⌀ ⇢⇢ <strong>FRONT DOOR</strong> ⇠⇠ <RENDER_ERROR:/home/usr/img/package-d⌽liver83y.jpg> ⎆ pAy deliver fee ⌱ 0xb0b9d337b68a69f5560969c7ab60e711ce83276f"`
 }
 
+const premiumDiscountText = {
+  from: '1-877-925-5783',
+  value: `LIMITED TIME OFFER: Currency Xchange <strong>Premium</strong> is now only <strong>₢ 9999</strong>! Fastest way to make ₢rypto GUARANTEED`
+}
+
 const tripleText = {
   from: '1-800-333-7777',
   value: 'Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ← Triple your $$$ !!! → → → 0x3335d32187a49be333c88d41c610538b412f333 ← ← ←',
@@ -351,6 +356,8 @@ const state = persist('__MOBILE_STATE', {
   nftCollectionIx: 0,
   nftsExisting: 40,
   currentNFTDisplay: undefined,
+  exchangePremiumDiscounted: false,
+  exchangeTextSent: false,
   userData: {
     0: {
       createdAt: 0,
@@ -1041,7 +1048,9 @@ createComponent(
       lastPayApp2fa,
       appMarketPPC,
       alarmRing,
-      meshNetworkPairings
+      meshNetworkPairings,
+      exchangePremiumDiscounted,
+      exchangeTextSent,
     } = ctx.state
 
     const currentUserData = userData[currentUser] || {}
@@ -1087,6 +1096,10 @@ createComponent(
 
     if (currentUser !== null && globalState.wifiActive && !textMessages.some(m => m.from === '+7 809 3390 753')) {
       ctx.newText(packageText)
+    }
+    if (currentUser !== null && exchangePremiumDiscounted && !exchangeTextSent) {
+      ctx.state.exchangeTextSent = true
+      ctx.newText(premiumDiscountText)
     }
 
     const hasMessageViewer = !appsInstalled.some(a => a.key === 'messageViewer')
@@ -1742,31 +1755,35 @@ createComponent(
           <div class="phoneScreen">
             <button id="home">Back</button>
             <button id="data">Switch to Data</button>
-            <h3>Current Network: ${wifiNetwork || 'null'}</h3>
+            <h3 style="margin-bottom: 0.5em">Current Network: ${wifiNetwork || 'null'}</h3>
             ${
               bluetoothEnabled
                 ? `
-                  <h3 style="margin-top: 0.4em">Network Name:</h3>
-                  <select id="networkName" style="margin: 0.25em 0">
-                    <option></option>
-                    <option value="Alien Nation">Alien Nation</option>
-                    <option value="CapitalC">CapitalC</option>
-                    <option value="ClickToAddNetwork">ClickToAddNetwork</option>
-                    <!-- i feel like i need to unlock this experience
-                      <option value="Dial19996663333ForAFunTime">Dial19996667777ForAFunTime</option>
-                    -->
-                    <option value="ElectricLadyLand" ${inInternetLocation && wifiNetwork === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
-                    <option value="Free-WiFi">Free-WiFi</option>
-                    <option value="HellInACellPhone98">HellInACellPhone98</option>
-                    ${globalState.routerReset && !globalState.routerUnplugged? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetwork === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
-                    <option value="ISP-Default-89s22D">ISP-Default-89s22D</option>
-                    <option value="LandlockRealtyLLC-5G">LandlockRealtyLLC-5G</option>
-                    <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
-                    <option value="NewNetwork">NewNetwork</option>
-                    <option value="XXX-No-Entry">XXX-No-Entry</option>
-                  </select>
-                  <input id="networkPassword" placeholder="password" type="password">
-                  <button id="connect">Connect</button>
+                  <button id="anotherWifi" class="${!wifiNetwork ? 'hidden' : ''}">Connect To Another Network</button>
+
+                  <div id="wifiChoose" class="${wifiNetwork ? 'hidden' : ''}">
+                    <h3 style="margin-top: 0.4em">Network Name:</h3>
+                    <select id="networkName" style="margin: 0.25em 0">
+                      <option></option>
+                      <option value="Alien Nation">Alien Nation</option>
+                      <option value="CapitalC">CapitalC</option>
+                      <option value="ClickToAddNetwork">ClickToAddNetwork</option>
+                      <!-- i feel like i need to unlock this experience
+                        <option value="Dial19996663333ForAFunTime">Dial19996667777ForAFunTime</option>
+                      -->
+                      <option value="ElectricLadyLand" ${inInternetLocation && wifiNetwork === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
+                      <option value="Free-WiFi">Free-WiFi</option>
+                      <option value="HellInACellPhone98">HellInACellPhone98</option>
+                      ${globalState.routerReset && !globalState.routerUnplugged? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetwork === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
+                      <option value="ISP-Default-89s22D">ISP-Default-89s22D</option>
+                      <option value="LandlockRealtyLLC-5G">LandlockRealtyLLC-5G</option>
+                      <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
+                      <option value="NewNetwork">NewNetwork</option>
+                      <option value="XXX-No-Entry">XXX-No-Entry</option>
+                    </select>
+                    <input id="networkPassword" placeholder="password" type="password">
+                    <button id="connect">Connect</button>
+                  </div>
                 `
                 : `<h3>${inInternetLocation ? 'Please enable Bluetooth in your device Settings to view available networks' : 'Cannot find networks'}</h3>`
             }
@@ -1805,6 +1822,11 @@ createComponent(
               ctx.$('#error').innerHTML = 'Incorrect Password'
             }, 500)
           }
+        }
+
+        if (ctx.$('#anotherWifi')) ctx.$('#anotherWifi').onclick = () => {
+          ctx.$('#anotherWifi').classList.add('hidden')
+          ctx.$('#wifiChoose').classList.remove('hidden')
         }
       } else {
         // TODO add dropdowns for district ix
@@ -3177,10 +3199,12 @@ createComponent(
           </div>
 
           <div id="p11" class="hidden">
-            <h2>CryptoCurrency: Generating Wealth Part III: Trading (cont.)</h2>
-            <p>5. Buy low, sell high! It's simple advice, but many investors forget to do it. ₱remium and ₢rypto have a natural price cycle, so it's important to pay close attention! Your Premium Membership will also give you BUY/SELL/HOLD signals, which will alert you to the relative highs and lows of the trading pair. </p>
-            <p>6. Finally, remember to have fun! Trading CryptoCurrency is an exhilirating activity, so don't forget to enjoy the high you get from making Money!</p>
+            <h2>CryptoCurrency: Generating Wealth Part III: Trading Tips</h2>
+            <p style="padding: 0 1em"><span class="icon">☛</span> Buy low, sell high! It's simple advice, but many investors forget to do it. ₱remium and ₢rypto have a natural price cycle, so it's important to pay close attention! Your Premium Membership will also give you BUY/SELL/HOLD signals, which will alert you to the relative highs and lows of the trading pair. </p>
+            <p style="padding: 0 1em"><span class="icon">☛</span> Remember to have fun! Trading CryptoCurrency is an exhilirating activity, so don't forget to enjoy the high you get from making Money!</p>
             <button id="complete">Complete</button>
+
+            <div style="display: inline-block; padding: 0.25em; border: 1px solid; text-align: center; margin-top: 1em"><strong>Learning module sponsored by: <br>Currency Xchange [PREMIUM]</strong></div>
           </div>
         `
 
@@ -4667,6 +4691,7 @@ createComponent(
       const {exchangeTab} = ctx.state
 
       const exchangeUSDBalance = usdBalances[exchangeUSDAddr] || 0
+      const premiumPrice = exchangePremiumDiscounted ? 9999 : 10000
 
       const tabHighlight = `font-weight: bold; text-decoration: underline;`
       ctx.$phoneContent.innerHTML = `
@@ -4815,9 +4840,15 @@ createComponent(
                 ${exchangePremium
                   ? ''
                   : `
-                    <button id="buyPremium" ${exchangeCryptoBalance < 10000 ? 'disabled' : ''} style="font-size: 1.2em; margin-bottom: 0.25em">BUY PREMIUM</button>
-                    <h4>₢ 10,000.00</h4>
-                    ${exchangeCryptoBalance < 10000 && hasInternet ? '<h5>(CURRENT BALANCE TOO LOW)</h5>' : ''}
+                    <button id="buyPremium" ${exchangeCryptoBalance < premiumPrice ? 'disabled' : ''} style="font-size: 1.2em; margin-bottom: 0.25em">BUY PREMIUM</button>
+                    ${exchangePremiumDiscounted
+                      ? `
+                        <h4 style="text-decoration: line-through">₢ 10,000.00</h4>
+                        <h2 >₢ 9,999</h2>
+                      `
+                      : `<h4>₢ 10,000.00</h4>`
+                    }
+                    ${exchangeCryptoBalance < premiumPrice && hasInternet ? '<h5>(CURRENT BALANCE TOO LOW)</h5>' : ''}
                   `}
                 ${exchangePremium ? '<h5>(PURCHASE SUCCESSFUL)</h5>' : ''}
               </div>
@@ -4847,7 +4878,7 @@ createComponent(
         ctx.$('#timeRemaining').innerHTML = 60 - seconds
         if (Math.random() < 0.1 && !globalState.pauseCurrency)  {
           ctx.$('#tempAddr').innerHTML = 'ERROR: Invalid signing key'
-        } else if (ctx.$('#tempAddr').innerHTML.includes('ERROR') || seconds < 2) {
+        } else if (ctx.$('#tempAddr').innerHTML.includes('ERROR') || seconds === 0) {
           ctx.$('#tempAddr').innerHTML = calcAddr(currentUser)
         }
 
@@ -4882,9 +4913,9 @@ createComponent(
       ctx.$('#viewPremiumTab').onclick = () => ctx.setState({ exchangeTab: 'premium' })
 
       if (ctx.$('#buyPremium')) ctx.$('#buyPremium').onclick = () => {
-        if (exchangeCryptoBalance >= 10000 && hasInternet) ctx.setUserData({
+        if (exchangeCryptoBalance >= premiumPrice && hasInternet) ctx.setUserData({
           exchangePremium: true,
-          exchangeCryptoBalance: exchangeCryptoBalance - 10000,
+          exchangeCryptoBalance: exchangeCryptoBalance - premiumPrice,
 
         })
       }
@@ -4937,7 +4968,7 @@ createComponent(
 
         if (['0x4b258603257460d480c929af5f7b83e8c4279b7b', '0xef301fb6c54b7cf2cecac63c9243b507a8695f4d'].includes(recipient)) {
           setTimeout(() => {
-            ctx.$('#sendUSDError').innerHTML = `PROCESSING ERROR: Recipient outside payment network`
+            ctx.$('#sendUSDError').innerHTML = `PROCESSING ERROR: Recipient outside payment network [Funds can only be transmetted to licensed payment processors]`
           }, 2000)
           return
         }
@@ -5337,6 +5368,8 @@ createComponent(
               globalState.sentEducatorText = true
             }
             ctx.$('#lockError').innerHTML = `Error: Device Failed With Message: "PLEASE TAKE NOTICE that you are hereby required to pay to Landlock Realty, LLC landlord of the premisis, the sum of $${globalState.rentBalance.toFixed(2)} for rent of the premises (<span style="text-decoration: underline">Unit #948921</span>). <br><br>You are required to pay within <strong>-3 days</strong> from the day of service of this notice. All payments shall be made through the official Landlock Realty Rental App"`
+
+            ctx.state.exchangePremiumDiscounted = true
 
           }
           ctx.setState({ smartLockPaired: true })
