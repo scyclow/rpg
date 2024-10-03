@@ -22,7 +22,12 @@ const state = persist('__TV_STATE', {
   }
 })
 
-const menuSrc = createSource('sine', 440)
+let menuSrc
+document.addEventListener('click', () => {
+  if (!menuSrc) {
+    menuSrc = createSource('sine', 440)
+  }
+})
 
 
 createComponent(

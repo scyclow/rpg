@@ -195,10 +195,22 @@ createComponent(
   `,
   state,
   ctx => {
-    const doorSrc1 = createSource('sawtooth', 150)
-    const doorSrc2 = createSource('sine', 300)
-    const doorSrc3 = createSource('sine', 900)
-    const doorSrc4 = createSource('sine', 150)
+
+    let doorSrc1, doorSrc2, doorSrc3, doorSrc4, listenSrc1, listenSrc2, listenSrc3, talkSrc1, talkSrc2
+
+    document.addEventListener('click', () => {
+      if (!doorSrc1) {
+        doorSrc1 = createSource('sawtooth', 150)
+        doorSrc2 = createSource('sine', 300)
+        doorSrc3 = createSource('sine', 900)
+        doorSrc4 = createSource('sine', 150)
+        listenSrc1 = createSource('sine', 200)
+        listenSrc2 = createSource('sine', 203)
+        listenSrc3 = createSource('sawtooth', 9000)
+        talkSrc1 = createSource('sine', 440)
+        talkSrc2 = createSource('sine', 660)
+      }
+    })
 
     let press = 0
     ctx.buzzStart = () => {
@@ -237,9 +249,6 @@ createComponent(
     }
 
 
-    const listenSrc1 = createSource('sine', 200)
-    const listenSrc2 = createSource('sine', 203)
-    const listenSrc3 = createSource('sawtooth', 9000)
 
     const listenSilence = () => {
       staticClip.pause()
@@ -276,8 +285,6 @@ createComponent(
     ctx.$('#listen').onmouseleave = listenSilence
 
 
-    const talkSrc1 = createSource('sine', 440)
-    const talkSrc2 = createSource('sine', 660)
 
     let micStream, active
     ctx.$('#talk').onmousedown = () => {

@@ -52,11 +52,17 @@ export class PhoneCall {
   constructor(onclick, select=$.id) {
     PhoneCall.active = this
 
-    this.srcs.key1 = createSource('sine')
-    this.srcs.key2 = createSource('sine')
+  document.addEventListener('click', () => {
+    if (!this.srcs.key1) {
+      this.srcs.key1 = createSource('sine')
+      this.srcs.key2 = createSource('sine')
 
-    this.srcs.ring1 = createSource('sine')
-    this.srcs.ring2 = createSource('sine')
+      this.srcs.ring1 = createSource('sine')
+      this.srcs.ring2 = createSource('sine')
+    }
+  })
+
+
 
     const keys = [
       [1, '@'],

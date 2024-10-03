@@ -7,10 +7,19 @@ import {marquee} from './marquee.js'
 
 
 
+let miscAudioSrc, miscAudioSrc2, buttonSrc
+document.addEventListener('click', () => {
+  if (!miscAudioSrc) {
+    miscAudioSrc = new SoundSrc('sine')
+    miscAudioSrc2 = new SoundSrc('sine')
+    buttonSrc = createSource('sine', 440)
+
+  }
+})
 
 
-const miscAudioSrc = new SoundSrc('sine')
-const miscAudioSrc2 = new SoundSrc('sine')
+
+
 const APPS = [
 
 // needs name/IRL callout
@@ -266,7 +275,6 @@ export const miscAdContent = [
 export const getAd = (adContent, offset=0) => adContent[(offset + Math.floor(Date.now()/20000))%adContent.length]
 
 
-const buttonSrc = createSource('sine', 440)
 const aMinor = [392, 349.23, 329.63, 293.66, 261.63, 246.94, 220, 440, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880]
 
 function generateNFT(id) {
