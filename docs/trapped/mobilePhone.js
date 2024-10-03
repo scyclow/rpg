@@ -6384,14 +6384,17 @@ createComponent(
       const validOutputNodes = ctx.state.meshOutputNodes
       const validInputNodes = ctx.state.meshInputNodes
 
-      const nodeList = appsInstalled.filter(a => a.physical)
+      const nodeList = appsInstalled.filter(a => a.physical).map(a => ({
+        ...a,
+        name: a.name.replace(`<sup>TM</sup>`, '™')
+      }))
       const outputNodeList = nodeList.filter(a => validOutputNodes[a.key])
       const inputNodeList = nodeList.filter(a => validInputNodes[a.key])
 
       const addRemoveNodes = `
         <select id="addRemoveNodes" required>
           <option disabled selected value=''>Node Name</option>
-          ${nodeList.map(a => `<option value="${a.key}">${a.name.replace(`<sup>TM</sup>`, '™')}</option>`).join('')}
+          ${nodeList.map(a => `<option value="${a.key}">${a.name}</option>`).join('')}
         </select>
 
         <select id="addRemoveRole" required>
@@ -6409,14 +6412,14 @@ createComponent(
       const inputNodes = `
         <select id="inputNodes" required>
           <option disabled selected value=''>Input Node</option>
-          ${inputNodeList.map(a => `<option value="${a.key}">${a.name.replace(`<sup>TM</sup>`, '™')}</option>`).join('')}
+          ${inputNodeList.map(a => `<option value="${a.key}">${a.name}</option>`).join('')}
         </select>
       `
 
       const outputNodes = `
         <select id="outputNodes" required>
           <option disabled selected value=''>Output Node</option>
-          ${outputNodeList.map(a => `<option value="${a.key}">${a.name.replace(`<sup>TM</sup>`, '™')}</option>`).join('')}
+          ${outputNodeList.map(a => `<option value="${a.key}">${a.name}</option>`).join('')}
         </select>
       `
 
@@ -6447,7 +6450,7 @@ createComponent(
             `
           }).join('')}
         </table>
-        <h6><em>⇢ Direct WiFi connection</em></h6>
+        <h6 style="margin-top:0.25em"><em>⇢ Direct WiFi connection</em></h6>
       `
 
       const mainContent = `
@@ -6461,8 +6464,8 @@ createComponent(
 
 
           <h4>Connect Nodes:</h4>
-          ${inputNodes}
           ${outputNodes}
+          ${inputNodes}
           <button id="connect" style="margin-top: 0.25em">Connect</button>
           <h5 id="connectionError"></h5>
         </section>
@@ -6524,7 +6527,7 @@ createComponent(
           ctx.setState({
             meshNetworkPairings: {
               ...ctx.state.meshNetworkPairings,
-              [input]: ctx.state.meshNetworkPairings[input] ? [...ctx.state.meshNetworkPairings[input], output] : [output]
+              [output]: ctx.state.meshNetworkPairings[output] ? [...ctx.state.meshNetworkPairings[output], input] : [input]
             }
           })
         }
