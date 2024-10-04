@@ -172,12 +172,15 @@ createComponent(
           <h6 style="padding-top: 0.5em; width: 30em">WARNING: VIDEO SIGNAL WEAK - CHECK EXTERNAL DEVICE CONNECTION <span id="signalStrength"></span></h6>
         </div>
 
-        <div style="display: flex; justify-content: center; padding-bottom: 4em">
-          <div>
-            <button class="action" id="talk"><span class="">⚟</span> TALK</button>
-            <button class="action" id="listen"><span class="">⚞</span> LISTEN</button>
-            <button class="action" id="door"><span class="">✹</span> DOOR</button>
+        <div style="padding-bottom: 4em">
+          <div style="display: flex; justify-content: center;">
+            <div>
+              <button class="action" id="talk"><span class="">⚟</span> TALK</button>
+              <button class="action" id="listen"><span class="">⚞</span> LISTEN</button>
+              <button class="action" id="door"><span class="">✹</span> DOOR</button>
+            </div>
           </div>
+          <h6 style="text-align: center; margin-top: 1em; font-style: italic">PRESS AND HOLD</h6>
         </div>
       </main>
 

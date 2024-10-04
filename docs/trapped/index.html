@@ -105,7 +105,7 @@
   import {StateMachine, CTX} from './stateMachine.js'
   import {persist} from './persist.js'
   import {globalState, setColor, tmp} from './global.js'
-  import {createSource, MAX_VOLUME} from './audio.js'
+  import {createSource, MAX_VOLUME, SoundSrc} from './audio.js'
 
 
 
@@ -243,6 +243,9 @@
       stairwayLevel: 0,
       checkedThermostat: false,
       checkedThermostatTwice: false,
+      roboVacLocation: 'kitchen',
+      roboVacLastActive: 0,
+      routerChecked: false
     }
 
   }))
@@ -289,10 +292,10 @@
 
 
       if (actions instanceof Function) {
-        actions = await sm.evaluate(actions)
+        actions = (await sm.evaluate(actions)).filter(a => !!a)
       }
 
-      if (actions && !deepEquals(actions.map(a => a.value), sm.ctx.currentActions.map(a => a.value))) {
+      if (actions && !deepEquals(actions.map(a => a.value).map(a => a.value), sm.ctx.currentActions.map(a => a.value))) {
         const phoneNotifications = $phoneDevice.phoneNotifications()
         $.id('nextActions').innerHTML = actions.map(a => `<button id="${sm.ctx.currentNode}-${a.value}">${
           a.text + (
@@ -350,6 +353,7 @@
       // { text: 'Your first conscious inclination is to reach for your phone', follow: 'bedFresh' },
     ],
 
+    // BED
     ...group({
       bedFresh: {
         text: '',
@@ -447,6 +451,7 @@
       text: 'You hear something in the hallway'
     },
 
+    // BEDROOM
     ...group({
       // TODO i might need some more here?
       // could be a good time to set anxiety around being here
@@ -561,6 +566,7 @@
       text: 'You hear the shower turn off'
     },
 
+    // HALLWAY
     ...group({
       hallway: {
         before({ ctx }) {
@@ -571,6 +577,8 @@
           await waitPromise(1500)
           if (!ctx.state.hallwayVisited) {
             return 'motionSensor'
+          } else if (ctx.state.roboVacLocation === 'hallway') {
+            return 'roboVacDoor'
           }
         },
         after({ ctx }) {
@@ -587,6 +595,18 @@
           await waitPromise(1000)
           return 'showerOff'
         }
+      },
+
+      roboVacDoor: {
+        text: `The RoboVac repeatedly rams the front door, as if it's trying to escape`
+      },
+
+      roboVacHallway: {
+        before({ctx}) {
+          ctx.state.roboVacLocation = sample(['livingRoom', 'kitchen'])
+        },
+        text: `You approach the RoboVac, but it moves to a different room`
+
       },
 
       motionSensor: {
@@ -710,6 +730,8 @@
         { text: 'Camera', value: 'camera', qr: { screen: 'appMarket', appMarketPreSearch: 'SmartPro Security'}},
         { text: 'Thermostat', value: 'thermostat', qr: { screen: 'appMarket', appMarketPreSearch: 'ThermoSmart'} },
         { text: 'Intercom', value: 'intercom', qr: { screen: 'appMarket', appMarketPreSearch: 'GateLink'}},
+        ctx.state.roboVacLocation === 'hallway'? { text: 'RoboVac', value: 'roboVacHallway'} : null,
+
       ],
       handler: ({ur}) => ur
     }),
@@ -739,7 +761,7 @@
 
     },
 
-
+    // Front DOOR
     ...group({
       frontDoor: [
         {
@@ -889,32 +911,55 @@
       }
     }),
 
+    hearSomething: {
+      before() {
+        $gateLinkDevice.buzz(250)
+      },
+      text: 'You hear a something in the hallway'
+    },
+
+    // LIVING ROOM
     ...group({
       livingRoom: {
         text: `You enter the living room`,
         async follow({ ctx }) {
-          await waitPromise(1500)
+          await waitPromise(1000)
+
+
           if (!ctx.state.livingRoomVisited) {
             ctx.state.livingRoomVisited = true
             globalState.location = 'livingRoom'
             return 'wonderPlants'
-          } else if (globalState.location === 'kitchen' && !ctx.state.envelopesPickedUp) {
+          } else if (globalState.location === 'kitchen' && !ctx.state.envelope1PickedUp) {
             globalState.location = 'livingRoom'
             return 'hearSomething'
+          } else if (ctx.state.roboVacLocation === 'livingRoom') {
+            return 'roboVacRouter'
           }
         },
+      },
+
+      roboVacRouter: {
+        text: `The RoboVac moves through a seemingly pre-planned set of motions, circling around the router`
+      },
+
+      roboVacLivingRoom: {
+        before({ctx}) {
+          if (!ctx.state.envelope1PickedUp) {
+            ctx.state.roboVacLocation = 'hallway'
+          } else {
+            ctx.state.roboVacLocation = sample(['hallway', 'kitchen'])
+          }
+        },
+        text: ({ctx}) => !ctx.state.envelope1PickedUp
+          ? `You walk towards the RoboVac, but it moves towards the hallway before you get to it`
+          : `You walk towards the RoboVac, but it leaves the room`
       },
 
       wonderPlants: {
         text: 'You wonder how your plants are doing'
       },
 
-      hearSomething: {
-        before() {
-          $gateLinkDevice.buzz(250)
-        },
-        text: 'You hear a something in the hallway'
-      },
 
       livingRoomCurrent: {
         text: ''
@@ -1028,13 +1073,18 @@
         { text: 'TV', value: 'tv'},
         { text: 'SmartFrame', value: 'smartFrame'},
         { text: 'eBook', value: 'eBook'},
+        ctx.state.roboVacLocation === 'livingRoom'? { text: 'RoboVac', value: 'roboVacLivingRoom'} : null,
       ],
       handler: ({ur}) => ur
 
     }),
 
+    // ROUTER
     ...group({
       router: {
+        before({ctx}) {
+          ctx.state.routerChecked = true
+        },
         text: ({ctx}) => ctx.state.router.pluggedIn
           ? `You inspect the router, which appears to have a reset button and three lights:
           <div>Power (on)</div>
@@ -1072,6 +1122,7 @@
       handler: ({ur}) => ur
     }),
 
+    // TV
     ...group({
       tv: {
         text: 'The black screen of the TV looms ominously over you'
@@ -1110,6 +1161,7 @@
       handler: ({ur}) => ur
     }),
 
+    // ROUTER BOTTOM
     ...group({
       checkWifiPower: {
         text: ({ctx}) => `You follow the router's power chord to a socket in the wall. It is ${ctx.state.router.pluggedIn ? 'plugged in' : 'unplugged'}`
@@ -1148,6 +1200,7 @@
     }),
 
 
+    // BATHROOM
     ...group({
       bathroom: {
         before({ ctx }) {
@@ -1225,6 +1278,7 @@
     }),
 
 
+    // KITCHEN
     ...group({
       kitchen: {
         before({ ctx }) {
@@ -1313,6 +1367,52 @@
           text: `The word "<strong>ClearBreeze</strong>" is laser-etched into the bottom right corner, along with a sticker: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the <strong>Landlock Realty Rental App</strong>"`
         },
       ],
+      roboVacActivate: [
+        {
+          before({ctx}) {
+            ctx.state.roboVacLastActive = Date.now()
+
+
+            const ring = async () => {
+              const src = new SoundSrc()
+              await src.note(659.25, 150)
+              await src.note(622.25, 150)
+              await src.note(659.25, 150)
+              await src.note(622.25, 150)
+              await src.note(659.25, 150)
+              await src.note(493.88, 150)
+              await src.note(587.33, 150)
+              await src.note(523.25, 150)
+              await src.note(440, 300)
+              await src.note(659.25, 300)
+              await src.note(880, 300)
+              setTimeout(() => {
+                src.stop()
+              }, 1000)
+            }
+
+            ring()
+
+            //e, eb, e, eb, e, b, d, c, a (e, a+)
+
+
+            if (!ctx.state.routerChecked) {
+              ctx.state.roboVacLocation = 'livingRoom'
+            } else if (ctx.state.envelope1PickedUp) {
+              ctx.state.roboVacLocation = 'hallway'
+            } else {
+              ctx.state.roboVacLocation = sample(['hallway', 'livingRoom'])
+            }
+
+          },
+          text: `The RoboVac comes to life`,
+          wait: 2000
+        },
+        {
+          text: ({ctx}) => `It slowly rolls into the ${!ctx.state.routerChecked ? 'living' : 'other'} room`
+        }
+      ],
+
     }, {
       actions: ({ctx}) => [
         { text: 'Phone', value: 'openPhone'},
@@ -1322,6 +1422,7 @@
         // { text: 'Oven', value: 'oven'},
         { text: 'Toaster', value: 'toaster', qr: { screen: 'messageViewer', messageViewerMessage: 'Introducing <em>Toastr</em>: the social way to toast! Download our App today!'}},
         { text: 'Window', value: 'kitchenWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'} },
+        ctx.state.roboVacLocation === 'kitchen'? { text: 'RoboVac', value: 'roboVacActivate'} : null,
       ],
       handler: ({ur}) => ur
     }),
