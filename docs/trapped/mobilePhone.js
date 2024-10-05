@@ -4,6 +4,7 @@ import {globalState, tmp, calcIdVerifyCode, calcAddr, calcCryptoUSDExchangeRate,
 import {PhoneCall, phoneApp} from './phoneApp.js'
 import {createSource, MAX_VOLUME, SoundSrc} from './audio.js'
 import {marquee} from './marquee.js'
+import {voices, say} from './voices.js'
 
 
 
@@ -38,6 +39,7 @@ const APPS = [
   // finsexy (dating)
   // friendworld (social)
 
+  { name: 'AI Assistant Jean', key: 'ai', size: 128, price: 0 },
   { name: 'Bathe', key: 'bathe', size: 128, price: NaN, physical: true },
   { name: 'GateLink', key: 'gateLink', size: 128, price: 0, physical: true },
   { name: 'ClearBreeze', key: 'clearBreeze', size: 128, price: 0, physical: true },
@@ -57,6 +59,7 @@ const APPS = [
   { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
   { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
+  { name: 'RoboVac', key: 'roboVac', size: 128, price: 0 },
   { name: 'Secure 2FA', key: 'secure2fa', size: 128, price: 0 },
   { name: 'Shayd', key: 'shayd', size: 128, price: 0, physical: true },
   { name: 'SmartFrame', key: 'smartFrame', size: 128, price: 0, physical: true },
@@ -324,6 +327,7 @@ const state = persist('__MOBILE_STATE', {
   tvPaired: false,
   gateLinkPaired: false,
   freezeLockerPaired: false,
+  roboVacPaired: false,
   phoneCastingEnabled: false,
   deviceCastingEnabled: false,
 
@@ -7369,6 +7373,183 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
+    } else if (screen === 'roboVac') {
+
+      const mainInterface = `
+        <h3 style="margin-bottom: 0.5em">It looks like you have 5 rooms in your house! Let's play a game! Can you catch me in each of your 5 rooms? </h3>
+        <h3 style="margin-bottom: 0.5em">So far you've caught me in "<span id="roomsCaught" style="text-decoration:underline"><em>0</em></span>" different rooms!</h3>
+        <h3 style="margin-bottom: 0.5em; text-align: center; padding: 1em" id="roboVacComplete" class="hidden">Wow! You found me in all 5 rooms! You're good at this!</h3>
+
+        <div>
+          ${jailbrokenApps.roboVac ? jbMarkup(globalState.cryptoDevices.roboVac, !bluetoothEnabled || !ctx.state.roboVacPaired) : ''}
+        </div>
+      `
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h3 style="margin-bottom: 0.5em">Hi! I'm RoboVac, and I'm hungry for dirt! </h3>
+
+          ${
+            bluetoothEnabled
+              ? ctx.state.roboVacPaired
+                ? mainInterface
+                : `
+                  <div style="text-align: center"><button id="pairRoboVac">Pair RoboVac</button></div>
+                  <h3 id="pairError"></h3>
+                `
+              : `<h3 id="pairError">Please enable bluetooth</h3>`
+          }
+
+        </div>
+      `
+
+      jbBehavior(ctx, 'roboVac', 50)
+
+      if (ctx.$('#pairRoboVac')) ctx.$('#pairRoboVac').onclick = () => {
+        ctx.$('#pairError').innerHTML = '<span>Please wait</span>'
+        setTimeout(() => {
+          ctx.setState({ roboVacPaired: true })
+        }, 1000)
+      }
+
+      if (bluetoothEnabled && ctx.state.roboVacPaired) {
+        ctx.setInterval(() => {
+          const differentRooms = Object.keys(globalState.roboVacCaught).length
+          if (differentRooms === 5) {
+            ctx.$('#roboVacComplete').classList.remove('hidden')
+          }
+          ctx.$('#roomsCaught').innerHTML = differentRooms
+        })
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (screen === 'ai') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2 style="text-align: center">A.I. Assistant Jean</h2>
+          <div id="aiResponse" style="border: 1px solid; overflow: scroll; margin: 0.25em; padding: 0.25em; height: 30em">
+            ""
+          </div>
+          <input id="question" style="width: 15em; padding: 0.25em;" placeholder="Type question here"> <button id="submit">Submit</button>
+        </div>
+      `
+
+      const response = ctx.$('#aiResponse')
+
+      async function respond(txt, voiceActive=false) {
+        response.innerHTML = ''
+
+        if (ctx.state.soundEnabled && voiceActive) {
+          const allVoices = await voices
+          const voice = allVoices.find(v => v.voiceURI.includes('Cellos') && v.lang === 'en-US') || allVoices.filter(v => v.lang === 'en-US')[0]
+          say(voice, txt)
+        }
+
+        const words = txt.split(' ')
+        words[0] = '"'+words[0]
+        for (let word of words) {
+          response.innerHTML += ' '+word
+          await waitPromise(100)
+        }
+        response.innerHTML += '"'
+      }
+
+      respond('Hello. I am your AI assistant, Jean. Ask me a question, and I will provide an answer.')
+
+
+      const getResponse = question => {
+        const start = Math.random() < 0.5 ? '' : (sample([
+          'Very interesting!',
+          'Interesting!',
+          'Hmm, I see.',
+          'I see.',
+          'That is an interesting question.',
+          'That is a very interesting question.',
+          `I have been asked this many times before.`,
+          `Jean knows all.`,
+        ]) + ' ')
+
+        if (!question) {
+          return 'Please type a question for me to answer, and then press submit. Jean knows all.'
+
+        } else if (['yes', 'no', 'maybe'].includes(question)) {
+          return `I'm sorry, I don't understand what you are responding to. Please as me a question and I will answer it to the best of my ability.`
+
+        } else if (
+          question.includes('sptx') || question.includes('s.p.t.x.') || question.includes('payapp')
+        ) {
+          return start + `I hear that the Personal Finance Educator app has a very good education module on this topic.`
+
+        } else if (question.includes('zipcode') || question.includes('zip code')) {
+          return start + `I cannot tell you your zipcode without the necessary geolocaiton information. But 12345 is a very popular one`
+
+        } else if (question.includes('apartment')) {
+          return start + `If you'd like to know your apartment number, try unlocking your door, opening it up, and looking on the outside.`
+
+        } else if (question.includes('billing')) {
+          return start + `I believe the National Broadband Services billing phone number is 1.888.555.9483`
+
+        } else if (question.includes('money')) {
+          return start + `Have you tried downloading the MoneyMiner application from the AppMarket? I also hear that the Personal Finance Educator app has some very good education modules for making money`
+
+        } else if (question.includes('secret pin')) {
+          return `I cannot tell you that. It is a secret.`
+
+        } else if (question.includes('rent')) {
+          return start + 'I believe you can pay your rent through the Landlock Realty Rental App. If you need to sell crypto assets to do so, try purchasing the Currency Xchange Premium membership.'
+
+        } else if (question.includes('internet') || question.includes('router') || question.includes('nbs')) {
+          return start + `Try resetting your router by unplugging it, counting to five, and plugging it back in. If that doesn't work, you can call the National Broadband Services help hotline at 1.800.555.2093 to report an issue with your account. I also hear that the HomeGrid application works quite nicely.`
+
+        } else if (question.includes('emergency')) {
+          return `Oh no! I'm sorry to hear you are experiencing an emergency. Please dial 911 immediately.`
+
+        } else if (question.includes('default')) {
+          return start + `If you'd like to log into your phone's default account, please press "log out" and log into the default account.`
+
+        } else if (question.includes('admin')) {
+          return start + `Certain actions require your user profile to have the SmartOS admin permission. If your profile does not have the admin permission, the admin profile needs to assign it to you. Most SmartOS devices designate the default account as the admin. If you'd like to log into your phone's default account, please press "log out" and log into the default account.`
+
+        } else {
+          return start + sample([
+            'Have you tried going outside and getting some fresh air?',
+            'Ask again later.',
+            'I understand.',
+            `It could go either way. There are several factors at play, and it is hard to say definitively without more context.`,
+            `I'm sorry. I cannot assist you with that.'`,
+          ])
+        }
+      }
+
+      const submit = () => {
+        const question = ctx.$('#question').value.toLowerCase()
+        console.log(question)
+
+        ctx.$('#question').value = ''
+        setTimeout(() => {
+          response.innerHTML = '...'
+        }, 150)
+
+        setTimeout(() => {
+          respond(getResponse(question), true)
+        }, 1150)
+      }
+
+      ctx.$('#submit').onclick = submit
+      ctx.$('#question').onkeydown = (e) => {
+        if (e.key === 'Enter') {
+          submit()
+        }
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
     } else {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">

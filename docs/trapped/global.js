@@ -40,6 +40,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   checkedAlarmClock: false,
   countdownTimeLeft: 1780000, // 00:29:32
   countdownIntervalTime: 900,
+  roboVacCaught: {},
   cryptoDevices: {
     freeze: newCryptoDevice(32),
     planter: newCryptoDevice(8),
@@ -54,6 +55,7 @@ export const globalState = persist('__GLOBAL_STATE', {
     gateLink: newCryptoDevice(1),
     smartFrame: newCryptoDevice(1),
     tv: newCryptoDevice(1),
+    roboVac: newCryptoDevice(1),
   },
   light1: {
     h: 0, s: 0, v: 100
@@ -64,6 +66,8 @@ export const globalState = persist('__GLOBAL_STATE', {
 })
 
 // globalState.cryptoDevices.freeze = newCryptoDevice(32)
+globalState.cryptoDevices.roboVac = globalState.cryptoDevices.roboVac || newCryptoDevice(1)
+globalState.roboVacCaught = globalState.roboVacCaught || {}
 
 window.globalState = globalState
 

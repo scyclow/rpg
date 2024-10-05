@@ -409,7 +409,6 @@ function phoneBehavior(ctx) {
   }
 
   function displayTranscript(txt) {
-    console.log('display')
     ctx.$('#phoneAppInfo').classList.add('silentMode')
     if (!transcriptTimeout) startInterval()
 

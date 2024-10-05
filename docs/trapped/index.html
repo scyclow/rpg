@@ -295,7 +295,7 @@
         actions = (await sm.evaluate(actions)).filter(a => !!a)
       }
 
-      if (actions && !deepEquals(actions.map(a => a.value).map(a => a.value), sm.ctx.currentActions.map(a => a.value))) {
+      if (actions && !deepEquals(actions.map(a => a.value), sm.ctx.currentActions.map(a => a.value))) {
         const phoneNotifications = $phoneDevice.phoneNotifications()
         $.id('nextActions').innerHTML = actions.map(a => `<button id="${sm.ctx.currentNode}-${a.value}">${
           a.text + (
@@ -465,6 +465,18 @@
           globalState.location = 'bedroom'
         },
         text: 'You enter the bedroom',
+        async follow({ctx}) {
+          if (ctx.state.roboVacLocation === 'bedroom') {
+            await waitPromise(1500)
+            ctx.state.roboVacLocation = sample(['livingRoom', 'kitchen', 'hallway', 'bathroom'])
+            globalState.roboVacCaught.bedroom = true
+            return 'roboVacBedroom'
+          }
+        }
+      },
+
+      roboVacBedroom: {
+        text: `The RoboVac exists the room, leaving the floor spotless`
       },
 
       bedroomAlarm: {
@@ -603,7 +615,8 @@
 
       roboVacHallway: {
         before({ctx}) {
-          ctx.state.roboVacLocation = sample(['livingRoom', 'kitchen'])
+          ctx.state.roboVacLocation = sample(['livingRoom', 'kitchen', 'bedroom', 'bathroom'])
+          globalState.roboVacCaught.hallway = true
         },
         text: `You approach the RoboVac, but it moves to a different room`
 
@@ -730,7 +743,7 @@
         { text: 'Camera', value: 'camera', qr: { screen: 'appMarket', appMarketPreSearch: 'SmartPro Security'}},
         { text: 'Thermostat', value: 'thermostat', qr: { screen: 'appMarket', appMarketPreSearch: 'ThermoSmart'} },
         { text: 'Intercom', value: 'intercom', qr: { screen: 'appMarket', appMarketPreSearch: 'GateLink'}},
-        ctx.state.roboVacLocation === 'hallway'? { text: 'RoboVac', value: 'roboVacHallway'} : null,
+        ctx.state.roboVacLocation === 'hallway'? { text: 'RoboVac', value: 'roboVacHallway', qr: { screen: 'appMarket', appMarketPreSearch: 'robovac'}} : null,
 
       ],
       handler: ({ur}) => ur
@@ -945,10 +958,12 @@
 
       roboVacLivingRoom: {
         before({ctx}) {
+          globalState.roboVacCaught.livingRoom = true
+
           if (!ctx.state.envelope1PickedUp) {
             ctx.state.roboVacLocation = 'hallway'
           } else {
-            ctx.state.roboVacLocation = sample(['hallway', 'kitchen'])
+            ctx.state.roboVacLocation = sample(['hallway', 'kitchen', 'bedroom', 'bathroom'])
           }
         },
         text: ({ctx}) => !ctx.state.envelope1PickedUp
@@ -1073,7 +1088,7 @@
         { text: 'TV', value: 'tv'},
         { text: 'SmartFrame', value: 'smartFrame'},
         { text: 'eBook', value: 'eBook'},
-        ctx.state.roboVacLocation === 'livingRoom'? { text: 'RoboVac', value: 'roboVacLivingRoom'} : null,
+        ctx.state.roboVacLocation === 'livingRoom'? { text: 'RoboVac', value: 'roboVacLivingRoom', qr: { screen: 'appMarket', appMarketPreSearch: 'robovac'}} : null,
       ],
       handler: ({ur}) => ur
 
@@ -1217,6 +1232,11 @@
           if (ctx.state.urine) {
             await waitPromise(1500)
             return globalState.autoFlusherActive  ? 'flush' : 'urine'
+          } else {
+            if (ctx.state.roboVacLocation === 'bathroom') {
+              await waitPromise(1500)
+              return 'roboVacSpinning'
+            }
           }
         },
       },
@@ -1225,11 +1245,27 @@
         before({ctx}) {
           ctx.state.urine = false
         },
-        text: 'The toilet detects your presence and promptly flushes'
+        text: 'The toilet detects your presence and promptly flushes',
+        async follow() {
+          if (ctx.state.roboVacLocation === 'bathroom') {
+            await waitPromise(1500)
+            return 'roboVacSpinning'
+          }
+        }
       },
 
       urine: {
-        text: 'The smell of stale urine fills your nostrils'
+        text: 'The smell of stale urine fills your nostrils',
+        async follow() {
+          if (ctx.state.roboVacLocation === 'bathroom') {
+            await waitPromise(1500)
+            return 'roboVacSpinning'
+          }
+        }
+      },
+
+      roboVacSpinning: {
+        text: `The RoboVac works through an endless counterclockwise rotation`
       },
 
       bathroomCurrent: {
@@ -1266,13 +1302,23 @@
       shower: {
         text: 'A showerhead sticks out of the wall with a QR code printed on its side'
       },
+      roboVacBathroom: {
+        before({ctx}) {
+          ctx.state.roboVacLocation = sample(['kitchen', 'livingRoom', 'bedroom', 'hallway'])
+          globalState.roboVacCaught.bathroom = true
+
+        },
+        text: 'Sensing your presence, the RoboVac moves to a different room',
+      }
     }, {
-      actions: [
+      actions: ({ctx}) => [
         { text: 'Phone', value: 'openPhone'},
         { text: 'Hallway', value: 'hallwayShower'},
         { text: 'Toilet', value: 'toilet', qr: {screen: 'messageViewer', messageViewerMessage: 'Advanced Auto-Flusher technology powered by FlushMate'}},
         { text: 'Sink', value: 'bathroomSink'},
         { text: 'Shower', value: 'shower', qr: {screen: 'messageViewer', messageViewerMessage: 'Bathe in luxury'}},
+        ctx.state.roboVacLocation === 'bathroom'? { text: 'RoboVac', value: 'roboVacBathroom', qr: { screen: 'appMarket', appMarketPreSearch: 'robovac'}} : null,
+
       ],
       handler: ({ur}) => ur
     }),
@@ -1287,6 +1333,12 @@
         text: ({ctx}) => `You enter the kitchen`,
         after({ ctx }) {
           ctx.state.kitchenVisited = true
+        },
+        async follow({ctx}) {
+          if (ctx.state.roboVacLocation === 'kitchen' && ctx.state.roboVacLastActive > 0) {
+            await waitPromise(1500)
+            return 'roboVacDocked'
+          }
         }
       },
 
@@ -1367,6 +1419,11 @@
           text: `The word "<strong>ClearBreeze</strong>" is laser-etched into the bottom right corner, along with a sticker: "For all issues regarding insulation and sound isolation, please submit a maintenance request using the <strong>Landlock Realty Rental App</strong>"`
         },
       ],
+
+      roboVacDocked: {
+        text: `The RoboVac charges in its doc`
+      },
+
       roboVacActivate: [
         {
           before({ctx}) {
@@ -1395,13 +1452,15 @@
 
             //e, eb, e, eb, e, b, d, c, a (e, a+)
 
+            globalState.roboVacCaught.kitchen = true
+
 
             if (!ctx.state.routerChecked) {
               ctx.state.roboVacLocation = 'livingRoom'
             } else if (ctx.state.envelope1PickedUp) {
               ctx.state.roboVacLocation = 'hallway'
             } else {
-              ctx.state.roboVacLocation = sample(['hallway', 'livingRoom'])
+              ctx.state.roboVacLocation = sample(['hallway', 'livingRoom', 'bedroom', 'bathroom'])
             }
 
           },
@@ -1422,7 +1481,7 @@
         // { text: 'Oven', value: 'oven'},
         { text: 'Toaster', value: 'toaster', qr: { screen: 'messageViewer', messageViewerMessage: 'Introducing <em>Toastr</em>: the social way to toast! Download our App today!'}},
         { text: 'Window', value: 'kitchenWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'} },
-        ctx.state.roboVacLocation === 'kitchen'? { text: 'RoboVac', value: 'roboVacActivate'} : null,
+        ctx.state.roboVacLocation === 'kitchen'? { text: 'RoboVac', value: 'roboVacActivate', qr: { screen: 'appMarket', appMarketPreSearch: 'robovac'}} : null,
       ],
       handler: ({ur}) => ur
     }),
@@ -1695,6 +1754,12 @@
   }
 
   rehydrate(primaryStartingCtx, primarySM)
+
+  setInterval(() => {
+    if (primarySM.ctx.state.roboVacLocation !== 'kitchen' && primarySM.ctx.state.roboVacLastActive > 0) {
+      primarySM.ctx.state.roboVacLocation = sample(['hallway', 'kitchen', 'livingRoom', 'bedroom', 'bathroom'])
+    }
+  }, 120000)
 
 
 
