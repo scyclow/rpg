@@ -39,7 +39,6 @@ const APPS = [
   // finsexy (dating)
   // friendworld (social)
 
-  { name: 'AI Assistant Jean', key: 'ai', size: 128, price: 0 },
   { name: 'Bathe', key: 'bathe', size: 128, price: NaN, physical: true },
   { name: 'GateLink', key: 'gateLink', size: 128, price: 0, physical: true },
   { name: 'ClearBreeze', key: 'clearBreeze', size: 128, price: 0, physical: true },
@@ -51,6 +50,7 @@ const APPS = [
   { name: 'FreezeLocker', key: 'freeze', size: 128, price: 0, physical: true },
   { name: 'HomeGrid', key: 'homeGrid', size: 128, price: 6 },
   { name: 'Identity Wizard', key: 'identityWizard', size: 128, price: 0 },
+  { name: 'Jean: Your AI Assistant', key: 'ai', size: 128, price: 0 },
   { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
   { name: 'Lumin', key: 'lumin', size: 128, price: 0, physical: true },
   { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
@@ -7528,7 +7528,6 @@ createComponent(
 
       const submit = () => {
         const question = ctx.$('#question').value.toLowerCase()
-        console.log(question)
 
         ctx.$('#question').value = ''
         setTimeout(() => {
