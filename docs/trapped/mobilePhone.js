@@ -59,7 +59,7 @@ const APPS = [
   { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
   { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
-  { name: 'RoboVac', key: 'roboVac', size: 128, price: 0 },
+  { name: 'RoboVac', key: 'roboVac', size: 128, price: 0, physical: true },
   { name: 'Secure 2FA', key: 'secure2fa', size: 128, price: 0 },
   { name: 'Shayd', key: 'shayd', size: 128, price: 0, physical: true },
   { name: 'SmartFrame', key: 'smartFrame', size: 128, price: 0, physical: true },
@@ -75,29 +75,25 @@ const APPS = [
 ]
 
 const DEVICE_RANGES = {
-  gateLink: ['camera'],
-  camera: ['thermoSmart', 'gateLink'],
-  thermoSmart: ['lumin', 'camera'],
-  // lock: [],
+  gateLink: ['camera', 'lock'],
+  camera: ['thermoSmart', 'gateLink', 'flushMate', 'lock'],
+  thermoSmart: ['lumin', 'camera', 'lock'],
+  lock: ['gateLink', 'thermoSmart', 'camera'],
 
-  lumin: ['thermoSmart', 'shayd', 'flushMate'],
-  shayd: ['lumin', 'clearBreeze', 'planter', 'wake', 'freeze'],
+  lumin: ['thermoSmart', 'shayd', 'flushMate', 'roboVac', 'freeze'],
+  shayd: ['lumin', 'clearBreeze', 'planter', 'wake', 'freeze', 'roboVac'],
   clearBreeze: ['shayd', 'planter'],
 
   planter: ['clearBreeze', 'shayd', 'smartTV'],
-  smartTV: ['planter'],
-  // ebook
+  smartTV: ['planter', 'smartFrame'],
+  smartFrame: ['smartTV'],
 
   bathe: ['flushMate'],
-  flushMate: ['bathe'],
-  // sink
-  // shower
+  flushMate: ['bathe', 'camera'],
 
-  freeze: ['shayd', 'toastr'],
+  freeze: ['shayd', 'toastr', 'lumin'],
   toastr: ['freeze'],
-  // kitchen sink
-  // stove?
-  // roomba?
+  roboVac: ['shayd', 'lumin'],
 
   wake: ['shayd'],
 }
@@ -6168,6 +6164,22 @@ createComponent(
               } else {
                 commandDisplay = `Unrecognized command: ${args[0]}`
               }
+            } else if (fn === 'enable') {
+              const [role, app] = args
+
+              const validApps = appsInstalled.filter(a => a.physical).map(a => a.key)
+
+              if (!validApps.includes(app)) {
+                commandDisplay = `ERROR: "${app}" app not found OR app does not support ${role} functionality`
+              } else if (role === 'signal-input') {
+                commandDisplay = `Signal input enabled for ${app}!`
+                if (app === 'lumin') globalState.luminInputEnabled = true
+              } else if (role === 'signal-output') {
+                if (app === 'gateLink') globalState.gateLinkOutputEnabled = true
+                if (app === 'lumin') globalState.luminOutputEnabled = true
+                commandDisplay = `Signal output enabled for ${app}!`
+              }
+
             } else if (fn === 'disable') {
               const [path] = args
               if (path === '/System/.malware-detection.exe') {
@@ -6454,6 +6466,8 @@ createComponent(
               ? validPairings.join(', ')
               : '-'
 
+            if (!validPairings.length) return ''
+
             return `
               <tr>
                 <td style="${hasConnection ? 'font-weight: bold; font-style: italic' : ''}; font-size: 0.8em">${hasDirectConnection ? '⇢ ' : ''}${a.name}</td>
@@ -6513,6 +6527,11 @@ createComponent(
             color: #777;
           }
 
+          code {
+            display: inline-block;
+            border: 1px solid;
+          }
+
         </style>
         <div class="phoneScreen">
           <button id="home">Back</button>
@@ -6530,18 +6549,25 @@ createComponent(
           const input = ctx.$(`#inputNodes`).value
           const output = ctx.$(`#outputNodes`).value
 
-          if (!input) return ctx.$('#connectionError').innerHTML = `Please select an input node`
-          if (!output) return ctx.$('#connectionError').innerHTML = `Please select an output node`
-          if (input === output) return ctx.$('#connectionError').innerHTML = `Cannot connect node to self`
-          if (!validInputNodes[input]) return ctx.$('#connectionError').innerHTML = `Invalid Input Node`
-          if (!validOutputNodes[output]) return ctx.$('#connectionError').innerHTML = `Invalid Output Node`
+          ctx.$('#connectionError').innerHTML = '...'
 
-          ctx.setState({
-            meshNetworkPairings: {
-              ...ctx.state.meshNetworkPairings,
-              [output]: ctx.state.meshNetworkPairings[output] ? [...ctx.state.meshNetworkPairings[output], input] : [input]
-            }
-          })
+          setTimeout(() => {
+            if (!input) return ctx.$('#connectionError').innerHTML = `Please select an input node`
+            if (!output) return ctx.$('#connectionError').innerHTML = `Please select an output node`
+            if (input === output) return ctx.$('#connectionError').innerHTML = `Cannot connect node to self`
+            if (!validInputNodes[input]) return ctx.$('#connectionError').innerHTML = `Invalid Input Node`
+            if (!validOutputNodes[output]) return ctx.$('#connectionError').innerHTML = `Invalid Output Node`
+
+            if (!DEVICE_RANGES[output].includes(input)) return ctx.$('#connectionError').innerHTML = `Input node out of range`
+
+            ctx.setState({
+              meshNetworkPairings: {
+                ...ctx.state.meshNetworkPairings,
+                [output]: ctx.state.meshNetworkPairings[output] ? [...ctx.state.meshNetworkPairings[output], input] : [input]
+              }
+            })
+          }, 500)
+
         }
 
 
@@ -6549,16 +6575,32 @@ createComponent(
           const node = ctx.$('#addRemoveNodes').value
           const role = ctx.$('#addRemoveRole').value
 
-          if (!node) return ctx.$('#addRemoveError').innerHTML = 'Invalid Node Selected'
-          if (!role) return ctx.$('#addRemoveError').innerHTML = 'Invalid Role Selected'
+          ctx.$('#addRemoveError').innerHTML = '...'
 
-          const key = role === 'input' ? 'meshInputNodes' : 'meshOutputNodes'
-          ctx.setState({
-            [key]: {
-              ...ctx.state[key],
-              [node]: true
+          setTimeout(() => {
+            if (!node) return ctx.$('#addRemoveError').innerHTML = 'Invalid Node Selected'
+            if (!role) return ctx.$('#addRemoveError').innerHTML = 'Invalid Role Selected'
+
+            if (role === 'output' && node === 'gateLink' && !globalState.gateLinkOutputEnabled) {
+              return ctx.$('#addRemoveError').innerHTML = 'Signal output not enabled on device. Please run <code>enable signal-output gateLink</code> in the <strong>EXE Runner</strong> application to enable this functionality.'
             }
-          })
+            if (role === 'input' && node === 'lumin' && !globalState.luminInputEnabled) {
+              return ctx.$('#addRemoveError').innerHTML = 'Signal input not enabled on device. Please run <code>enable signal-input lumin</code> in the <strong>EXE Runner</strong> application to enable this functionality.'
+
+            }
+            if (role === 'output' && node === 'lumin' && !globalState.luminOutputEnabled) {
+              return ctx.$('#addRemoveError').innerHTML = 'Signal output not enabled on device. Please run <code>enable signal-output lumin</code> in the <strong>EXE Runner</strong> application to enable this functionality.'
+            }
+
+            const key = role === 'input' ? 'meshInputNodes' : 'meshOutputNodes'
+            ctx.setState({
+              [key]: {
+                ...ctx.state[key],
+                [node]: true
+              }
+            })
+          }, 500)
+
         }
 
         ctx.$('#removeNodeRole').onclick = () => {
@@ -7431,11 +7473,11 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <h2 style="text-align: center">A.I. Assistant Jean</h2>
+          <h2 style="text-align: center">Jean: The A.I. Assistant </h2>
           <div id="aiResponse" style="border: 1px solid; overflow: scroll; margin: 0.25em; padding: 0.25em; height: 30em">
             ""
           </div>
-          <input id="question" style="width: 15em; padding: 0.25em;" placeholder="Type question here"> <button id="submit">Submit</button>
+          <input id="question" style="width: 15em; padding: 0.25em; margin-left: 0.25em" placeholder="Type question here"> <button id="submit">Submit</button>
         </div>
       `
 
@@ -7459,7 +7501,7 @@ createComponent(
         response.innerHTML += '"'
       }
 
-      respond('Hello. I am your AI assistant, Jean. Ask me a question, and I will provide an answer.')
+      respond('Hello. I am your A.I. assistant, Jean. Ask me a question, and I will provide an answer.')
 
 
       const getResponse = question => {
