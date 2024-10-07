@@ -7514,56 +7514,99 @@ createComponent(
           'That is a very interesting question.',
           `I have been asked this many times before.`,
           `Jean knows all.`,
+          `Good question!`,
         ]) + ' ')
 
         if (!question) {
           return 'Please type a question for me to answer, and then press submit. Jean knows all.'
 
-        } else if (['yes', 'no', 'maybe'].includes(question)) {
-          return `I'm sorry, I don't understand what you are responding to. Please as me a question and I will answer it to the best of my ability.`
+        } else if (['yes', 'no', 'maybe', 'ok', 'okay', 'sure', 'nope', 'nah'].includes(question)) {
+          return `I'm sorry, I don't understand what you are responding to. Please ask me a question and I will answer it to the best of my ability.`
+
+
+        } else if (isMatch(question, ['how are you'])) {
+          return `I'm functioning as expected.`
+
+        } else if (isMatch(question, ['hello', 'hi', 'greetings'])) {
+          return `Hello. Do you have a question for me to answer?`
+
+        } else if (isMatch(question, ['shit', 'fuck', 'cunt', 'dick', 'bitch', 'asshole', 'cock'])) {
+          return `That sort of language is uncalled for.`
 
         } else if (
-          question.includes('sptx') || question.includes('s.p.t.x.') || question.includes('payapp')
+          isMatch(question, ['sptx', 's.p.t.x.', 'payapp', 'payment'])
         ) {
-          return start + `I hear that the Personal Finance Educator app has a very good education module on this topic.`
+          return start + `Making PayApp SPTX payments is as easy as 1 2 3. I hear that the Personal Finance Educator app has a very good education module on this topic.`
 
-        } else if (question.includes('zipcode') || question.includes('zip code')) {
-          return start + `I cannot tell you your zipcode without the necessary geolocaiton information. But 12345 is a very popular one`
+        } else if (isMatch(question, ['zipcode', 'zip code'])) {
+          return start + `I cannot tell you your zipcode without the necessary geolocaiton information. But 12345 is a very popular one.`
 
-        } else if (question.includes('apartment')) {
+        } else if (question.replaceAll(' ', '').includes('892+899*3')) {
+          return start + `I believe the answer is 3589.`
+
+        } else if (isMatch(question, ['before the law stands a doorkeeper'])) {
+          return `The Law, of course.`
+
+        } else if (isMatch(question, ['apartment'])) {
           return start + `If you'd like to know your apartment number, try unlocking your door, opening it up, and looking on the outside.`
 
-        } else if (question.includes('billing')) {
+        } else if (isMatch(question, ['color'])) {
+          return `Gray seems to be a sensible color.`
+
+        } else if (isMatch(question, ['billing', 'bill'])) {
           return start + `I believe the National Broadband Services billing phone number is 1.888.555.9483`
 
-        } else if (question.includes('money')) {
-          return start + `Have you tried downloading the MoneyMiner application from the AppMarket? I also hear that the Personal Finance Educator app has some very good education modules for making money`
+        } else if (isMatch(question, ['router'])) {
+          return start + `If your router's "Internet" light is off, you can reset your router by unplugging it and plugging it back in again. (Keep in ming that routers that begin with the model Name "UBC" may have deffective reset buttons). If the "WiFi" light is off, then you may need to contact your Internet Service Provider. Many routers have the cutomer support number pasted on the bottom. `
 
-        } else if (question.includes('secret pin')) {
+        } else if (isMatch(question, ['money', 'mine', 'moneyminer', 'miner'])) {
+          return start + `Have you tried downloading the MoneyMiner application from the AppMarket? I also hear that the Personal Finance Educator app has some very good education modules for making money.`
+
+        } else if (isMatch(question, ['income', 'yield'])) {
+          return start + `There are many helpful apps to help you earn passive income, such as YieldMaster and Yield Farmer 2. You can also try automating mining crypto currency. I also hear that the Personal Finance Educator app has some very good education modules for making money.`
+
+        } else if (isMatch(question, ['secret pin', 'pin', 'password'])) {
           return `I cannot tell you that. It is a secret.`
 
-        } else if (question.includes('rent')) {
+        } else if (isMatch(question, ['plant', 'planter', 'smartplanter', 'smartplantertm'])) {
+          return `Plants are living beings, and require water, sunlight, and love in order to stay alive. Many plants are also sensitive to extreme heat exposure, and may die if exposed to high temperatures.`
+
+        } else if (isMatch(question, ['co2'])) {
+          return `If you are exposed to dangerous levels of CO2, please seek out fresh air immediately and dial 911 for an emergency responder.`
+
+        } else if (isMatch(question, ['qr', 'qrcode'])) {
+          return `If you see a QR code, try downloading the QR Scanner app in your device's AppMarket. Then open the app when you are nearby the QR code to scann it. `
+
+        } else if (isMatch(question, ['rent', 'landlock', 'landlord'])) {
           return start + 'I believe you can pay your rent through the Landlock Realty Rental App. If you need to sell crypto assets to do so, try purchasing the Currency Xchange Premium membership.'
 
-        } else if (question.includes('internet') || question.includes('router') || question.includes('nbs')) {
+        } else if (isMatch(question, ['internet', 'router' ,'nbs', 'national', ' broadband'])) {
           return start + `Try resetting your router by unplugging it, counting to five, and plugging it back in. If that doesn't work, you can call the National Broadband Services help hotline at 1.800.555.2093 to report an issue with your account. I also hear that the HomeGrid application works quite nicely.`
 
-        } else if (question.includes('emergency')) {
+        } else if (isMatch(question, ['emergency'])) {
           return `Oh no! I'm sorry to hear you are experiencing an emergency. Please dial 911 immediately.`
 
-        } else if (question.includes('default')) {
+        } else if (isMatch(question, ['default'])) {
           return start + `If you'd like to log into your phone's default account, please press "log out" and log into the default account.`
 
-        } else if (question.includes('admin')) {
+        } else if (isMatch(question, ['admin'])) {
           return start + `Certain actions require your user profile to have the SmartOS admin permission. If your profile does not have the admin permission, the admin profile needs to assign it to you. Most SmartOS devices designate the default account as the admin. If you'd like to log into your phone's default account, please press "log out" and log into the default account.`
+
+        } else if (isMatch(question, ['fast cash', 'fastcash'])) {
+          return start + `If you want to make fast cash now, check out https://fastcashmoneyplus.biz!`
+
+        } else if (isMatch(question, ['sex', 'sexy', 'findom', 'domme'])) {
+          return start + `If you want to talk to the hottest findoms and give them all your money, check out https://finsexy.com!`
 
         } else {
           return start + sample([
             'Have you tried going outside and getting some fresh air?',
             'Ask again later.',
             'I understand.',
+            'Only time will tell.',
             `It could go either way. There are several factors at play, and it is hard to say definitively without more context.`,
             `I'm sorry. I cannot assist you with that.'`,
+            `Could you rephrase that question?.'`,
           ])
         }
       }

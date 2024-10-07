@@ -160,25 +160,44 @@ function formatTime(timeLeft) {
   return `${with0(hours)}:${with0(minutes)}:${with0(seconds)}`
 }
 
-  function triggerTimer(endTimestamp, $elem1, cb) {
+function triggerTimer(endTimestamp, $elem1, cb) {
 
-    return setRunInterval(() => {
-      let timeLeftCounter = Math.max(endTimestamp - Date.now(), 0)
-      const hours = timeLeftCounter / (60*60*1000)
-      const minutes = 60 * (hours%1)
-      const seconds = Math.floor(60 * (minutes%1))
+  return setRunInterval(() => {
+    let timeLeftCounter = Math.max(endTimestamp - Date.now(), 0)
+    const hours = timeLeftCounter / (60*60*1000)
+    const minutes = 60 * (hours%1)
+    const seconds = Math.floor(60 * (minutes%1))
 
 
-      $elem1.innerHTML = `${with0(hours)}:${with0(minutes)}:${with0(seconds)}`
+    $elem1.innerHTML = `${with0(hours)}:${with0(minutes)}:${with0(seconds)}`
 
-      if (timeLeftCounter <= 0) {
-        timeLeftCounter = endTimestamp - Date.now()
-      }
+    if (timeLeftCounter <= 0) {
+      timeLeftCounter = endTimestamp - Date.now()
+    }
 
-      if (cb) cb()
+    if (cb) cb()
 
-    }, 1000)
+  }, 1000)
+}
+
+const responseParser = txt => txt.toLowerCase().trim().replaceAll('!', '').replaceAll('.', '').replaceAll(',', '').replaceAll('"', '').replaceAll(`'`, '').replaceAll('?', '')
+
+function isMatch(txt, phrases, strict=false) {
+  const cleaned = responseParser(txt)
+  const multipleWordPhrases = phrases.filter(phrase => phrase.split(' ').length > 1)
+  const singleWordPhrases = phrases.filter(phrase => phrase.split(' ').length === 1)
+
+  if (strict) {
+    return (
+      multipleWordPhrases.some(phrase => cleaned == phrase) ||
+      singleWordPhrases.some(phrase => cleaned.split(' ') == phrase)
+    )
   }
+  return (
+    multipleWordPhrases.some(phrase => cleaned.includes(phrase)) ||
+    singleWordPhrases.some(phrase => cleaned.split(' ').includes(phrase))
+  )
+}
 
 
 
