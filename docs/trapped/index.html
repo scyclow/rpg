@@ -55,16 +55,16 @@
           <div id="nextActions"></div>
           <div id="notebook" style="transition: 0.3s;" class="invisible hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5em;">
-              <h4>eBook</h4>
+              <h4>eNotepad</h4>
               <div>
-                <span id="ebookBattery">(97%)</span>
-                <button id="pluginEbook" style="margin: 0">Plug In</button>
+                <span id="eNotepadBattery">(97%)</span>
+                <button id="pluginENotepad" style="margin: 0">Plug In</button>
                 <button id="pairWithNotes" style="margin: 0">Pair with NotePad App</button>
                 <!-- <button>Factory Reset</button> -->
               </div>
             </div>
-            <div id="ebookError" style="text-align: right;"></div>
-            <textarea id="ebookTextArea">ERROR: Cannot acccess Library </textarea>
+            <div id="eNotepadError" style="text-align: right;"></div>
+            <textarea id="eNotepadTextArea">ERROR: Cannot acccess Library </textarea>
           </div>
         </aside>
       </section>
@@ -142,9 +142,9 @@
   //           $.id('notebook').classList.remove('invisible')
   //         }, 10)
   //         setTimeout(() => {
-  //           $.id('ebookTextArea').focus()
-  //           $.id('ebookTextArea').selectionEnd = 80
-  //           $.id('ebookTextArea').selectionStart = 80
+  //           $.id('eNotepadTextArea').focus()
+  //           $.id('eNotepadTextArea').selectionEnd = 80
+  //           $.id('eNotepadTextArea').selectionStart = 80
   //         }, 100)
   //       }
   //     } else {
@@ -155,11 +155,11 @@
   // })
 
 
-  $.id('ebookBattery').innerHTML = `(${globalState.ebookBattery}%)`
-  $.id('ebookTextArea').innerHTML = globalState.ebookContent
+  $.id('eNotepadBattery').innerHTML = `(${globalState.eNotepadBattery}%)`
+  $.id('eNotepadTextArea').innerHTML = globalState.eNotepadContent
 
-  function pluginEbook() {
-    globalState.ebookOpen = false
+  function pluginENotepad() {
+    globalState.eNotepadOpen = false
 
     $.id('notebook').classList.add('invisible')
     setTimeout(() => {
@@ -168,33 +168,33 @@
 
 
     setTimeout(() => {
-      $.id('ebookTextArea').classList.remove('disabled')
+      $.id('eNotepadTextArea').classList.remove('disabled')
     }, 500)
 
 
-    clearInterval(tmp.ebookInterval)
+    clearInterval(tmp.eNotePadInterval)
 
-    tmp.ebookInterval = setInterval(() => {
-      if (globalState.ebookBattery < 100) globalState.ebookBattery += 1
+    tmp.eNotePadInterval = setInterval(() => {
+      if (globalState.eNotepadBattery < 100) globalState.eNotepadBattery += 1
     }, 4000)
   }
 
-  $.id('ebookTextArea').onkeyup = () => globalState.ebookContent = $.id('ebookTextArea').value
-  $.id('ebookTextArea').onpaste = () => globalState.ebookContent = $.id('ebookTextArea').value
+  $.id('eNotepadTextArea').onkeyup = () => globalState.eNotepadContent = $.id('eNotepadTextArea').value
+  $.id('eNotepadTextArea').onpaste = () => globalState.eNotepadContent = $.id('eNotepadTextArea').value
 
-  $.id('pluginEbook').onclick = pluginEbook
+  $.id('pluginENotepad').onclick = pluginENotepad
   $.id('pairWithNotes').onclick = () => {
-    $.id('ebookError').innerHTML = 'An Error Occurred'
+    $.id('eNotepadError').innerHTML = 'An Error Occurred'
     setTimeout(() => {
-      $.id('ebookError').innerHTML = ''
+      $.id('eNotepadError').innerHTML = ''
     }, 3000)
   }
 
 
-  function unplugEbook() {
-    globalState.ebookOpen = true
+  function unplugENotepad() {
+    globalState.eNotepadOpen = true
 
-    $.id('ebookBattery').innerHTML = `(${globalState.ebookBattery}%)`
+    $.id('eNotepadBattery').innerHTML = `(${globalState.eNotepadBattery}%)`
 
 
     $.id('notebook').classList.remove('hidden')
@@ -204,21 +204,21 @@
     }, 10)
 
     setTimeout(() => {
-      $.id('ebookTextArea').focus()
-      $.id('ebookTextArea').selectionEnd = 80
-      $.id('ebookTextArea').selectionStart = 80
+      $.id('eNotepadTextArea').focus()
+      $.id('eNotepadTextArea').selectionEnd = 80
+      $.id('eNotepadTextArea').selectionStart = 80
     }, 400)
 
-    clearInterval(tmp.ebookInterval)
-    tmp.ebookInterval = setInterval(() => {
-      if (globalState.ebookBattery > 0) globalState.ebookBattery -= 1
-      $.id('ebookBattery').innerHTML = `(${globalState.ebookBattery}%)`
+    clearInterval(tmp.eNotePadInterval)
+    tmp.eNotePadInterval = setInterval(() => {
+      if (globalState.eNotepadBattery > 0) globalState.eNotepadBattery -= 1
+      $.id('eNotepadBattery').innerHTML = `(${globalState.eNotepadBattery}%)`
 
-      if (globalState.ebookBattery === 0) {
-        $.id('ebookTextArea').blur()
-        $.id('ebookTextArea').value = 'Battery Depleted'
-        $.id('ebookTextArea').classList.add('disabled')
-        globalState.ebookContent = 'Battery Depleted'
+      if (globalState.eNotepadBattery === 0) {
+        $.id('eNotepadTextArea').blur()
+        $.id('eNotepadTextArea').value = 'Battery Depleted'
+        $.id('eNotepadTextArea').classList.add('disabled')
+        globalState.eNotepadContent = 'Battery Depleted'
       }
     }, 12000)
   }
@@ -1008,13 +1008,13 @@
       ],
 
 
-      eBook: {
-        text: () => globalState.ebookOpen ? 'You plug in the eBook' : 'You pick up the eBook',
+      eNotepad: {
+        text: () => globalState.eNotepadOpen ? 'You plug in the eNotepad' : 'You pick up the eNotepad',
         follow({ctx}) {
-          if (globalState.ebookOpen) {
-            pluginEbook()
+          if (globalState.eNotepadOpen) {
+            pluginENotepad()
           } else {
-            unplugEbook()
+            unplugENotepad()
           }
         }
       },
@@ -1087,7 +1087,7 @@
         { text: 'Router', value: 'router'},
         { text: 'TV', value: 'tv'},
         { text: 'SmartFrame', value: 'smartFrame'},
-        { text: 'eBook', value: 'eBook'},
+        { text: 'eNotepad', value: 'eNotepad'},
         ctx.state.roboVacLocation === 'livingRoom'? { text: 'RoboVac', value: 'roboVacLivingRoom', qr: { screen: 'appMarket', appMarketPreSearch: 'robovac'}} : null,
       ],
       handler: ({ur}) => ur
@@ -1711,17 +1711,17 @@
       $consoleTemperature.innerHTML = ctx.state.checkedThermostatTwice ? ' — 84˚ [CO2 LEVEL: HAZARDOUS]' : ' — 99˚'
     }
 
-    clearInterval(tmp.ebookInterval)
-    if (globalState.ebookOpen) {
-      unplugEbook()
-      if (globalState.ebookBattery === 0) {
-        $.id('ebookTextArea').blur()
-        $.id('ebookTextArea').value = 'Battery Depleted'
-        $.id('ebookTextArea').classList.add('disabled')
+    clearInterval(tmp.eNotePadInterval)
+    if (globalState.eNotepadOpen) {
+      unplugENotepad()
+      if (globalState.eNotepadBattery === 0) {
+        $.id('eNotepadTextArea').blur()
+        $.id('eNotepadTextArea').value = 'Battery Depleted'
+        $.id('eNotepadTextArea').classList.add('disabled')
       }
     } else {
-      tmp.ebookInterval = setInterval(() => {
-        if (globalState.ebookBattery < 100) globalState.ebookBattery += 1
+      tmp.eNotePadInterval = setInterval(() => {
+        if (globalState.eNotepadBattery < 100) globalState.eNotepadBattery += 1
       }, 4000)
     }
 

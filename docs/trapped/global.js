@@ -9,9 +9,9 @@ export const globalState = persist('__GLOBAL_STATE', {
   routerReset: false,
   routerUnplugged: false,
   lightsOn: false,
-  ebookBattery: 97,
-  ebookOpen: false,
-  ebookContent: 'ERROR: Cannot acccess Library ',
+  eNotepadBattery: 97,
+  eNotepadOpen: false,
+  eNotepadContent: 'ERROR: Cannot acccess Library ',
   rand: Math.random(),
   wifiActive: false,
   smartLockOpen: false,
@@ -72,6 +72,10 @@ export const globalState = persist('__GLOBAL_STATE', {
 // globalState.cryptoDevices.freeze = newCryptoDevice(32)
 globalState.cryptoDevices.roboVac = globalState.cryptoDevices.roboVac || newCryptoDevice(1)
 globalState.roboVacCaught = globalState.roboVacCaught || {}
+globalState.eNotepadBattery = globalState.eNotepadBattery ||  97
+globalState.eNotepadOpen = globalState.eNotepadOpen ||  false
+globalState.eNotepadContent = globalState.eNotepadContent ||  'ERROR: Cannot acccess Library '
+
 
 window.globalState = globalState
 

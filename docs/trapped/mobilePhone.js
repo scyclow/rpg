@@ -373,7 +373,7 @@ const state = persist('__MOBILE_STATE', {
         { name: 'App Market', key: 'appMarket' },
         { name: 'Phone App', key: 'phoneApp' },
         { name: 'Text Messages', key: 'textMessage' },
-        { name: 'Setting', key: 'settings' },
+        { name: 'Settings', key: 'settings' },
         { name: 'Network & Internet', key: 'network' },
         { name: 'SmartPlanter', key: 'planter', size: 256, price: 0 },
         { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
@@ -1347,7 +1347,7 @@ createComponent(
                 { name: 'App Market', key: 'appMarket' },
                 { name: 'Phone App', key: 'phoneApp' },
                 { name: 'Text Messages', key: 'textMessage' },
-                { name: 'Setting', key: 'settings' },
+                { name: 'Settings', key: 'settings' },
                 { name: 'Network & Internet', key: 'network' },
               ],
               textMessages: [],
@@ -2920,7 +2920,7 @@ createComponent(
 
           <div id="p10" class="hidden">
             <h2>The SPTXs & Payment Module: Tutorial (1/3)</h2>
-            <p>Let's start in the "Receive" tab on PayApp. This is the address you will send the $ to. Be sure to copy the Recipient Address before advancing to the next step!</p>
+            <p>Let's start in the "Receive" tab on PayApp. This is the address you will send the $ to. <strong>Be sure to copy the Recipient Address before advancing to the next step!</strong></p>
 
             <div style="border: 1px solid; padding: 0.25em">
               <h2>PayApp</h2>
@@ -2940,7 +2940,7 @@ createComponent(
 
           <div id="p11" class="hidden">
             <h2>The SPTXs & Payment Module: Tutorial (2/3)</h2>
-            <p>Now, use your PayApp $ Recipient Address to generate a SPTX for $10. Remember not to lose your SPTX!</p>
+            <p>Now, use your PayApp $ Recipient Address from the previous step to generate a SPTX for $10. <strong>Remember not to lose your SPTX!</strong></p>
 
             <div style="border: 1px solid; padding: 0.25em">
               <h2>Currency Xchange</h2>
@@ -3004,8 +3004,12 @@ createComponent(
           ctx.$('#sptxError1').innerHTML = `You don't have an SPTX yet! You'll get one in the next step. Make sure you've coppied your PayApp $ Recipient Address before advancing!`
         }
         ctx.$('#sendUSD').onclick = () => {
-          if (ctx.$('#sendUSDAddress').value !== '0x11111111111111111111111111111111111111') {
+          if (!ctx.$('#sendUSDAddress').value) {
+            ctx.$('#sptxError2').innerHTML = `Whoops! You forgot to input your Recipient Address from the previous step`
+          } else if (ctx.$('#sendUSDAddress').value !== '0x22222222222222222222222222222222222222') {
             ctx.$('#sptxError2').innerHTML = `Wrong Recipient Address! You want to send to your PayApp account, not your Currency Xchange account!`
+          } else if (ctx.$('#sendUSDAddress').value !== '0x11111111111111111111111111111111111111') {
+            ctx.$('#sptxError2').innerHTML = `Wrong Recipient Address! Make sure you correctly copied the Recipient Address from the previous step!`
           } else {
             ctx.$('#exchangeBalance').innerHTML = `0.0000`
             ctx.$('#sptxNext11').disabled = false
@@ -3143,7 +3147,7 @@ createComponent(
 
           <div id="p8" class="hidden">
             <h2>CryptoCurrency: Generating Wealth Part I: Mining</h2>
-            <p>As we said before, there are various consensus algorithms that provide rewards for participating in the network's decentralization. The popular Money Miner wallet application makes it dead simple to get started mining ₢rypto. Try mining 20 ₢rypto below:</p>
+            <p>As we said before, there are various consensus algorithms that provide rewards for participating in the network's decentralization. The popular <strong>Money Miner</strong> wallet application makes it dead simple to get started mining ₢rypto. Try mining 20 ₢rypto below:</p>
 
             <div style="border: 1px solid; padding: 0.25em">
               <div style="transform: scale(0.95)">
@@ -3171,7 +3175,7 @@ createComponent(
 
           <div id="p9" class="hidden">
             <h2>CryptoCurrency: Generating Wealth Part II: Yield</h2>
-            <p>Now that you have ₢rypto, how do you make it work for you? It would be a shame to see it sitting in your wallet collecting dust. The popular YieldMaster application makes it trivial to start generating yield on your ₢rypto balance. Try staking 20 ₢rypto below until you have at least 30 ₢rypto:</p>
+            <p>Now that you have ₢rypto, how do you make it work for you? It would be a shame to see it sitting in your wallet collecting dust. The popular <strong>YieldMaster</strong> application makes it trivial to start generating yield on your ₢rypto balance. Try staking 20 ₢rypto below until you have at least 30 ₢rypto:</p>
 
             <div style="padding: 0.25em; border: 1px solid; margin: 0.5em 0">
               <div style="transform: scale(0.95)">
@@ -6709,7 +6713,7 @@ createComponent(
                 </div>
 
                 <div style="height: 125px; overflow: scroll; border: 1px inset; padding: 0.25em; background: #ccc">
-                ${ctx.state.buzzes.map(b => `<div style="font-size: 0.75em">[<em>${b.secondsAgo + globalState.secondsPassed} Seconds Ago!</em>] "${b.message}" </div>`).join('')}
+                ${ctx.state.buzzes.map(b => `<div style="font-size: 0.75em">[<em>${b.secondsAgo + globalState.secondsPassed} Seconds Ago!</em>] undefined</div>`).join('')}
                 </div>
                 <h6 id="updated"></h6>
 
@@ -7606,7 +7610,7 @@ createComponent(
             'Only time will tell.',
             `It could go either way. There are several factors at play, and it is hard to say definitively without more context.`,
             `I'm sorry. I cannot assist you with that.'`,
-            `Could you rephrase that question?.'`,
+            `Could you rephrase that question?`,
           ])
         }
       }

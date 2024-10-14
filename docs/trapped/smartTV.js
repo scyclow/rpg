@@ -76,7 +76,7 @@ createComponent(
         background: none;
         border: 0;
         font-family: monospace;
-        cursor: pointer;
+        cursor: alias;
         padding: 0.5em;
       }
 
