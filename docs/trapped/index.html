@@ -3,12 +3,14 @@
 <head>
   <meta charset="utf-8">
   <title>SmartHome</title>
-  <!-- <link rel="shortcut icon" type="image/x-icon" href="./assets/kiss.png" id="favicon"> -->
+  <link rel="shortcut icon" type="image/x-icon" href="./favicon.svg" id="favicon">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000" />
 
   <meta name="description" content="SmartHome: An Adventure Game">
-  <meta name="keywords" content="smart home, smart, home, smarthome, smart home an adventure game, smarthome an adventure game, adventure game, adventure, game, art game, text adventure, rpg, role play game, steviep, steve pikelny, pikelny, crypto, purgatory, hell, yield farmer 2, SmartOS, trapped, currency xchange, money miner, payapp, smartplanter, homegrid, jailbreakr, plantasia, simulator, idle game, clicker, incremental game, idle, incremental, html, web game">
+  <meta name="keywords" content="smart home, smart, home, smarthome, smart home an adventure game, smarthome an adventure game, adventure game, adventure, game, art game, text adventure, rpg, role play game, steviep, steve pikelny, pikelny, crypto, purgatory, hell, yield farmer 2, SmartOS, trapped, currency xchange, money miner, payapp, smartplanter, homegrid, jailbreakr, plantasia, simulator, idle game, clicker, incremental game, idle, incremental, html, web game, free game">
 
+  <meta name="twitter:image" content="https://steviep.xyz/rpg/trapped/SmartHome1.png">
   <!-- <meta name="twitter:image" content="https://finsexy.com/assets/thumbnail.png"> -->
   <!-- <meta name="twitter:image:alt" content="WARNING! The SEXY FINDOMS on this website will SUCK your wallet dry. Proceed at your own risk."> -->
   <meta name="twitter:card" content="summary_large_image">
@@ -16,6 +18,7 @@
   <meta name="twitter:site" content="@steviepxyz">
   <meta property="twitter:description" content="SmartHome: An Adventure Game">
 
+  <meta name="og:image" property="og:image" content="https://steviep.xyz/rpg/trapped/SmartHome1.png">
   <!-- <meta name="og:image" property="og:image" content="https://finsexy.com/assets/thumbnail.png"> -->
   <!-- <meta name="og:image:alt" content="WARNING! The SEXY FINDOMS on this website will SUCK your wallet dry. Proceed at your own risk."> -->
   <meta property="og:type" content="website">
@@ -104,7 +107,7 @@
   import {$} from './$.js'
   import {StateMachine, CTX} from './stateMachine.js'
   import {persist} from './persist.js'
-  import {globalState, setColor, tmp} from './global.js'
+  import {globalState, setColors, tmp} from './global.js'
   import {createSource, MAX_VOLUME, SoundSrc} from './audio.js'
 
 
@@ -849,11 +852,9 @@
       closeDoor: {
         before() {
           if (globalState.lightsOn) {
-            setColor('--bg-color', '#fff')
-            setColor('--primary-color', '#000')
+            setColors('#fff', '#000')
           } else {
-            setColor('--bg-color', 'var(--dark-color)')
-            setColor('--primary-color', 'var(--light-color)')
+            setColors('var(--dark-color)', 'var(--light-color)')
           }
         },
         text: `You close the door.`
@@ -868,11 +869,9 @@
 
           if (globalState.lightsOn) {
             const { light1, light2 } = globalState
-            setColor('--bg-color', hsvToRGB(light1))
-            setColor('--primary-color', hsvToRGB(light2))
+            setColors(hsvToRGB(light1), hsvToRGB(light2))
           } else {
-            setColor('--bg-color', 'var(--dark-color)')
-            setColor('--primary-color', 'var(--light-color)')
+            setColors('var(--dark-color)', 'var(--light-color)')
           }
         },
         text: `You reenter your apartment and close the door`
@@ -1489,8 +1488,7 @@
 
     openDoorUnlocked: {
       before() {
-        setColor('--bg-color', '#000')
-        setColor('--primary-color', '#fff')
+        setColors('#000', '#fff')
       },
       text: `You turn the doorknob and slowly pull the door open. You stare into darkness`,
         before() {
@@ -1530,8 +1528,7 @@
         {
           before() {
             setTimeout(() => {
-              setColor('--bg-color', '#fff')
-              setColor('--primary-color', '#000')
+              setColors('#fff', '#000')
             }, 500)
           },
           text: 'A series of LED lights flicker on and glare overhead',
@@ -1590,8 +1587,7 @@
       enterStairway: {
         before({ ctx }) {
           globalState.location = 'stairway'
-          setColor('--bg-color', '#000')
-          setColor('--primary-color', '#c1bf9f')
+          setColors('#000', '#c1bf9f')
 
           if (tmp.src1 && tmp.src2) {
             tmp.src1.smoothGain(0.000001, 1)
@@ -1679,19 +1675,15 @@
 
 
     if (globalState.location === 'externalHallway') {
-      setColor('--bg-color', '#fff')
-      setColor('--primary-color', '#000')
+      setColors('#fff', '#000')
 
     } else if (globalState.location === 'stairway') {
-      setColor('--bg-color', '#000')
-      setColor('--primary-color', '#c1bf9f')
+      setColors('#000', '#c1bf9f')
     } else if (globalState.lightsOn) {
       const { light1, light2 } = globalState
-      setColor('--bg-color', hsvToRGB(light1))
-      setColor('--primary-color', hsvToRGB(light2))
+      setColors(hsvToRGB(light1), hsvToRGB(light2))
     } else if (globalState.shaydOpen) {
-      setColor('--bg-color', 'var(--light-color)')
-      setColor('--primary-color', 'var(--dark-color)')
+      setColors('var(--light-color)', 'var(--dark-color)')
     }
 
 

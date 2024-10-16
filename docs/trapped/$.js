@@ -126,6 +126,14 @@ export const ls = {
   }
 }
 
+export function setFavicon(c1, c2) {
+  $.id('favicon').href = `data:image/svg+xml;base64,${btoa(`
+    <svg width="768" height="768" viewBox="0 0 768 768" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M384 80.2011L710 391.54V710H58V391.54L384 80.2011Z" fill="${c1}" stroke="${c2}" stroke-width="128"/>
+    </svg>
+  `)}`
+}
+
 window.ls = ls
 
 export const createComponent = (tag, templateStr, initialState, onInit, onRender, onSetState=noop, broadcast={}) => {

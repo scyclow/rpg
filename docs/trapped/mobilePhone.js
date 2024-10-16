@@ -1,6 +1,6 @@
 import {$, createComponent} from './$.js'
 import {persist} from './persist.js'
-import {globalState, tmp, calcIdVerifyCode, calcAddr, calcCryptoUSDExchangeRate, calcPremiumCryptoUSDExchangeRate, setColor, rndAddr, setMiningInterval, clearMiningInterval} from './global.js'
+import {globalState, tmp, calcIdVerifyCode, calcAddr, calcCryptoUSDExchangeRate, calcPremiumCryptoUSDExchangeRate, setColors, rndAddr, setMiningInterval, clearMiningInterval} from './global.js'
 import {PhoneCall, phoneApp} from './phoneApp.js'
 import {createSource, MAX_VOLUME, SoundSrc} from './audio.js'
 import {marquee} from './marquee.js'
@@ -4384,8 +4384,7 @@ createComponent(
         if (globalState.light2.v <= 100) globalState.light2.v = Math.min(globalState.light2.v + 1, 100)
 
         if (globalState.lightsOn) {
-          setColor('--bg-color', hsvToRGB(globalState.light1))
-          setColor('--primary-color', hsvToRGB(globalState.light2))
+          setColors(hsvToRGB(globalState.light1), hsvToRGB(globalState.light2))
         }
 
       })
@@ -4394,18 +4393,15 @@ createComponent(
         const { light1, light2 } = globalState
 
         if (globalState.lightsOn) {
-          setColor('--bg-color', hsvToRGB(light1))
-          setColor('--primary-color', hsvToRGB(light2))
+          setColors(hsvToRGB(light1), hsvToRGB(light2))
         } else if (globalState.shaydOpen) {
-          setColor('--bg-color', 'var(--light-color)')
-          setColor('--primary-color', 'var(--dark-color)')
+          setColors('var(--light-color)', 'var(--dark-color)')
         } else {
-          setColor('--bg-color', 'var(--dark-color)')
-          setColor('--primary-color', 'var(--light-color)')
+          setColors('var(--dark-color)', 'var(--light-color)')
         }
       }
 
-      console.log(globalState.light1, globalState.light2)
+      // console.log(globalState.light1, globalState.light2)
 
       if (ctx.$('#offOn')) ctx.$('#offOn').onclick = () => {
         globalState.lightsOn = !lampOn
@@ -5775,11 +5771,9 @@ createComponent(
       const setBg = () => {
         if (!ctx.state.lampOn) {
           if (globalState.shaydOpen) {
-            setColor('--bg-color', 'var(--light-color)')
-            setColor('--primary-color', 'var(--dark-color)')
+            setColors('var(--light-color)', 'var(--dark-color)')
           } else {
-            setColor('--bg-color', 'var(--dark-color)')
-            setColor('--primary-color', 'var(--light-color)')
+            setColors('var(--dark-color)', 'var(--light-color)')
           }
         }
       }

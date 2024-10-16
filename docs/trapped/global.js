@@ -1,4 +1,5 @@
 import {persist} from './persist.js'
+import {setFavicon} from './$.js'
 
 
 export const globalState = persist('__GLOBAL_STATE', {
@@ -195,8 +196,26 @@ export const setColor = (c, v) => {
 }
 
 
+const getColor = c => {
+  const r = document.querySelector(':root')
+  if (c === 'var(--light-color)') {
+    return r.style.getPropertyValue('--light-color') || '#c1bf9f'
+  } else if (c === 'var(--dark-color)') {
+    return r.style.getPropertyValue('--dark-color') || '#19120b'
+  } else {
+    return c
+  }
+}
+
+export const setColors = (c1, c2) => {
+  setColor('--bg-color', c1)
+  setColor('--primary-color', c2)
+
+  setFavicon(getColor(c1), getColor(c2))
+}
+
+
 
 if (globalState.lightsOn) {
-  setColor('--bg-color', '#fff')
-  setColor('--primary-color', '#000')
+  setColors('#fff','#000')
 }
