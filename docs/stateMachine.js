@@ -77,7 +77,7 @@ export class StateMachine {
       return evaluated
     } else if (this.nodeIsArray(key)) {
       const [baseKey, keyIx] = this.splitNodeKeys(key)
-      return `${baseKey}.${Number(keyIx) + 1}`
+      if (this.nodes[baseKey][keyIx+1]) return `${baseKey}.${Number(keyIx) + 1}`
     }
   }
 
