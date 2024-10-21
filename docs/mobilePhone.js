@@ -7299,9 +7299,9 @@ createComponent(
               Math.max(amountStaked, maxYield),
               amountStaked * ( (1 + (stakeBps/10000) ) ** secondsStaked )
             )
+            ctx.$('#calcedAmountStaked').innerHTML = calculatedAmountStaked.toFixed(2) + (calculatedAmountStaked >= maxYield ? ' [YIELD EXHAUSTED]' : '')
           }
 
-          ctx.$('#calcedAmountStaked').innerHTML = calculatedAmountStaked.toFixed(2) + (calculatedAmountStaked >= maxYield ? ' [YIELD EXHAUSTED]' : '')
         })
       }
 
