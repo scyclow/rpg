@@ -52,6 +52,7 @@ export const globalState = persist('__GLOBAL_STATE', {
     toastr: newCryptoDevice(4),
     thermoSmart: newCryptoDevice(2),
     wake: newCryptoDevice(2),
+    smartTV: newCryptoDevice(2),
     lumin: newCryptoDevice(1),
     clearBreeze: newCryptoDevice(1),
     shayd: newCryptoDevice(1),
@@ -59,7 +60,6 @@ export const globalState = persist('__GLOBAL_STATE', {
     flushMate: newCryptoDevice(1),
     gateLink: newCryptoDevice(1),
     smartFrame: newCryptoDevice(1),
-    tv: newCryptoDevice(1),
     roboVac: newCryptoDevice(1),
   },
   light1: {
@@ -71,6 +71,7 @@ export const globalState = persist('__GLOBAL_STATE', {
 })
 
 // globalState.cryptoDevices.freeze = newCryptoDevice(32)
+globalState.cryptoDevices.smartTV = globalState.cryptoDevices.smartTV || newCryptoDevice(2)
 globalState.cryptoDevices.roboVac = globalState.cryptoDevices.roboVac || newCryptoDevice(1)
 globalState.roboVacCaught = globalState.roboVacCaught || {}
 globalState.eNotepadBattery = globalState.eNotepadBattery ||  97
@@ -183,10 +184,9 @@ export const calcPremiumCryptoUSDExchangeRate = () => {
   const base = 0.001
   const cycle = globalState.pauseCurrency ? 1 : Math.sin(Date.now()/40000)
   const rand = globalState.pauseCurrency ? 1 : globalState.rand
-
   const modifier = (1.45 + cycle) ** 2
 
-  return (base / modifier) * (0.85 + rand * 0.3)
+  return (1.45 - cycle) * (base / modifier) * (0.85 + rand * 0.3)
 }
 
 

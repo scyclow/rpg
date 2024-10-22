@@ -357,14 +357,25 @@ export const ssoNodes = {
 
   violation: {
     text: `This account is in violation of our terms of service. To continue, please input your account's secret PIN., Then press the pound key. If your account does not have a secret PIN, then press the pound key without inputting a secret PIN.`,
-    follow: 'violationPIN'
+    follow: ({ctx}) => {
+      ctx.state.violationPINEntry = []
+      return 'violationPIN'
+    }
   },
 
   violationPIN: {
     text: '',
     handler({ur, ctx}) {
-      if (ur === '#') return 'invalidPIN'
-      else return 'violationPIN'
+      if (ur === '#') {
+        if (ctx.state.violationPINEntry.join('') === ctx.phoneUserData[0].password) {
+          return 'violationContinue'
+        } else {
+          return 'invalidPIN'
+        }
+      } else {
+        ctx.state.violationPINEntry.push(ur)
+        return 'violationPIN'
+      }
     }
   },
 
@@ -386,12 +397,20 @@ export const ssoNodes = {
   },
 
   incorrectSecurityQuestion: {
-    text: `I'm sorry, but you've selected the wrong answer to your security question`,
-    follow: 'securityQuestion'
+    text: `I'm sorry, but you've selected the wrong answer to your security question. I can verify your identity with a valid answer to your security question. Your security question is, what color was your first car? For red press 1. For orange press 2. For brown press 3. For yellow press 4. For green press 5. For teal press 6. For blue press 7. For purple press 8. For white press 9. For black press 0. For gray press star.`,
+    handler({ur}) {
+      if (ur === '*') return 'correctSecurityQuestion'
+      else return 'incorrectSecurityQuestion'
+    }
   },
 
   correctSecurityQuestion: {
-    text: `You've selected the correct answer to your security question! Your account has been suspended for violation of our terms of service. If you would like to appeal this decision press 1. If you'd like to return to the main menu press 2`,
+    text: `You've selected the correct answer to your security question!`,
+    follow: 'violationContinue'
+  },
+
+  violationContinue: {
+    text: `Your account has been suspended for violation of our terms of service. If you would like to appeal this decision press 1. If you'd like to return to the main menu press 2`,
     handler: options({
       1: 'appeal',
       2: 'intro'
@@ -414,9 +433,11 @@ export const ssoNodes = {
   },
   escalate: {
     text: `You've requested to escalate your account suspension appeal. One moment while I submit the escalation request`,
-    async follow() {
+    async follow({ctx}) {
       await waitPromise(10000)
       globalState.defaultUnlocked = true
+      ctx.phoneUserData[0].password = ''
+
       return 'escalateSuccess'
     }
   },

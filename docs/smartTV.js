@@ -455,6 +455,18 @@ createComponent(
         b.addEventListener('mousedown', clickSound)
       })
 
+    } else if (screen === 'deviceCast') {
+      $screen.innerHTML = `
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center">
+          <h4 style="margin-bottom: 1em">DEVICE CASTING NOT AVAILABLE ON THIS DEVICE</h4>
+          <button id="back">BACK</button>
+        </div>
+      `
+
+      ctx.$('#back').onclick = () => {
+        ctx.setState({ screen: 'smartCast' })
+      }
+
     } else if (screen === 'phoneCast') {
       const {phoneCastScreens} = ctx.state
       setProp('--bg-color', '#fff')

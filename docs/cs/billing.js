@@ -133,11 +133,11 @@ export const billingCSNodes = {
   },
 
   payBalance: {
-    // text: () => `To pay your unpaid balance of, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., Download the Pay App application from the AppMarket. Enter the following pay app address into the recipient box: 0, x, 4, b, 2, 5, 8, 6, 0, 3, 2, 5, 7, 4, 6, 0, d, 4, 8, 0, c, 9, 2, 9, a, f, 5, f, 7, b, 8, 3, e, 8, c, 4, 2, 7, 9, b, 7, b.,,, Then enter ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., into the amount box. Then press the sign transaction button. Finally, provide us with the resulting S P T X. identifier , To repeat this message press 1. , To enter a Pay App S P T X identifier press 2,. To dispute this balance press 3., To return to the main menu press 4`,
-    text: () => `To pay your unpaid balance of, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., with a Pay App S P T X identifier press 1,. For instructions on how to generate a valid Pay App S P T X identifier press 2., To dispute your balance of, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., press 3., To return to the main menu press 4., To repeat this message press 5`,
+    // text: () => `To pay your unpaid balance of, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., with a Pay App S P T X identifier press 1,. For instructions on how to generate a valid Pay App S P T X identifier press 2., To dispute your balance of, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., press 3., To return to the main menu press 4., To repeat this message press 5`,
+    text: () => `For instructions on how to pay your unpaid balance of ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., with a Pay App S P T X identifier, press 1. If you already have a Pay App S P T X identifier and would like to pay your balance now, press 2. To dispute your balance of, ${Math.floor(globalState.ispBalance)}., Dollars., And., ${100*(globalState.ispBalance % 1)}., Cents., press 3., To return to the main menu press 4., To repeat this message press 5`,
     handler: options({
-      1: 'enterSPTX',
-      2: 'sptxInstructions1',
+      1: 'sptxInstructions1',
+      2: 'enterSPTX',
       3: 'disputeBalance',
       4: 'mainMenu',
       5: 'payBalance',

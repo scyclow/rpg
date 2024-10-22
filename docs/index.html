@@ -252,6 +252,15 @@
   }))
 
 
+  const logoSVG = `
+  <svg width="10em" height="10em" viewBox="0 0 1085 1116" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M35.29 1080H1065C1070.52 1080 1075 1075.52 1075 1070V373.784C1075 370.536 1073.42 367.49 1070.77 365.616L570.09 11.9293C566.734 9.55853 562.27 9.48198 558.834 11.7363L19.5137 365.643C16.6967 367.491 15 370.634 15 374.003V949.557C15 955.08 19.4772 959.557 25 959.557H951.868C957.391 959.557 961.868 955.08 961.868 949.557V434.196C961.868 430.896 960.24 427.809 957.517 425.944L570.025 160.686C566.696 158.407 562.324 158.351 558.938 160.545L149.295 425.967C146.451 427.81 144.733 430.969 144.733 434.359V831.846C144.733 837.369 149.21 841.846 154.733 841.846H834.432C839.954 841.846 844.432 837.369 844.432 831.846V487.882C844.432 484.471 842.693 481.296 839.82 479.458L569.805 306.759C566.577 304.695 562.454 304.656 559.189 306.659L277.394 479.481C274.429 481.299 272.622 484.527 272.622 488.005V718.615C272.622 724.138 277.099 728.615 282.622 728.615H718.84C724.363 728.615 728.84 724.138 728.84 718.615V536.64C728.84 533.184 727.055 529.973 724.12 528.148L569.627 432.093C566.489 430.142 562.531 430.081 559.333 431.933L393.2 528.193C390.114 529.981 388.213 533.278 388.213 536.846V620.489C388.213 626.011 392.691 630.489 398.213 630.489H564.528" stroke="#000" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="37.5" cy="1078.5" r="37" fill="#000" stroke="#000"/>
+  <circle cx="560.5" cy="628.5" r="37" fill="#000" stroke="#000"/>
+  </svg>
+  `
+
+
 
 
 
@@ -1079,9 +1088,9 @@
         { text: 'Hallway', value: 'hallway'},
         { text: 'Kitchen', value: 'kitchen'},
         { text: 'SmartPlanter<sup>TM</sup>', value: 'planter', qr: {screen: 'messageViewer', messageViewerMessage: `Your plants will thank you once you download the official SmartPlanter<sup>TM</sup> app!` } },
-        { text: 'Window', value: 'livingroomWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'} },
-
         { text: 'Router', value: 'router'},
+
+        { text: 'Window', value: 'livingroomWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'} },
         { text: 'TV', value: 'tv'},
         { text: 'SmartFrame', value: 'smartFrame'},
         { text: 'eNotepad', value: 'eNotepad'},
@@ -1175,29 +1184,47 @@
 
     // ROUTER BOTTOM
     ...group({
-      checkWifiPower: {
-        text: ({ctx}) => `You follow the router's power chord to a socket in the wall. It is ${ctx.state.router.pluggedIn ? 'plugged in' : 'unplugged'}`
-      },
-      unplugRouter: {
-        text: `You unplug the router. The Power, Internet, and WiFi lights immediately turn off`,
-        follow() {
-          globalState.routerUnplugged = true
-          Object.values(globalState.cryptoDevices).forEach(device => {
-            device.active = false
-            clearInterval(device.interval)
-          })
+      checkWifiPower: [
+        {
+          text: `You follow the router's power chord to a socket in the wall`,
+          wait: 1500
         },
-        wait: 0
-      },
-
-      plugInRouter: {
-        text: ({ctx}) => `You plug the router back in. The Power, Internet, and WiFi lights all turn off for one second, turn back on for one second, and blink for three seconds${globalState.routerReset ? ' before returning to their original states.' : '. The WiFi light is now on.'}`,
-        wait: 0,
-        follow() {
-          globalState.routerUnplugged = false
-          globalState.routerReset = true
+        {
+          text: ({ctx}) => `It is ${ctx.state.router.pluggedIn ? 'plugged in' : 'unplugged'}`
         }
-      },
+      ],
+      unplugRouter: [
+        {
+          text: `You unplug the router`,
+          after() {
+            globalState.routerUnplugged = true
+            Object.values(globalState.cryptoDevices).forEach(device => {
+              device.active = false
+              clearInterval(device.interval)
+            })
+          },
+          wait: 1000
+        },
+        {
+          text: 'The Power, Internet, and WiFi lights immediately turn off'
+        }
+      ],
+
+      plugInRouter: [
+        {
+          text: ({ctx}) => `You plug the router back in`,
+          after() {
+            globalState.routerUnplugged = false
+          },
+          wait: 1500,
+        },
+        {
+          text: `The Power, Internet, and WiFi lights all turn off for one second, turn back on for one second, and blink for three seconds${globalState.routerReset ? ' before returning to their original states' : '. The WiFi light is now on'}`,
+          follow() {
+            globalState.routerReset = true
+          }
+        }
+      ]
 
     }, {
       handler: ({ur}) => ur,
@@ -1489,20 +1516,21 @@
         setColors('#000', '#fff')
       },
       text: `You turn the doorknob and slowly pull the door open. You stare into darkness`,
-        before() {
-          try {
-            tmp.src1 = createSource('sine')
-            tmp.src2 = createSource('sine')
+      before() {
+        try {
+          tmp.src1 = createSource('sine')
+          tmp.src2 = createSource('sine')
 
-            tmp.src1.smoothFreq(100)
-            tmp.src2.smoothFreq(100.1)
+          tmp.src1.smoothFreq(100)
+          tmp.src2.smoothFreq(100.1)
 
-            tmp.src1.smoothGain(MAX_VOLUME, 2)
-            tmp.src2.smoothGain(MAX_VOLUME, 2)
-          } catch (e) {
-            console.log(e)
-          }
-        },
+          tmp.src1.smoothGain(MAX_VOLUME, 2)
+          tmp.src2.smoothGain(MAX_VOLUME, 2)
+          pluginENotepad()
+        } catch (e) {
+          console.log(e)
+        }
+      },
       handler: ({ur}) => ur,
       actions: ({ctx}) => [
         {text: 'Leave apartment', value: 'externalHallway'},
@@ -1644,9 +1672,10 @@
             screen: 'messageViewer',
             messageViewerMessage: `
               <div style="display: flex; flex-direction: column; justify-content: center; height: 370px">
-                <h1 style="text-align: center; margin-bottom: 0.4em"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h1>
+                ${logoSVG}
+                <h1 style="text-align: center; margin-bottom: 0.25em; margin-top: 0.75em"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h1>
                 <h2 style="text-align: center">2024</h2>
-                <button onclick="localStorage.clear(); location.reload()" style="align-self:center; margin-top: 1.4em">Play Again?</button>
+                <button onclick="localStorage.clear(); location.reload()" style="align-self:center; margin-top: 2em">Play Again?</button>
               </div>
             `
           }

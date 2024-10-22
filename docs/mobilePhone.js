@@ -134,6 +134,25 @@ TODO
 - pay rent
 `
 
+const soundSVG = `
+
+  <svg width="1.4em" height="1.4em" viewBox="0 0 679 519" fill="none" stroke-width="70" stroke="#222" style="transform: translateY(15%)" xmlns="http://www.w3.org/2000/svg">
+    <path d="M371.174 161C437.546 227.373 434.811 315.71 371.174 379.347" />
+    <path d="M471 62C597.455 188.455 592.243 356.757 471 478" />
+    <path d="M30 375V173.644H159.5L263 72V468.5L159.5 375H30Z" fill="#222" />
+  </svg>
+`
+const noSoundSVG = `
+
+  <svg width="1.4em" height="1.4em" viewBox="0 0 679 519" fill="none" stroke-width="70" stroke="#222" style="transform: translateY(15%)" xmlns="http://www.w3.org/2000/svg">
+    <path d="M373 171L570.5 368.5"/>
+    <path d="M570.5 171L373 368.5"/>
+    <path d="M30 375V173.644H159.5L263 72V468.5L159.5 375H30Z" fill="#222"/>
+  </svg>
+`
+
+
+
 const turboConnectText = {
   from: '1-800-444-3830',
   value: 'You have subscribed: TurboConnect FREE TRIAL for MOBILE + DATA Plan! Please Dial 1-800-444-3830 on <strong>*PhoneApp*</strong> for all question',
@@ -176,17 +195,17 @@ const billingText1 = {
 
 const billingText2 = {
   from: '1-888-555-9483',
-  value: 'Outstang balance: $0.37 -- Your internet service will be discontinued without further payment. Please call 1-888-555-9483 at your earliest convenience',
+  value: 'Outstang balance: Your internet service will be discontinued without further payment. Please call 1-888-555-9483 at your earliest convenience',
 }
 
 const billingText3 = {
   from: '1-888-555-9483',
-  value: 'INTERNET DISCONTINUATION: Due to an outstanding balance of $0.37 your internet subscription will be terminated. Please call 1-888-555-9483 to remit this balance.',
+  value: 'INTERNET DISCONTINUATION: Due to an outstanding balance your internet subscription will be terminated. Please call 1-888-555-9483 to remit this balance.',
 }
 
 const billingText4 = {
   from: '1-888-555-9483',
-  value: 'FINAL WARNING: This is your final notice regarding your overdue balance of $0.37 with National Broadband Services. Immediate payment is required 1-888-555-9483',
+  value: 'FINAL WARNING: This is your final notice regarding your overdue balance with National Broadband Services. Immediate payment is required 1-888-555-9483',
 }
 
 const funTimeText = {
@@ -3513,21 +3532,21 @@ createComponent(
               <fieldset>
                 <legend>Gender</legend>
                 <select value="${idWizardInfo.gender}" id="gender">
-                  ${['Agender', 'Androgynous', 'Bigender', 'Binary', 'Demigender', 'DemiFlux', 'GenderFluid', 'GenderNonConforming', 'Genderqueer', 'Hijra', 'Intersex', 'Male', 'Non-Binary', 'Other', 'Pangender', 'Transfeminine', 'Transmasculine', 'TransNonBinary', 'Two-Spirit', 'Woman'].map(g => `<option value="${g}">${g}</option>`).join('')}
+                  ${['Agender', 'Androgynous', 'Bigender', 'Binary', 'Demigender', 'DemiFlux', 'GenderFluid', 'GenderNonConforming', 'Genderqueer', 'Hijra', 'Intersex', 'Male', 'NonBinary', 'Other', 'Pangender', 'Transfeminine', 'Transmasculine', 'TransNonBinary', 'TwoSpirit', 'Woman'].map(g => `<option value="${g}">${g}</option>`).join('')}
                 </select>
               </fieldset>
 
               <fieldset>
                 <legend>Sexual Orientation</legend>
                 <select value="${idWizardInfo.sexualOrientation}" id="sexualOrientation">
-                  ${['Androgynosexual', 'Androsexual', 'Aromantic', 'Asexual', 'Bisexual', 'Bi-curious', 'Demisexual', 'Finsexual', 'Gay', 'GrayAsexual', 'Gynosexual', 'Heteroflexible', 'Heterosexual', 'Homoflexible', 'Homosexual', 'Lesbian', 'Lithosexual', 'Minsexual', 'Neptunic', 'Ninsexual', 'Objectumsexual', 'Omnisexual', 'Pansexual', 'Polysexual', 'Queer', 'Sapiosexual', 'Saturnic', 'Skoliosexual', 'Straight', 'Uranic'].map(s => `<option value="${s}">${s}</option>`).join('')}
+                  ${['Androgynosexual', 'Androsexual', 'Aromantic', 'Asexual', 'Bisexual', 'BiCurious', 'Demisexual', 'Finsexual', 'Gay', 'GrayAsexual', 'Gynosexual', 'Heteroflexible', 'Heterosexual', 'Homoflexible', 'Homosexual', 'Lesbian', 'Lithosexual', 'Minsexual', 'Neptunic', 'Ninsexual', 'Objectumsexual', 'Omnisexual', 'Pansexual', 'Polysexual', 'Queer', 'Sapiosexual', 'Saturnic', 'Skoliosexual', 'Straight', 'Uranic'].map(s => `<option value="${s}">${s}</option>`).join('')}
                 </select>
               </fieldset>
 
               <fieldset>
                 <legend>Martial Status</legend>
                 <select value="${idWizardInfo.martialStatus}" id="martialStatus">
-                  ${['Casual Relationship', 'Civil Union', 'Divorced', 'Domestic Partner', 'Married', 'Filing for Divorce', 'Polyamorous', 'Single', 'Relationship Anarchy'].map(m => `<option value="${m}">${m}</option>`).join('')}
+                  ${['CasualRelationship', 'CivilUnion', 'Divorced', 'DomesticPartner', 'Married', 'FilingForDivorce', 'Polyamorous', 'Single', 'RelationshipAnarchy'].map(m => `<option value="${m}">${m}</option>`).join('')}
                 </select>
               </fieldset>
 
@@ -3664,7 +3683,7 @@ createComponent(
         <div class="phoneScreen">
           <button id="home">Back</button>
           <div>
-            <button id="sound">${soundEnabled ? 'Disable' : 'Enable'} Sound</button><br>
+            <button id="sound">${soundEnabled ? 'Disable' : 'Enable'} Sound</button> ${soundEnabled ? soundSVG : noSoundSVG}<br>
             <button id="bluetooth">${bluetoothEnabled ? 'Disable' : 'Enable'} Bluetooth ®</button><h4 id="message" style="display: inline-block; margin-left: 1em"></h4><br>
             <button id="a11y">${a11yEnabled ? 'Disable' : 'Enable'} A11Y Mode</button>
             <div>
@@ -3936,14 +3955,14 @@ createComponent(
       }
 
     } else if (screen === 'qrScanner') {
-      const availableActions = ctx.state.availableActions.filter(a => !['standUpBed', 'openPhone', 'closePhone', 'hallway', 'hallwayShower', 'externalHallway', 'livingRoom', 'bathroom', 'bedroom', 'hallwayCurrent', 'kitchen', 'livingRoomCurrent', 'resetRouter', 'checkWifiPower', 'frontDoorListen', 'pickupEnvelopes', 'reenterApartment', 'externalHallwayBack'].includes(a.value))
+      const availableActions = ctx.state.availableActions.filter(a => !['standUpBed', 'openPhone', 'closePhone', 'hallway', 'hallwayShower', 'externalHallway', 'livingRoom', 'bathroom', 'bedroom', 'hallwayCurrent', 'kitchen', 'livingRoomCurrent', 'resetRouter', 'checkWifiPower', 'frontDoorListen', 'pickupEnvelopes', 'reenterApartment', 'externalHallwayBack', 'bottomRouter', 'unplugRouter', 'router', 'turnOnTV', 'turnOffTV', 'openDoorUnlocked', 'openDoorLocked'].includes(a.value))
 
       const objects = availableActions.map(a => `<button id="qr-${a.value}" style="margin-right: 0.25em">${a.text}</button>`).join('')
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
           <h2>QR SCANNER</h2>
-          <div style="padding: 0.5em">${objects}</div>
+          <div style="padding: 0.5em">${availableActions.length ? objects : '...'}</div>
           <h4 id="error"></h4>
         </div>
       `
@@ -4367,7 +4386,7 @@ createComponent(
             })
           }, 2000)
         } else {
-          ctx.$('#pairShaydLuminError').innerHTML = 'Error: Lumin device cannot locate Shayd device over WiFi network: InpatientRehabilitationServices'
+          ctx.$('#pairShaydLuminError').innerHTML = 'Error: Lumin device cannot locate Shayd device over WiFi network'
         }
       }
 
@@ -5363,7 +5382,7 @@ createComponent(
 
         setTimeout(() => {
           if (!(wifiAvailable || findMeshPairing('gateLink', 'lock'))) {
-            ctx.$('#lockError').innerHTML = 'Device Error: Wifi Connection Error <br>Device Error: Cannot Connect To Server'
+            ctx.$('#lockError').innerHTML = 'Device Error: Wifi Connection Error <br>Device Error: Cannot Connect to "InpatientRehabilitationServices" Network'
 
           } else if (globalState.rentBalance <= 0) {
             globalState.smartLockOpen = !globalState.smartLockOpen

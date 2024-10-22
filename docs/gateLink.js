@@ -217,23 +217,23 @@ createComponent(
 
     let press = 0
     ctx.buzzStart = () => {
-      doorSrc1.smoothGain(MAX_VOLUME)
-      doorSrc2.smoothGain(MAX_VOLUME)
-      doorSrc3.smoothGain(MAX_VOLUME/3)
-      doorSrc4.smoothGain(MAX_VOLUME)
+      doorSrc1?.smoothGain?.(MAX_VOLUME)
+      doorSrc2?.smoothGain?.(MAX_VOLUME)
+      doorSrc3?.smoothGain?.(MAX_VOLUME/3)
+      doorSrc4?.smoothGain?.(MAX_VOLUME)
       press = Date.now()
     }
 
     ctx.buzzStop = () => {
-      doorSrc1.smoothGain(0)
-      doorSrc2.smoothGain(0)
-      doorSrc3.smoothGain(0)
-      doorSrc4.smoothGain(0)
+      doorSrc1?.smoothGain?.(0)
+      doorSrc2?.smoothGain?.(0)
+      doorSrc3?.smoothGain?.(0)
+      doorSrc4?.smoothGain?.(0)
     }
 
     ctx.buzz = (ms) => {
-      ctx.buzzStart()
-      setTimeout(() => ctx.buzzStop(), ms)
+      ctx?.buzzStart?.()
+      setTimeout(() => ctx?.buzzStop?.(), ms)
     }
 
     ctx.$('#door').onmousedown = ctx.buzzStart
@@ -243,12 +243,12 @@ createComponent(
       if (Date.now() < press + 50) {
         setTimeout(ctx.buzzStop, (press + 50) - Date.now())
       } else {
-        ctx.buzzStop()
+        ctx?.buzzStop?.()
       }
     }
 
     ctx.$('#door').onmouseleave = () => {
-      ctx.buzzStop()
+      ctx?.buzzStop?.()
     }
 
 
