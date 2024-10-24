@@ -5,7 +5,7 @@ import {getAd, allAds} from './mobilePhone.js'
 
 
 
-const state = persist('__INTERCOM_STATE', {})
+const state = persist('__INTERCOM_STATE', {viewCamera: false})
 
 
 createComponent(
@@ -99,11 +99,21 @@ createComponent(
         color: #bdb5b5;
       }
 
+      .hidden {
+        display: none !important;
+      }
+
+      #flashWarning {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
 
       .sc {
         margin: 0.4em 0;
         animation: Ad 1.5s steps(2, start) infinite;
       }
+
 
       @keyframes Ad {
         from {
@@ -166,10 +176,17 @@ createComponent(
         <div id="scPlaceholder"></div>
 
         <div style="flex: 1; display: flex; justify-content: center; align-items: center; flex-direction: column">
-          <div class="waver" style="border: 2px solid #343434; width: 20em; height: 20em;">
-            <h6 style="display: inline-block; padding: 0.5em; opacity: 0.15; user-select: none">OUTSIDE</h6>
+          <div id="flashWarning">
+            <button class="action" id="enableCameraView">ENABLE CAMERA</button>
+            <h5 style="padding-top: 1em; width: 30em; text-align: center">WARNING: THIS FEATURE MAY NOT BE SUITABLE FOR THOSE WITH PHOTOSENSITIVE EPILEPSY</h5>
           </div>
-          <h6 style="padding-top: 0.5em; width: 30em">WARNING: VIDEO SIGNAL WEAK - CHECK EXTERNAL DEVICE CONNECTION <span id="signalStrength"></span></h6>
+
+          <div id="cameraView" class="hidden">
+            <div class="waver" style="border: 2px solid #343434; width: 20em; height: 20em">
+              <h6 style="display: inline-block; padding: 0.5em; opacity: 0.15; user-select: none">OUTSIDE</h6>
+            </div>
+            <h6 style="padding-top: 0.5em; width: 30em">WARNING: VIDEO SIGNAL WEAK - CHECK EXTERNAL DEVICE CONNECTION <span id="signalStrength"></span></h6>
+          </div>
         </div>
 
         <div style="padding-bottom: 4em">
@@ -287,6 +304,10 @@ createComponent(
 
     ctx.$('#listen').onmouseleave = listenSilence
 
+    ctx.$('#enableCameraView').onclick = () => {
+      ctx.setState({viewCamera: true})
+    }
+
 
 
     let micStream, active
@@ -375,27 +396,32 @@ createComponent(
       }
     }, 600000)
 
-// var static = new Audio();
-// static.src = './tv-static-7019.mp3';
+    // var static = new Audio();
+    // static.src = './tv-static-7019.mp3';
 
-// document.body.appendChild(static);
+    // document.body.appendChild(static);
 
-//   const AudioContext = window.AudioContext || window.webkitAudioContext
+    //   const AudioContext = window.AudioContext || window.webkitAudioContext
 
-// var context = new AudioContext();
-// var analyser = context.createAnalyser();
-
-
-// window.addEventListener('click', function(e) {
-//   // Our <audio> element will be the audio source.
-//   var source = context.createMediaElementSource(audio);
-//   source.connect(analyser);
-//   analyser.connect(context.destination);
+    // var context = new AudioContext();
+    // var analyser = context.createAnalyser();
 
 
-// }, false);
+    // window.addEventListener('click', function(e) {
+    //   // Our <audio> element will be the audio source.
+    //   var source = context.createMediaElementSource(audio);
+    //   source.connect(analyser);
+    //   analyser.connect(context.destination);
+
+
+    // }, false);
   },
-  ctx => {},
+  ctx => {
+    if (ctx.state.viewCamera) {
+      ctx.$('#cameraView').classList.remove('hidden')
+      ctx.$('#flashWarning').classList.add('hidden')
+    }
+  },
   (oldState, newState, stateUpdate) => {
     Object.assign(state, { ...newState, lastScreen: oldState.screen})
 

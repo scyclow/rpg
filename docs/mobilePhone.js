@@ -43,6 +43,7 @@ const APPS = [
   { name: 'GateLink', key: 'gateLink', size: 128, price: 0, physical: true },
   { name: 'ClearBreeze', key: 'clearBreeze', size: 128, price: 0, physical: true },
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
+  { name: 'Device Upgrader', key: 'deviceUpgrader', size: 128, price: 0 },
   { name: 'Elevate', key: 'elevate', size: 128, price: 0 },
   { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
   { name: 'FlushMate', key: 'flushMate', size: 128, price: 3, physical: true },
@@ -318,6 +319,7 @@ const state = persist('__MOBILE_STATE', {
   a11yEnabled: false,
   devMode: false,
   soundEnabled: true,
+  nightModeEnabled: false,
   distractionMode: 1,
   fastMode: false,
   started: false,
@@ -589,6 +591,10 @@ createComponent(
         color: #000;
         box-shadow: 0 0 3em #ddd;
         overflow: hidden;
+      }
+
+      .nightMode {
+        filter: sepia(1.5) invert(1) saturate(1.5)
       }
 
 
@@ -1037,6 +1043,8 @@ createComponent(
   ctx => {
     clearInterval(ctx.interval)
     ctx.__queuedInterval = 0
+    ctx.__loadingStarted = 0
+
     const screenOnly = ctx.getAttribute('screen-only')
 
     ctx.$phoneContent = ctx.$('#phoneContent')
@@ -1057,6 +1065,7 @@ createComponent(
       bluetoothEnabled,
       a11yEnabled,
       soundEnabled,
+      nightModeEnabled,
       distractionMode,
       luminPaired,
       wakePaired,
@@ -1079,6 +1088,12 @@ createComponent(
       exchangePremiumDiscounted,
       exchangeTextSent,
     } = ctx.state
+
+    if (nightModeEnabled) {
+      ctx.$phone.classList.add('nightMode')
+    } else {
+      ctx.$phone.classList.remove('nightMode')
+    }
 
     const currentUserData = userData[currentUser] || {}
 
@@ -1164,6 +1179,7 @@ createComponent(
 
 
     if (screen === 'loading') {
+
       ctx.$header.classList.add('hidden')
       ctx.$phoneContent.innerHTML = `
         <div class="loadingScreen">
@@ -1174,12 +1190,17 @@ createComponent(
       `
 
 
+      if (ctx.state.started) {
+        ctx.__loadingStarted = Date.now()
 
-      setTimeout(() => {
-        if (ctx.state.screen === 'loading') {
-          ctx.setState({ screen: 'login' })
-        }
-      }, 10000)
+        setTimeout(() => {
+          if (ctx.__loadingStarted && Date.now() - ctx.__loadingStarted > 10000) {
+            debugger
+            ctx.setState({ screen: 'login' })
+          }
+        }, 11000)
+      }
+
 
     } else if (screen === 'login') {
       ctx?.__notificationCb?.()
@@ -3680,12 +3701,33 @@ createComponent(
 
     } else if (screen === 'settings') {
       ctx.$phoneContent.innerHTML = `
+
+        <style>
+          #upgradeButton {
+            display: inline-block;
+            padding: 0.25em 0.5em;
+            margin-left: 1em;
+            border: 1px solid;
+            cursor: pointer;
+            user-select: none;
+            font-weight: bold;
+            font-size: 0.8em;
+            background: #fff;
+            color: #000;
+          }
+
+          #upgradeButton:hover {
+            background: #000;
+            color: #fff;
+          }
+        </style>
         <div class="phoneScreen">
           <button id="home">Back</button>
           <div>
             <button id="sound">${soundEnabled ? 'Disable' : 'Enable'} Sound</button> ${soundEnabled ? soundSVG : noSoundSVG}<br>
             <button id="bluetooth">${bluetoothEnabled ? 'Disable' : 'Enable'} Bluetooth ®</button><h4 id="message" style="display: inline-block; margin-left: 1em"></h4><br>
-            <button id="a11y">${a11yEnabled ? 'Disable' : 'Enable'} A11Y Mode</button>
+            <button id="a11y">${a11yEnabled ? 'Disable' : 'Enable'} A11Y Mode</button><br>
+            <button id="nightMode">${nightModeEnabled ? 'Disable' : 'Enable'} Night Mode</button>
             <div>
               <label style="display: block; font-size: 0.9em"><input id="noDistraction" type="radio" name="distractionMode" ${distractionMode === 1 ? 'checked' : ''}> No-Distraction Mode</label>
               <label style="display: block; font-size: 0.9em"><input id="deepFocus" type="radio" name="distractionMode" ${distractionMode === 2 ? 'checked' : ''}> Deep Focus Mode</label>
@@ -3696,12 +3738,12 @@ createComponent(
           <div class="deviceData" style="margin-top: 2em">
             <h5>Device ID: 49-222999-716-2580</h5>
             <h5>User: ${userNames[currentUser]}</h5>
-            <h5 id="versionNumber">SmartOS Version: ${window.GAME_VERSION}.1</h5>
+            <h5 id="versionNumber">SmartOS Version: 1.${window.GAME_VERSION}.1</h5>
             <h5><a href="https://steviep.xyz" target="_blank">stevie.xyz</a> [2024]</h5>
           </div>
           ${devMode
             ? `
-              <div style="margin-top: 0.5em; padding: 0.5em; border: 1px solid; height: 290px; overflow: scroll">
+              <div style="margin-top: 0.5em; padding: 0.5em; border: 1px solid; height: 230px; overflow: scroll">
                 <h3>Dev Mode</h3>
                 <div>
                   <label><input id="fastMode" type="checkbox" ${ctx.state.fastMode ? 'checked' : ''}> fast mode</label>
@@ -3845,6 +3887,10 @@ createComponent(
         ctx.setState({ a11yEnabled: !a11yEnabled })
       }
 
+      ctx.$('#nightMode').onclick = () => {
+        ctx.setState({ nightModeEnabled: !nightModeEnabled })
+      }
+
       ctx.$('#noDistraction').onclick = () => {
         globalState.modelBgMode = 1
         ctx.parentElement.setBgMode(1)
@@ -3870,8 +3916,13 @@ createComponent(
           setTimeout(() => {
             src.smoothGain(0)
           }, 300)
+          window.allSources.forEach(s => s.unmute())
+        } else {
+          window.allSources.forEach(s => s.mute())
+          window.speechSynthesis.cancel()
         }
         ctx.setState({ soundEnabled: !soundEnabled })
+        globalState.soundMuted = soundEnabled
       }
 
       ctx.$('#home').onclick = () => {
@@ -4303,6 +4354,7 @@ createComponent(
         ['cyber', 'Cyber', {h: 299, s: 100, v: 17} , {h: 174, s: 100, v: 100}],
         ['opportunity', 'Opportunity', {h: 180, s: 100, v: 100} , {h: 0, s: 100, v: 100}],
         ['cozy', 'Cozy', {h: 11, s: 23, v: 16} , {h: 60, s: 59, v: 90}],
+        ['peach', 'Peach', {h: 0, s: 67, v: 100} , {h: 160, s: 65, v: 100}],
       ]
 
       const mainInterface = `
@@ -5755,7 +5807,7 @@ createComponent(
               <h3 id="shaydError" style="display: inline-block;"></h3>
 
               <h3 style="margin-top: 1em">Natural Sunlight Schedule:</h3>
-              ${(wifiAvailable || findMeshPairing('gateLink', 'shayd')) ? '<h5 style="margin: 0.5em 0;"><em>Feature coming soon!</em></h5>' : ''}
+              ${(wifiAvailable || findMeshPairing('gateLink', 'shayd')) ? '<h5 style="margin: 0.5em 0;"><em id="upgradeText">Feature available on Shayd v2.3</em></h5><button id="upgrade">Upgrade</button>' : ''}
             </div>
 
             ${
@@ -5771,7 +5823,7 @@ createComponent(
           </div>
 
         `
-        : `<button id="pairShayd">Pair Device</button>`
+        : `<div style="display: flex; justify-content: center; margin-top:1em"><button id="pairShayd">Pair Device</button></div>`
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -5809,6 +5861,11 @@ createComponent(
         }
       })
 
+
+      if (ctx.$('#upgrade')) ctx.$('#upgrade').onclick = () => {
+        ctx.$('#upgradeText').innerHTML = `Error: Shayd v2.3 unsupported on this operating system. Please upgrade your device's operating system using the Device Upgrader app.`
+
+      }
 
       if (ctx.$('#pairShayd')) ctx.$('#pairShayd').onclick = () => {
         ctx.$('#btError').innerHTML = 'Please wait while device pairs'
@@ -6066,7 +6123,7 @@ createComponent(
               <h4>Active UserID: <span id="activeUserID">${currentUser}</span></h4>
               <h4>Admin Access: <span id="adminAccess">${Number(currentUser) === Number(rootUser) ? 'Granted' : 'Denied'}</span></h4>
               <h4>Device ID: 49-222999-716-2580</h4>
-              <h4>OS: SmartOS ${window.GAME_VERSION}.1</h4>
+              <h4>OS: SmartOS 1.${window.GAME_VERSION}.1</h4>
               <br>
               <br>
             `]})
@@ -7646,6 +7703,27 @@ createComponent(
         if (e.key === 'Enter') {
           submit()
         }
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+    } else if (screen === 'deviceUpgrader') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h3 style="margin-bottom: 0.5em">Current OS: 1.${window.GAME_VERSION}.1</h3>
+          <h4 style="margin-bottom: 0.5em">Upgrade Available! (1.${window.GAME_VERSION+1}.0) </h4>
+          <button id="upgradeButton">Upgrade</button>
+          <h5 id="upgradeError" style="margin-top: 0.5em"></h5>
+        </div>
+      `
+
+      ctx.$('#upgradeButton').onclick = () => {
+        ctx.$('#upgradeError').innerHTML = 'Upgrading...'
+        setTimeout(() => {
+          ctx.$('#upgradeError').innerHTML = `<span style="text-decoration: underline">SmartOS Version 1.${window.GAME_VERSION+1}.0</span> not supported on this device. Please upgrade to a modern SmartPhone device to receive this upgrade.`
+        }, 600)
       }
 
       ctx.$('#home').onclick = () => {

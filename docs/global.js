@@ -37,6 +37,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   gateLinkOutputEnabled: false,
   luminInputEnabled: false,
   luminOutputEnabled: false,
+  soundMuted: false,
 
   secondsPassed: 0,
   deviceViruses: false,
@@ -70,13 +71,6 @@ export const globalState = persist('__GLOBAL_STATE', {
   },
 })
 
-// globalState.cryptoDevices.freeze = newCryptoDevice(32)
-globalState.cryptoDevices.smartTV = globalState.cryptoDevices.smartTV || newCryptoDevice(2)
-globalState.cryptoDevices.roboVac = globalState.cryptoDevices.roboVac || newCryptoDevice(1)
-globalState.roboVacCaught = globalState.roboVacCaught || {}
-globalState.eNotepadBattery = globalState.eNotepadBattery ||  97
-globalState.eNotepadOpen = globalState.eNotepadOpen ||  false
-globalState.eNotepadContent = globalState.eNotepadContent ||  'ERROR: Cannot acccess Library '
 
 
 window.globalState = globalState

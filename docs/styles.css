@@ -135,6 +135,15 @@ p {
   display: flex;
   flex-direction: column;
 }
+
+#mainConsole {
+  font-size: 1.15em;
+}
+
+#mainConsole button {
+  font-size: 1.1em;
+}
+
 #mainConsolePrimary {
   display: flex;
   flex: 1;

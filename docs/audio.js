@@ -1,3 +1,5 @@
+import {globalState} from './global.js'
+
 export const MAX_VOLUME = 0.04
 
 export const allSources = []
@@ -32,7 +34,11 @@ export function createSource(waveType = 'square', startingFreq=3000) {
     )
   }
 
+  let volume = 0
   const smoothGain = (value, timeInSeconds=0.001) => {
+    volume = value
+    if (globalState.soundMuted) return
+
     gain.gain.setTargetAtTime(
       Math.min(value, MAX_VOLUME),
       ctx.currentTime,
@@ -42,10 +48,25 @@ export function createSource(waveType = 'square', startingFreq=3000) {
 
   const stop = () => {
     source.stop()
-
   }
 
-  const src = { source, gain, panner,smoothFreq, smoothGain, smoothPanner, originalSrcType: source.type, stop }
+
+  const mute = () => {
+    gain.gain.setTargetAtTime(
+      Math.min(0, MAX_VOLUME),
+      ctx.currentTime,
+      0.001
+    )
+  }
+  const unmute = () => {
+    gain.gain.setTargetAtTime(
+      Math.min(volume, MAX_VOLUME),
+      ctx.currentTime,
+      0.001
+    )
+  }
+
+  const src = { source, gain, panner,smoothFreq, smoothGain, smoothPanner, originalSrcType: source.type, stop, mute, unmute }
 
   allSources.push(src)
 

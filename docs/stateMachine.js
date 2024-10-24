@@ -39,9 +39,9 @@ export class StateMachine {
       const currentNode = this.getNode(this.ctx.currentNode)
 
       const nextNodeKey = await this.getNextNodeKey(fn, this.ctx.currentNode, ur)
-      this.ctx.currentKey = nextNodeKey
 
       if (nextNodeKey) {
+        this.ctx.currentKey = nextNodeKey
         const nextNode = this.getNode(nextNodeKey)
 
         if (this.isNotDeadEnd(nextNodeKey)) {
@@ -56,7 +56,9 @@ export class StateMachine {
       }
     } catch (e) {
       console.log(e)
-      this.enqueue(this.ctx.fallbackNode)
+      if (this.ctx.currentNode !== this.ctx.fallbackNode) {
+        this.enqueue(this.ctx.fallbackNode)
+      }
     }
   }
 

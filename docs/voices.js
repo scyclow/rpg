@@ -1,4 +1,7 @@
+import {globalState} from './global.js'
+
 window.speechSynthesis.cancel()
+
 export const voices = new Promise((res, rej) => {
   setTimeout(() => {
     let i = 0
@@ -21,6 +24,8 @@ export const voices = new Promise((res, rej) => {
 
 
 export function say(voice, txt) {
+  if (globalState.soundMuted) return
+
   const utterance = new window.SpeechSynthesisUtterance(txt)
   utterance.volume = 0.88
   utterance.voice = voice

@@ -33,7 +33,7 @@
 <script type="module">
   import {ls} from './$.js'
 
-  window.GAME_VERSION = 1.10
+  window.GAME_VERSION = 12
 
   const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
   if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {
@@ -300,7 +300,6 @@
 
       $consoleLocation.innerHTML = niceLocation[globalState.location]
 
-
       if (actions instanceof Function) {
         actions = (await sm.evaluate(actions)).filter(a => !!a)
       }
@@ -365,9 +364,9 @@
 
     // BED
     ...group({
-      bedFresh: {
-        text: '',
-      },
+      bedFresh: [
+        { text: '', }, {text: '', }
+      ],
 
       bed: {
         before({ ctx }) {
