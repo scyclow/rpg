@@ -594,7 +594,7 @@ createComponent(
       }
 
       .nightMode {
-        filter: sepia(1.5) invert(1) saturate(1.5)
+        filter: invert(1) sepia(1.5) saturate(2)
       }
 
 
@@ -5980,7 +5980,7 @@ createComponent(
         ${internetConnected ? `<h4 style="text-align: center; margin-top: 0.5em">CONTINUED EXPOSURE AT THIS LEVEL MAY LEAD TO ADVERSE HEALTH EFFECTS</h4>` : ''}
         <div style="text-align: center">
           ${internetConnected && !globalState.thermostatDisabled
-            ? `<button id="disable" style="margin-top:1em">Disable Warning</button>`
+            ? `<button id="disable" style="margin-top:1em">Silence Warning</button>`
             : ''
           }
         </div>
