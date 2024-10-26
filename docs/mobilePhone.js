@@ -60,7 +60,7 @@ const APPS = [
   { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
   { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
-  { name: 'RoboVac', key: 'roboVac', size: 128, price: 0, physical: true },
+  { name: 'RoboVac Tracker', key: 'roboVac', size: 128, price: 0, physical: true },
   { name: 'Secure 2FA', key: 'secure2fa', size: 128, price: 0 },
   { name: 'Shayd', key: 'shayd', size: 128, price: 0, physical: true },
   { name: 'SmartFrame', key: 'smartFrame', size: 128, price: 0, physical: true },
@@ -7496,6 +7496,22 @@ createComponent(
         <h3 style="margin-bottom: 0.5em">So far you've caught me in "<span id="roomsCaught" style="text-decoration:underline"><em>0</em></span>" different rooms!</h3>
         <h3 style="margin-bottom: 0.5em; text-align: center; padding: 1em" id="roboVacComplete" class="hidden">Wow! You found me in all 5 rooms! You're good at this!</h3>
 
+        <div style="display: flex; justify-content: center; margin-top: 3em">
+          <svg width="90%" viewBox="0 0 2357 909" fill="none" xmlns="http://www.w3.org/2000/svg" >
+            <path d="M1038.5 899H2346.5V10H324V431.5M825 899H324M324 431.5H10.5V899H324M324 431.5V672M324 785.5V899" stroke="black" stroke-width="20"/>
+            <path d="M1916 10V541M1916 677V897.5" stroke="black" stroke-width="20"/>
+            <path d="M323 551H524.378M677.788 551H1019V10" stroke="black" stroke-width="20"/>
+            <circle id="bathroomCircle" cx="172" cy="665" r="55" fill="none"/>
+            <circle id="hallwayCircle" cx="726" cy="720" r="55" fill="none"/>
+            <circle id="bedroomCircle" cx="671" cy="281" r="55" fill="none"/>
+            <circle id="livingroomCircle" cx="1467" cy="454" r="55" fill="none"/>
+            <circle id="kitchenCircle" cx="2130" cy="455" r="55" fill="none"/>
+          </svg>
+        </div>
+        <h4 style="margin-top: 1em; text-align: center"><span class="icon">⏺</span> YOU</h4>
+        <h4 style="margin-top: 0.5em; text-align: center">〄 ROBOVAC</h4>
+        <h4 style="margin-top: 0.25em; text-align: center">[ERROR: RoboVac Not Found]</h4>
+
         <div>
           ${jailbrokenApps.roboVac ? jbMarkup(globalState.cryptoDevices.roboVac, !bluetoothEnabled || !ctx.state.roboVacPaired) : ''}
         </div>
@@ -7504,7 +7520,7 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <h3 style="margin-bottom: 0.5em">Hi! I'm RoboVac, and I'm hungry for dirt! </h3>
+          <h3 style="margin-bottom: 0.5em">Hi! I'm RoboVac and I'm hungry for dirt! </h3>
 
           ${
             bluetoothEnabled
@@ -7521,6 +7537,12 @@ createComponent(
       `
 
       jbBehavior(ctx, 'roboVac', 50)
+
+      if (globalState.location === 'bathroom') ctx.$('#bathroomCircle').style = 'fill: #000'
+      if (globalState.location === 'hallway') ctx.$('#hallwayCircle').style = 'fill: #000'
+      if (globalState.location === 'bedroom' || globalState.location === 'bed') ctx.$('#bedroomCircle').style = 'fill: #000'
+      if (globalState.location === 'livingRoom') ctx.$('#livingroomCircle').style = 'fill: #000'
+      if (globalState.location === 'kitchen') ctx.$('#kitchenCircle').style = 'fill: #000'
 
       if (ctx.$('#pairRoboVac')) ctx.$('#pairRoboVac').onclick = () => {
         ctx.$('#pairError').innerHTML = '<span>Please wait</span>'

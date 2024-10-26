@@ -995,17 +995,17 @@
     // LIVING ROOM
     ...group({
       livingRoom: {
+        before() {
+          globalState.location = 'livingRoom'
+        },
         text: `You enter the living room`,
         async follow({ ctx }) {
           await waitPromise(1000)
 
-
           if (!ctx.state.livingRoomVisited) {
             ctx.state.livingRoomVisited = true
-            globalState.location = 'livingRoom'
             return 'wonderPlants'
           } else if (globalState.location === 'kitchen' && !ctx.state.envelope1PickedUp) {
-            globalState.location = 'livingRoom'
             return 'hearSomething'
           } else if (ctx.state.roboVacLocation === 'livingRoom') {
             return 'roboVacRouter'
