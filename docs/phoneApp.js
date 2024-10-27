@@ -51,16 +51,17 @@ export class PhoneCall {
 
   constructor(onclick, select=$.id) {
     PhoneCall.active = this
+    this.onclick = onclick
 
-  document.addEventListener('click', () => {
-    if (!this.srcs.key1) {
-      this.srcs.key1 = createSource('sine')
-      this.srcs.key2 = createSource('sine')
+    document.addEventListener('click', () => {
+      if (!this.srcs.key1) {
+        this.srcs.key1 = createSource('sine')
+        this.srcs.key2 = createSource('sine')
 
-      this.srcs.ring1 = createSource('sine')
-      this.srcs.ring2 = createSource('sine')
-    }
-  })
+        this.srcs.ring1 = createSource('sine')
+        this.srcs.ring2 = createSource('sine')
+      }
+    })
 
 
 
@@ -87,9 +88,7 @@ export class PhoneCall {
 
 
       elem.onclick = () => {
-        this.live = true
-        this.dialed.push(key === 'hash' ? '#' : key === 'star' ? '*' : key)
-        onclick(this, key)
+        this.pressKey(key)
       }
       elem.onmousedown = () => this.startTone(key)
       elem.onmouseup = () => this.endTone(key)
@@ -97,6 +96,12 @@ export class PhoneCall {
 
       return elem
     })
+  }
+
+  pressKey(key) {
+    this.live = true
+    this.dialed.push(key === 'hash' ? '#' : key === 'star' ? '*' : key)
+    this.onclick(this, key)
   }
 
   startTone(key) {
@@ -321,6 +326,15 @@ function phoneMarkup() {
       <div style="padding-top: 0.5em; display: flex; justify-content: space-evenly">
         <button id="home">Back</button>
         <button id="hangup">Hangup</button>
+        <button id="previousCalls" class="hidden">Previous</button>
+      </div>
+    </div>
+
+    <div id="previousCallsView" class="hidden">
+      <div id="previouslyDialedNumbers" style="height: 505px; overflow: scroll; "></div>
+
+      <div style="padding-top: 0.5em; display: flex; justify-content: center">
+        <button id="backToPhone">Back</button>
       </div>
     </div>
   `
@@ -367,6 +381,11 @@ let ACTIVE_PHONECALL
 function phoneBehavior(ctx) {
   const $menu = ctx.$('#menuNumbers')
 
+  const userData = ctx.state.userData[ctx.state.currentUser]
+
+  if (userData.previouslyDialed && userData.previouslyDialed.length >= 2) {
+    ctx.$('#previousCalls').classList.remove('hidden')
+  }
 
   ctx.$('#home').onclick = () => {
     ctx.setState({ screen: 'home' })
@@ -442,7 +461,12 @@ function phoneBehavior(ctx) {
       if (phone.phoneAnswered) phone.stateMachine.next(key)
 
 
-      if (dialed.length === validDigits) ctx.$('#callTime').innerHTML = `<span class="blink">(Ringing)</span>`
+      if (dialed.length === validDigits) {
+        ctx.$('#callTime').innerHTML = `<span class="blink">(Ringing)</span>`
+
+        userData.previouslyDialed = userData.previouslyDialed || []
+        userData.previouslyDialed.push(dialed)
+      }
 
       // ISP
       if (dialed === '18005552093' || dialed === '8005552093') {
@@ -738,6 +762,79 @@ function phoneBehavior(ctx) {
     window.speechSynthesis.cancel()
     if (PhoneCall.active) PhoneCall.active.hangup()
     // PhoneCall.active.stateMachine.goto('start')
+  }
+
+
+  const renderPrevCalls = () => {
+    ctx.$('#previouslyDialedNumbers').innerHTML = `
+      <div style="padding: 1em">
+        ${[...userData.previouslyDialed].reverse().map((n, i) => `<div>${n} <button id="redial-${i}">Re-Dial</button></div>`).join('')}
+      </div>
+    `
+
+    ;[...userData.previouslyDialed].reverse().forEach((n, i) => {
+      ctx.$(`#redial-${i}`).onclick = async () => {
+        ctx.$('#phoneAppContent').classList.remove('hidden')
+        ctx.$('#previousCallsView').classList.add('hidden')
+
+        for (let d of n.split('')) {
+          phoneCall.pressKey(d)
+          phoneCall.startTone(d)
+          await waitPromise(75)
+          phoneCall.endTone(d)
+          await waitPromise(25)
+        }
+      }
+    })
+  }
+
+  ctx.$('#previousCalls').onclick = () => {
+    ctx.$('#phoneAppContent').classList.add('hidden')
+    ctx.$('#previousCallsView').classList.remove('hidden')
+
+    if (userData.previouslyDialedUnlocked) {
+      renderPrevCalls()
+
+
+    } else {
+      ctx.$('#previouslyDialedNumbers').innerHTML = `
+        <h2 style="text-align: center; margin: 0.4em 0">Premium Feature Upgrade Available!</h2>
+        <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">View all previous calls!</h4>
+        <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">Re-dial numbers!</h4>
+        <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">Only <span class="blink">2</span> Credits!</h4>
+
+        <div style="margin-top: 5em; padding: 1em">
+          <button id="upgrade">Upgrade</button>
+          <div id="upgradeError"></div>
+        </div>
+      `
+
+      if (userData.appCreditBalance < 2) {
+        ctx.$('#upgrade').disabled = true
+        ctx.$('#upgradeError').innerHTML = `Not Enough Credits. <br>App Market Credits: ${userData.appCreditBalance}`
+      } else {
+        ctx.$('#upgradeError').innerHTML = `App Market Credits: ${userData.appCreditBalance}`
+      }
+
+      ctx.$('#upgrade').onclick = () => {
+        if (userData.appCreditBalance >= 2) ctx.setUserData({
+          appCreditBalance: userData.appCreditBalance - 2,
+          previouslyDialedUnlocked: true
+        })
+
+        setTimeout(() => {
+          ctx.$('#phoneAppContent').classList.add('hidden')
+          ctx.$('#previousCallsView').classList.remove('hidden')
+          renderPrevCalls()
+
+        }, 100)
+      }
+    }
+  }
+
+  ctx.$('#backToPhone').onclick = () => {
+    ctx.$('#phoneAppContent').classList.remove('hidden')
+    ctx.$('#previousCallsView').classList.add('hidden')
   }
 
 

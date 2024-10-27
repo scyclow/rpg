@@ -423,6 +423,8 @@ const state = persist('__MOBILE_STATE', {
         {...billingText4, read: false}
       ],
       keyPairs: [],
+      previouslyDialed: [],
+      previouslyDialedUnlocked: false,
       payAppUSDAddr: rndAddr(),
       moneyMinerCryptoAddr: rndAddr(),
       exchangeUSDAddr: rndAddr(),
@@ -1392,6 +1394,8 @@ createComponent(
               ],
               textMessages: [],
               keyPairs: [],
+              previouslyDialed: [],
+              previouslyDialedUnlocked: false,
               payAppUSDAddr: rndAddr(),
               moneyMinerCryptoAddr: rndAddr(),
               exchangeUSDAddr: rndAddr(),
@@ -3770,6 +3774,7 @@ createComponent(
                 <div><input id="exchangeC" type="number" placeholder="exchange ₢"> <button id="setExchangeC">Set</button></div>
                 <div><input id="exchangeP" type="number" placeholder="exchange ₱"> <button id="setExchangeP">Set</button></div>
                 <div><input id="payappUSD" type="number" placeholder="payapp $"> <button id="setPayappUSD">Set</button></div>
+                <div><input id="appCredits" type="number" placeholder="app market credits"> <button id="setAppCredits">Set</button></div>
                 <div><input placeholder="admin account"> <button>Set</button></div>
                 <button id="dlJB">Download JailBreaker</button>
 
@@ -3868,6 +3873,10 @@ createComponent(
         }
         ctx.$('#setPayappUSD').onclick = () => {
           ctx.state.usdBalances[payAppUSDAddr] = Number(ctx.$('#payappUSD').value)
+        }
+
+        ctx.$('#setAppCredits').onclick = () => {
+          ctx.state.userData[currentUser].appCreditBalance = Number(ctx.$('#appCredits').value)
         }
 
         ctx.$('#teleport').onclick = () => {

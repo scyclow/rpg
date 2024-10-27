@@ -195,7 +195,7 @@ p {
 
 
 
-.actionButton {
+#intro, #wakeUpAgain {
   z-index: 1;
   position: relative;
 }
