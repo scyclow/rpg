@@ -315,6 +315,7 @@ function phoneMarkup() {
 
     </style>
 
+
     <div id="phoneAppContent">
       <div id="phoneAppInfo">
         <h4 id="callTime"></h4>
@@ -331,10 +332,10 @@ function phoneMarkup() {
     </div>
 
     <div id="previousCallsView" class="hidden">
-      <div id="previouslyDialedNumbers" style="height: 505px; overflow: scroll; "></div>
+      <div id="previouslyDialedNumbers" style="height: 513px; overflow: scroll; "></div>
 
-      <div style="padding-top: 0.5em; display: flex; justify-content: center">
-        <button id="backToPhone">Back</button>
+      <div style="padding: 0.5em; padding-bottom: 0; display: flex; justify-content: flex-end; border-top: 1px solid; height: 29px">
+        <button id="backToPhone" style="margin-right:2em">Back</button>
       </div>
     </div>
   `
@@ -768,7 +769,7 @@ function phoneBehavior(ctx) {
   const renderPrevCalls = () => {
     ctx.$('#previouslyDialedNumbers').innerHTML = `
       <div style="padding: 1em">
-        ${[...userData.previouslyDialed].reverse().map((n, i) => `<div>${n} <button id="redial-${i}">Re-Dial</button></div>`).join('')}
+        ${[...userData.previouslyDialed].reverse().map((n, i) => `<div>${formatPhoneNumber(n.split(''))} <button id="redial-${i}">Re-Dial</button></div>`).join('')}
       </div>
     `
 

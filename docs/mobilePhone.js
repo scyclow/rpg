@@ -209,7 +209,7 @@ const billingText4 = {
   value: 'FINAL WARNING: This is your final notice regarding your overdue balance with National Broadband Services. Immediate payment is required 1-888-555-9483',
 }
 
-const funTimeText = {
+export const funTimeText = {
   from: '1-800-666-0000',
   value: 'Call 1-800-666-0000 for a fun time ;)',
 }
@@ -5443,7 +5443,7 @@ createComponent(
 
         setTimeout(() => {
           if (!(wifiAvailable || findMeshPairing('gateLink', 'lock'))) {
-            ctx.$('#lockError').innerHTML = 'Device Error: Wifi Connection Error <br>Device Error: Cannot Connect to "InpatientRehabilitationServices" Network'
+            ctx.$('#lockError').innerHTML = 'Device Error: Wifi Connection Error <br>Device Error: Device Cannot Connect to "InpatientRehabilitationServices" Network'
 
           } else if (globalState.rentBalance <= 0) {
             globalState.smartLockOpen = !globalState.smartLockOpen
@@ -5985,11 +5985,13 @@ createComponent(
 
       const mainInterface = `
         <h1 style="text-align: center; font-size: 3.5em; padding-left: 0.4em">${internetConnected ? `84˚` : '-˚'}</h1>
-        <h3 style="text-align: center">CO2 Level: ${internetConnected ? `<span class="blink">HAZARDOUS</span>` : '-'}</h3>
-        ${internetConnected ? `<h4 style="text-align: center; margin-top: 0.5em">CONTINUED EXPOSURE AT THIS LEVEL MAY LEAD TO ADVERSE HEALTH EFFECTS</h4>` : ''}
+        <h3 style="text-align: center">CO2 Level: ${internetConnected ? `<span class="blink"><span class="icon">☠︎</span> HAZARDOUS <span class="icon">☠︎</span></span>` : '-'}</h3>
+        ${internetConnected ? `<h4 style="text-align: center; margin-top: 0.5em">CONTINUED EXPOSURE AT THIS LEVEL MAY LEAD TO ADVERSE HEALTH EFFECTS</h4>
+        ${!globalState.thermostatDisabled ? `<h4 style="text-align: center; font-size: 3em; animation-duration: 0.5s" class="blink">☣︎</h4>` : ''}
+        ` : ''}
         <div style="text-align: center">
           ${internetConnected && !globalState.thermostatDisabled
-            ? `<button id="disable" style="margin-top:1em">Silence Warning</button>`
+            ? `<button id="disable" style="margin-top:1em">Snooze Warning</button> `
             : ''
           }
         </div>
@@ -7539,7 +7541,7 @@ createComponent(
                   <div style="text-align: center"><button id="pairRoboVac">Pair RoboVac</button></div>
                   <h3 id="pairError"></h3>
                 `
-              : `<h3 id="pairError">Please enable bluetooth</h3>`
+              : `<h3 id="pairError">Turn on your bluetooth so I can eat!</h3>`
           }
 
         </div>
@@ -7547,18 +7549,14 @@ createComponent(
 
       jbBehavior(ctx, 'roboVac', 50)
 
-      if (globalState.location === 'bathroom') ctx.$('#bathroomCircle').style = 'fill: #000'
-      if (globalState.location === 'hallway') ctx.$('#hallwayCircle').style = 'fill: #000'
-      if (globalState.location === 'bedroom' || globalState.location === 'bed') ctx.$('#bedroomCircle').style = 'fill: #000'
-      if (globalState.location === 'livingRoom') ctx.$('#livingroomCircle').style = 'fill: #000'
-      if (globalState.location === 'kitchen') ctx.$('#kitchenCircle').style = 'fill: #000'
 
       if (ctx.$('#pairRoboVac')) ctx.$('#pairRoboVac').onclick = () => {
-        ctx.$('#pairError').innerHTML = '<span>Please wait</span>'
+        ctx.$('#pairError').innerHTML = '<span>Please wait while I pair</span>'
         setTimeout(() => {
           ctx.setState({ roboVacPaired: true })
         }, 1000)
       }
+
 
       if (bluetoothEnabled && ctx.state.roboVacPaired) {
         ctx.setInterval(() => {
@@ -7568,6 +7566,13 @@ createComponent(
           }
           ctx.$('#roomsCaught').innerHTML = differentRooms
         })
+
+        if (globalState.location === 'bathroom') ctx.$('#bathroomCircle').style = 'fill: #000'
+        if (globalState.location === 'hallway') ctx.$('#hallwayCircle').style = 'fill: #000'
+        if (globalState.location === 'bedroom' || globalState.location === 'bed') ctx.$('#bedroomCircle').style = 'fill: #000'
+        if (globalState.location === 'livingRoom') ctx.$('#livingroomCircle').style = 'fill: #000'
+        if (globalState.location === 'kitchen') ctx.$('#kitchenCircle').style = 'fill: #000'
+
       }
 
       ctx.$('#home').onclick = () => {

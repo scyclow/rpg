@@ -391,7 +391,7 @@ createComponent(
 
         randBuzz(0)
 
-        window.primarySM.enqueue('hearSomethingVirus')
+        if (window.primarySM) window.primarySM.enqueue('hearSomethingVirus')
 
       }
     }, 600000)

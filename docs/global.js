@@ -38,6 +38,8 @@ export const globalState = persist('__GLOBAL_STATE', {
   luminInputEnabled: false,
   luminOutputEnabled: false,
   soundMuted: false,
+  sentFunTimeText: false,
+  wokenUp: false,
 
   secondsPassed: 0,
   deviceViruses: false,
@@ -83,7 +85,7 @@ setInterval(() => {
   if (Date.now() >= globalState.lastGlobalUpdate + 60000) globalState.lastGlobalUpdate = Date.now()
   globalState.rand = Math.random()
 
-  if (!document.hidden) {
+  if (!document.hidden && globalState.wokenUp) {
     globalState.secondsPassed += 1
   }
 
