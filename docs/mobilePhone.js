@@ -6737,7 +6737,7 @@ createComponent(
         </div>
       `
 
-      jbBehavior(ctx, 'tv', 900)
+      jbBehavior(ctx, 'smartTV', 900)
 
 
       if (ctx.$('#pairTV')) ctx.$('#pairTV').onclick = () => {
