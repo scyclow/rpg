@@ -1339,7 +1339,7 @@
           ctx.state.urine = false
         },
         text: 'The toilet detects your presence and promptly flushes',
-        async follow() {
+        async follow({ctx}) {
           if (ctx.state.roboVacLocation === 'bathroom') {
             await waitPromise(1500)
             return 'roboVacSpinning'
@@ -1349,7 +1349,7 @@
 
       urine: {
         text: 'The smell of stale urine fills your nostrils',
-        async follow() {
+        async follow({ctx}) {
           if (ctx.state.roboVacLocation === 'bathroom') {
             await waitPromise(1500)
             return 'roboVacSpinning'
