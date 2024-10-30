@@ -3050,7 +3050,7 @@ createComponent(
         ctx.$('#sendUSD').onclick = () => {
           if (!ctx.$('#sendUSDAddress').value) {
             ctx.$('#sptxError2').innerHTML = `Whoops! You forgot to input your Recipient Address from the previous step`
-          } else if (ctx.$('#sendUSDAddress').value !== '0x22222222222222222222222222222222222222') {
+          } else if (ctx.$('#sendUSDAddress').value === '0x22222222222222222222222222222222222222') {
             ctx.$('#sptxError2').innerHTML = `Wrong Recipient Address! You want to send to your PayApp account, not your Currency Xchange account!`
           } else if (ctx.$('#sendUSDAddress').value !== '0x11111111111111111111111111111111111111') {
             ctx.$('#sptxError2').innerHTML = `Wrong Recipient Address! Make sure you correctly copied the Recipient Address from the previous step!`
