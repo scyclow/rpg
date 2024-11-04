@@ -438,7 +438,7 @@ const state = persist('__MOBILE_STATE', {
       yieldFarmerHighScore: 674.2,
       appCreditBalance: 1,
       educatorModulesCompleted: {},
-      password: '',
+      password: 'password',
       virusL1: true,
       virusL2: true,
       nftWalletConnected: false,
@@ -7637,6 +7637,19 @@ createComponent(
         } else if (isMatch(question, ['how are you'])) {
           return `I'm functioning as expected.`
 
+        } else if (isMatch(question, ['should i do', 'next'])) {
+          // wifi
+          if (!globalState.wifiActive && !globalState.ispBillingReminderSent) return `Have you tried calling your internet service provider? National Broadband Services can be reached at 1.800.555.2093`
+          else if (!globalState.wifiActive && !globalState.ispBillingCalled) return `Have you tried reaching out to your internet service provider's billing department? The National Broadband Services can be reached at 1.888.555.9483`
+          else if (!globalState.wifiActive) return `Have you tried paying your internet bill? I think it might be overdue.`
+          else return sample([
+            globalState.rentBalance > 0 ? `Have you paid your rent recently? That is always a good thing to do!` : `It's such a beautiful day today. Have you tried going outside and getting some fresh air?`,
+            `It's such a beautiful day today. Have you tried going outside and getting some fresh air?`,
+            `Why don't you check your text messages and see if anyone has texted you recently?`,
+            `Clicking on your phone's sponsored content is always a fun idea.`,
+            `YieldFarmer2 is now available on the AppMarket, and I hear it has excellent reviews!`,
+          ])
+
         } else if (isMatch(question, ['hello', 'hi', 'greetings'])) {
           return `Hello. Do you have a question for me to answer?`
 
@@ -7666,7 +7679,7 @@ createComponent(
         } else if (isMatch(question, ['billing', 'bill'])) {
           return start + `I believe the National Broadband Services billing phone number is 1.888.555.9483`
 
-        } else if (isMatch(question, ['router'])) {
+        } else if (isMatch(question, ['router', 'wifi'])) {
           return start + `If your router's "Internet" light is off, you can reset your router by unplugging it and plugging it back in again. (Keep in ming that routers that begin with the model Name "UBC" may have deffective reset buttons). If the "WiFi" light is off, then you may need to contact your Internet Service Provider. Many routers have the cutomer support number pasted on the bottom. `
 
         } else if (isMatch(question, ['money', 'mine', 'moneyminer', 'miner'])) {
@@ -7693,7 +7706,7 @@ createComponent(
         } else if (isMatch(question, ['internet', 'router' ,'nbs', 'national', ' broadband'])) {
           return start + `Try resetting your router by unplugging it, counting to five, and plugging it back in. If that doesn't work, you can call the National Broadband Services help hotline at 1.800.555.2093 to report an issue with your account. I also hear that the HomeGrid application works quite nicely.`
 
-        } else if (isMatch(question, ['emergency'])) {
+        } else if (isMatch(question, ['emergency', 'co2', 'c02'])) {
           return `Oh no! I'm sorry to hear you are experiencing an emergency. Please dial 911 immediately.`
 
         } else if (isMatch(question, ['default'])) {

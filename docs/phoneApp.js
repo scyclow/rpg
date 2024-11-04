@@ -48,6 +48,7 @@ export class PhoneCall {
   $keypad = []
   pressTS = 0
   silent = false
+  hangups = 0
 
   constructor(onclick, select=$.id) {
     PhoneCall.active = this
@@ -148,10 +149,10 @@ export class PhoneCall {
     this.srcs.ring1.smoothFreq(PhoneCall.tones.ring[0])
     this.srcs.ring2.smoothFreq(PhoneCall.tones.ring[1])
 
-
+    const hangups = this.hangups
     await waitPromise(500)
     for (let i = 0; i < rings; i++) {
-      if (!this.live) return
+      if (!this.live || hangups < this.hangups) return
 
       if (soundEnabled) this.srcs.ring1.smoothGain(MAX_VOLUME)
       if (soundEnabled) this.srcs.ring2.smoothGain(MAX_VOLUME)
@@ -174,6 +175,7 @@ export class PhoneCall {
     this.dialed = []
     this.isRinging = false
     this.live = false
+    this.hangups++
     this.answerTime = 0
     this.stateMachine?.kill?.()
     // allSources.forEach(src => src.stop())
@@ -377,8 +379,6 @@ function setCallTime(ctx, phone) {
 }
 
 
-
-let ACTIVE_PHONECALL
 function phoneBehavior(ctx) {
   const $menu = ctx.$('#menuNumbers')
 
@@ -444,6 +444,8 @@ function phoneBehavior(ctx) {
 
       const validDigits = dialed === '911' ? 3 : dialed[0] === '1' ? 11 : 10
 
+      const hangups = phone.hangups
+
 
       if (dialed.length > 0 && dialed.length < validDigits) {
         ctx.$('#hangup').innerHTML = 'Clear'
@@ -473,7 +475,7 @@ function phoneBehavior(ctx) {
       if (dialed === '18005552093' || dialed === '8005552093') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 2, ctx.state.soundEnabled)
 
-        if (!phone.live) return
+        if (!phone.live || hangups < phone.hangups) return
 
 
         const stateMachine = new StateMachine(
@@ -487,7 +489,6 @@ function phoneBehavior(ctx) {
             defaultWait: 1000,
             async onUpdate({text, action, ...props}, sm) {
 
-              // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'isp', text } }})
 
               sm.ctx.history.push(text)
               if (ctx.state.soundEnabled) say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
@@ -525,7 +526,7 @@ function phoneBehavior(ctx) {
       else if (dialed === '18885559483' || dialed === '8885559483') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 1, ctx.state.soundEnabled)
 
-        if (!phone.live) return
+        if (!phone.live || hangups < phone.hangups) return
 
         const stateMachine = new StateMachine(
           new CTX({
@@ -534,7 +535,6 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text}, sm) {
-              // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'billing', text } }})
 
               sm.ctx.history.push(text)
               // TODO different voice
@@ -556,7 +556,7 @@ function phoneBehavior(ctx) {
       else if (dialed === '18007770836' || dialed === '8007770836') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 3, ctx.state.soundEnabled)
 
-        if (!phone.live) return
+        if (!phone.live || hangups < phone.hangups) return
 
         const stateMachine = new StateMachine(
           new CTX({
@@ -565,7 +565,6 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text}, sm) {
-              // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'billingDispute', text } }})
 
               sm.ctx.history.push(text)
               // TODO different voice
@@ -589,8 +588,7 @@ function phoneBehavior(ctx) {
       // SSO
       else if (dialed === '18772225379' || dialed === '8772225379') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 1, ctx.state.soundEnabled)
-
-        if (!phone.live) return
+        if (!phone.live || hangups < phone.hangups) return
 
         ssoCTX.phoneUserData = ctx.state.userData
 
@@ -599,7 +597,6 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text, action}, sm) {
-              // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'sso', text } }})
 
               sm.ctx.history.push(text)
 
@@ -632,7 +629,7 @@ function phoneBehavior(ctx) {
       else if (dialed === '18004443830' || dialed === '8004443830') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 2, ctx.state.soundEnabled)
 
-        if (!phone.live) return
+        if (!phone.live || hangups < phone.hangups) return
 
         const stateMachine = new StateMachine(
           new CTX({
@@ -641,7 +638,6 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text}, sm) {
-              // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'turboConnect', text } }})
 
               sm.ctx.history.push(text)
               // TODO different voice
@@ -668,7 +664,7 @@ function phoneBehavior(ctx) {
       else if (dialed === '18006660000' || dialed === '8006660000') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 3, ctx.state.soundEnabled)
 
-        if (!phone.live) return
+        if (!phone.live || hangups < phone.hangups) return
 
         const stateMachine = new StateMachine(
           new CTX({
@@ -677,7 +673,6 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text}, sm) {
-              // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'phoneCall', payload: { connection: 'turboConnect', text } }})
 
               sm.ctx.history.push(text)
               // TODO different voice
@@ -699,7 +694,7 @@ function phoneBehavior(ctx) {
       else if (dialed === '911') {
         await phone.ringTone(ctx.state.fastMode ? 0 : 1, ctx.state.soundEnabled)
 
-        if (!phone.live) return
+        if (!phone.live || hangups < phone.hangups) return
 
         const stateMachine = new StateMachine(
           new CTX({
@@ -755,6 +750,7 @@ function phoneBehavior(ctx) {
     clearTranscripts()
     ctx.$('#dialedNumber').innerHTML = ''
     ctx.$('#menuNumbers').innerHTML = ''
+    ctx.$('#hangup').innerHTML = 'Hangup'
     setTimeout(() => {
       try {
         ctx.$('#callTime').innerHTML = ''
