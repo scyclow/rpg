@@ -2449,7 +2449,7 @@ createComponent(
           </div>
 
           ${educatorModulesCompleted.intro && educatorModulesCompleted.history && educatorModulesCompleted.system && educatorModulesCompleted.sptx && educatorModulesCompleted.crypto
-              ? `<h4 class="breathe">Congratulations! You've completed the Personal Finance Educator!</h4>`
+              ? `<h4 class="breathe">Congratulations! You've completed the Personal Finance Educator! <br><span class="icon">☤</span></h4>`
               : ''
 
           }
@@ -3258,10 +3258,87 @@ createComponent(
             <h2>CryptoCurrency: Generating Wealth Part III: Trading Tips</h2>
             <p style="padding: 0 1em"><span class="icon">☛</span> Buy low, sell high! It's simple advice, but many investors forget to do it. ₱remium and ₢rypto have a natural price cycle, so it's important to pay close attention! Your Premium Membership will also give you BUY/SELL/HOLD signals, which will alert you to the relative highs and lows of the trading pair. </p>
             <p style="padding: 0 1em"><span class="icon">☛</span> Remember to have fun! Trading CryptoCurrency is an exhilirating activity, so don't forget to enjoy the high you get from making Money!</p>
-            <button id="complete">Complete</button>
+            <button id="cryptoNext11">Start Interactive Trading Tutorial</button>
 
             <div style="display: inline-block; padding: 0.25em; border: 1px solid; text-align: center; margin-top: 1em"><strong>Learning module sponsored by: <br>Currency Xchange [PREMIUM]</strong></div>
           </div>
+
+          <div id="p12" class="hidden">
+            <h2>CryptoCurrency: Generating Wealth Part III: Interactive Tutorial</h2>
+            <h3><span class="icon">✯</span> <span id="tradeChallenge">Wow, ₱ is really cheap relative to ₢! Use your ₢ to buy as much ₱ as you can, and wait for the price to go up!<span></h3>
+
+            <div style="margin-top: 1em">
+              <h3>₢ Balance: <span id="cBalance">32.210000</span></h3>
+              <h3>₱ Balance: <span id="pBalance">0.000000</span></h3>
+
+              <div style="padding: 0.25em; border: 3px solid;">
+                <h3 style="text-align: center">Exchange Rates (<em>Simulated</em>)</h3>
+                <table style="border: 1px solid; margin: 0.4em auto">
+                  <tr>
+                    <td id="cryptoPBuy" style="border: 1px solid">SELL</td>
+                    <td style="border: 1px solid"> ₢ 1.00</td>
+                    <td style="border: 1px solid">=</td>
+                    <td id="cryptoP" style="border: 1px solid">₱ 14.349261</td>
+                  </tr>
+
+                  <tr>
+                    <td id="premiumCBuy" style="border: 1px solid">BUY</td>
+                    <td style="border: 1px solid"> ₱ 1.00</td>
+                    <td style="border: 1px solid">=</td>
+                    <td id="premiumC" style="border: 1px solid">₢ 0.069690</td>
+                  </tr>
+
+                </table>
+
+                <div style="display: flex; flex-direction: column; align-items: center">
+                  <div style="text-align: center">
+                    <select id="tradeAction" style="box-shadow: 1px 1px 0 #000" required>
+                      <option value="" selected disabled>-</option>
+                      <option value="buy">BUY</option>
+                      <option value="sell">SELL</option>
+                    </select>
+
+                    <select id="currency1" style="box-shadow: 1px 1px 0 #000}">
+                      <option value="crypto">₢</option>
+                      <option value="premium">₱</option>
+                    </select>
+
+                    <input id="transactionAmount" placeholder="0.00" step=".01" style="width: 5em; text-align: center" type="number">
+
+
+                    <span id="tradeOperation">to</span>
+
+                    <select id="currency2" style="box-shadow: 1px 1px 0 #000}">
+                      <option value="crypto">₢</option>
+                      <option value="premium">₱</option>
+                    </select>
+                  </div>
+
+                  <button id="executeTrade1" style="margin-top: 0.4em">EXECUTE TRADE</button>
+                  <button id="executeTrade2" style="margin-top: 0.4em" class="hidden">EXECUTE TRADE</button>
+
+                </div>
+                <h4 id="tradeError" style="text-align: center"></h4>
+              </div>
+            </div>
+
+            <button id="cryptoNext12" class="hidden" style="margin-top: 0.5em">Finish Tutorial</button>
+
+
+            <div style="display: inline-block; padding: 0.25em; border: 1px solid; text-align: center; margin-top: 1em"><strong>Learning module sponsored by: <br>Currency Xchange [PREMIUM]</strong></div>
+          </div>
+
+
+          <div id="p13" class="hidden">
+            <h2>$ Congratulations! $</h2>
+            <p>You just made a lot of crypto!</p>
+            <p>1. First, you mined ₢ 20</p>
+            <p>2. Second, you staked your ₢ like a yield farming pro to get up to ₢ 32.20</p>
+            <p>3. Finally, you turned that ₢ 32.20 into ₢ 4766.80 by trading!</p>
+            <p>Now you're ready to do it for real! Download <strong>Currency Xchange</strong> and buy the <strong>Premium Membership</strong> to get started! You deserve it!</p>
+            <button id="complete">Complete</button>
+          </div>
+
         `
 
         ctx.$('#scContainer').onclick = () => {
@@ -3323,13 +3400,131 @@ createComponent(
           }
 
           unstaked = true
-          ctx.$('#yieldError').innerHTML = `You did it!`
+          ctx.$('#yieldError').innerHTML = `You did it! You now have more than ₢ 4766!`
           ctx.$('#yielding').classList.add('hidden')
           ctx.$('#notYielding').classList.remove('hidden')
           ctx.$('#yieldBalance').innerHTML = (20 * 1.1 ** yieldSeconds).toFixed(2)
           ctx.$('#amountStaked').innerHTML = '0'
         }
 
+
+
+
+        ctx.$('#tradeAction').onchange = () => {
+          ctx.$('#tradeOperation').innerHTML =
+            ctx.$('#tradeAction').value === 'buy' ? 'with'
+              : ctx.$('#tradeAction').value === 'sell' ? 'for'
+              : '-'
+        }
+
+
+        ctx.$('#executeTrade1').onclick = () => {
+          const action = ctx.$('#tradeAction').value
+          const amount = Number(ctx.$('#transactionAmount').value)
+
+          const buyCurrency = action === 'buy'
+            ? ctx.$('#currency1').value
+            : ctx.$('#currency2').value
+
+          const sellCurrency = action === 'sell'
+            ? ctx.$('#currency1').value
+            : ctx.$('#currency2').value
+
+          if (!action) {
+            ctx.$('#tradeError').innerHTML = 'Invalid trade action'
+            return
+          }
+
+          if (! (amount > 0) ) {
+            ctx.$('#tradeError').innerHTML = 'Oops, you want to trade more than that!'
+            return
+          }
+
+          if (buyCurrency === sellCurrency) {
+            ctx.$('#tradeError').innerHTML = `Buy currency cannot equal Sell currency`
+            return
+          }
+
+          if (buyCurrency === 'crypto') {
+            ctx.$('#tradeError').innerHTML = `Oops! You want to buy ₱ (or sell ₢)!`
+            return
+          }
+
+
+          ctx.$('#cBalance').innerHTML = '0.000000'
+          ctx.$('#pBalance').innerHTML = '462.189697'
+
+          ctx.$('#executeTrade1').classList.add('hidden')
+          ctx.$('#executeTrade2').classList.remove('hidden')
+          ctx.$('#tradeChallenge').innerHTML = ''
+          ctx.$('#tradeError').innerHTML = ''
+
+          let cryptoPStart = 14.349261
+          let premiumCStart = 0.069690
+
+          const $cryptoP = ctx.$('#cryptoP')
+          const $premiumC = ctx.$('#premiumC')
+
+          let i = 0
+          const tradingInterval = setInterval(() => {
+            $cryptoP.innerHTML = (cryptoPStart - (i * 0.07)).toFixed(6)
+            $premiumC.innerHTML = (premiumCStart + (i * 0.05)).toFixed(6)
+            i++
+
+            if (cryptoPStart - (i * 0.07) < 0.1) {
+              clearInterval(tradingInterval)
+              ctx.$('#tradeChallenge').innerHTML = `Now it looks like ₱ is expensive relative to ₢! Realize your profits by selling all of your ₱ for ₢!`
+
+              ctx.$('#tradeAction').value = ''
+              ctx.$('#transactionAmount').value = ''
+              $cryptoP.innerHTML = '0.096960'
+              $premiumC.innerHTML = '10.313531'
+              ctx.$('#tradeError').innerHTML = 'Now it looks like ₱ is expensive relative to ₢! Realize your profits by selling all of your ₱ for ₢!'
+            }
+          }, 10)
+        }
+
+
+        ctx.$('#executeTrade2').onclick = () => {
+          const action = ctx.$('#tradeAction').value
+          const amount = Number(ctx.$('#transactionAmount').value)
+
+          const buyCurrency = action === 'buy'
+            ? ctx.$('#currency1').value
+            : ctx.$('#currency2').value
+
+          const sellCurrency = action === 'sell'
+            ? ctx.$('#currency1').value
+            : ctx.$('#currency2').value
+
+          if (!action) {
+            ctx.$('#tradeError').innerHTML = 'Invalid trade action'
+            return
+          }
+
+          if (! (amount > 0) ) {
+            ctx.$('#tradeError').innerHTML = 'Oops, you want to trade more than that!'
+            return
+          }
+
+          if (buyCurrency === sellCurrency) {
+            ctx.$('#tradeError').innerHTML = `Buy currency cannot equal Sell currency`
+            return
+          }
+
+          if (buyCurrency === 'premium') {
+            ctx.$('#tradeError').innerHTML = `Oops! You want to buy ₢ (or sell ₱)!`
+            return
+          }
+
+
+          ctx.$('#cBalance').innerHTML = '4766.807768'
+          ctx.$('#pBalance').innerHTML = '0.000000'
+
+          ctx.$('#tradeChallenge').innerHTML = 'You did it!'
+          ctx.$('#tradeError').innerHTML = 'You did it!'
+          ctx.$('#cryptoNext12').classList.remove('hidden')
+        }
 
         ctx.$('#cryptoNext1').onclick = () => {
           ctx.$('#p1').classList.add('hidden')
@@ -3378,7 +3573,7 @@ createComponent(
 
         ctx.$('#cryptoNext9').onclick = () => {
           if (!unstaked) {
-            ctx.$('#yieldError').innerHTML = `Try staking until you have 30 ₢rypto!`
+            ctx.$('#yieldError').innerHTML = `Try staking until you have 30 ₢rypto, then unstake!`
             return
           }
           ctx.$('#p9').classList.add('hidden')
@@ -3388,6 +3583,17 @@ createComponent(
         ctx.$('#cryptoNext10').onclick = () => {
           ctx.$('#p10').classList.add('hidden')
           ctx.$('#p11').classList.remove('hidden')
+        }
+
+
+        ctx.$('#cryptoNext11').onclick = () => {
+          ctx.$('#p11').classList.add('hidden')
+          ctx.$('#p12').classList.remove('hidden')
+        }
+
+        ctx.$('#cryptoNext12').onclick = () => {
+          ctx.$('#p12').classList.add('hidden')
+          ctx.$('#p13').classList.remove('hidden')
         }
 
         ctx.$('#complete').onclick = () => {
@@ -4801,7 +5007,7 @@ createComponent(
             ${exchangePremium ? `<h3>₱ Balance: ${hasInternet ? exchangePremiumCryptoBalance.toFixed(6) : '-'}</h3>` : ''}
           </div>
 
-          <div style="padding: 0.25em; border: 3px solid;"">
+          <div style="padding: 0.25em; border: 3px solid;">
             <nav style="text-align: center; padding-bottom: 0.25em; border-bottom: 3px solid">
               <h4>I want to <button id="viewTradeTab" style="margin-bottom: 0; ${exchangeTab === 'trade' ? tabHighlight : ''}">TRADE</button> <button id="viewSendTab" style="margin-bottom: 0; ${exchangeTab === 'send' ? tabHighlight : ''}">SEND</button> <button id="viewPremiumTab" style="margin-bottom: 0; ${exchangeTab === 'premium' ? tabHighlight : ''}">PREMIUM</button></h4>
             </nav>
