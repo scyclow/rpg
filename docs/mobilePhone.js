@@ -1815,8 +1815,8 @@ createComponent(
 
                   <div id="wifiChoose" class="${wifiNetwork ? 'hidden' : ''}">
                     <h3 style="margin-top: 0.4em">Network Name:</h3>
-                    <select id="networkName" style="margin: 0.25em 0">
-                      <option></option>
+                    <select id="networkName" style="margin: 0.25em 0; color: ${wifiNetwork ? '#000' : '#777'};">
+                      <option disabled selected value="">Choose Network</option>
                       <option value="Alien Nation">Alien Nation</option>
                       <option value="CapitalC">CapitalC</option>
                       <option value="ClickToAddNetwork">ClickToAddNetwork</option>
@@ -1845,6 +1845,9 @@ createComponent(
         `
         ctx.$('#data').onclick = () => {
           ctx.setState({ internet: 'data' })
+        }
+        ctx.$('#networkName').onchange = () => {
+          ctx.$('#networkName').style.color = "#000"
         }
 
         if (ctx.$('#connect')) ctx.$('#connect').onclick = () => {

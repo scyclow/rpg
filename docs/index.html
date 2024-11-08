@@ -1389,9 +1389,16 @@
       toiletQR: {
         text: 'On the side of the tank you see a QR code next to the text: "Scan this QR code with the QR Scanner app!"'
       },
-      bathroomSink: {
-        text: 'You wave your hands in front of the sink, but nothing happens. A small red light blinks at its base'
-      },
+      bathroomSink: [
+        {
+          text: 'You wave your hands in front of the sink, but nothing happens',
+          wait: 1500
+
+        },
+        {
+          text: 'A small red light blinks at its base'
+        }
+      ],
       shower: {
         text: 'A showerhead sticks out of the wall with a QR code printed on its side'
       },
@@ -1446,12 +1453,17 @@
       refrigeratorOpen: {
         text: `You open the refrigerator. It's empty. The air is only slightly cooler than room temperature`
       },
-      kitchenSink: {
-        text: 'You wave your hands in front of the sink, but nothing happens. A small red light blinks on its side.'
-      },
-      // oven: {
-      //   text: 'todo'
-      // },
+      kitchenSink: [
+        {
+          text: 'You wave your hands in front of the sink, but nothing happens',
+          wait: 1500
+
+        },
+        {
+          text: 'A small red light blinks on its side'
+        }
+      ],
+
       toaster: {
         text: () => `You're not quite sure how the toaster works, but you see a QR code on one side. On the other side is an LED screen:
           <div style="margin-top: 0.5em">
