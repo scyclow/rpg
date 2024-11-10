@@ -7865,6 +7865,9 @@ createComponent(
         } else if (isMatch(question, ['shit', 'fuck', 'cunt', 'dick', 'bitch', 'asshole', 'cock'])) {
           return `That sort of language is uncalled for.`
 
+        } else if (isMatch(question, ['thank you', 'thanks'])) {
+          return `You are quite welcome.`
+
         } else if (
           isMatch(question, ['sptx', 's.p.t.x.', 'payapp', 'payment'])
         ) {

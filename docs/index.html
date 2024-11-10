@@ -75,7 +75,7 @@
           <span id="landingLogo"></span>
           <h2 style="font-weight: normal; font-size: 1.9em; margin-top: 0.1em;">SmartHome</h2>
           <h3 style="font-weight: normal; font-size: 0.9em; margin-top: 0.1em;">[An Adventure Game]</h3>
-          <h4 style="font-weight: normal; font-size: 0.75em; margin-top: 0.1em; display: flex; justify-content: space-evenly; width: 100%;"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a> 2024</h4>
+          <h4 style="font-weight: normal; font-size: 0.75em; margin-top: 0.1em; display: flex; justify-content: space-evenly; width: 100%;"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h4>
         </div>
       </div>
 
@@ -260,6 +260,7 @@
       routerChecked: false,
       wokenUp: false,
       leftBed: false,
+      hallwayVisited: false,
     }
 
   }))
@@ -291,6 +292,7 @@
 
   const primaryConfig = {
     defaultWait: 300,
+    clearQueue: true,
     async onUpdate({ text, actions }, sm, nodeKey) {
       sm.ctx.history.push(text)
       // globalState.eventLog.push({timestamp: Date.now(), event: { type: 'mainConsole', payload: text}})
@@ -327,9 +329,11 @@
           )
         }</button>`).join('')
 
-        actions.forEach(a => $.id(a.value).onclick = () => {
-          if (a.onClick) a.onClick()
-          sm.next(a.value)
+        actions.forEach(a => {
+          $.id(a.value).onclick = () => {
+            if (a.onClick) a.onClick()
+            sm.next(a.value, true)
+          }
         })
 
         sm.ctx.currentActions = actions
@@ -648,7 +652,15 @@
     }),
 
     showerOff: {
-      text: 'You hear the shower turn off'
+      text: 'You hear the shower turn off',
+      follow: async ({ctx}) => {
+        await waitPromise(1000)
+        if (ctx.state.roboVacLocation === 'hallway') {
+          return 'roboVacDoor'
+        } else if (!ctx.state.envelope1PickedUp || !ctx.state.envelope2PickedUp) {
+          return 'seePaper'
+        }
+      },
     },
 
     // HALLWAY
@@ -664,6 +676,8 @@
             return 'motionSensor'
           } else if (ctx.state.roboVacLocation === 'hallway') {
             return 'roboVacDoor'
+          } else if (!ctx.state.envelope1PickedUp || !ctx.state.envelope2PickedUp) {
+            return 'seePaper'
           }
         },
         after({ ctx }) {
@@ -680,6 +694,10 @@
           await waitPromise(1000)
           return 'showerOff'
         }
+      },
+
+      seePaper: {
+        text: `You notice something at the foot of the front door`,
       },
 
       roboVacDoor: {
@@ -865,6 +883,7 @@
               (ctx.state.envelope1PickedUp && !ctx.state.envelope2PickedUp) ||
               (!ctx.state.envelope1PickedUp && ctx.state.envelope2PickedUp)
             ) {
+              await waitPromise(1500)
               return 'singleEnvelope'
             }
           }
@@ -1446,16 +1465,32 @@
         text: ''
       },
 
-      refrigeratorLocked: {
-        text: `You try the door to the refrigerator, but it won't open. A small LED screen on its front says: "LOCKED ||| LOCAL NETWORK INVALID"`
-      },
+      refrigeratorLocked: [
+        {
+          text: `You try the door to the refrigerator but it won't open`,
+          wait: 1500,
+        },
+        {
+          text: `A small LED screen on its front: <span style="display: inline-block; padding: 0.25em; border: 1px solid; background: #000; color: #fff">LOCKED // LOCAL NETWORK INVALID</span>`
+        }
+      ],
 
-      refrigeratorOpen: {
-        text: `You open the refrigerator. It's empty. The air is only slightly cooler than room temperature`
-      },
+      refrigeratorOpen: [
+        {
+          text: `You open the refrigerator`,
+          wait: 1500,
+        },
+        {
+          text: `It's empty`,
+          wait: 1500,
+        },
+        {
+          text: `The air is only slightly cooler than room temperature`
+        },
+      ],
       kitchenSink: [
         {
-          text: 'You wave your hands in front of the sink, but nothing happens',
+          text: 'You wave your hands in front of the sink but nothing happens',
           wait: 1500
 
         },
@@ -1464,17 +1499,23 @@
         }
       ],
 
-      toaster: {
-        text: () => `You're not quite sure how the toaster works, but you see a QR code on one side. On the other side is an LED screen:
-          <div style="margin-top: 0.5em">
-            <div style="display: inline-block;border: 1px dashed; padding: 0.5em; background: #79ffec; text-align: center; color: #4b0d5d">
-              <h3 style="color: #4b0d5d">User: ToastBaby69</h3>
-              <h3 style="color: #4b0d5d">Last toast: ${globalState.wifiActive ?  '52' : 'NaN'} days ago</h3>
-              <h3 style="color: #4b0d5d">Total toasts: ${globalState.wifiActive ?  '11' : 'ERROR: Cannot connect to server.'}</h3>
+      toaster: [
+        {
+          text: `You're not quite sure how the toaster works but you see a QR code on one side`,
+          wait: 1500
+        },
+        {
+          text: () => `On the other side is an LED screen:
+            <div style="margin-top: 0.5em">
+              <div style="display: inline-block;border: 1px dashed; padding: 0.5em; background: #79ffec; text-align: center; color: #4b0d5d">
+                <h3 style="color: #4b0d5d">User: ToastBaby69</h3>
+                <h3 style="color: #4b0d5d">Last toast: ${globalState.wifiActive ?  '52' : 'NaN'} days ago</h3>
+                <h3 style="color: #4b0d5d">Total toasts: ${globalState.wifiActive ?  '11' : 'ERROR: Cannot connect to server.'}</h3>
+              </div>
             </div>
-          </div>
-        `
-      },
+          `
+        }
+      ],
       kitchenWindow: {
         text: '',
         wait: 0,
@@ -1859,9 +1900,11 @@
           : ''
       )
     }</button>`).join('')
-    actions.forEach(a => $.id(a.value).onclick = () => {
-      if (a.onClick) a.onClick()
-      sm.next(a.value)
+    actions.forEach(a => {
+      $.id(a.value).onclick = () => {
+        if (a.onClick) a.onClick()
+        sm.next(a.value, true)
+      }
     })
   }
 

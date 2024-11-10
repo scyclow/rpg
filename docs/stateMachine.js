@@ -1,5 +1,5 @@
 export class StateMachine {
-  constructor(startingCtx, config, nodes) {
+  constructor(startingCtx, config, nodes, clearQueue=false) {
     this.ctx = startingCtx
     this.nodes = nodes
     this.defaultWait = config.defaultWait ?? 1000
@@ -7,6 +7,7 @@ export class StateMachine {
     this.queue = []
     this.start = this.ctx.currentNode
     this.alive = false
+    this.clearQueue = config.clearQueue || false
   }
 
   getNode(nodeKey) {
@@ -24,9 +25,9 @@ export class StateMachine {
   }
 
 
-  async next(ur) {
+  async next(ur, force=false) {
     this.alive = true
-    this.run(ur, 'handler')
+    this.run(ur, 'handler', force)
   }
 
   redirect(newNode) {
@@ -34,13 +35,14 @@ export class StateMachine {
     this.ctx.currentNode = newNode
   }
 
-  async run(ur, fn) {
+  async run(ur, fn, force=false) {
     try {
       const currentNode = this.getNode(this.ctx.currentNode)
 
       const nextNodeKey = await this.getNextNodeKey(fn, this.ctx.currentNode, ur)
 
-      if (nextNodeKey) {
+
+      if (nextNodeKey || force) {
         this.ctx.currentKey = nextNodeKey
         const nextNode = this.getNode(nextNodeKey)
 
@@ -105,6 +107,11 @@ export class StateMachine {
   enqueue(nodeKey, ur='', wait=0, isFollow=false) {
     if (isFollow && !this.alive) return
     if (!nodeKey) return
+
+    if (this.clearQueue) {
+      if (this.queue.length && isFollow) return
+      this.queue = []
+    }
 
     this.queue.push({
       nodeKey,
