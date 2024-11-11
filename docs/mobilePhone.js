@@ -914,12 +914,15 @@ createComponent(
     ctx.onNotification = cb => ctx.__notificationCb = cb
 
     ctx.newText = (txt) => {
+      const {currentUser, userData} = ctx.state
+      if (currentUser === null) return
+
       ctx.setState({
         userData: {
-          ...ctx.state.userData,
-          [ctx.state.currentUser]: {
-            ...ctx.state.userData[ctx.state.currentUser],
-            textMessages: [...ctx.state.userData[ctx.state.currentUser].textMessages, {
+          ...userData,
+          [currentUser]: {
+            ...userData[currentUser],
+            textMessages: [...userData[currentUser].textMessages, {
               ...txt,
               read: false
             }]

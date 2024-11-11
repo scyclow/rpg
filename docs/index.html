@@ -610,13 +610,12 @@
         }
       },
 
-      bedroomWindowClosedNew: [
-        {text: 'It must be daytime', wait: 1800 },
-        {text: `You don't see a way to manually open them`},
-      ],
+      bedroomWindowClosedNew: {
+        text: 'It must be daytime'
+      },
 
       bedroomWindowClosedContinued: {
-        text: `You notice a QR code with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+        text: `You don't see a way to manually open them, but you notice a QR code with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
       },
 
       bedroomWindowOpenNew: [
@@ -754,7 +753,7 @@
 
       cameraSeen3: {
         text: `You squint and make out a tiny message printed on it:
-          <div style="border: 1px solid; padding: 1em; max-width: 250px; font-size: 0.5em">
+          <div style="border: 1px solid; padding: 1em; max-width: 250px; font-size: 0.5em; margin-top: 1em">
             SmartPro Security Camera: Keeping you safe since 2013. Download our App in the AppMarket!
           </div>
         `
@@ -904,7 +903,7 @@
         },
         text: `You pick up the first envelope
           <div>
-            <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em;">
+            <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em; background: #fff">
               <p class="letterText">Dear NEIGHBOR,</p>
               <p class="letterText">Special Promotion for LIMITED TIME only FREE TRIAL for MOBILE + DATA Plan</p>
               <p class="letterText">Service Provider Code (SPC): 00010-032991</p>
@@ -923,7 +922,7 @@
         },
         text: `You pick up the second envelope
           <div>
-          <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em;">
+          <div style="border: 1px solid; padding: 0.5em; display: inline-block; margin: 0.5em; background: #fff">
             <p class="letterText" style="text-align: center"><em style="font-size: 0.85em">HealthyLiving Inc. -- Your health is priceless!</em></p>
             <p class="letterText">Medical Billing Statement:</p>
             <p class="letterText" style="margin-bottom: 0; padding-left: 1em;word-break: break-word">Billed/Total Charges: $47823456758409889012345.97</p>
@@ -1132,13 +1131,12 @@
         }
       },
 
-      livingroomWindowClosedNew: [
-        {text: 'It must be daytime', wait: 1800 },
-        {text: `You don't see a way to manually open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`},
-      ],
+      livingroomWindowClosedNew: {
+        text: 'It must be daytime'
+      },
 
       livingroomWindowClosedContinued: {
-        text: `You notice a QR code with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+        text: `You don't see a way to manually open them, but you notice a QR code with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
       },
 
       livingroomWindowOpenNew: [
@@ -1541,14 +1539,14 @@
         }
       },
 
-      kitchenWindowClosedNew: [
-        {text: 'It must be daytime', wait: 1800 },
-        {text: `You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`},
-      ],
+      kitchenWindowClosedNew: {
+        text: 'It must be daytime'
+      },
 
       kitchenWindowClosedContinued: {
-        text: `You notice a QR code with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
+        text: `You don't see a way to open them, but you notice a QR code accompanied with instructions: "Scan this QR code to download the <em>Shayd</em> App!"`
       },
+
 
       kitchenWindowOpenNew: [
         { text: `The blinds are now open`, wait: 1800 },

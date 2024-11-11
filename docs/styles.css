@@ -205,9 +205,11 @@ p.preVisible {
   animation: Intro 0.5s linear;
 }
 
-.letterText {
+.letterText, .letterText em {
   font-family: serif;
+  color: #000;
 }
+
 
 .smoothScroll {
   scroll-behavior: smooth;
