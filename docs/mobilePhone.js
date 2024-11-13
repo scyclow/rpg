@@ -56,6 +56,7 @@ const APPS = [
   { name: 'Lumin', key: 'lumin', size: 128, price: 0, physical: true },
   { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
   { name: 'MoneyMiner', key: 'moneyMiner', size: 128, price: 0 },
+  { name: 'National Broadband Services Customer Success App', key: 'nbs', size: 128, price: 0, outOfNetwork: true },
   { name: 'NFT Marketplace', key: 'nftMarketPlace', size: 128, price: 0 },
   { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
@@ -403,6 +404,7 @@ const state = persist('__MOBILE_STATE', {
         { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
         { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
         { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
+        { name: 'National Broadband Services Customer Success App', key: 'nbs', size: 128, price: 0, outOfNetwork: true },
         { name: 'SmartLock', key: 'lock', size: 128, price: 0, physical: true },
         // { name: 'Bathe', key: 'alarm', size: 128, price: NaN },
         // { name: 'Elevate', key: 'elevate', size: 128, price: NaN },
@@ -822,7 +824,6 @@ createComponent(
       }
 
 
-
       @keyframes SlideFromLeft {
         0% {
           transform: translateX(100%);
@@ -884,6 +885,34 @@ createComponent(
         }
       }
 
+      #alert {
+        position: absolute;
+        width: 320px;
+        height: 569px;
+      }
+
+      #alert section {
+        background: #fff;
+        width: 300px;
+        position: relative;
+        left: 10px;
+        top: 100px;
+        box-sizing: border-box;
+        border: 1px solid;
+        border-radius: 5px;
+        padding: 5px;
+      }
+
+      #closeAlert {
+        display: inline-block;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      #alertText {
+        margin: 5px 0;
+      }
+
     </style>
     <div id="phone">
       <header id="header">
@@ -891,6 +920,17 @@ createComponent(
         <div id="internetType">WiFi: <span class="blink">unconnected</span></div>
       </header>
       <main id="phoneContent"></main>
+
+      <div id="alert" class="hidden">
+        <div style="position: absolute; background: #000; opacity: 0.8; width: 320px; height: 569px;"></div>
+        <section>
+          <h3>SYSTEM ALERT:</h3>
+          <div id="alertText"></div>
+          <div style="display: flex; justify-content: flex-end">
+            <button id="closeAlert">OK</button>
+          </div>
+        </section>
+      </div>
     </div>
   `,
   state,
@@ -1041,6 +1081,12 @@ createComponent(
           }
         })
       }
+    }
+
+    ctx.alert = (txt) => {
+      ctx.$('#alert').classList.remove('hidden')
+      ctx.$('#closeAlert').onclick = () => ctx.$('#alert').classList.add('hidden')
+      ctx.$('#alertText').innerHTML = txt
     }
 
     ctx.onClose = () => ctx.parentElement.close()
@@ -1549,7 +1595,7 @@ createComponent(
       if (virusL1) {
         ctx.$('#scContainer1').onclick = () => {
           if (hasMessageViewer) {
-            alert('Please download the Message Viewer app from the AppMarket to view this message')
+            ctx.alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
           }
           ctx.setState(getAd(ads, 1).update)
@@ -1562,7 +1608,7 @@ createComponent(
       if (virusL3) {
         ctx.$('#scContainer3').onclick = () => {
           if (hasMessageViewer) {
-            alert('Please download the Message Viewer app from the AppMarket to view this message')
+            ctx.alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
           }
           ctx.setState(getAd(ads, 2).update)
@@ -1575,7 +1621,7 @@ createComponent(
       if (virusL2) {
         ctx.$('#scContainer2').onclick = () => {
           if (hasMessageViewer) {
-            alert('Please download the Message Viewer app from the AppMarket to view this message')
+            ctx.alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
           }
           ctx.setState(getAd(ads).update)
@@ -1656,7 +1702,7 @@ createComponent(
                   <td>${
                     appsInstalled.some(_a => _a.name === a.name)
                       ? `Downloaded`
-                      : `<button id="${clean(a.key)}-download" ${isNaN(a.price) || a.price > appCreditBalance ? 'disabled' : ''}>Download</button></td>`
+                      : `<button id="${clean(a.key)}-download" ${isNaN(a.price) || a.price > appCreditBalance || (!wifiConnected && a.outOfNetwork) ? 'disabled' : ''}>Download</button>${!wifiConnected && a.outOfNetwork ? `<h6>(APPPLICATION UNAVAILABLE IN RECIPIENT DATA NETWORK)</h6>` : ''}</td>`
 
                   }
                   </tr>`).join('')
@@ -4911,7 +4957,7 @@ createComponent(
 
         } else {
           if (hasMessageViewer) {
-            alert('Please download the Message Viewer app from the AppMarket to view this message')
+            ctx.alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
           }
           ctx.setState({
@@ -4948,7 +4994,7 @@ createComponent(
 
       ctx.$('#scContainer1').onclick = () => {
         if (hasMessageViewer) {
-          alert('Please download the Message Viewer app from the AppMarket to view this message')
+          ctx.alert('Please download the Message Viewer app from the AppMarket to view this message')
           return
         }
         ctx.setState({
@@ -7972,6 +8018,107 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+    } else if (screen === 'nbs') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2>National Broadband Services Customer Success App</h2>
+          <h4 style="margin: 0.5em 0">NBS Payment Center</h4>
+          <h5 style="margin: 0.5em 0">Please direct all all PayApp payments to 0x4b258603257460d480c929af5f7b83e8c4279b7b</h5>
+
+          <div style="margin: 0.5em 0">
+            <input id="deviceIdentifier" placeholder="Router Device Identifier">
+            <input id="sptx" placeholder="S.P.T.X.">
+            <button id="payNow" style="margin-top: 0.25em">Pay Now</button>
+            <h5 id="paymentError"></h5>
+          </div>
+
+          <div style="margin: 0.5em 0">
+            <h4 style="margin: 0.5em 0">Check Account Balance</h4>
+
+            <input id="deviceIdentifier2" placeholder="Router Device Identifier">
+            <button id="checkBalance" style="margin-top: 0.25em">Check</button>
+            <h5 id="balance"></h5>
+          </div>
+
+          <table>
+            <tbody>
+              <tr>
+                <td>Help Hotline:</td>
+                <td>1.800.555.2093</td>
+              </tr>
+              <tr>
+                <td>Report an Outtage:</td>
+                <td>1.800.555.2093</td>
+              </tr>
+              <tr>
+                <td>Billing:</td>
+                <td>1.888.555.9483</td>
+              </tr>
+
+              <tr>
+                <td>Billing Disputes:</td>
+                <td>1.888.555.9483</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `
+
+      ctx.$('#checkBalance').onclick = () => {
+        const deviceIdentifier = Number(ctx.$('#deviceIdentifier2').value)
+        setTimeout(() => {
+          if (!hasInternet) {
+            ctx.$('#balance').innerHTML = 'Cannot connect to internet'
+
+          } else if (deviceIdentifier === 5879234963378) {
+            ctx.$('#balance').innerHTML = `Balance: $${globalState.ispBalance}`
+          } else {
+            ctx.$('#balance').innerHTML = `Balance: $NaN`
+          }
+
+        }, 1500)
+      }
+
+      ctx.$('#payNow').onclick = () => {
+        ctx.$('#paymentError').innerHTML = 'Processing...'
+
+        setTimeout(() => {
+          const sptx = ctx.$('#sptx').value
+          const deviceIdentifier = Number(ctx.$('#deviceIdentifier').value)
+          const payment = globalState.payments[sptx]
+
+          if (!hasInternet) {
+            ctx.$('#paymentError').innerHTML = 'Cannot connect to internet'
+          } else if (!payment || payment.recipient !== '0x4b258603257460d480c929af5f7b83e8c4279b7b') {
+            ctx.$('#paymentError').innerHTML = 'Invalid SPTX'
+          } else if (payment.received) {
+            ctx.$('#paymentError').innerHTML = 'SPTX already processed'
+          } else {
+            payment.received = true
+
+            const correctDevice = deviceIdentifier === 5879234963378
+
+            if (correctDevice) {
+              globalState.ispBalance = Math.max(0, globalState.ispBalance - payment.amount)
+            }
+
+            if (globalState.ispBalance === 0 && correctDevice) {
+              ctx.$('#paymentError').innerHTML = `Payment Recieved.${!globalState.wifiActive ? ' Service to your account has been resumed.' : ''}`
+              globalState.wifiActive = true
+            } else {
+              ctx.$('#paymentError').innerHTML = `Payment Recieved.`
+            }
+
+          }
+        }, 3000)
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+
     } else if (screen === 'deviceUpgrader') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">

@@ -380,8 +380,6 @@ function setCallTime(ctx, phone) {
 
 
 function phoneBehavior(ctx) {
-  const $menu = ctx.$('#menuNumbers')
-
   const userData = ctx.state.userData[ctx.state.currentUser]
 
   if (userData.previouslyDialed && userData.previouslyDialed.length >= 2) {
@@ -406,7 +404,7 @@ function phoneBehavior(ctx) {
 
   function startInterval() {
     transcriptTimeout = setTimeout(() => {
-      $menu.innerHTML = `Transcript: `
+      ctx.$('#menuNumbers').innerHTML = `Transcript: `
 
       transcriptInterval = setInterval(() => {
         try {
@@ -414,11 +412,11 @@ function phoneBehavior(ctx) {
           const word = allWords.shift()
           wordQueue = allWords.join(' ')
 
-          const newWords = $menu.innerHTML.split(' ')
+          const newWords = ctx.$('#menuNumbers').innerHTML.split(' ')
           newWords.push(word)
           if (newWords.length >= 110) times(20, () => newWords.shift())
 
-          $menu.innerHTML = newWords.join(' ')
+          ctx.$('#menuNumbers').innerHTML = newWords.join(' ')
 
           if (!wordQueue) clearTranscripts()
         } catch (e) {
@@ -429,10 +427,12 @@ function phoneBehavior(ctx) {
   }
 
   function displayTranscript(txt) {
+    if (!txt) return
+
     ctx.$('#phoneAppInfo').classList.add('silentMode')
     if (!transcriptTimeout) startInterval()
 
-    wordQueue += txt.replaceAll('.,', '.')
+    wordQueue += ' ' + txt.replaceAll('.,', '.')
   }
 
 
@@ -455,8 +455,8 @@ function phoneBehavior(ctx) {
 
       ctx.$('#dialedNumber').innerHTML = formatPhoneNumber(phone.dialed.slice(0, validDigits))
 
-      if (ctx.state.soundEnabled) ctx.$('#menuNumbers').innerHTML = phone.dialed.slice(validDigits).join('')
-      else if (isFullNumber) ctx.$('#menuNumbers').innerHTML = key
+      ctx.$('#menuNumbers').innerHTML = phone.dialed.slice(validDigits).join('')
+      // else  ctx.$('#menuNumbers').innerHTML = phone.dialed.slice(validDigits).join('')
 
 
       window.speechSynthesis.cancel()
