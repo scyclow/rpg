@@ -47,6 +47,7 @@ const APPS = [
   { name: 'Elevate', key: 'elevate', size: 128, price: 0 },
   { name: 'EXE Runner', key: 'exe', size: 128, price: 0 },
   { name: 'FlushMate', key: 'flushMate', size: 128, price: 3, physical: true },
+  { name: 'FoodFetch', key: 'foodFetch', size: 128, price: 0, },
   { name: 'Personal Finance Educator', key: 'educator', size: 128, price: 0 },
   { name: 'FreezeLocker', key: 'freeze', size: 128, price: 0, physical: true },
   { name: 'HomeGrid', key: 'homeGrid', size: 128, price: 6 },
@@ -56,7 +57,7 @@ const APPS = [
   { name: 'Lumin', key: 'lumin', size: 128, price: 0, physical: true },
   { name: 'Message Viewer', key: 'messageViewer', size: 128, price: 0 },
   { name: 'MoneyMiner', key: 'moneyMiner', size: 128, price: 0 },
-  { name: 'National Broadband Services Customer Success App', key: 'nbs', size: 128, price: 0, outOfNetwork: true },
+  { name: 'NBS Customer Success App', key: 'nbs', size: 128, price: 0, outOfNetwork: true },
   { name: 'NFT Marketplace', key: 'nftMarketPlace', size: 128, price: 0 },
   { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
@@ -404,12 +405,13 @@ const state = persist('__MOBILE_STATE', {
         { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
         { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
         { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
-        { name: 'National Broadband Services Customer Success App', key: 'nbs', size: 128, price: 0, outOfNetwork: true },
+        { name: 'NBS Customer Success App', key: 'nbs', size: 128, price: 0, outOfNetwork: true },
         { name: 'SmartLock', key: 'lock', size: 128, price: 0, physical: true },
         // { name: 'Bathe', key: 'alarm', size: 128, price: NaN },
         // { name: 'Elevate', key: 'elevate', size: 128, price: NaN },
 
-        // { name: 'Alarm', key: 'alarm', size: 128, price: NaN },
+        { name: 'Wake', key: 'wake', size: 128, price: 0, physical: true },
+        { name: 'FoodFetch', key: 'foodFetch', size: 128, price: 0, },
 
         { name: 'Lumin', key: 'lumin', size: 128, price: 0, physical: true },
         { name: 'Toastr', key: 'toastr', size: 128, price: 0, physical: true },
@@ -1052,32 +1054,34 @@ createComponent(
     }
 
     ctx.sendCrypto = (from, to, amount) => {
+      const _amount = Math.floor(amount * 1000000) / 1000000
+
       const currentUser = ctx.state.currentUser
       if (to === calcAddr(currentUser)) {
         ctx.setUserData({
-          exchangeCryptoBalance: ctx.state.userData[currentUser].exchangeCryptoBalance + amount
+          exchangeCryptoBalance: ctx.state.userData[currentUser].exchangeCryptoBalance + _amount
         })
       } else {
         ctx.setState({
           cryptoBalances: {
             ...ctx.state.cryptoBalances,
-            [to]: (ctx.state.cryptoBalances[to] || 0) + amount
+            [to]: (ctx.state.cryptoBalances[to] || 0) + _amount
           }
         })
       }
 
       if (from === null) {
-        if (ctx.state.userData[currentUser].exchangeCryptoBalance < amount) throw new Error('invalid amount')
+        if (ctx.state.userData[currentUser].exchangeCryptoBalance < _amount) throw new Error('invalid amount')
 
         ctx.setUserData({
-          exchangeCryptoBalance: ctx.state.userData[currentUser].exchangeCryptoBalance - amount
+          exchangeCryptoBalance: ctx.state.userData[currentUser].exchangeCryptoBalance - _amount
         })
       } else {
-        if (ctx.state.cryptoBalances[to] < amount) throw new Error('invalid amount')
+        if (ctx.state.cryptoBalances[to] < _amount) throw new Error('invalid amount')
         ctx.setState({
           cryptoBalances: {
             ...ctx.state.cryptoBalances,
-            [from]: ctx.state.cryptoBalances[from] - amount
+            [from]: ctx.state.cryptoBalances[from] - _amount
           }
         })
       }
@@ -1864,7 +1868,7 @@ createComponent(
 
                   <div id="wifiChoose" class="${wifiNetwork ? 'hidden' : ''}">
                     <h3 style="margin-top: 0.4em">Network Name:</h3>
-                    <select id="networkName" style="margin: 0.25em 0; color: ${wifiNetwork ? '#000' : '#777'};">
+                    <select id="networkName" style="margin: 0.25em 0; color: ${wifiNetwork ? '#000' : '#777'}; padding: 0.25em 0;">
                       <option disabled selected value="">Choose Network</option>
                       <option value="Alien Nation">Alien Nation</option>
                       <option value="CapitalC">CapitalC</option>
@@ -1875,14 +1879,14 @@ createComponent(
                       <option value="ElectricLadyLand" ${inInternetLocation && wifiNetwork === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
                       <option value="Free-WiFi">Free-WiFi</option>
                       <option value="HellInACellPhone98">HellInACellPhone98</option>
-                      ${globalState.routerReset && !globalState.routerUnplugged? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetwork === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
+                      ${(globalState.routerReset || globalState.wifiActive) && !globalState.routerUnplugged ? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetwork === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
                       <option value="ISP-Default-89s22D">ISP-Default-89s22D</option>
                       <option value="LandlockRealtyLLC-5G">LandlockRealtyLLC-5G</option>
                       <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
                       <option value="NewNetwork">NewNetwork</option>
                       <option value="XXX-No-Entry">XXX-No-Entry</option>
                     </select>
-                    <input id="networkPassword" placeholder="password" type="password">
+                    <input id="networkPassword" placeholder="Password" type="password" style="padding: 0.25em">
                     <button id="connect">Connect</button>
                   </div>
                 `
@@ -1895,7 +1899,8 @@ createComponent(
         ctx.$('#data').onclick = () => {
           ctx.setState({ internet: 'data' })
         }
-        ctx.$('#networkName').onchange = () => {
+
+        if (bluetoothEnabled) ctx.$('#networkName').onchange = () => {
           ctx.$('#networkName').style.color = "#000"
         }
 
@@ -4114,6 +4119,7 @@ createComponent(
 
         ctx.$('#defaultUnlocked').onclick = () => {
           globalState.defaultUnlocked = ctx.$('#defaultUnlocked').checked
+          ctx.state.userData[0].password = ''
         }
 
         ctx.$('#rentPaid').onclick = () => {
@@ -4893,7 +4899,7 @@ createComponent(
         </style>
         ${ctx.state.showMMPopup
           ? `
-          <div id="popupContainer" style="position: absolute; border: 2px solid; background: #fff; padding: 0.25em; width: 200px; margin-top:107px; margin-left: 17px">
+          <div id="popupContainer" style="position: absolute; border: 2px solid; background: #fff; padding: 0.25em; width: 200px; margin-top: 107px; margin-left: 17px; user-select: none">
             <span id="closePopUp" style="position: absolute; padding: 0.25em; cursor: pointer">X</span>
             <div id="popupContent" style="padding-top: 1.25em; cursor: pointer">
               <h2 style="padding: 0.5em" id="popupText">Do YoU cRAvE yIeLd?? THeN cLiCk HeRe</h2>
@@ -4974,7 +4980,7 @@ createComponent(
           return
         }
 
-        let adState = ctx.state.totalMined === 199 || (ctx.state.totalMined === 299 && !ctx.state.yieldMasterAdClicked)
+        let adState = ctx.state.totalMined === 99 || (ctx.state.totalMined === 299 && !ctx.state.yieldMasterAdClicked)
           ? {
             showMMPopup: true
           }
@@ -5380,6 +5386,7 @@ createComponent(
         const action = ctx.$('#tradeAction').value
         const amount = Number(ctx.$('#transactionAmount').value)
 
+
         const buyCurrency = action === 'buy'
           ? ctx.$('#currency1').value
           : ctx.$('#currency2').value
@@ -5401,13 +5408,18 @@ createComponent(
         const exchangeRate = exchangeRates[sellCurrency + buyCurrency]
 
 
-        const sellAmount = action === 'sell'
+
+
+        const _sellAmount = action === 'sell'
           ? amount
           : amount / exchangeRate
 
-        const buyAmount = action === 'buy'
+        const _buyAmount = action === 'buy'
           ? amount
           : amount * exchangeRate
+
+        const buyAmount = Math.floor(_buyAmount * 1000000) / 1000000
+        const sellAmount = Math.floor(_sellAmount * 1000000) / 1000000
 
         const sellBalance = {
           usd: exchangeUSDBalance,
@@ -5824,12 +5836,29 @@ createComponent(
 
     } else if (screen === 'notePad') {
       ctx.$phoneContent.innerHTML = `
-        <div class="phoneScreen" style="flex: 1; display: flex; flex-direction: column">
+        <div class="phoneScreen" style="flex: 1; display: flex; flex-direction: column;">
           <div><button id="home">Back</button></div>
-          <h4>NotePad</h4>
+          <h4>NotePad <span id="pairInfo"></span></h4>
+
           <textarea id="pad" style="flex: 1">${notePadValue || ''}</textarea>
         </div>
       `
+
+      if (ctx.state.notepadUser === currentUser) {
+        ctx.$('#pairInfo').innerHTML = `<em style="font-size: 0.75em">[Pair status: PAIRED]</em>`
+      } else if (ctx.state.notepadUser !== currentUser) {
+        ctx.$('#pairInfo').innerHTML = `<button id="pairNotePad">Pair</button>`
+        ctx.$('#pairNotePad').onclick = () => {
+          ctx.$('#pairInfo').innerHTML = `<em style="font-size: 0.75em">[Pair status: CONNECTING...]</em>`
+
+          setTimeout(() => {
+            ctx.setState({
+              notepadUser: currentUser
+            })
+          }, 1000)
+        }
+
+      }
 
       ctx.$('#pad').onkeyup = (...args) => {
         ctx.state.userData[currentUser].notePadValue = ctx.$('#pad').value
@@ -7534,7 +7563,7 @@ createComponent(
         ? `
           <div style="">
             <h6 style="word-wrap: break-word; margin-bottom: 0.4em">Connected As: ${moneyMinerCryptoAddr}</h6>
-            <h3>Balance: ₢ ${Math.floor(cryptoBalance * 100) / 100}</h3>
+            <h3>Balance: ₢ ${Math.floor(cryptoBalance * 1000000) / 1000000}</h3>
             <h3>Amount Staked: ₢ <span id="calcedAmountStaked"></span></h3>
             ${amountStaked
               ? `
@@ -7623,10 +7652,12 @@ createComponent(
           amountStaked * ( (1 + (stakeBps/10000) ) ** secondsStaked )
         )
 
+        const roundedAmoutStaked = Math.floor(calculatedAmountStaked * 1000000) / 1000000
+
         ctx.setState({
           cryptoBalances: {
             ...cryptoBalances,
-            [moneyMinerCryptoAddr]: cryptoBalance + calculatedAmountStaked
+            [moneyMinerCryptoAddr]: cryptoBalance + roundedAmoutStaked
           }
         })
 
@@ -7644,7 +7675,7 @@ createComponent(
               Math.max(amountStaked, maxYield),
               amountStaked * ( (1 + (stakeBps/10000) ) ** secondsStaked )
             )
-            ctx.$('#calcedAmountStaked').innerHTML = calculatedAmountStaked.toFixed(2) + (calculatedAmountStaked >= maxYield ? ' [YIELD EXHAUSTED]' : '')
+            ctx.$('#calcedAmountStaked').innerHTML = calculatedAmountStaked.toFixed(6) + (calculatedAmountStaked >= maxYield ? ' [YIELD EXHAUSTED]' : '')
           }
 
         })
@@ -8140,6 +8171,52 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+    } else if (screen === 'foodFetch') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <style>
+            .blink1 {
+              animation: Blink1 4s steps(4, end) infinite;
+            }
+            .blink2 {
+              animation: Blink2 4s steps(4, end) infinite;
+            }
+            .blink3 {
+              animation: Blink3 4s steps(4, end) infinite;
+            }
+
+            @keyframes Blink1 {
+              0%, 100% { visibility: hidden }
+              25%, 50%, 75% { visibility: visible }
+            }
+
+            @keyframes Blink2 {
+              0%, 25%, 100% { visibility: hidden }
+              50%, 75% { visibility: visible }
+            }
+
+            @keyframes Blink3 {
+              0%, 25%, 50%, 100% { visibility: hidden }
+              75% { visibility: visible }
+            }
+          </style>
+
+          <button id="home">Back</button>
+          <h2>FeedFetch: #1 Takeout App</h2>
+          <h4 style="margin: 1em 0">Enter zipcode for top tier food delivery in your area</h4>
+          <input placeholder="Zip Code" type="number" style="padding: 0.1em; font-size: 1.2em"> <button id="search" style="font-size: 1.2em">Search</button>
+          <h5 id="searching"></h5>
+        </div>
+      `
+
+      ctx.$('#search').onclick = () => {
+        ctx.$('#searching').innerHTML = `Searching<span class="blink1">.</span><span class="blink2">.</span><span class="blink3">.</span>`
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
     } else {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">

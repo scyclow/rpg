@@ -12,7 +12,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   lightsOn: false,
   eNotepadBattery: 97,
   eNotepadOpen: false,
-  eNotepadContent: 'ERROR: Cannot acccess Library ',
+  eNotepadContent: 'ERROR: Cannot access Library ',
   rand: Math.random(),
   wifiActive: false,
   smartLockOpen: false,

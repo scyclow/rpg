@@ -376,9 +376,9 @@ createComponent(
         function randBuzz(totalBuzzTime) {
           const buzzTime = Math.random() * 3000
 
-          ctx.buzzStart()
+          if (!document.hidden) ctx.buzzStart()
           setTimeout(() => {
-            ctx.buzzStop()
+            if (!document.hidden) ctx.buzzStop()
 
             if (totalBuzzTime + buzzTime < 3000) {
               setTimeout(() => {

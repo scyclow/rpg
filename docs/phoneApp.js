@@ -349,6 +349,7 @@ function phoneMarkup() {
 
 
 function formatPhoneNumber(num) {
+  if (num.slice(0, 3) === '911') return '911'
   if (num.length < 4) return num.slice(0, 3).join('')
   if (num.length < 8) return `${num.slice(0, 3).join('')}-${num.slice(3, 7).join('')}`
   if (num.length < 11) return `${num.slice(0, 3).join('')}-${num.slice(3, 6).join('')}-${num.slice(6, 10).join('')}`
@@ -360,8 +361,11 @@ function formatPhoneNumber(num) {
 
 const padZero = n => n < 10 ? '0' + n : '' +  n
 function setCallTime(ctx, phone) {
-  if (!phone.answerTime) return
   const $time = ctx.$('#callTime')
+  if (phone.isRinging) {
+    $time.innerHTML = `<span class="blink">(Ringing)</span>`
+  }
+  if (!phone.answerTime) return
 
 
   ctx.setInterval(() => {
@@ -441,8 +445,9 @@ function phoneBehavior(ctx) {
       clearTranscripts()
 
       const dialed = phone.dialed.join('')
+      const is911 = dialed.slice(0,3) === '911'
 
-      const validDigits = dialed === '911' ? 3 : dialed[0] === '1' ? 11 : 10
+      const validDigits = is911 ? 3 : dialed[0] === '1' ? 11 : 10
 
       const hangups = phone.hangups
 

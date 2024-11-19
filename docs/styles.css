@@ -193,6 +193,15 @@ p {
   transition: 500ms;
 }
 
+#notepadActions {
+  text-align: right;
+}
+
+#notepadActions button {
+  margin: 0;
+  margin-bottom: 0.1em;
+}
+
 
 
 #intro, #wakeUpAgain {
@@ -237,6 +246,18 @@ p.preVisible {
   }
 }
 
+@media (max-width: 975px) {
+  #notepadActions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  #notepadActions button {
+    margin-top: 0.25em;
+  }
+}
+
+
 @media (max-width: 650px) {
   #mainConsolePrimary {
     flex-direction: column;
@@ -257,6 +278,33 @@ p.preVisible {
     align-items: flex-start;
   }
 
+  #notepadActions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  #notepadActions button {
+    margin-left: 0.5em;
+  }
+
+  #eNotepadTextArea {
+    height: 15vh;
+  }
+
+}
+
+@media (max-height: 500px) {
+  #sleepModal {
+    justify-content: flex-end;
+  }
+}
+
+
+@media (max-width: 470px) {
+  #notepadActions {
+    padding-top: 0.5em;
+  }
 }
 
 @media (max-width: 400px) {
@@ -268,11 +316,13 @@ p.preVisible {
   #sleepModal {
     padding: 2em;
   }
-
 }
-@media (max-height: 500px) {
-  #sleepModal {
-    justify-content: flex-end;
+
+@media (max-width: 380px) {
+  #notepadActions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
   }
 }
 

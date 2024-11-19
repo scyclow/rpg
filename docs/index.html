@@ -55,17 +55,17 @@
         <aside>
           <div id="nextActions"></div>
           <div id="notebook" style="transition: 0.3s;" class="invisible hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5em;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.1em;">
               <h4>eNotepad</h4>
-              <div>
-                <span id="eNotepadBattery">(97%)</span>
-                <button id="pluginENotepad" style="margin: 0">Plug In</button>
-                <button id="pairWithNotes" style="margin: 0">Pair with NotePad App</button>
+              <div id="notepadActions">
+                <span id="eNotepadBattery">[97%]</span>
+                <button id="pluginENotepad">Plug In</button>
+                <button id="pairWithNotes">Sync Notes</button>
                 <!-- <button>Factory Reset</button> -->
               </div>
             </div>
             <div id="eNotepadError" style="text-align: right;"></div>
-            <textarea id="eNotepadTextArea">ERROR: Cannot acccess Library </textarea>
+            <textarea id="eNotepadTextArea" style="margin-top: 0.4em;">ERROR: Cannot access Library </textarea>
           </div>
         </aside>
       </section>
@@ -167,7 +167,7 @@
   // })
 
 
-  $.id('eNotepadBattery').innerHTML = `(${globalState.eNotepadBattery}%)`
+  $.id('eNotepadBattery').innerHTML = `[${globalState.eNotepadBattery}%]`
   $.id('eNotepadTextArea').innerHTML = globalState.eNotepadContent
 
   function pluginENotepad() {
@@ -191,22 +191,33 @@
     }, 4000)
   }
 
-  $.id('eNotepadTextArea').onkeyup = () => globalState.eNotepadContent = $.id('eNotepadTextArea').value
-  $.id('eNotepadTextArea').onpaste = () => globalState.eNotepadContent = $.id('eNotepadTextArea').value
+  const updateNotepadStorage = () => globalState.eNotepadContent = $.id('eNotepadTextArea').value
+
+  $.id('eNotepadTextArea').onkeyup = updateNotepadStorage
+  $.id('eNotepadTextArea').onpaste = updateNotepadStorage
 
   $.id('pluginENotepad').onclick = pluginENotepad
+
   $.id('pairWithNotes').onclick = () => {
-    $.id('eNotepadError').innerHTML = 'An Error Occurred'
-    setTimeout(() => {
-      $.id('eNotepadError').innerHTML = ''
-    }, 3000)
+    if (isNaN($phoneDevice.state.notepadUser)) {
+      $.id('eNotepadTextArea').value = 'Please download the *NotePad* app and pair with this device to sync notes'
+        updateNotepadStorage()
+    } else {
+      $.id('eNotepadTextArea').value = 'Syncing...'
+
+      setTimeout(() => {
+        $.id('eNotepadTextArea').value = $phoneDevice.state.userData[$phoneDevice.state.notepadUser].notePadValue
+        $.id('eNotepadTextArea').focus()
+        updateNotepadStorage()
+      }, 500)
+    }
   }
 
 
   function unplugENotepad() {
     globalState.eNotepadOpen = true
 
-    $.id('eNotepadBattery').innerHTML = `(${globalState.eNotepadBattery}%)`
+    $.id('eNotepadBattery').innerHTML = `[${globalState.eNotepadBattery}%]`
 
 
     $.id('notebook').classList.remove('hidden')
@@ -224,7 +235,7 @@
     clearInterval(tmp.eNotePadInterval)
     tmp.eNotePadInterval = setInterval(() => {
       if (globalState.eNotepadBattery > 0) globalState.eNotepadBattery -= 1
-      $.id('eNotepadBattery').innerHTML = `(${globalState.eNotepadBattery}%)`
+      $.id('eNotepadBattery').innerHTML = `[${globalState.eNotepadBattery}%]`
 
       if (globalState.eNotepadBattery === 0) {
         $.id('eNotepadTextArea').blur()
@@ -1479,11 +1490,11 @@
           wait: 1500,
         },
         {
-          text: `It's empty`,
+          text: `The air is only slightly cooler than room temperature`,
           wait: 1500,
         },
         {
-          text: `The air is only slightly cooler than room temperature`
+          text: `You see an empty paper bag with a reciept that says "FoodFetch"`
         },
       ],
       kitchenSink: [
