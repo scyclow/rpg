@@ -2,10 +2,6 @@ import {CTX} from '../stateMachine.js'
 import {globalState} from '../global.js'
 
 
-// TODO add password reset option
-  // if you'd liek to reset your pin, press 2. if you've been locked out of your account, press 3
-  // allows you to pass recovery step with new password
-
 export const ssoCTX = new CTX({
   currentNode: 'start',
   state: {

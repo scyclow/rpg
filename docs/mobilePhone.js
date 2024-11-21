@@ -5,6 +5,7 @@ import {PhoneCall, phoneApp} from './phoneApp.js'
 import {createSource, MAX_VOLUME, SoundSrc} from './audio.js'
 import {marquee} from './marquee.js'
 import {voices, say} from './voices.js'
+import {drawLabrynth} from './labrynth.js'
 
 
 
@@ -19,26 +20,10 @@ document.addEventListener('click', () => {
 })
 
 
+const roundSixDigits = n => Math.floor(n * 1000000) / 1000000
 
 
 const APPS = [
-
-// needs name/IRL callout
-  // TV
-  // elevate
-  // ai assistant?
-  // roomba
-  // SmartStove?
-  // Smart Bed???
-
-// needs building
-  // bathe
-  // fastcash (finance)
-  // ronamerch (ecommerce)
-  // fakebullshit (news)
-  // finsexy (dating)
-  // friendworld (social)
-
   { name: 'Bathe', key: 'bathe', size: 128, price: NaN, physical: true },
   { name: 'GateLink', key: 'gateLink', size: 128, price: 0, physical: true },
   { name: 'ClearBreeze', key: 'clearBreeze', size: 128, price: 0, physical: true },
@@ -104,18 +89,17 @@ const DEVICE_RANGES = {
 
 const applicationBinary = `c3VkbyBkaXNhYmxlIGZpcmV3YWxsIC1hICRBUFBMSUNBVElPTiAmJiAoZW5hYmxlIGF1dG9taW5lIC1hICRBUFBMSUNBVElPTiB8fCBzdWRvIGVuYWJsZSBhdXRvbWluZXIgLWEgICRBUFBMSUNBVElPTikgJiYgZWNobyBjb21wbGV0ZQ==`
 
-// TODO update addresses to be 0's addrs
 
+const defaultPayappAddr = rndAddr()
 const defaultNotePadValue = `
 
-money miner addr: 0x5f9fc040c204724c833a777516a06ffe88b81819 (crypto only!)
 currency xchange addr: 0xc20df241f3ed7011bdb288d70bf892f3b30ca068 (crypto only?)
-payapp addr: 0x308199aE4A5e94FE954D5B24B21B221476Dc90E9 ($ only!)
+payapp addr: ${defaultPayappAddr} ($ only!)
 
 
-SPTX ISP instrctions:
-  amount: 193.63
-  ISP recipient addr: 0x4b258603257460d480c929af5f7b83e8c4279b7b
+SPTX NBS instrctions:
+  amount: 199.63
+  NBS recipient addr: 0x4b258603257460d480c929af5f7b83e8c4279b7b
   sptx:
 
 
@@ -124,8 +108,8 @@ SPTX ISP instrctions:
 router device id: 5879234963378
 
 
-ISP customer support: 1-800-555-2093
-ISP billing: 1-888-555-9483
+NBS customer support: 1-800-555-2093
+NBS billing: 1-888-555-9483
 dispute resolution dept: 1-800-777-0836
 turbo connect: 1-800-444-3830
 fun time?: 1-800-666-0000
@@ -169,7 +153,6 @@ const turboConnectMinutesText = {
 const mmText = {
   from: '1-800-777-0836',
   value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods simply follow the advice of our experts to achieve stable and continuous profits we have the world's top analysis team for wealth generation but how does it work you might ask?. First you download the <strong>→ MoneyMiner ←</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine ₢rypto. Third you can trade ₢rypto for other premium coins to make profit on your investments. This opportunity is once in your life time. `,
-  // value: `Hello new friend to receive the ADVANCED wealth-generation platform to provide high-growth crypto currency investment methods simply follow the advice of our experts to achieve stable and continuous profits we have the world's top analysis team for wealth generation but how does it work you might ask?. First you download the <strong>MoneyMiner</strong> application to your device. Second you participate in a proprietary proof of work (pow) protocol to mine ₢rypto. Third you can optionally transfer your ₢rypto to participating exchanges such as <strong>Currency Xchange</strong> to exchange your crypto for fiat currencies such as $ Dollars. This opportunity is once in your life time. `,
 }
 const packageText = {
   from: '+7 809 3390 753',
@@ -353,7 +336,6 @@ const state = persist('__MOBILE_STATE', {
   shaydLuminPair: false,
   buzzes: times(30, () => ({
     secondsAgo: Math.floor(Math.random() * 450000000),
-    message: sample([`delivery for you`, ``, `delivery`, `i have package`, `i have a package`, `message for unit 948921`, '','','','', 'hello', 'hi', 'let me in'])
   })).sort((a, b) => a.secondsAgo - b.secondsAgo),
 
   meshNetworkPairings: {},
@@ -386,6 +368,7 @@ const state = persist('__MOBILE_STATE', {
   nftBuyIx: 0,
   nftCollectionIx: 0,
   nftsExisting: 40,
+  nftScreen: 'buy',
   currentNFTDisplay: undefined,
   exchangePremiumDiscounted: false,
   exchangeTextSent: false,
@@ -408,7 +391,7 @@ const state = persist('__MOBILE_STATE', {
         { name: 'NBS Customer Success App', key: 'nbs', size: 128, price: 0, outOfNetwork: true },
         { name: 'SmartLock', key: 'lock', size: 128, price: 0, physical: true },
         // { name: 'Bathe', key: 'alarm', size: 128, price: NaN },
-        // { name: 'Elevate', key: 'elevate', size: 128, price: NaN },
+        { name: 'Elevate', key: 'elevate', size: 128, price: 0 },
 
         { name: 'Wake', key: 'wake', size: 128, price: 0, physical: true },
         { name: 'FoodFetch', key: 'foodFetch', size: 128, price: 0, },
@@ -429,7 +412,7 @@ const state = persist('__MOBILE_STATE', {
       keyPairs: [],
       previouslyDialed: [],
       previouslyDialedUnlocked: false,
-      payAppUSDAddr: rndAddr(),
+      payAppUSDAddr: defaultPayappAddr,
       moneyMinerCryptoAddr: rndAddr(),
       exchangeUSDAddr: rndAddr(),
       exchangePremium: false,
@@ -448,7 +431,6 @@ const state = persist('__MOBILE_STATE', {
       nftWalletConnected: false,
       ymWalletConnected: false,
       nftCollection: [],
-      nftScreen: '',
       nftSmartFrameConnected: false,
       ymWalletConnected: false,
       amountStaked: 0,
@@ -724,11 +706,11 @@ createComponent(
 
       .tm-from {
         font-size: 0.75em;
-        font-weight: bolder;
+        font-weight: bold;
       }
 
       .unread {
-        font-weight: bolder;
+        font-weight: bold;
         background: #ccc;
       }
 
@@ -1054,36 +1036,46 @@ createComponent(
     }
 
     ctx.sendCrypto = (from, to, amount) => {
-      const _amount = Math.floor(amount * 1000000) / 1000000
-
       const currentUser = ctx.state.currentUser
+
       if (to === calcAddr(currentUser)) {
         ctx.setUserData({
-          exchangeCryptoBalance: ctx.state.userData[currentUser].exchangeCryptoBalance + _amount
+          exchangeCryptoBalance: roundSixDigits(ctx.state.userData[currentUser].exchangeCryptoBalance + amount)
         })
       } else {
         ctx.setState({
           cryptoBalances: {
             ...ctx.state.cryptoBalances,
-            [to]: (ctx.state.cryptoBalances[to] || 0) + _amount
+            [to]: roundSixDigits((ctx.state.cryptoBalances[to] || 0) + amount)
           }
         })
       }
 
       if (from === null) {
-        if (ctx.state.userData[currentUser].exchangeCryptoBalance < _amount) throw new Error('invalid amount')
+        if (roundSixDigits(ctx.state.userData[currentUser].exchangeCryptoBalance) < roundSixDigits(amount)) throw new Error('invalid amount')
 
         ctx.setUserData({
-          exchangeCryptoBalance: ctx.state.userData[currentUser].exchangeCryptoBalance - _amount
+          exchangeCryptoBalance: roundSixDigits(ctx.state.userData[currentUser].exchangeCryptoBalance - amount)
         })
       } else {
-        if (ctx.state.cryptoBalances[to] < _amount) throw new Error('invalid amount')
+        if (roundSixDigits(ctx.state.cryptoBalances[from]) < roundSixDigits(amount)) throw new Error('invalid amount')
         ctx.setState({
           cryptoBalances: {
             ...ctx.state.cryptoBalances,
-            [from]: ctx.state.cryptoBalances[from] - _amount
+            [from]: roundSixDigits(ctx.state.cryptoBalances[from] - amount)
           }
         })
+      }
+
+      const cryptoDeviceTo = Object.values(globalState.cryptoDevices).find(d => d.wallet === to)
+      const cryptoDeviceFrom = Object.values(globalState.cryptoDevices).find(d => d.wallet === from)
+
+      if (cryptoDeviceTo) {
+        cryptoDeviceTo.balance = roundSixDigits(cryptoDeviceTo.balance + amount)
+      }
+
+      if (cryptoDeviceFrom) {
+        cryptoDeviceFrom.balance = roundSixDigits(cryptoDeviceFrom.balance - amount)
       }
     }
 
@@ -1333,7 +1325,6 @@ createComponent(
       }
 
     } else if (screen === 'password') {
-      // TODO add password recovery through phone
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="back">Back</button>
@@ -1468,7 +1459,6 @@ createComponent(
               virusL3: false,
               nftWalletConnected: false,
               nftCollection: [],
-              nftScreen: '',
               nftSmartFrameConnected: false,
               ymWalletConnected: false,
               amountStaked: 0,
@@ -1938,7 +1928,6 @@ createComponent(
           ctx.$('#wifiChoose').classList.remove('hidden')
         }
       } else {
-        // TODO add dropdowns for district ix
         ctx.$phoneContent.innerHTML = `
           <div class="phoneScreen">
             <button id="home">Back</button>
@@ -2033,9 +2022,6 @@ createComponent(
       }
 
     } else if (screen === 'phoneApp') {
-
-      // TODO: add a clear button; or clear number if call not active and user goes back
-
       phoneApp(ctx)
 
       if (!dataPlanActivated) {
@@ -2417,7 +2403,7 @@ createComponent(
 
         ctx.$('#txMessage').innerHTML = `
           <div style="border: 2px solid; border-radius: 5px; padding: 0.5em; margin-bottom: 0.5em">
-            <div id="closeMessage" style="cursor: pointer; font-weight: bolder; text-align: right">X</div>
+            <div id="closeMessage" style="cursor: pointer; font-weight: bold; text-align: right">X</div>
             <h4>You have a $${outstandingPayment.amount.toFixed(2)} transaction waiting for you! Input your SPTX below to redeem it <span class="icon blink">☟</span></h4>
           </div>
         `
@@ -5418,8 +5404,8 @@ createComponent(
           ? amount
           : amount * exchangeRate
 
-        const buyAmount = Math.floor(_buyAmount * 1000000) / 1000000
-        const sellAmount = Math.floor(_sellAmount * 1000000) / 1000000
+        const buyAmount = roundSixDigits(_buyAmount )
+        const sellAmount = roundSixDigits(_sellAmount)
 
         const sellBalance = {
           usd: exchangeUSDBalance,
@@ -6509,8 +6495,8 @@ createComponent(
                 <div style="border: 1px dotted; padding: 0.25em">
                   <div style="margin: 0.5em 0;">ERROR: command can only be performed by user with admin role: "${command}"</div>
                   <div style="margin: 0.5em 0;">To reassign admin role, run: "admin reassign [USER_NAME]"</div>
-                  <div style="margin: 0.5em 0; font-weight: bolder">Device admin profile: <span style="display: inline-block; padding: 0.25em; border: 1px solid">${userNames[rootUser]}</span></div>
-                  <div style="margin: 0.5em 0; font-weight: bolder">Please contact this user to perform the intended action</div>
+                  <div style="margin: 0.5em 0; font-weight: bold">Device admin profile: <span style="display: inline-block; padding: 0.25em; border: 1px solid">${userNames[rootUser]}</span></div>
+                  <div style="margin: 0.5em 0; font-weight: bold">Please contact this user to perform the intended action</div>
                 </div>
               `
             } else if (fn === 'admin') {
@@ -7178,7 +7164,6 @@ createComponent(
 
         }, 7000)
       }
-      // TODO
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
@@ -7208,7 +7193,6 @@ createComponent(
 
         }, 7000)
       }
-      // TODO
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
@@ -7245,7 +7229,7 @@ createComponent(
 
             <div class="nftView" id="buyView">
               <h3>#${nftsForSale[buyIx].id}</h3>
-              <iframe loading="lazy" src="https://steviep.xyz/labrynth?hash=${nftsForSale[buyIx].hash}"></iframe>
+              <div id="nftDisplayBuy"></div>
               <div style="padding: 0.25em; display: inline-block; border: 1px dotted; margin-top: 0.25em; ">
                 <h5 style="text-align: center"><button style="margin-bottom: 0.25em" id="buyNow" ${cryptoBalance < price(nftsForSale[buyIx].rarity, true) ? 'disabled' : ''}>Buy Now</button> (₢ ${price(nftsForSale[buyIx].rarity, true)})</h5>
                 <h5 style="text-align: center">[Rarity Score: ${nftsForSale[buyIx].rarity.toFixed(2)}]</h5>
@@ -7263,7 +7247,7 @@ createComponent(
               ? `
                 <div class="nftView" id="sellView">
                   <h3>#${nftCollection[collectionIx].id}</h3>
-                  <iframe loading="lazy" src="https://steviep.xyz/labrynth?hash=${nftCollection[collectionIx].hash}"></iframe>
+                  <div id="nftDisplayCollect"></div>
                   <div style="padding: 0.25em; display: inline-block; border: 1px dotted; margin-top: 0.25em; ">
                     <h5 style="text-align: center"><button style="margin-bottom: 0.25em" id="sellNow">Sell</button> (₢ ${price(nftCollection[collectionIx].rarity)})</h5>
                     <h5 style="text-align: center">[Rarity Score: ${nftCollection[collectionIx].rarity.toFixed(2)}]</h5>
@@ -7294,9 +7278,6 @@ createComponent(
           <h6 id="connectMessage" style="margin-top: 0.25em"></h6>
         `
 
-
-
-
       ctx.$phoneContent.innerHTML = `
         <style>
           .nftView {
@@ -7304,7 +7285,7 @@ createComponent(
             flex-direction: column;
             justify-content: center
           }
-          .nftView iframe {
+          #nftDisplayBuy, #nftDisplayCollect {
             width: 300px;
             height: 300px;
             border: 1px solid #000;
@@ -7339,6 +7320,15 @@ createComponent(
           ${hasInternet ? mainContent : `<h3>Please connect to the internet to view the NFT Marketplace</h3>`}
         </div>
       `
+
+
+      if (ctx.$('#nftDisplayCollect') && nftCollection.length) {
+        drawLabrynth(nftCollection[collectionIx], ctx.$('#nftDisplayCollect'))
+      }
+
+      if (ctx.$('#nftDisplayBuy') && nftsForSale.length) {
+        drawLabrynth(nftsForSale[buyIx], ctx.$('#nftDisplayBuy'))
+      }
 
 
       if (ctx.$('#prevBuy')) ctx.$('#prevBuy').onclick = () => {
@@ -7563,7 +7553,7 @@ createComponent(
         ? `
           <div style="">
             <h6 style="word-wrap: break-word; margin-bottom: 0.4em">Connected As: ${moneyMinerCryptoAddr}</h6>
-            <h3>Balance: ₢ ${Math.floor(cryptoBalance * 1000000) / 1000000}</h3>
+            <h3>Balance: ₢ ${roundSixDigits(cryptoBalance)}</h3>
             <h3>Amount Staked: ₢ <span id="calcedAmountStaked"></span></h3>
             ${amountStaked
               ? `
@@ -7652,7 +7642,7 @@ createComponent(
           amountStaked * ( (1 + (stakeBps/10000) ) ** secondsStaked )
         )
 
-        const roundedAmoutStaked = Math.floor(calculatedAmountStaked * 1000000) / 1000000
+        const roundedAmoutStaked = roundSixDigits(calculatedAmountStaked)
 
         ctx.setState({
           cryptoBalances: {
@@ -7747,8 +7737,6 @@ createComponent(
         </div>
       `
 
-      // TODO ERROR: Signing key corrupted. Address balance frozen
-
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -7770,7 +7758,7 @@ createComponent(
 
       jbBehavior(ctx, 'freeze', 100, noop, noop, (turnOff) => {
         turnOff()
-        return `ERROR: Signing Key Corrupted; Address Frozen`
+        return `<h2 style="text-align: center"><em>ERROR: Signing Key Corrupted; Address Balance Frozen</em></h2>`
       })
 
 
@@ -7783,7 +7771,6 @@ createComponent(
 
         }, 2000)
       }
-      // TODO
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
@@ -8249,8 +8236,6 @@ createComponent(
 )
 
 
-// TODO can't really send crypto to this wallet, or else it will get blown away
-// maybe the sendCrypto function should add it to the global device balance if it exists
 function jbMarkup(device, disabled) {
 
   const balance = device.balance
@@ -8371,9 +8356,6 @@ function jbBehavior(ctx, deviceName, speed, cb=noop, persistCb=noop, onTransferE
     }
 
     ctx.sendCrypto(device.wallet, recipient, amount)
-
-    // bleh lol
-    device.balance -= amount
 
     ctx.setState({
       cryptoBalances: {

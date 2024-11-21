@@ -1,4 +1,5 @@
 import {$, createComponent} from './$.js'
+import {drawLabrynth} from './labrynth.js'
 
 
 
@@ -28,7 +29,7 @@ createComponent(
         text-align: center;
       }
 
-      iframe {
+      #nftDisplay {
         border: 0;
         width: 100%;
         height: 100%;
@@ -38,7 +39,6 @@ createComponent(
     </style>
 
     <div id="screen">
-
     </div>
   `,
   {},
@@ -49,7 +49,9 @@ createComponent(
   },
   ctx => {
     if (globalState.castingNFT != null) {
-      ctx.$('#screen').innerHTML = `<iframe src="https://steviep.xyz/labrynth?hash=${globalState.castingNFT}"></iframe>`
+      ctx.$('#screen').innerHTML = `<div id="nftDisplay"></div>`
+
+      drawLabrynth({ hash: globalState.castingNFT }, ctx.$('#nftDisplay'))
 
     } else {
       ctx.$('#screen').innerHTML = `

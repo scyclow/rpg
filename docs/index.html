@@ -10,14 +10,14 @@
   <meta name="description" content="SmartHome: An Adventure Game">
   <meta name="keywords" content="smart home, smart, home, smarthome, smart home an adventure game, smarthome an adventure game, adventure game, adventure, game, art game, text adventure, rpg, role play game, steviep, steve pikelny, pikelny, crypto, purgatory, hell, yield farmer 2, SmartOS, trapped, currency xchange, money miner, payapp, smartplanter, homegrid, jailbreakr, plantasia, simulator, idle game, clicker, incremental game, idle, incremental, html, web game, free game, cozy game">
 
-  <meta name="twitter:image" content="https://smarthome.steviep.xyz/SmartHome1.png">
+  <meta name="twitter:image" content="https://smarthome.steviep.xyz/SmartHome.png">
   <meta name="twitter:image:alt" content="SmartHome: An Adventure Game">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:creator" content="@steviepxyz">
   <meta name="twitter:site" content="@steviepxyz">
   <meta property="twitter:description" content="SmartHome: An Adventure Game">
 
-  <meta name="og:image" property="og:image" content="https://smarthome.steviep.xyz/SmartHome1.png">
+  <meta name="og:image" property="og:image" content="https://smarthome.steviep.xyz/SmartHome.png">
   <meta name="og:image:alt" content="SmartHome: An Adventure Game">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://smarthome.steviep.xyz/">
@@ -42,9 +42,6 @@
   ls.set('__GAME_VERSION', GAME_VERSION)
 </script>
 
-<!--   <div style="position: absolute; left:0; top:0; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; background: var(--bg-color); z-index: 120;">
-    <h1 style="text-align: center; font-size: 4em; font-weight:400 "><span class="icon" style="transform: scale(1.8) translateY(-0.125em) translateX(0.1em)">⌂</span> SmartHome</h1>
-  </div> -->
 
   <main id="currentDisplay">
     <section id="mainConsole">
@@ -538,9 +535,6 @@
 
     // BEDROOM
     ...group({
-      // TODO i might need some more here?
-      // could be a good time to set anxiety around being here
-
       standUpBed: {
         before({ctx}) {
           ctx.state.leftBed = true
@@ -862,7 +856,6 @@
       follow({ ctx, redirect }) {
         tmp.thermostatSrc = createSource('sine', 500)
         tmp.thermostatRinging = true
-        // TODO - add a thermostat app
 
         tmp.thermostatRingInterval = setRunInterval(() => {
           tmp.thermostatSrc.smoothGain(MAX_VOLUME/2)
@@ -1657,7 +1650,6 @@
 
           tmp.src1.smoothGain(MAX_VOLUME, 2)
           tmp.src2.smoothGain(MAX_VOLUME, 2)
-          pluginENotepad()
         } catch (e) {
           console.log(e)
         }
@@ -1675,7 +1667,11 @@
           before({ ctx }) {
             globalState.location = 'externalHallway'
 
-            $consoleTemperature.innerHTML = ' — ??˚'
+            pluginENotepad()
+
+            $consoleLocation.innerHTML = '???'
+
+            if (ctx.state.checkedThermostat) $consoleTemperature.innerHTML = ' — ??˚'
             if (ctx.state.checkedAlarmClock) $consoleTime.innerHTML = ` — ??:??:??`
 
           },
@@ -1717,7 +1713,6 @@
       },
       elevator2: {
         text: `A message where the buttons should be: "Download the <em>Elevate</em> app today!"`
-        // TODO: app
       },
 
     }, {
@@ -1729,16 +1724,21 @@
       ]
     }),
 
-    // TODO break up into two actions
-    stairway: {
-      text: `You approach the stairway door. Standing in front of it, you read a sticker at eye level: "<strong style="font-size: 1.2em; text-decoration: underline">NO RE-ENTRY</strong>"`,
-      handler: ({ur}) => ur,
-      actions: [
-        { text: 'Back', value: 'externalHallwayBack'},
-        { text: 'Enter Stairway', value: 'enterStairway'},
-        { text: 'Phone', value: 'openPhone'},
-      ]
-    },
+    stairway: [
+      {
+        text: `You approach the stairway door`,
+        wait: 1500,
+      },
+      {
+        text: `You read a sticker at eye level: "<strong style="font-size: 1.2em; text-decoration: underline">NO RE-ENTRY</strong>"`,
+        handler: ({ur}) => ur,
+        actions: [
+          { text: 'Back', value: 'externalHallwayBack'},
+          { text: 'Enter Stairway', value: 'enterStairway'},
+          { text: 'Phone', value: 'openPhone'},
+        ]
+      },
+    ],
 
     ...group({
       enterStairway: {
