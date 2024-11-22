@@ -5831,7 +5831,14 @@ createComponent(
       `
 
       if (ctx.state.notepadUser === currentUser) {
-        ctx.$('#pairInfo').innerHTML = `<em style="font-size: 0.75em">[Pair status: PAIRED]</em>`
+        ctx.$('#pairInfo').innerHTML = `<em style="font-size: 0.75em">[Pair status: PAIRED]</em> <button id="sync" style="font-size: 0.75em">Sync</button>`
+        ctx.$('#sync').onclick = () => {
+          ctx.$('#pad').value = `Syncing...`
+          setTimeout(() => {
+            ctx.$('#pad').value = globalState.eNotepadContent
+            ctx.state.userData[currentUser].notePadValue = globalState.eNotepadContent
+          }, 400)
+        }
       } else if (ctx.state.notepadUser !== currentUser) {
         ctx.$('#pairInfo').innerHTML = `<button id="pairNotePad">Pair</button>`
         ctx.$('#pairNotePad').onclick = () => {

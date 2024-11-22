@@ -207,8 +207,6 @@ function drawDivisorLine(grid, GRID_SIZE, xStart, yStart, i) {
 
 
 export function drawLabrynth(tokenData, mountTo) {
-
-  console.log(tokenData)
   let __randomSeed = int(tokenData.hash.slice(50, 58), 16)
   function rnd(mn, mx) {
     __randomSeed ^= __randomSeed << 13

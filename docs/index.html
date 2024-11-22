@@ -352,7 +352,7 @@
         const notifications = $phoneDevice.phoneNotifications()
           ? ` (${$phoneDevice.phoneNotifications()})`
           : ''
-        const phoneButton = $.id(`${sm.ctx.currentNode}-openPhone`)
+        const phoneButton = $.id(`openPhone`)
         if (phoneButton) phoneButton.innerHTML = `Phone${notifications}`
       })
 
@@ -585,9 +585,15 @@
         { text: `You wonder what will happen when it hits 00:00:00`}
       ],
 
-      bedroomAlarmApp: {
-        text: `There are no buttons. A sticker says: "Time to download the official <em>Wake</em> app!"`
-      },
+      bedroomAlarmApp: [
+        {
+          text: `There are no buttons`,
+          wait: 2200
+        },
+        {
+          text: `A sticker on its side says: "Time to download the official <em>Wake</em> app!"`
+        }
+      ],
 
       bedroomWindow: {
         text: '',
@@ -938,7 +944,7 @@
       },
 
       openDoorLocked: {
-        text: `You try turning the doorknob, but it appears to be locked`
+        text: `You try turning the doorknob, but it's locked`
       },
 
       closeDoor: {
@@ -1197,7 +1203,7 @@
           ctx.state.routerChecked = true
         },
         text: ({ctx}) => ctx.state.router.pluggedIn
-          ? `You inspect the router, which appears to have a reset button and three lights:
+          ? `You inspect the router, which has a reset button and three lights:
           <div>Power (on)</div>
           <div>Internet (${globalState.wifiActive ? 'on' : 'off'})</div>
           <div>WiFi (${globalState.routerReset ? 'on' : 'blinking'})</div>
@@ -1205,12 +1211,18 @@
           : `You inspect the router. The Power, Internet, and WiFi lights are all off`
       },
 
-      resetRouter: {
-        text: `You push the router's reset button. Nothing happens`
-      },
+      resetRouter: [
+        {
+          text: `You push the router's reset button`,
+          wait: 1500
+        },
+        {
+          text: `Nothing happens`
+        }
+      ],
 
       bottomRouter: {
-        text: `You pick up the router and look at the bottom. A sticker says:
+        text: `You pick up the router and look at the bottom:
         <div>
           <div style="border: 1px solid; padding: 1em; display: inline-block; margin: 0.5em; border-radius: 8px">
             <h3>WiFi Network Name: InpatientRehabilitationServices</h3>
@@ -1408,7 +1420,7 @@
       },
 
       toiletQR: {
-        text: 'On the side of the tank you see a QR code next to the text: "Scan this QR code with the QR Scanner app!"'
+        text: 'On the side of the tank you see a QR code with instructions: "Scan this QR code with the QR Scanner app!"'
       },
       bathroomSink: [
         {
@@ -1504,7 +1516,7 @@
       toaster: [
         {
           text: `You're not quite sure how the toaster works but you see a QR code on one side`,
-          wait: 1500
+          wait: 1800
         },
         {
           text: () => `On the other side is an LED screen:
