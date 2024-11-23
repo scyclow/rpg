@@ -3,6 +3,7 @@ import {setFavicon} from './$.js'
 
 
 export const globalState = persist('__GLOBAL_STATE', {
+  referrer: document.referrer,
   modelBgMode: 1,
   routerRestartTime: 0,
   location: 'nothing',

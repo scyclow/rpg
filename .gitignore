@@ -1,2 +1,5 @@
 NOTES
 .DS_Store
+.env*
+.branches
+.temp
