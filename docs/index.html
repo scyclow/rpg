@@ -1209,7 +1209,7 @@
           ? `You inspect the router, which has a reset button and three lights:
           <div>Power (on)</div>
           <div>Internet (${globalState.wifiActive ? 'on' : 'off'})</div>
-          <div>WiFi (${globalState.routerReset ? 'on' : 'blinking'})</div>
+          <div>WiFi (${globalState.routerReset || globalState.wifiActive ? 'on' : 'off'})</div>
           `
           : `You inspect the router. The Power, Internet, and WiFi lights are all off`
       },
@@ -1320,14 +1320,12 @@
           text: ({ctx}) => `You plug the router back in`,
           after() {
             globalState.routerUnplugged = false
+            globalState.routerReset = true
           },
           wait: 1500,
         },
         {
           text: `The Power, Internet, and WiFi lights all turn off for one second, turn back on for one second, and blink for three seconds${globalState.routerReset ? ' before returning to their original states' : '. The WiFi light is now on'}`,
-          follow() {
-            globalState.routerReset = true
-          }
         }
       ]
 
@@ -1689,16 +1687,14 @@
             if (ctx.state.checkedThermostat) $consoleTemperature.innerHTML = ' — ??˚'
             if (ctx.state.checkedAlarmClock) $consoleTime.innerHTML = ` — ??:??:??`
 
-          },
-          text: 'You exit your apartment and enter a hallway',
-          wait: 1800
-        },
-        {
-          before() {
             setTimeout(() => {
               setColors('#fff', '#000')
-            }, 500)
+            }, 2300)
           },
+          text: 'You exit your apartment and enter a hallway',
+          wait: 1800,
+        },
+        {
           text: 'A series of LED lights flicker on and glare overhead',
           wait: 1800
         },
