@@ -3994,7 +3994,7 @@ createComponent(
             <h5>User: ${userNames[currentUser]}</h5>
             <h5>Session ID: ${ls.get('__SESSION_ID').toString()}</h5>
             <h5 id="versionNumber">SmartOS Version: 1.${window.GAME_VERSION}.1</h5>
-            <h5><a href="https://steviep.xyz" target="_blank">stevie.xyz</a></h5>
+            <h5><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h5>
           </div>
           ${devMode
             ? `
