@@ -62,26 +62,25 @@ function getStateSnapshot() {
   const ms = ls.get('__MOBILE_STATE')
   const irls = ls.get('__PRIMARY_SM_CTX')
 
-
   return {
     SESSION_ID: ls.get('__SESSION_ID'),
     GAME_VERSION: ls.get('__GAME_VERSION'),
     IRL_STATE: {
-      history: irls.history.reverse().slice(0, 10),
-      lastNode: irls.lastNode,
-      currentNode: irls.currentNode,
-      currentKey: irls.currentKey,
+      history: irls?.history?.reverse()?.slice?.(0, 10),
+      lastNode: irls?.lastNode,
+      currentNode: irls?.currentNode,
+      currentKey: irls?.currentKey,
       state: {
-        router: irls.state.router,
-        stairwayLevel: irls.state.stairwayLevel,
-        roboVacLocation: irls.state.roboVacLocation,
-        routerChecked: irls.state.routerChecked,
-        wokenUp: irls.state.wokenUp,
-        checkedBlinds: irls.state.checkedBlinds,
-        urine: irls.state.urine,
-        envelope1PickedUp: irls.state.envelope1PickedUp,
-        envelope2PickedUp: irls.state.envelope2PickedUp,
-        checkedAlarmClock: irls.state.checkedAlarmClock,
+        router: irls?.state?.router,
+        stairwayLevel: irls?.state?.stairwayLevel,
+        roboVacLocation: irls?.state?.roboVacLocation,
+        routerChecked: irls?.state?.routerChecked,
+        wokenUp: irls?.state?.wokenUp,
+        checkedBlinds: irls?.state?.checkedBlinds,
+        urine: irls?.state?.urine,
+        envelope1PickedUp: irls?.state?.envelope1PickedUp,
+        envelope2PickedUp: irls?.state?.envelope2PickedUp,
+        checkedAlarmClock: irls?.state?.checkedAlarmClock,
       }
     },
     GLOBAL_STATE: {
@@ -152,7 +151,10 @@ function getStateSnapshot() {
   }
 }
 
-console.log(getStateSnapshot())
+// setTimeout(() => {
+
+// console.log(getStateSnapshot())
+// }, 100)
 
 async function post(_body, url) {
   const method = 'POST';

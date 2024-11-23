@@ -1178,7 +1178,7 @@ createComponent(
 
 
     const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
-    const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged && globalState.routerReset
+    const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged
     const wifiConnected = internet === 'wifi' && wifiNetwork && inInternetLocation && wifiAvailable
     const dataConnected = internet === 'data' && dataPlanActivated && inInternetLocation
     const hasInternet = dataConnected || wifiConnected
