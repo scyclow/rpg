@@ -18,10 +18,7 @@ export function setupAnalytics() {
     setRunInterval(async () => {
       if (!document.hidden) {
         try {
-          const res = await post({
-            id: ls.get('__SESSION_ID').toString(),
-            snapshot: getStateSnapshot()
-          }, `${ANALYTICS_URL[ENV]}/snapshots`)
+          const res = await postSnapshot()
         } catch (e) {
           console.log(e)
         }
@@ -48,6 +45,13 @@ export function setupAnalytics() {
       }
     })
   }
+}
+
+export async function postSnapshot() {
+  return post({
+    id: ls.get('__SESSION_ID').toString(),
+    snapshot: getStateSnapshot()
+  }, `${ANALYTICS_URL[ENV]}/snapshots`)
 }
 
 
@@ -83,6 +87,7 @@ function getStateSnapshot() {
       defaultUnlocked: gs.defaultUnlocked,
       checkedAlarmClock: gs.checkedAlarmClock,
       firstSeen: gs.eventLoopStartTime,
+      completionTime: gs.completionTime,
     },
     MOBILE_STATE: {
       userNames: ms.userNames,

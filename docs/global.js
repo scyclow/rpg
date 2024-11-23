@@ -43,6 +43,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   wokenUp: false,
 
   secondsPassed: 0,
+  completionTime: null,
   deviceViruses: false,
   defaultUnlocked: false,
   pauseCurrency: false,

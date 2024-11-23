@@ -1821,7 +1821,7 @@
                 ${logoSVG(10, '#000')}
                 <h1 style="text-align: center; margin-bottom: 0.25em; margin-top: 0.75em"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h1>
                 <h2 style="text-align: center">2024</h2>
-                <div style="margin-top: 0.5em">${formatTime(globalState.secondsPassed * 1000)}</div>
+                <div style="margin-top: 0.5em" id="completionTime"></div>
                 <button onclick="localStorage.clear(); location.reload()" style="align-self:center; margin-top: 2em">Play Again?</button>
               </div>
             `

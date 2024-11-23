@@ -6,6 +6,7 @@ import {createSource, MAX_VOLUME, SoundSrc} from './audio.js'
 import {marquee} from './marquee.js'
 import {voices, say} from './voices.js'
 import {drawLabrynth} from './labrynth.js'
+import {postSnapshot} from './analytics.js'
 
 
 
@@ -3991,12 +3992,13 @@ createComponent(
           <div class="deviceData" style="margin-top: 2em">
             <h5>Device ID: 49-222999-716-2580</h5>
             <h5>User: ${userNames[currentUser]}</h5>
+            <h5>Session ID: ${ls.get('__SESSION_ID').toString()}</h5>
             <h5 id="versionNumber">SmartOS Version: 1.${window.GAME_VERSION}.1</h5>
             <h5><a href="https://steviep.xyz" target="_blank">stevie.xyz</a></h5>
           </div>
           ${devMode
             ? `
-              <div style="margin-top: 0.5em; padding: 0.5em; border: 1px solid; height: 230px; overflow: scroll">
+              <div style="margin-top: 0.5em; padding: 0.5em; border: 1px solid; height: 215px; overflow: scroll">
                 <h3>Dev Mode</h3>
                 <div>
                   <label><input id="fastMode" type="checkbox" ${ctx.state.fastMode ? 'checked' : ''}> fast mode</label>
@@ -4279,11 +4281,23 @@ createComponent(
 
       availableActions.forEach(a => {
         ctx.$('#qr-'+a.value).onclick = () => {
+
           if (a.qr) {
             if (a.qr.screen === 'messageViewer' && hasMessageViewer) {
               ctx.$('#error').innerHTML = 'Please download the Message Viewer app from the AppMarket to view this message'
             } else {
+              if (a.value === 'insideStairwayDoorPrimary' && !globalState.completionTime) {
+                globalState.completionTime = globalState.secondsPassed * 1000
+                try {
+                  postSnapshot().catch(console.log)
+                } catch (e) {
+                  console.log(e)
+                }
+              }
               ctx.setState(a.qr)
+              if (a.value === 'insideStairwayDoorPrimary' && globalState.completionTime) {
+                ctx.$('#completionTime').innerHTML = formatTime(globalState.completionTime)
+              }
             }
           } else {
             ctx.$('#error').innerHTML = 'This item does not have a qr code'
