@@ -88,6 +88,10 @@ function getStateSnapshot() {
       checkedAlarmClock: gs.checkedAlarmClock,
       firstSeen: gs.eventLoopStartTime,
       completionTime: gs.completionTime,
+      cryptoDevices: Object.keys(gs.cryptoDevices).reduce((a, c) => {
+        a[c] = gs.cryptoDevices[c].activated
+        return a
+      }, {})
     },
     MOBILE_STATE: {
       userNames: ms.userNames,
@@ -119,6 +123,7 @@ function getStateSnapshot() {
         exchangePremiumCryptoBalance: d.exchangePremiumCryptoBalance,
         password: d.password,
         appCreditBalance: d.appCreditBalance,
+        appsInstalled: d.appsInstalled.map(a => a.key),
       }))
     },
     timstamp: Date.now(),
@@ -130,6 +135,8 @@ function getStateSnapshot() {
     }
   }
 }
+
+console.log(getStateSnapshot())
 
 async function post(_body, url) {
   const method = 'POST';

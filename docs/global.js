@@ -100,6 +100,7 @@ function newCryptoDevice (ram) {
     balance: 0,
     interval: null,
     active: false,
+    activated: false,
     ms: null,
     amount: 0,
     totalTime: 0,
@@ -111,6 +112,7 @@ export function setMiningInterval(device, amount, ms) {
   device.amount = amount
   device.ms = ms
   device.active = true
+  device.activated = true
   device.interval = setRunInterval(() => {
     if (!document.hidden) {
       device.totalTime += ms
