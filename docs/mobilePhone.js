@@ -3992,7 +3992,7 @@ createComponent(
             <h5>Device ID: 49-222999-716-2580</h5>
             <h5>User: ${userNames[currentUser]}</h5>
             <h5 id="versionNumber">SmartOS Version: 1.${window.GAME_VERSION}.1</h5>
-            <h5><a href="https://steviep.xyz" target="_blank">stevie.xyz</a> [2024]</h5>
+            <h5><a href="https://steviep.xyz" target="_blank">stevie.xyz</a></h5>
           </div>
           ${devMode
             ? `

@@ -69,10 +69,10 @@
 
       <div id="sleepModal">
         <div style="display: flex; align-items: center; flex-direction: column; ">
-          <span id="landingLogo"></span>
+          <a href="./help" target="_blank"><span id="landingLogo"></span></a>
           <h2 style="font-weight: normal; font-size: 1.9em; margin-top: 0.1em;">SmartHome</h2>
           <h3 style="font-weight: normal; font-size: 0.9em; margin-top: 0.1em;">[An Adventure Game]</h3>
-          <h4 style="font-weight: normal; font-size: 0.75em; margin-top: 0.1em; display: flex; justify-content: space-evenly; width: 100%;"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h4>
+          <h4 style="font-weight: normal; font-size: 0.75em; margin-top: 0.1em; display: flex; justify-content: space-evenly; width: 100%;"><a id="steviep" href="https://steviep.xyz" target="_blank">steviep.xyz</a></h4>
         </div>
       </div>
 
@@ -882,7 +882,7 @@
           wait: 1800
         },
         {
-          text: `Above the doorknob is a QR code along with the text "Powered by <strong>SmartLock</strong> Technology"`,
+          text: `Above the doorknob is a QR code along with the text "Powered by <strong style="text-decoration: underline">SmartLock</strong> Technology"`,
           async follow({ctx}) {
             if (!ctx.state.envelope1PickedUp && !ctx.state.envelope2PickedUp) {
               await waitPromise(1500)
