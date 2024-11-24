@@ -37,6 +37,7 @@ const APPS = [
   { name: 'Personal Finance Educator', key: 'educator', size: 128, price: 0 },
   { name: 'FreezeLocker', key: 'freeze', size: 128, price: 0, physical: true },
   { name: 'HomeGrid', key: 'homeGrid', size: 128, price: 6 },
+  { name: 'HotSpot', key: 'hotSpot', size: 128, price: 0 },
   { name: 'Identity Wizard', key: 'identityWizard', size: 128, price: 0 },
   { name: 'Jean: Your AI Assistant', key: 'ai', size: 128, price: 0 },
   { name: 'Landlock Realty Rental App', key: 'landlock', size: 128, price: 0 },
@@ -64,27 +65,27 @@ const APPS = [
 ]
 
 const DEVICE_RANGES = {
-  gateLink: ['camera', 'lock'],
-  camera: ['thermoSmart', 'gateLink', 'flushMate', 'lock'],
-  thermoSmart: ['lumin', 'camera', 'lock'],
-  lock: ['gateLink', 'thermoSmart', 'camera'],
+  gateLink: ['camera', 'lock', 'hotSpot'],
+  camera: ['thermoSmart', 'gateLink', 'flushMate', 'lock', 'hotSpot'],
+  thermoSmart: ['lumin', 'camera', 'lock', 'hotSpot'],
+  lock: ['gateLink', 'thermoSmart', 'camera', 'hotSpot'],
 
-  lumin: ['thermoSmart', 'shayd', 'flushMate', 'roboVac', 'freeze'],
-  shayd: ['lumin', 'clearBreeze', 'planter', 'wake', 'freeze', 'roboVac'],
-  clearBreeze: ['shayd', 'planter'],
+  lumin: ['thermoSmart', 'shayd', 'flushMate', 'roboVac', 'freeze', 'hotSpot'],
+  shayd: ['lumin', 'clearBreeze', 'planter', 'wake', 'freeze', 'roboVac', 'hotSpot'],
+  clearBreeze: ['shayd', 'planter', 'hotSpot'],
 
-  planter: ['clearBreeze', 'shayd', 'smartTV'],
-  smartTV: ['planter', 'smartFrame'],
-  smartFrame: ['smartTV'],
+  planter: ['clearBreeze', 'shayd', 'smartTV', 'hotSpot'],
+  smartTV: ['planter', 'smartFrame', 'hotSpot'],
+  smartFrame: ['smartTV', 'hotSpot'],
 
-  bathe: ['flushMate'],
-  flushMate: ['bathe', 'camera'],
+  bathe: ['flushMate', 'hotSpot'],
+  flushMate: ['bathe', 'camera', 'hotSpot'],
 
-  freeze: ['shayd', 'toastr', 'lumin'],
-  toastr: ['freeze'],
-  roboVac: ['shayd', 'lumin'],
+  freeze: ['shayd', 'toastr', 'lumin', 'hotSpot'],
+  toastr: ['freeze', 'hotSpot'],
+  roboVac: ['shayd', 'lumin', 'hotSpot'],
 
-  wake: ['shayd'],
+  wake: ['shayd', 'hotSpot'],
 }
 
 
@@ -319,6 +320,7 @@ const state = persist('__MOBILE_STATE', {
   rootUser: 0,
   lampOn: false,
 
+  shaydPaired: false,
   luminPaired: false,
   wakePaired: false,
   clearBreezePaired: false,
@@ -331,8 +333,11 @@ const state = persist('__MOBILE_STATE', {
   gateLinkPaired: false,
   freezeLockerPaired: false,
   roboVacPaired: false,
+  cameraPaired: false,
+  smartFramePaired: false,
   phoneCastingEnabled: false,
   deviceCastingEnabled: false,
+  enableHotspotHGInput: false,
 
   shaydLuminPair: false,
   buzzes: times(30, () => ({
@@ -1115,14 +1120,21 @@ createComponent(
       soundEnabled,
       nightModeEnabled,
       distractionMode,
+      shaydPaired,
       luminPaired,
       wakePaired,
       toastrPaired,
       planterPaired,
       thermoSmartPaired,
+      clearBreezePaired,
       flushMatePaired,
+      freezeLockerPaired,
       tvPaired,
+      smartLockPaired,
       gateLinkPaired,
+      cameraPaired,
+      roboVacPaired,
+      smartFramePaired,
       lampOn,
       usdBalances,
       cryptoBalances,
@@ -1135,6 +1147,7 @@ createComponent(
       meshNetworkPairings,
       exchangePremiumDiscounted,
       exchangeTextSent,
+      enableHotspotHGInput,
     } = ctx.state
 
     if (nightModeEnabled) {
@@ -1177,9 +1190,14 @@ createComponent(
     const textMessages = currentUserData?.textMessages || []
 
 
+    const findMeshPairing = meshPairFinder(ctx)
+
+
+
     const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
     const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged
-    const wifiConnected = internet === 'wifi' && wifiNetwork && inInternetLocation
+    const wifiHotSpotConnected = findMeshPairing('gateLink', 'hotSpot') && ctx.state.bluetoothEnabled
+    const wifiConnected = internet === 'wifi' && (wifiNetwork || wifiHotSpotConnected) && inInternetLocation
     const dataConnected = internet === 'data' && dataPlanActivated && inInternetLocation
     const hasInternet = dataConnected || wifiConnected
 
@@ -1222,9 +1240,6 @@ createComponent(
     else ctx.$phone.classList.remove('a11yMode')
 
     const unreadTextCount = textMessages.reduce((a, c) => c.read ? a : a + 1, 0) || 0
-
-    const findMeshPairing = meshPairFinder(ctx)
-
 
     if (screen === 'loading') {
 
@@ -1847,19 +1862,20 @@ createComponent(
 
     } else if (screen === 'network') {
       if (ctx.state.internet === 'wifi') {
+        const wifiNetworkName = wifiHotSpotConnected ? '<em>HotSpot <span class="icon">♨︎</span></em>' : wifiNetwork
         ctx.$phoneContent.innerHTML = `
           <div class="phoneScreen">
             <button id="home">Back</button>
             <button id="data">Switch to Data</button>
-            <h3 style="margin-bottom: 0.5em">Current Network: ${wifiNetwork || 'null'}</h3>
+            <h3 style="margin-bottom: 0.5em">Current Network: ${wifiNetworkName || 'null'}</h3>
             ${
               bluetoothEnabled
                 ? `
-                  <button id="anotherWifi" class="${!wifiNetwork ? 'hidden' : ''}">Connect To Another Network</button>
+                  <button id="anotherWifi" class="${!wifiNetworkName ? 'hidden' : ''}">Connect To Another Network</button>
 
-                  <div id="wifiChoose" class="${wifiNetwork ? 'hidden' : ''}">
+                  <div id="wifiChoose" class="${wifiNetworkName ? 'hidden' : ''}">
                     <h3 style="margin-top: 0.4em">Network Name:</h3>
-                    <select id="networkName" style="margin: 0.25em 0; color: ${wifiNetwork ? '#000' : '#777'}; padding: 0.25em 0;">
+                    <select id="networkName" style="margin: 0.25em 0; color: ${wifiNetworkName ? '#000' : '#777'}; padding: 0.25em 0;">
                       <option disabled selected value="">Choose Network</option>
                       <option value="Alien Nation">Alien Nation</option>
                       <option value="CapitalC">CapitalC</option>
@@ -1867,10 +1883,10 @@ createComponent(
                       <!-- i feel like i need to unlock this experience
                         <option value="Dial19996663333ForAFunTime">Dial19996667777ForAFunTime</option>
                       -->
-                      <option value="ElectricLadyLand" ${inInternetLocation && wifiNetwork === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
+                      <option value="ElectricLadyLand" ${inInternetLocation && wifiNetworkName === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
                       <option value="Free-WiFi">Free-WiFi</option>
                       <option value="HellInACellPhone98">HellInACellPhone98</option>
-                      ${(globalState.routerReset || globalState.wifiActive) && !globalState.routerUnplugged ? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetwork === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
+                      ${(globalState.routerReset || globalState.wifiActive) && !globalState.routerUnplugged ? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetworkName === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
                       <option value="ISP-Default-89s22D">ISP-Default-89s22D</option>
                       <option value="LandlockRealtyLLC-5G">LandlockRealtyLLC-5G</option>
                       <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
@@ -4703,7 +4719,7 @@ createComponent(
       }
 
       if (ctx.$('#pairShaydLumin')) ctx.$('#pairShaydLumin').onclick = () => {
-        if (wifiAvailable || findMeshPairing('gateLink', 'lumin')) {
+        if (wifiAvailable || (findMeshPairing('gateLink', 'lumin') && findMeshPairing('lumin', 'shayd'))) {
           ctx.$('#pairShaydLuminError').innerHTML = 'Pairing...'
           setTimeout(() => {
             ctx.setState({
@@ -5675,7 +5691,6 @@ createComponent(
 
     } else if (screen === 'lock') {
       // todo: make it so you can pair with other smartlocks
-      const {smartLockPaired} = ctx.state
       const mainContent = smartLockPaired
         ? `
           <div>
@@ -6104,7 +6119,6 @@ createComponent(
       }
 
     } else if (screen === 'shayd') {
-      const {shaydPaired} = ctx.state
       const mainContent = shaydPaired
         ? `
           <div>
@@ -6221,8 +6235,6 @@ createComponent(
       }
 
     } else if (screen === 'clearBreeze') {
-      const {clearBreezePaired} = ctx.state
-
       const mainContent = clearBreezePaired
         ? `
           <div style="display: flex; flex-direction: column; align-items: center">
@@ -6231,7 +6243,7 @@ createComponent(
           </div>
 
         `
-        : `<button id="pairWindow">Pair Device</button>`
+        : `<div style="text-align: center"><button id="pairWindow">Pair Device</button></div>`
 
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -6791,7 +6803,7 @@ createComponent(
       const validOutputNodes = ctx.state.meshOutputNodes
       const validInputNodes = ctx.state.meshInputNodes
 
-      const nodeList = appsInstalled.filter(a => a.physical).map(a => ({
+      const nodeList = appsInstalled.filter(a => a.physical || a.key === 'hotSpot').map(a => ({
         ...a,
         name: a.name.replace(`<sup>TM</sup>`, '™')
       }))
@@ -6829,9 +6841,6 @@ createComponent(
           ${outputNodeList.map(a => `<option value="${a.key}">${a.name}</option>`).join('')}
         </select>
       `
-
-
-
 
       const connectionTable = `
         <table>
@@ -6882,6 +6891,12 @@ createComponent(
         <section>
           <h4>Network Diagram:</h4>
           ${connectionTable}
+        </section>
+
+        <section>
+          <p style="font-size: 0.75em">
+            HomeGrid Local Mesh Networks may be constructed by connecting Output Nodes (which emit WiFi signals) to Input Nodes (which receive WiFi signals). At least one Output node must have a direct WiFi connection, and be position upstream from all nodes without a direct WiFi connection. All nodes connected to the  HomeGrid Mesh Network may emit and use WiFi.</li>
+          </ul>
         </section>
       `
 
@@ -6935,11 +6950,31 @@ createComponent(
           ctx.$('#connectionError').innerHTML = '...'
 
           setTimeout(() => {
-            if (!input) return ctx.$('#connectionError').innerHTML = `Please select an input node`
-            if (!output) return ctx.$('#connectionError').innerHTML = `Please select an output node`
+            if (!input) return ctx.$('#connectionError').innerHTML = `Please select an Input node`
+            if (!output) return ctx.$('#connectionError').innerHTML = `Please select an Output node`
             if (input === output) return ctx.$('#connectionError').innerHTML = `Cannot connect node to self`
             if (!validInputNodes[input]) return ctx.$('#connectionError').innerHTML = `Invalid Input Node`
             if (!validOutputNodes[output]) return ctx.$('#connectionError').innerHTML = `Invalid Output Node`
+
+
+            if (
+              ([input, output].includes('camera') && !cameraPaired)
+              || ([input, output].includes('thermoSmart') && !thermoSmartPaired)
+              || ([input, output].includes('lock') && !smartLockPaired)
+              || ([input, output].includes('lumin') && !luminPaired)
+              || ([input, output].includes('shayd') && !shaydPaired)
+              || ([input, output].includes('clearBreeze') && !clearBreezePaired)
+              || ([input, output].includes('planter') && !planterPaired)
+              || ([input, output].includes('smartTV') && !tvPaired)
+              || ([input, output].includes('smartFrame') && !smartFramePaired)
+              || ([input, output].includes('flushMate') && !flushMatePaired)
+              || ([input, output].includes('freeze') && !freezeLockerPaired)
+              || ([input, output].includes('toastr') && !toastrPaired)
+              || ([input, output].includes('roboVac') && !roboVacPaired)
+              || ([input, output].includes('wake') && !wakePaired)
+            ) {
+              return ctx.$('#connectionError').innerHTML = `Error: Please ensure that both Input and Output devices are paired to the device operating the HomeGrid Local Mesh Network Setup application`
+            }
 
             if (!DEVICE_RANGES[output].includes(input)) return ctx.$('#connectionError').innerHTML = `Input node out of range`
 
@@ -6963,6 +6998,9 @@ createComponent(
           setTimeout(() => {
             if (!node) return ctx.$('#addRemoveError').innerHTML = 'Invalid Node Selected'
             if (!role) return ctx.$('#addRemoveError').innerHTML = 'Invalid Role Selected'
+
+            if (node === 'hotSpot' && role === 'output') return ctx.$('#addRemoveError').innerHTML = 'Signal output capability not enabled on this device'
+            if (node === 'hotSpot' && role === 'input' && !enableHotspotHGInput) return ctx.$('#addRemoveError').innerHTML = 'Signal intput capability not enabled on this device'
 
             if (role === 'output' && node === 'gateLink' && !globalState.gateLinkOutputEnabled) {
               return ctx.$('#addRemoveError').innerHTML = 'Signal output not enabled on device. Please run <code>enable signal-output gateLink</code> in the <strong>EXE Runner</strong> application to enable this functionality.'
@@ -7173,21 +7211,33 @@ createComponent(
 
           ${
             bluetoothEnabled
-              ? `
-                  <div style="text-align: center"><button id="pairCamera">Pair SmartTV</button></div>
-                  <h3 id="pairError" style="text-align: center"></h3>
+              ? cameraPaired
+                ? `
+                    <div style="text-align: center; margin-top: 0.5em"><button id="pairCameraTV">Pair SmartCamera with SmartTV</button></div>
+                    <h3 id="pairError" style="text-align: center"></h3>
+                  `
+                : `
+                    <div style="text-align: center; margin-top: 0.5em"><button id="pairCamera">Pair SmartCamera</button></div>
+                    <h3 id="pairError" style="text-align: center"></h3>
                 `
               : `<h3 id="pairError">Enable bluetooth to pair device</h3>`
           }
         </div>
       `
 
-      if (ctx.$('#pairCamera')) ctx.$('#pairCamera').onclick = () => {
+      if (ctx.$('#pairCameraTV')) ctx.$('#pairCameraTV').onclick = () => {
         ctx.$('#pairError').innerHTML = '<span>Please wait while device pairs</span>'
         setTimeout(() => {
           ctx.$('#pairError').innerHTML = 'ERROR: Device incompatible with SmartPro Security Camera Viewer App v3.1354.221 Please attempt connection with a valid SmartPro Security Camera device [1953903]'
 
         }, 7000)
+      }
+
+      if (ctx.$('#pairCamera')) ctx.$('#pairCamera').onclick = () => {
+        ctx.$('#pairError').innerHTML = '<span>Please wait while device pairs</span>'
+        setTimeout(() => {
+          ctx.setState({ cameraPaired: true })
+        }, 400)
       }
 
       ctx.$('#home').onclick = () => {
@@ -7490,14 +7540,24 @@ createComponent(
             `
             : ''
           }
-          <h4 style="margin: 0.4em 0">NFTs Available:</h4>
-          ${hasInternet
-            ? nftCollection.length
-              ? nftCollection.map(nft => `
-                <div style="padding-left: 1em">#${nft.id} <button id="display-${nft.id}">Display</button> ${currentNFTDisplay === nft.id ? '<span class="icon">☜</span>': ''}</div>
-              `).join('')
-              : `<h5>There are no NFTs associated with this wallet, but you can purchase all the hottest new NFTs in the <span style="text-decoration: underline">NFT Marketplace</span> app!</h5>`
-            : `<h3>Please connect to the internet to view your NFTs</h3>`
+          ${smartFramePaired
+            ? `
+              <h4 style="margin: 0.4em 0">NFTs Available:</h4>
+              ${hasInternet
+                ? nftCollection.length
+                  ? nftCollection.map(nft => `
+                    <div style="padding-left: 1em">#${nft.id} <button id="display-${nft.id}">Display</button> ${currentNFTDisplay === nft.id ? '<span class="icon">☜</span>': ''}</div>
+                  `).join('')
+                  : `<h5>There are no NFTs associated with this wallet, but you can purchase all the hottest new NFTs in the <span style="text-decoration: underline">NFT Marketplace</span> app!</h5>`
+                : `<h3>Please connect to the internet to view your NFTs</h3>`
+              }
+            `
+            : `
+              <div style="text-align: center; margin-top: 1em">
+                <button id="pairSmartFrame">Pair SmartFrame</button>
+              </div>
+            `
+
           }
         `
         : `
@@ -7533,6 +7593,15 @@ createComponent(
 
       jbBehavior(ctx, 'smartFrame', 200)
 
+
+      if (ctx.$('#pairSmartFrame')) ctx.$('#pairSmartFrame').onclick = () => {
+        ctx.$('#pairSmartFrame').innerHTML = 'Pairing...'
+        setTimeout(() => {
+          ctx.setState({
+            smartFramePaired: true
+          })
+        }, 1000)
+      }
 
       if (ctx.$('#removeDisplay')) ctx.$('#removeDisplay').onclick = () => {
         globalState.castingNFT = null
@@ -7756,7 +7825,7 @@ createComponent(
         <div style="margin: 1em 0">
           <h1 style="text-align: center">53°F</h1>
           <div>
-            ${jailbrokenApps.freeze ? jbMarkup(globalState.cryptoDevices.freeze, !bluetoothEnabled || !ctx.state.freezeLockerPaired) : ''}
+            ${jailbrokenApps.freeze ? jbMarkup(globalState.cryptoDevices.freeze, !bluetoothEnabled || !freezeLockerPaired) : ''}
           </div>
           <h6 style="text-align: left">Firmware update required. Device functionality might be limited. Please contact a FreezeLocker representative to update your device</h6>
         </div>
@@ -7770,10 +7839,10 @@ createComponent(
 
           ${
             bluetoothEnabled
-              ? ctx.state.freezeLockerPaired
+              ? freezeLockerPaired
                 ? mainInterface
                 : `
-                  <div style="text-align: center"><button id="pairFreezeLocker">Pair FreezeLocker</button></div>
+                  <div style="text-align: center; margin-top: 3em;"><button id="pairFreezeLocker" style="font-size: 1.5em">Pair FreezeLocker</button></div>
                   <h3 id="pairError"></h3>
                 `
               : `<h3 id="pairError">Please enable bluetooth</h3>`
@@ -7825,7 +7894,7 @@ createComponent(
         <h4 style="margin-top: 0.25em; text-align: center">[ERROR: RoboVac Not Found]</h4>
 
         <div>
-          ${jailbrokenApps.roboVac ? jbMarkup(globalState.cryptoDevices.roboVac, !bluetoothEnabled || !ctx.state.roboVacPaired) : ''}
+          ${jailbrokenApps.roboVac ? jbMarkup(globalState.cryptoDevices.roboVac, !bluetoothEnabled || !roboVacPaired) : ''}
         </div>
       `
 
@@ -7836,7 +7905,7 @@ createComponent(
 
           ${
             bluetoothEnabled
-              ? ctx.state.roboVacPaired
+              ? roboVacPaired
                 ? mainInterface
                 : `
                   <div style="text-align: center"><button id="pairRoboVac">Pair RoboVac</button></div>
@@ -7859,7 +7928,7 @@ createComponent(
       }
 
 
-      if (bluetoothEnabled && ctx.state.roboVacPaired) {
+      if (bluetoothEnabled && roboVacPaired) {
         ctx.setInterval(() => {
           const differentRooms = Object.keys(globalState.roboVacCaught).length
           if (differentRooms === 5) {
@@ -8164,7 +8233,6 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
-
     } else if (screen === 'deviceUpgrader') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -8233,6 +8301,34 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
+    } else if (screen === 'hotSpot') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2 style="text-align: center; margin: 0.25em 0"><em>HotSpot <span class="icon">♨︎</span></em></h2>
+          <h4 style="margin-top: 2em; margin-bottom: 0.5em; text-align: center;">Turn this device into a WiFi broadcast hub</h4>
+          <div style="text-align: center;"><button disabled="true">Enable</button></div>
+          <h6>Feature unavailable on SmartOS 1.${window.GAME_VERSION}.1 please upgrade this device to enable this feature</h6>
+
+          <h4 style="margin-top: 2em; margin-bottom: 0.5em; text-align: center;">Turn this device into a HomeGrid WiFi input node</h4>
+          <div style="text-align: center;"><button id="enableHotspotHGInput">${enableHotspotHGInput ? 'Disable' : 'Enable'}</button></div>
+        </div>
+      `
+
+      ctx.$('#enableHotspotHGInput').onclick = () => {
+        ctx.$('#enableHotspotHGInput').innerHTML = `<span class="icon">♨︎</span>`
+        setTimeout(() => {
+
+          ctx.setState({
+            enableHotspotHGInput: !enableHotspotHGInput
+          })
+        }, 300)
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
     } else {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -8247,8 +8343,11 @@ createComponent(
   },
   (oldState, newState, stateUpdate) => {
     Object.assign(state, { ...newState, lastScreen: oldState.screen})
+
+    const findMeshPairing = meshPairFinder({ state: newState })
+
     if (
-      globalState.wifiActive
+      (globalState.wifiActive || findMeshPairing('gateLink', 'thermoSmart'))
       && !globalState.thermostatDisabled
       && !tmp.thermostatRinging
     ) {
