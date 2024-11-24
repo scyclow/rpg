@@ -1179,7 +1179,7 @@ createComponent(
 
     const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
     const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged
-    const wifiConnected = internet === 'wifi' && wifiNetwork && inInternetLocation && wifiAvailable
+    const wifiConnected = internet === 'wifi' && wifiNetwork && inInternetLocation
     const dataConnected = internet === 'data' && dataPlanActivated && inInternetLocation
     const hasInternet = dataConnected || wifiConnected
 
@@ -4602,7 +4602,7 @@ createComponent(
         ctx.$('#journalError').innerHTML = 'Logging Dream. Please wait...'
 
         setTimeout(() => {
-          if (hasInternet) {
+          if (wifiAvailable && inInternetLocation) {
             ctx.$('#journalError').innerHTML = 'DREAM PROCESSED SUCCESSFULLY'
             ctx.$('#journalText').value = ''
 
@@ -7487,11 +7487,13 @@ createComponent(
             : ''
           }
           <h4 style="margin: 0.4em 0">NFTs Available:</h4>
-          ${nftCollection.length
-            ? nftCollection.map(nft => `
-              <div style="padding-left: 1em">#${nft.id} <button id="display-${nft.id}">Display</button> ${currentNFTDisplay === nft.id ? '<span class="icon">☜</span>': ''}</div>
-            `).join('')
-            : `<h5>There are no NFTs associated with this wallet, but you can purchase all the hottest new NFTs in the <span style="text-decoration: underline">NFT Marketplace</span> app!</h5>`
+          ${hasInternet
+            ? nftCollection.length
+              ? nftCollection.map(nft => `
+                <div style="padding-left: 1em">#${nft.id} <button id="display-${nft.id}">Display</button> ${currentNFTDisplay === nft.id ? '<span class="icon">☜</span>': ''}</div>
+              `).join('')
+              : `<h5>There are no NFTs associated with this wallet, but you can purchase all the hottest new NFTs in the <span style="text-decoration: underline">NFT Marketplace</span> app!</h5>`
+            : `<h3>Please connect to the internet to view your NFTs</h3>`
           }
         `
         : `
@@ -7516,7 +7518,7 @@ createComponent(
           <button id="home">Back</button>
           <h2 style="text-align: center; margin-bottom: 0.25em;">SmartFrame</h2>
           ${bluetoothEnabled
-            ? hasInternet ? mainContent : `<h3>Please connect to the internet to view the NFT Marketplace</h3>`
+            ? mainContent
             : `Please enable bluetooth`
           }
         </div>
