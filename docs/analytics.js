@@ -3,7 +3,7 @@ import {ls} from './$.js'
 
 
 if (!ls.get('__SESSION_ID')) {
-  ls.set('__SESSION_ID', Math.random().toString().slice(2))
+  ls.set('__SESSION_ID', 'S' + Math.random().toString().slice(2))
 }
 
 const ENV = window.location.href.includes('smarthome.steviep.xyz') ? 'prod' : 'dev'
