@@ -465,8 +465,10 @@
           text: () => `It counts down from ${formatTime(globalState.countdownTimeLeft)}`,
           before() {
             setTimeout(() => {
-              $phoneDevice.newText(funTimeText)
-              globalState.sentFunTimeText = true
+              if ($phoneDevice.state.dataPlanActivated) {
+                $phoneDevice.newText(funTimeText)
+                globalState.sentFunTimeText = true
+              }
             }, globalState.countdownTimeLeft)
           },
           wait: 2200
@@ -1234,6 +1236,7 @@
             <h3>Device Identifier: 5879234963378</h3>
             <h3>Customer Support: 1-800-555-2093</h3>
             <h3>Property of: National Broadband Services</h3>
+            <h6 style="text-align: center; margin-top: 0.5em"><em>Download the official NBS Customer Success App in the App Market!</em></h6>
           </div>
         </div>
         `
@@ -1894,8 +1897,10 @@
 
     if (globalState.countdownTimeLeft > 0 && !globalState.sentFunTimeText) {
       setTimeout(() => {
-        $phoneDevice.newText(funTimeText)
-        globalState.sentFunTimeText = true
+        if ($phoneDevice.state.dataPlanActivated) {
+          $phoneDevice.newText(funTimeText)
+          globalState.sentFunTimeText = true
+        }
       }, globalState.countdownTimeLeft)
     }
 

@@ -627,6 +627,17 @@ function phoneBehavior(ctx) {
         phone.answer(stateMachine)
         setCallTime(ctx, phone)
 
+        phone.onHangup = () => {
+          if (!globalState.jeanTextSent) {
+            ctx.newText({
+              from: '54321',
+              value: 'Introducing your new AI Assistant: Jean! <strong>Download Jean in the AppMarket today!</strong> Jean knows all.',
+            })
+            globalState.jeanTextSent = true
+            phone.onHangup = noop
+          }
+        }
+
         stateMachine.next('')
       }
 

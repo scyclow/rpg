@@ -129,7 +129,8 @@ function getStateSnapshot() {
       yieldMasterAdClicked: ms.yieldMasterAdClicked,
       usdBalances: ms.usdBalances,
       cryptoBalances: ms.cryptoBalances,
-      userData: Object.values(ms.userData).map(d => ({
+      userData: Object.values(ms.userData).map((d, id) => ({
+        id,
         educatorModulesCompleted: d.educatorModulesCompleted,
         moneyMinerCryptoAddr: d.moneyMinerCryptoAddr,
         exchangeUSDAddr: d.exchangeUSDAddr,
@@ -141,7 +142,7 @@ function getStateSnapshot() {
         appsInstalled: d.appsInstalled.map(a => a.key),
       }))
     },
-    timstamp: Date.now(),
+    timestamp: Date.now(),
     navigator: {
       userAgent: navigator?.userAgent,
       language: navigator?.language,

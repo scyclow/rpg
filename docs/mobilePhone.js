@@ -1184,10 +1184,10 @@ createComponent(
     const hasInternet = dataConnected || wifiConnected
 
 
-    if (currentUser !== null && globalState.wifiActive && !textMessages.some(m => m.from === '+7 809 3390 753')) {
+    if (currentUser !== null && dataPlanActivated && globalState.wifiActive && !textMessages.some(m => m.from === '+7 809 3390 753')) {
       ctx.newText(packageText)
     }
-    if (currentUser !== null && exchangePremiumDiscounted && !exchangeTextSent) {
+    if (currentUser !== null && dataPlanActivated && exchangePremiumDiscounted && !exchangeTextSent) {
       ctx.state.exchangeTextSent = true
       ctx.newText(premiumDiscountText)
     }
@@ -1754,7 +1754,7 @@ createComponent(
                   }
                 })
 
-                if (a.key === 'exchange') {
+                if (a.key === 'exchange' && dataPlanActivated) {
                   ctx.newText(premiumText)
                 }
               }, ctx.state.fastMode ? 0 : 3300)
@@ -2220,7 +2220,7 @@ createComponent(
             return
           }
 
-          if (usdBalance === 0 && !textMessages.some(m => m.from === '1-800-333-7777')) {
+          if (usdBalance === 0 && dataPlanActivated && !textMessages.some(m => m.from === '1-800-333-7777')) {
             ctx.newText(tripleText)
           }
 
@@ -5647,7 +5647,11 @@ createComponent(
           stakeTimestamp = Date.now()
           ctx.$('#stakeCrypto').disabled = true
           update()
-          setTimeout(update, stakeTime)
+          setTimeout(() => {
+            try {
+              update()
+            } catch (e) {}
+          }, stakeTime)
         }
       }
 
@@ -5721,7 +5725,7 @@ createComponent(
             window.primarySM.enqueue('smartLockShift')
 
           } else {
-            if (!globalState.sentEducatorText) {
+            if (!globalState.sentEducatorText && dataPlanActivated) {
               ctx.newText(educatorText)
               globalState.sentEducatorText = true
             }
@@ -7665,12 +7669,10 @@ createComponent(
           amountStaked * ( (1 + (stakeBps/10000) ) ** secondsStaked )
         )
 
-        const roundedAmoutStaked = roundSixDigits(calculatedAmountStaked)
-
         ctx.setState({
           cryptoBalances: {
             ...cryptoBalances,
-            [moneyMinerCryptoAddr]: cryptoBalance + roundedAmoutStaked
+            [moneyMinerCryptoAddr]: roundSixDigits(cryptoBalance + calculatedAmountStaked)
           }
         })
 
@@ -8059,6 +8061,7 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+
     } else if (screen === 'nbs') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
@@ -8078,6 +8081,7 @@ createComponent(
             <h4 style="margin: 0.5em 0">Check Account Balance</h4>
 
             <input id="deviceIdentifier2" placeholder="Router Device Identifier">
+            <input id="modelName" placeholder="Model Name">
             <button id="checkBalance" style="margin-top: 0.25em">Check</button>
             <h5 id="balance"></h5>
           </div>
@@ -8108,12 +8112,13 @@ createComponent(
 
       ctx.$('#checkBalance').onclick = () => {
         const deviceIdentifier = Number(ctx.$('#deviceIdentifier2').value)
+        const modelName = ctx.$('#modelName').value.trim()
         setTimeout(() => {
           if (!hasInternet) {
             ctx.$('#balance').innerHTML = 'Cannot connect to internet'
 
-          } else if (deviceIdentifier === 5879234963378) {
-            ctx.$('#balance').innerHTML = `Balance: $${globalState.ispBalance}`
+          } else if (deviceIdentifier === 5879234963378 && modelName === 'UBC-9283') {
+            ctx.$('#balance').innerHTML = `Balance: $${globalState.ispBalance * -1}`
           } else {
             ctx.$('#balance').innerHTML = `Balance: $NaN`
           }
@@ -8181,6 +8186,7 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+
     } else if (screen === 'foodFetch') {
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">

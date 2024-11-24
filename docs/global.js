@@ -40,6 +40,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   luminOutputEnabled: false,
   soundMuted: false,
   sentFunTimeText: false,
+  jeanTextSent: false,
   wokenUp: false,
 
   secondsPassed: 0,
