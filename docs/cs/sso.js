@@ -14,6 +14,9 @@ export const ssoNodes = {
   },
 
   intro: {
+    before() {
+      globalState.ssoCalled = true
+    },
     text: `You have reached the S S O identity management support line. Quality customer service is our goal, so this call may be recorded for training purposes. What can I help you with? If you'd like to create a new account press 1., If you've forgotten the password to an existing account, press 2., If you've been locked out of an existing account press 3., If you are calling to, press 4., To speak with a representative press 0., To repeat this message press star`,
     handler: options({
       0: 'representative',

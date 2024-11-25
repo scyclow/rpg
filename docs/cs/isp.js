@@ -12,6 +12,9 @@ export const ispCSNodes = {
 
   ...group({
     intro: {
+      before() {
+        globalState.ispCalled = true
+      },
       text: `Hello, and welcome to N B S customer support. This call may be recorded for quality and security purposes. If you're calling about becoming a new customer, press 1. To add service to an existing account, press 2. If you'd like to pay an outstanding bill, press 3. For all other inquiries, press 4. To hear these options again, press star`,
     },
     mainMenu: {
