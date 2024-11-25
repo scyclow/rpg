@@ -736,12 +736,7 @@
 
       weirdHum: {
         before() {
-          const src = createSource('sine', 400)
-          src.smoothGain(MAX_VOLUME*0.5)
-          setTimeout(() => {
-            src.smoothGain(0)
-            setTimeout(() => src.stop(), 100)
-          }, 150)
+          $gateLinkDevice.buzz(150, MAX_VOLUME*0.75)
         },
         text: `You hear a noise, but can't place its location`
       },
@@ -842,10 +837,10 @@
     }, {
       actions: ({ctx}) =>  [
         { text: 'Phone', value: 'openPhone'},
+        { text: 'Front Door', value: 'frontDoor',  qr: {screen: 'messageViewer', messageViewerMessage: 'Powered by SmartLock Technology<sup>TM</sup> Download the Official App today!'} },
         { text: 'Living Room', value: 'livingRoom'},
         { text: 'Bathroom', value: 'bathroom'},
         { text: 'Bedroom', value: 'bedroom'},
-        { text: 'Front Door', value: 'frontDoor',  qr: {screen: 'messageViewer', messageViewerMessage: 'Powered by SmartLock Technology<sup>TM</sup> Download the Official App today!'} },
         { text: 'Camera', value: 'camera', qr: { screen: 'appMarket', appMarketPreSearch: 'SmartPro Security'}},
         { text: 'Thermostat', value: 'thermostat', qr: { screen: 'appMarket', appMarketPreSearch: 'ThermoSmart'} },
         { text: 'Intercom', value: 'intercom', qr: { screen: 'appMarket', appMarketPreSearch: 'GateLink'}},

@@ -2867,7 +2867,7 @@ createComponent(
 
           <div id="p5" class="hidden">
             <h2>The Modern $ System Module: $and You</h2>
-            <p>So, how do you fit into all of this? You're an integral part of the economy! You accumulate debts and obligations whenever you engage in economic transactions, and generate wealth whenever you work. And while this may sound fun, it's a big responsability. Some people handle it well, and decide to be productive members of society. They go to job, take pride in their work, and earn a well-deserved paycheck. Then they use that paycheck to take care of all their financial obligations. Other people aren't as well-adjusted. These people accumulate goods and services that they cannot afford, and ultimately default on their debts. These delinquents are often marginalized by society as non-productive leeches.</p>
+            <p>So, how do you fit into all of this? You're an integral part of the economy! You accumulate debts and obligations whenever you engage in economic transactions, and generate wealth whenever you work. And while this may sound fun, it's a big responsibility. Some people handle it well, and decide to be productive members of society. They go to job, take pride in their work, and earn a well-deserved paycheck. Then they use that paycheck to take care of all their financial obligations. Other people aren't as well-adjusted. These people accumulate goods and services that they cannot afford, and ultimately default on their debts. These delinquents are often marginalized by society as non-productive leeches.</p>
             <button id="systemNext5">Next</button>
           </div>
 

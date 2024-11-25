@@ -233,11 +233,12 @@ createComponent(
     })
 
     let press = 0
-    ctx.buzzStart = () => {
-      doorSrc1?.smoothGain?.(MAX_VOLUME)
-      doorSrc2?.smoothGain?.(MAX_VOLUME)
-      doorSrc3?.smoothGain?.(MAX_VOLUME/3)
-      doorSrc4?.smoothGain?.(MAX_VOLUME)
+    ctx.buzzStart = (vol) => {
+      vol = vol || MAX_VOLUME
+      doorSrc1?.smoothGain?.(vol)
+      doorSrc2?.smoothGain?.(vol)
+      doorSrc3?.smoothGain?.(vol/3)
+      doorSrc4?.smoothGain?.(vol)
       press = Date.now()
     }
 
@@ -248,8 +249,8 @@ createComponent(
       doorSrc4?.smoothGain?.(0)
     }
 
-    ctx.buzz = (ms) => {
-      ctx?.buzzStart?.()
+    ctx.buzz = (ms, vol) => {
+      ctx?.buzzStart?.(vol)
       setTimeout(() => ctx?.buzzStop?.(), ms)
     }
 
@@ -374,13 +375,13 @@ createComponent(
       if (globalState.deviceViruses) {
 
         function randBuzz(totalBuzzTime) {
-          const buzzTime = Math.random() * 3000
+          const buzzTime = Math.random() * 4500
 
           if (!document.hidden) ctx.buzzStart()
           setTimeout(() => {
             if (!document.hidden) ctx.buzzStop()
 
-            if (totalBuzzTime + buzzTime < 3000) {
+            if (totalBuzzTime + buzzTime < 4500) {
               setTimeout(() => {
                 randBuzz(totalBuzzTime + buzzTime)
               }, Math.random() * 750)

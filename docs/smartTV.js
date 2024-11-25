@@ -379,7 +379,7 @@ createComponent(
           ${tvPaired
               ? castScreen
               : `
-                <p>Pleae download the official SmartTV app and follow all setup instructions to SmartCast.</p>
+                <p>Please download the official SmartTV app and follow all setup instructions to SmartCast.</p>
                 <div style="text-align: center; margin-top: 1em">
                   <button id="back">BACK</button>
                 </div>
