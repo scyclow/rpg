@@ -8,6 +8,7 @@ import {turboConnectNodes} from './cs/turboConnect.js'
 import {ssoNodes, ssoCTX} from './cs/sso.js'
 import {hellNodes} from './cs/hell.js'
 import {emergencyNodes} from './cs/emergency.js'
+import {jeanText} from './mobilePhone.js'
 
 
 export class PhoneCall {
@@ -329,7 +330,7 @@ function phoneMarkup() {
       <div style="padding-top: 0.5em; display: flex; justify-content: space-evenly">
         <button id="home">Back</button>
         <button id="hangup">Hangup</button>
-        <button id="previousCalls" class="hidden">Previous</button>
+        <button id="previousCalls" class="hidden"><em>Premium</em></button>
       </div>
     </div>
 
@@ -629,10 +630,7 @@ function phoneBehavior(ctx) {
 
         phone.onHangup = () => {
           if (!globalState.jeanTextSent) {
-            ctx.newText({
-              from: '54321',
-              value: 'Introducing your new AI Assistant: Jean! <strong>Download Jean in the AppMarket today!</strong> Jean knows all.',
-            })
+            ctx.newText(jeanText)
             globalState.jeanTextSent = true
             phone.onHangup = noop
           }
@@ -780,10 +778,27 @@ function phoneBehavior(ctx) {
 
   const renderPrevCalls = () => {
     ctx.$('#previouslyDialedNumbers').innerHTML = `
+      <div style="padding: 1em; padding-bottom: 0"><input id="pasteToDial" placeholder="Paste Number Here" type="number"> <button id="dialPasted">Dial</button></div>
       <div style="padding: 1em">
         ${[...userData.previouslyDialed].reverse().map((n, i) => `<div>${formatPhoneNumber(n.split(''))} <button id="redial-${i}">Re-Dial</button></div>`).join('')}
       </div>
     `
+
+      ctx.$(`#dialPasted`).onclick = async () => {
+        const n = ctx.$('#pasteToDial').value
+        if (!n) return
+
+        ctx.$('#phoneAppContent').classList.remove('hidden')
+        ctx.$('#previousCallsView').classList.add('hidden')
+
+        for (let d of n.split('')) {
+          phoneCall.pressKey(d)
+          phoneCall.startTone(d)
+          await waitPromise(75)
+          phoneCall.endTone(d)
+          await waitPromise(25)
+        }
+      }
 
     ;[...userData.previouslyDialed].reverse().forEach((n, i) => {
       ctx.$(`#redial-${i}`).onclick = async () => {
@@ -814,6 +829,7 @@ function phoneBehavior(ctx) {
         <h2 style="text-align: center; margin: 0.4em 0">Premium Feature Upgrade Available!</h2>
         <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">View all previous calls!</h4>
         <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">Re-dial numbers!</h4>
+        <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">Paste-to-dial!</h4>
         <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">Only <span class="blink">2</span> Credits!</h4>
 
         <div style="margin-top: 5em; padding: 1em">

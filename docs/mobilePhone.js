@@ -140,6 +140,10 @@ const noSoundSVG = `
   </svg>
 `
 
+export const jeanText = {
+  from: '54321',
+  value: 'Introducing Jean, your Personal AI Assistant! <strong>Download Jean in the AppMarket today!</strong> <strong>Jean knows all</strong>.',
+}
 
 
 const turboConnectText = {
@@ -441,6 +445,7 @@ const state = persist('__MOBILE_STATE', {
       ymWalletConnected: false,
       amountStaked: 0,
       timeStaked: NaN,
+      toastrLoggedIn: true
     }
   }
 })
@@ -1210,7 +1215,12 @@ createComponent(
       ctx.newText(premiumDiscountText)
     }
 
-    const hasMessageViewer = !appsInstalled.some(a => a.key === 'messageViewer')
+    if (currentUser !== null && !globalState.jeanTextSent && globalState.secondsPassed > 3600) {
+      globalState.jeanTextSent = true
+      ctx.newText(jeanText)
+    }
+
+    const messageViewerNotDownloaded = !appsInstalled.some(a => a.key === 'messageViewer')
 
     ctx.$phone.classList.remove('virusL1')
     ctx.$phone.classList.remove('virusL2')
@@ -1479,6 +1489,7 @@ createComponent(
               ymWalletConnected: false,
               amountStaked: 0,
               timeStaked: NaN,
+              toastrLoggedIn: false
             }
           }
         })
@@ -1604,7 +1615,7 @@ createComponent(
 
       if (virusL1) {
         ctx.$('#scContainer1').onclick = () => {
-          if (hasMessageViewer) {
+          if (messageViewerNotDownloaded) {
             ctx.alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
           }
@@ -1617,7 +1628,7 @@ createComponent(
 
       if (virusL3) {
         ctx.$('#scContainer3').onclick = () => {
-          if (hasMessageViewer) {
+          if (messageViewerNotDownloaded) {
             ctx.alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
           }
@@ -1630,7 +1641,7 @@ createComponent(
 
       if (virusL2) {
         ctx.$('#scContainer2').onclick = () => {
-          if (hasMessageViewer) {
+          if (messageViewerNotDownloaded) {
             ctx.alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
           }
@@ -4302,7 +4313,7 @@ createComponent(
         ctx.$('#qr-'+a.value).onclick = () => {
 
           if (a.qr) {
-            if (a.qr.screen === 'messageViewer' && hasMessageViewer) {
+            if (a.qr.screen === 'messageViewer' && messageViewerNotDownloaded) {
               ctx.$('#error').innerHTML = 'Please download the Message Viewer app from the AppMarket to view this message'
             } else {
               if (a.value === 'insideStairwayDoorPrimary' && !globalState.completionTime) {
@@ -4984,7 +4995,7 @@ createComponent(
           })
 
         } else {
-          if (hasMessageViewer) {
+          if (messageViewerNotDownloaded) {
             ctx.alert('Please download the Message Viewer app from the AppMarket to view this message')
             return
           }
@@ -5021,7 +5032,7 @@ createComponent(
 
 
       ctx.$('#scContainer1').onclick = () => {
-        if (hasMessageViewer) {
+        if (messageViewerNotDownloaded) {
           ctx.alert('Please download the Message Viewer app from the AppMarket to view this message')
           return
         }
@@ -5902,9 +5913,9 @@ createComponent(
 
     } else if (screen === 'toastr') {
 
-      const mainContent = Number(currentUser) === 0
+      const mainContent = currentUserData.toastrLoggedIn
         ? `
-          <div>
+          <div style="flex: 1; overflow: scroll;">
             <h3 style="text-align: center; margin: 0.4em 0;">ToastBaby69</h3>
             <h5 style="text-align: center;">Followers: 12 | Following: 58 | Toasts: 11</h5>
             <div>
@@ -5962,8 +5973,8 @@ createComponent(
         `
         : `
           <div>
-            <input placeholder="Username">
-            <input placeholder="Password" type="password">
+            <input id="toastrUsername" placeholder="Username">
+            <input id="toastrPassword" placeholder="Password" type="password">
             <button id="login" style="margin-top: 0.4em">Login</button>
             <h5 id="loginError"></h5>
           </div>
@@ -5974,18 +5985,18 @@ createComponent(
         : `<h3>Device Error: NETWORK_ERROR: Cannot connect to server.</h3>`
 
       ctx.$phoneContent.innerHTML = `
-        <div class="phoneScreen">
-          <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.25em; border-bottom: 1px solid">
+        <div class="phoneScreen" style="display: flex; flex-direction: column; height: calc(100% - 2.5em)">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.25em; border-bottom: 1px solid; margin-bottom: 0.5em">
             <button id="home" style="margin-bottom: 0">Back</button>
             <h2 style="">Toastr</h2>
-            <h6 style="">Powered by <a href="https://friendworld.social" target="_blank">friendworld.social</a></h6>
+            <h6 style="">Powered by <a id="fwLink" style="color: #00f; text-decoration: underline; cursor: pointer">friendworld.social</a></h6>
           </div>
+          <div>${jailbrokenApps.toastr ? jbMarkup(globalState.cryptoDevices.toastr, !bluetoothEnabled || !toastrPaired || !inInternetLocation) : ''}</div>
           ${
             bluetoothEnabled
               ? toastrPaired ? mainInterface : `<button id="pairToaster">Pair Device</button>`
               : `<h3>Must enable bluetooth permissions in Home/Settings</h3>`
           }
-          <div>${jailbrokenApps.toastr ? jbMarkup(globalState.cryptoDevices.toastr, !bluetoothEnabled || !toastrPaired || !inInternetLocation) : ''}</div>
         </div>
       `
 
@@ -5993,8 +6004,31 @@ createComponent(
       jbBehavior(ctx, 'toastr', 300)
 
 
+      if (ctx.$('#fwLink')) ctx.$('#fwLink').onclick = () => {
+        if (messageViewerNotDownloaded) {
+          ctx.alert('Please download the Message Viewer app from the AppMarket to view this message')
+          return
+        }
+
+        ctx.setState({
+          screen: 'messageViewer',
+          messageViewerMessage: `Viewing <a href="https://friendworld.social" target="_blank">friendworld.social</a><iframe src="https://friendworld.social"></iframe>`
+        })
+      }
+
       if (ctx.$('#login')) ctx.$('#login').onclick = () => {
-        ctx.$('#loginError').innerHTML = 'Credentials Incorrect'
+        ctx.$('#login').disabled = true
+        setTimeout(() => {
+          if (ctx.$('#toastrUsername').value.toLowerCase().trim() === 'toastbaby69' && ctx.$('#toastrPassword').value) {
+            ctx.setUserData({
+              toastrLoggedIn: true
+            })
+
+          } else {
+            ctx.$('#login').disabled = false
+            ctx.$('#loginError').innerHTML = 'Credentials Incorrect'
+          }
+        }, 1000)
       }
 
       if (ctx.$('#pairToaster')) ctx.$('#pairToaster').onclick = () => {
