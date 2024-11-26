@@ -179,10 +179,10 @@ function getStateSnapshot() {
   }
 }
 
-setTimeout(() => {
+// setTimeout(() => {
 
-console.log(getStateSnapshot())
-}, 100)
+// console.log(getStateSnapshot())
+// }, 100)
 
 async function post(_body, url) {
   const method = 'POST';

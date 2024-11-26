@@ -3039,6 +3039,9 @@ createComponent(
               <h5 id="sptxError1"></h5>
             </div>
 
+            <div style="margin-top: 0.5em; text-align: center">
+              <em style="font-size: 0.75em">NOTE: This is a FAKE ACCOUNT for EDUCATIONAL PURPOSES ONLY. Any REAL $ sent to this account will be lost.</em>
+            </div>
             <button id="sptxNext10" style="margin-top: 0.5em">Continue</button>
           </div>
 
@@ -4647,7 +4650,9 @@ createComponent(
       ]
 
       const mainInterface = `
-        <button id="offOn">${lampOn ? 'Turn Off' : 'Turn On'}</button>
+        <div style="text-align: center">
+          <button id="offOn">${lampOn ? 'Turn Off' : 'Turn On'}</button>
+        </div>
         ${lampOn
             ? `
               <div style="display: flex; justify-content: space-around">
@@ -4683,7 +4688,8 @@ createComponent(
                   : `
                     <div style="padding: 0 1em">
                       <h3>Save Electricity!</h3>
-                      <p>Automatically turn off lumin lights when you open your blinds: <button id="pairShaydLumin">Pair Shayd</button></p>
+                      <p>Automatically turn off lumin lights when you open your blinds: </p>
+                      <div style="margin:0.5em 0"><button id="pairShaydLumin">Pair with Shayd</button></div>
                       <h5 id="pairShaydLuminError"></h5>
                     </div>
                   `
@@ -4701,7 +4707,7 @@ createComponent(
               ? !inInternetLocation ? '<h3>Device Out Of Range</h3>'
                 : luminPaired
                   ? mainInterface
-                  : `<button id="pairLumin">Pair Device</button>`
+                  : `<div style="text-align: center"><button id="pairLumin">Pair Device</button></div>`
               : `<h3>Please enable blue tooth to pair local devices</h3>`
           }
 
@@ -4894,7 +4900,7 @@ createComponent(
           <p style="font-size: 0.9em; padding-left: 1em"><strong>A:</strong> In order to mine ₢rypto, all you need to do is click the <strong>Mine ₢rypto"</strong> button in the Money Miner interface. Each click will mine a new ₢rypto.</p>
 
           <p style="margin-top: 0.5em; padding-left: 1em"><strong>Q:</strong> How can I convert ₢rypto to $?</p>
-          <p style="font-size: 0.9em; padding-left: 1em"><strong>A:</strong> Exchanging ₢rypto is easy! Just download the <strong>Currency Xchange App</strong>, send ₢rypto to your new wallet, and start trading! </p>
+          <p style="font-size: 0.9em; padding-left: 1em"><strong>A:</strong> Exchanging ₢rypto is easy! Just download the <strong>Currency Xchange</strong> App, send ₢rypto to your new wallet, and start trading! </p>
 
           <p style="margin-top: 0.5em; padding-left: 1em"><strong>Q:</strong> Where can I learn more?</p>
           <p style="font-size: 0.9em; padding-left: 1em"><strong>A:</strong> Download the <strong>Personal Finance Educator</strong> app and check out the CryptoCurrency learning module!</p>
@@ -6134,7 +6140,7 @@ createComponent(
             ${
               !(wifiAvailable || findMeshPairing('gateLink', 'shayd'))
                 ? `
-                  <div style="margin: 0.5em 0; padding: 0.25em;width: 75%; background: #000; color: #fff; border: 2px dashed">
+                  <div style="margin: 0.5em 0; padding: 0.25em;width: 75%; border: 1px dashed">
                     <p>CANNOT RETRIEVE NATURAL SUNLIGHT SCHEDULE FROM SHAYD SERVER</p>
                     <p><strong style="text-decoration: underline">PLEASE CHECK DEVICE WIFI CONNECTION AND RELOAD SHAYD APP</strong></p>
                   </div>
@@ -8374,7 +8380,7 @@ function jbMarkup(device, disabled) {
         <h5 style="display: inline-block; padding: 0.25em; margin: 0.25em 0; background: #333; border: 1px solid">${device.wallet}</h4>
         <h4 style="margin: 0.4em 0">Balance: ₢ <span id="cryptoBalance-${device.wallet}">${device.balance}</span></h4>
         ${disabled
-          ? '<h5 style="text-align:center; padding: 1em">Cannot find device. Please ensure device is connected and powered "On"</h5>'
+          ? '<h5 style="text-align:center; padding: 1em">Cannot find device. Please ensure device is "paired" and powered "On"</h5>'
           : `
             <button id="enableMining">${device.active ? 'Disable' : 'Enable'} Autominer</button>
           `
