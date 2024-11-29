@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>YieldFarmer2</title>
+  <link rel="shortcut icon" type="image/x-icon" href="./favicon.svg" id="favicon">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000" />
+
+
+  <meta name="description" content="Welcome to YieldFarmer 2! As of last week this was the most downloaded game on AppMarket, and the most popular DeFi simulation game by far! This version has a lot of new features and bug fixes, so I'm really excited for you to play it!">
+  <meta name="keywords" content="yield, farmer, yield farmer, yieldfarmer, YieldFarmer2, yield farmer 2, incremental game, clicker, accumulation, game, art game, crypto, bitcoin, btc, eth, ethereum, defi, idle game, idle, html, web game, web, free, free game">
+
+
+  <style type="text/css">
+
+      body {
+        font-family: monospace;
+      }
+
+
+      button, select, label, input[type="range"], input[type="checkbox"], input[type="radio"] {
+        cursor: pointer;
+      }
+
+      button {
+        margin-bottom: 0.5em;
+        padding: 0.1em 0.5em;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      button:disabled {
+        user-select: none;
+        cursor: no-drop;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      h3 {
+        margin: 0;
+      }
+      h5 {
+        margin: 0.5em;
+      }
+
+
+
+/*      @media (prefers-color-scheme: dark) {
+        body {
+          background: #000;
+          color: #fff;
+        }
+
+        button {
+          background: #444;
+          color: #fff;
+        }
+      }*/
+  </style>
+</head>
+<body>
+    <div style="max-width: 600px; margin: auto; padding: 1em">
+      <div id="main" style="flex: 1; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between">
+
+        <div>
+          <h1>YieldFarmer 2</h1>
+        </div>
+
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; width: 100%">
+          <h1 style="text-align: center; margin-bottom: 0.4em">Crypto: <span id="currentScore">0.00</span></h1>
+          <button id="mineCrypto" style="font-size: 1.1em">Mine Crypto</button>
+
+          <div id="stake" class="hidden" style="display: flex; align-items: center; flex-direction: column; margin-top: 1em">
+            <h3>Stake (<span id="stakeYield">10.00%</span>/<span id="stakeTime">5.00s</span>)</h3>
+            <button id="stakeCrypto" style="margin-top: 0.5em">Stake <span id="stakeAmount">10<span></button>
+          </div>
+
+          <div id="protocol" class="hidden" style="margin-top: 1em; padding: 0 0.75em; display: flex; flex-direction: column; margin: auto;">
+            <h3 style="margin-bottom:0.4em">Protocol Upgrade</h3>
+            <button id="increaseAmount" disabled>Increase Stake Amount 100% (100) </button>
+            <button id="increaseYield" disabled>Increase Stake Yield 20% (100) </button>
+            <button id="decreaseTime" disabled>Decrease Stake Time 20% (100) </button>
+
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 2em">
+          <div>
+            <h5>Your High Score: <span id="highScore"></span></h5>
+            <h5>Global Score: <span id="globalHighScore"></span></h5>
+          </div>
+          <button id="gotoAbout" style="margin-bottom:0">About</button>
+        </div>
+      </div>
+
+      <div id="about" class="hidden" style="flex:1">
+        <button id="gotoMain">Back</button>
+
+        <h3>About</h3>
+        <p>Welcome to YieldFarmer 2! As of last week this was the most downloaded game on AppMarket, and the most popular DeFi simulation game by far! This version has a lot of new features and bug fixes, so I'm really excited for you to play it!</p>
+      </div>
+    </div>
+
+</body>
+
+
+
+<script type="module">
+  import {$, ls} from './$.js'
+
+    let globalHighScore = Math.max(
+      ls.get('__MOBILE_STATE')?.yieldFarmerGlobalHighScore || 19011.44,
+      ls.get('__YIELD_FARMER_2')?.global || 0,
+    )
+
+    let localHighScore = ls.get('__YIELD_FARMER_2')?.local || 0
+
+    function updateScores({ globalScore, localScore }) {
+      const scores = ls.get('__YIELD_FARMER_2') || {}
+      const mobileState = ls.get('__MOBILE_STATE')
+
+      if (globalScore) {
+        globalHighScore = globalScore
+        scores.global = globalScore
+        if (mobileState) {
+          mobileState.yieldFarmerGlobalHighScore = globalScore
+        }
+      }
+      if (localScore) {
+        localHighScore = localScore
+        scores.local = localScore
+      }
+
+
+      ls.set('__YIELD_FARMER_2', JSON.stringify(scores))
+      if (mobileState) {
+        ls.set('__MOBILE_STATE', JSON.stringify(mobileState))
+
+      }
+    }
+
+    $.id('highScore').innerHTML = localHighScore.toFixed(2)
+    $.id('globalHighScore').innerHTML = globalHighScore.toFixed(2)
+
+
+      let currentScore = 0
+      let unstakedAmount = 0
+      let stakeAmount = 10
+      let stakeYield = 0.1
+      let stakeTime = 5000
+      let stakeTimestamp = Date.now()
+      let staked = false
+
+      let yieldPrice = 100
+      let timePrice = 100
+      let amountPrice = 100
+
+      const update = () => {
+        $.id('currentScore').innerHTML = currentScore.toFixed(2)
+        if ($.id('stakeAmount')) $.id('stakeAmount').innerHTML = stakeAmount
+        $.id('stakeYield').innerHTML = (stakeYield * 100).toFixed(2) + '%'
+        $.id('stakeTime').innerHTML = (stakeTime/1000).toFixed(2) + 's'
+
+        if (currentScore >= 10) {
+          $.id('stake').classList.remove('hidden')
+        }
+        if (currentScore >= 100) {
+          $.id('protocol').classList.remove('hidden')
+        }
+
+        $.id('increaseAmount').disabled = currentScore < amountPrice
+        $.id('increaseYield').disabled = currentScore < yieldPrice
+        $.id('decreaseTime').disabled = currentScore < timePrice
+        $.id('stakeCrypto').disabled = currentScore < stakeAmount
+
+        if (staked) {
+          if (Date.now() < stakeTimestamp + stakeTime) {
+            $.id('stakeCrypto').disabled = true
+            $.id('stakeCrypto').innerHTML = `Unstake (${Math.floor(( stakeTimestamp + stakeTime - Date.now()) / 1000)}s)`
+          } else {
+            $.id('stakeCrypto').disabled = false
+            $.id('stakeCrypto').innerHTML = `Unstake ${(unstakedAmount).toFixed(2)}`
+          }
+        } else {
+          $.id('stakeCrypto').innerHTML = `Stake ${stakeAmount}`
+        }
+
+        if (currentScore > localHighScore) {
+          updateScores({localScore: currentScore})
+          $.id('highScore').innerHTML = currentScore.toFixed(2)
+        }
+
+        if (currentScore > globalHighScore) {
+
+          updateScores({globalScore: currentScore})
+          $.id('globalHighScore').innerHTML = currentScore.toFixed(2)
+        }
+      }
+
+      $.id('mineCrypto').onclick = () => {
+        currentScore += 1
+        update()
+      }
+
+      $.id('increaseAmount').onclick = () => {
+        currentScore -= amountPrice
+        amountPrice = Math.floor(amountPrice  * 1.5)
+        stakeAmount *= 2
+        $.id('increaseAmount').innerHTML = `Increase Stake Amount 100% (${amountPrice})`
+        update()
+      }
+      $.id('increaseYield').onclick = () => {
+        currentScore -= yieldPrice
+        yieldPrice = Math.floor(yieldPrice  * 1.5)
+        stakeYield *= 1.2
+        $.id('increaseYield').innerHTML = `Increase Stake Yield 20% (${yieldPrice})`
+        update()
+      }
+      $.id('decreaseTime').onclick = () => {
+        currentScore -= timePrice
+        timePrice = Math.floor(timePrice  * 1.5)
+        stakeTime *= 0.8
+        $.id('decreaseTime').innerHTML = `Decrease Stake Time 20% (${timePrice})`
+        update()
+      }
+
+      $.id('stakeCrypto').onclick = () => {
+        if (staked) {
+          staked = false
+          if (currentScore !== Infinity) {
+            currentScore += unstakedAmount
+          }
+          unstakedAmount = 0
+          update()
+        } else {
+          staked = true
+          if (currentScore !== Infinity) {
+            currentScore -= stakeAmount
+          }
+          unstakedAmount = stakeAmount * (1 + stakeYield)
+          stakeTimestamp = Date.now()
+          $.id('stakeCrypto').disabled = true
+          update()
+          setTimeout(() => {
+            try {
+              update()
+            } catch (e) {}
+          }, stakeTime)
+        }
+      }
+
+      setInterval(() => {
+        update()
+      }, 1000)
+
+      $.id('gotoAbout').onclick = () => {
+        $.id('main').classList.add('hidden')
+        $.id('about').classList.remove('hidden')
+      }
+
+      $.id('gotoMain').onclick = () => {
+        $.id('about').classList.add('hidden')
+        $.id('main').classList.remove('hidden')
+      }
+
+</script>
+</html>
