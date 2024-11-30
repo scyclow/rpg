@@ -36,7 +36,7 @@ export function createSource(waveType = 'square', startingFreq=3000) {
 
   let volume = 0
   const smoothGain = (value, timeInSeconds=0.001) => {
-    volume = value
+    volume = value || 0
     if (globalState.soundMuted) return
 
     gain.gain.setTargetAtTime(

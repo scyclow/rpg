@@ -1840,8 +1840,25 @@
       $.id('sleepModal').classList.add('invisible')
     }
 
-    if (primarySM.ctx.currentNode === 'intro.1') primarySM.next('intro.1')
-    if (primarySM.ctx.currentNode === 'intro.2') primarySM.next('bedFresh')
+    if (primarySM.ctx.currentNode === 'intro') {
+      primarySM.enqueue('intro.0')
+      setTimeout(() =>  primarySM.enqueue('intro.1'), 1000)
+      setTimeout(() =>  primarySM.enqueue('intro.2'), 2800)
+      setTimeout(() =>  primarySM.enqueue('bedFresh'), 4600)
+    }
+    if (primarySM.ctx.currentNode === 'intro.0') {
+      primarySM.enqueue('intro.1')
+      setTimeout(() =>  primarySM.enqueue('intro.2'), 1000)
+      setTimeout(() =>  primarySM.enqueue('bedFresh'), 2800)
+    }
+    if (primarySM.ctx.currentNode === 'intro.1') {
+      primarySM.enqueue('intro.2')
+      setTimeout(() =>  primarySM.enqueue('bedFresh'), 1000)
+    }
+    if (primarySM.ctx.currentNode === 'intro.2') {
+      primarySM.goto('bedFresh.1')
+    }
+    if (primarySM.ctx.currentNode === 'bedFresh') primarySM.goto('bedFresh.1')
     const $content = $.id('mainConsoleContent')
     const $nextActions = $.id('nextActions')
 
