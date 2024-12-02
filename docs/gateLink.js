@@ -254,7 +254,7 @@ createComponent(
       setTimeout(() => ctx?.buzzStop?.(), ms)
     }
 
-    ctx.$('#door').onmousedown = ctx.buzzStart
+    ctx.$('#door').onmousedown = () => ctx.buzzStart()
 
 
     ctx.$('#door').onmouseup = () => {

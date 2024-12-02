@@ -24,6 +24,11 @@ export const ssoNodes = {
       2: 'forgotPassword',
       3: 'accountLockout',
       4: 'thankYou',
+      5: 'accountLockout',
+      6: 'accountLockout',
+      7: 'accountLockout',
+      8: 'accountLockout',
+      9: 'accountLockout',
       '*': 'intro'
     }),
   },

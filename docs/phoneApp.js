@@ -387,7 +387,7 @@ function setCallTime(ctx, phone) {
 function phoneBehavior(ctx) {
   const userData = ctx.state.userData[ctx.state.currentUser]
 
-  if (userData.previouslyDialed && userData.previouslyDialed.length >= 2) {
+  if (ctx.state.currentUser === 0 || (userData.previouslyDialed && userData.previouslyDialed.length >= 2)) {
     ctx.$('#previousCalls').classList.remove('hidden')
   }
 

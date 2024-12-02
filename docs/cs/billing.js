@@ -18,6 +18,11 @@ export const billingCSNodes = {
       2: 'checkBalance',
       3: 'disputeBalance',
       4: 'reactivateAccount',
+      5: 'mainMenu',
+      6: 'checkBalance',
+      7: 'checkBalance',
+      8: 'checkBalance',
+      9: 'checkBalance',
       0: 'representative',
       '*': 'mainMenu'
     })

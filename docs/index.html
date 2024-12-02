@@ -465,7 +465,7 @@
           text: () => `It counts down from ${formatTime(globalState.countdownTimeLeft)}`,
           before() {
             setTimeout(() => {
-              if ($phoneDevice.state.dataPlanActivated) {
+              if ($phoneDevice.state.dataPlanActivated && !globalState.sentFunTimeText) {
                 $phoneDevice.newText(funTimeText)
                 globalState.sentFunTimeText = true
               }
@@ -1425,7 +1425,7 @@
       bathroomSink: [
         {
           text: 'You wave your hands in front of the sink, but nothing happens',
-          wait: 1500
+          wait: 1600
 
         },
         {
