@@ -46,11 +46,6 @@ export function createSource(waveType = 'square', startingFreq=3000) {
     )
   }
 
-  const stop = () => {
-    source.stop()
-  }
-
-
   const mute = () => {
     gain.gain.setTargetAtTime(
       Math.min(0, MAX_VOLUME),
@@ -66,7 +61,13 @@ export function createSource(waveType = 'square', startingFreq=3000) {
     )
   }
 
-  const src = { source, gain, panner,smoothFreq, smoothGain, smoothPanner, originalSrcType: source.type, stop, mute, unmute }
+  const src = {
+    source, gain, panner,smoothFreq, smoothGain, smoothPanner, originalSrcType: source.type, mute, unmute,
+    stop() {
+      source.stop()
+      this.isStopped = true
+    }
+  }
 
   allSources.push(src)
 

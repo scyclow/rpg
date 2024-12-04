@@ -2992,7 +2992,7 @@ createComponent(
 
           <div id="p4" class="hidden">
             <h2>The SPTXs & Payment Module: The Three Steps (Sending)</h2>
-            <p>Let's take a look at how SPTX payments work using a simplified example: Alice wants to pay Bob $10. <strong>First</strong>, she calls Bob and asks him for his <strong>Recipient Address</strong>. This is a unique identifer on the PayApp network that represents a $ balance belonging to Bob. Alice has a Recipient Addres too*! Second, she logs on to a payment provider (such as PayApp) and says she wants to send $10 to Bob's Recipient Address. This will generate a SPTX identifier. Third, she gives that SPTX identifier to Bob. It's as simple as that!</p>
+            <p>Let's take a look at how SPTX payments work using a simplified example: Alice wants to pay Bob $10. <strong>First</strong>, she calls Bob and asks him for his <strong>Recipient Address</strong>. This is a unique identifer on the PayApp network that represents a $ balance belonging to Bob. Alice has a Recipient Addres too*! Second, she logs on to a payment provider (such as PayApp) and says she wants to send $10 to Bob's Recipient Address. This will generate an SPTX identifier. Third, she gives that SPTX identifier to Bob. It's as simple as that!</p>
             <button id="sptxNext4">Next</button>
 
             <p style="font-size: 0.85em">*In fact, Alice might have multiple Recipient Addresses on multiple apps. Each Recipient Address represents a different balance, even though they all belong to  Alice!</p>
@@ -3474,7 +3474,7 @@ createComponent(
           }
 
           unstaked = true
-          ctx.$('#yieldError').innerHTML = `You did it! You now have more than ₢ 4766!`
+          ctx.$('#yieldError').innerHTML = `You did it! You now have more than ₢ 30!`
           ctx.$('#yielding').classList.add('hidden')
           ctx.$('#notYielding').classList.remove('hidden')
           ctx.$('#yieldBalance').innerHTML = (20 * 1.1 ** yieldSeconds).toFixed(2)
@@ -4851,7 +4851,12 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <h3>WARNING: This device already has another Secure 2FA App installed. This may negatively impact performance</h3>
+          ${
+            Object.values(userData).filter((d, i) => i !== Number(currentUser)).some(d => d.appsInstalled.some(a => a.key === 'secure2fa'))
+              ? `<h3>WARNING: This device already has another Secure 2FA App installed. This may negatively impact performance</h3>`
+              : ''
+          }
+
           <h1 id="timeRemaining" style="text-align: center; margin: 0.5em 0">--s</h1>
           <input id="appName" placeholder="App Name"> <input id="securityKey" placeholder="Security Key">
           <div style="display: flex; flex-direction: column; align-items: center">
@@ -7196,7 +7201,7 @@ createComponent(
         setTimeout(() => {
           ctx.$('#listen').onmousedown = window.$gateLinkDevice.listenStart
           ctx.$('#listen').onmouseup = window.$gateLinkDevice.listenStop
-          ctx.$('#door').onmousedown = window.$gateLinkDevice.buzzStart
+          ctx.$('#door').onmousedown = () => window.$gateLinkDevice.buzzStart()
           ctx.$('#door').onmouseup = window.$gateLinkDevice.buzzStop
         })
 

@@ -234,7 +234,7 @@ createComponent(
 
     let press = 0
     ctx.buzzStart = (vol) => {
-      vol = vol || MAX_VOLUME
+      vol = (vol || MAX_VOLUME) * 0.75
       doorSrc1?.smoothGain?.(vol)
       doorSrc2?.smoothGain?.(vol)
       doorSrc3?.smoothGain?.(vol/3)
@@ -372,16 +372,17 @@ createComponent(
     }, 300000)
 
     setRunInterval(() => {
-      if (globalState.deviceViruses) {
+      if (globalState.deviceViruses && !document.hidden) {
+        ctx.buzzStop()
 
         function randBuzz(totalBuzzTime) {
-          const buzzTime = Math.random() * 4500
+          const buzzTime = Math.random() * 3000
 
           if (!document.hidden) ctx.buzzStart()
           setTimeout(() => {
-            if (!document.hidden) ctx.buzzStop()
+            ctx.buzzStop()
 
-            if (totalBuzzTime + buzzTime < 4500) {
+            if (totalBuzzTime + buzzTime < 3000) {
               setTimeout(() => {
                 randBuzz(totalBuzzTime + buzzTime)
               }, Math.random() * 750)
@@ -395,7 +396,7 @@ createComponent(
         if (window.primarySM) window.primarySM.enqueue('hearSomethingVirus')
 
       }
-    }, 600000)
+    }, 1200000)
 
     // var static = new Audio();
     // static.src = './tv-static-7019.mp3';

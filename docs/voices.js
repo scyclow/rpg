@@ -27,7 +27,7 @@ export function say(voice, txt) {
   if (globalState.soundMuted) return
 
   const utterance = new window.SpeechSynthesisUtterance(txt)
-  utterance.volume = 0.88
+  utterance.volume = 0.7
   utterance.voice = voice
   window.speechSynthesis.speak(utterance)
 }

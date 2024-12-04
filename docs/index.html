@@ -881,7 +881,7 @@
           text: ({ctx}) => `The front door is closed`,
           wait: 1800
         },
-        {
+        globalState.smartLockOpen ? null : {
           text: `Above the doorknob is a QR code along with the text "Powered by <strong style="text-decoration: underline">SmartLock</strong> Technology"`,
           async follow({ctx}) {
             if (!ctx.state.envelope1PickedUp && !ctx.state.envelope2PickedUp) {
@@ -955,15 +955,29 @@
           } else {
             setColors('var(--dark-color)', 'var(--light-color)')
           }
+
+          if (tmp.src1 && tmp.src2) {
+            tmp.src1.smoothGain(0.000001, 1)
+            tmp.src2.smoothGain(0.000001, 1)
+
+            setTimeout(() => {
+              tmp.src1.stop()
+              tmp.src2.stop()
+            }, 3000)
+          }
         },
-        text: `You close the door.`
+        text: `You close the door`
       },
 
       reenterApartment: {
         before({ ctx }) {
           globalState.location = 'hallway'
 
-          $consoleTemperature.innerHTML = ctx.state.checkedThermostatTwice ? ' — 84˚ [CO2 LEVEL: HAZARDOUS]' : ' — 99˚'
+          if (ctx.state.checkedThermostat) {
+            $consoleTemperature.innerHTML = ctx.state.checkedThermostatTwice ? ' — 84˚ [CO2 LEVEL: HAZARDOUS]' : ' — 99˚'
+          } else {
+            $consoleTemperature.innerHTML = ''
+          }
           $consoleTime.innerHTML = ` — ${formatTime(globalState.countdownTimeLeft)}`
 
           if (globalState.lightsOn) {
@@ -971,6 +985,16 @@
             setColors(hsvToRGB(light1), hsvToRGB(light2))
           } else {
             setColors('var(--dark-color)', 'var(--light-color)')
+          }
+
+          if (tmp.src1 && tmp.src2) {
+            tmp.src1.smoothGain(0.000001, 1)
+            tmp.src2.smoothGain(0.000001, 1)
+
+            setTimeout(() => {
+              tmp.src1.stop()
+              tmp.src2.stop()
+            }, 3000)
           }
         },
         text: `You reenter your apartment and close the door`
@@ -980,14 +1004,13 @@
         {
           before() {
             try {
-              tmp.src1 = createSource('sine')
-              tmp.src2 = createSource('sine')
+              if (!tmp.src1?.isStopped) {
+                tmp.src1 = createSource('sine', 100)
+                tmp.src2 = createSource('sine', 100.1)
 
-              tmp.src1.smoothFreq(100)
-              tmp.src2.smoothFreq(100.1)
-
-              tmp.src1.smoothGain(MAX_VOLUME*0.75, 1.5)
-              tmp.src2.smoothGain(MAX_VOLUME*0.75, 1.5)
+                tmp.src1.smoothGain(MAX_VOLUME, 1.5)
+                tmp.src2.smoothGain(MAX_VOLUME, 1.5)
+              }
             } catch (e) {
               console.log(e)
             }
@@ -1009,11 +1032,10 @@
         ctx.state.envelope1PickedUp ? null : {text: 'Pick Up First Envelope', value: 'pickupEnvelope1'},
         ctx.state.envelope2PickedUp ? null : {text: 'Pick Up Second Envelope', value: 'pickupEnvelope2'},
       ].filter(exists),
-      after() {
-        if (tmp.src1 && tmp.src2) {
+      after({ur}) {
+        if (tmp.src1 && tmp.src2 && !['openDoorUnlocked', 'frontDoorListen'].includes(ur)) {
           tmp.src1.smoothGain(0.000001, 1)
           tmp.src2.smoothGain(0.000001, 1)
-
           setTimeout(() => {
             tmp.src1.stop()
             tmp.src2.stop()
@@ -1647,31 +1669,41 @@
     }),
 
 
-    openDoorUnlocked: {
-      before() {
-        setColors('#000', '#fff')
-      },
-      text: `You turn the doorknob and slowly pull the door open. You stare into darkness`,
-      before() {
-        try {
-          tmp.src1 = createSource('sine')
-          tmp.src2 = createSource('sine')
+    openDoorUnlocked: [
+      {
+        text: ({ctx}) => `You turn the doorknob and${ctx.state.leftApartment ? '' : ' slowly'} pull the door open`,
+        handler: ({ur}) => ur,
+        actions: ({ctx}) => [
+          {text: 'Leave apartment', value: 'externalHallway'},
+          {text: 'Close Door', value: 'closeDoor'},
+        ],
+        before({ctx}) {
+          if (ctx.state.leftApartment) setColors('#fff', '#000')
+          else setColors('#000', '#fff')
 
-          tmp.src1.smoothFreq(100)
-          tmp.src2.smoothFreq(100.1)
+          try {
+            if (!tmp.src1 || tmp.src1.isStopped) {
+              tmp.src1 = createSource('sine', 100)
+              tmp.src2 = createSource('sine', 100.1)
 
-          tmp.src1.smoothGain(MAX_VOLUME, 2)
-          tmp.src2.smoothGain(MAX_VOLUME, 2)
-        } catch (e) {
-          console.log(e)
-        }
+              tmp.src1.smoothGain(MAX_VOLUME * 1.25, 1.5)
+              tmp.src2.smoothGain(MAX_VOLUME * 1.25, 1.5)
+            }
+          } catch (e) {
+            console.log(e)
+          }
+        },
+        wait: 2500,
       },
-      handler: ({ur}) => ur,
-      actions: ({ctx}) => [
-        {text: 'Leave apartment', value: 'externalHallway'},
-        {text: 'Close Door', value: 'closeDoor'},
-      ]
-    },
+      {
+        text: ({ctx}) => ctx.state.leftApartment ? '' : `You stare into darkness`,
+        handler: ({ur}) => ur,
+        actions: ({ctx}) => [
+          {text: 'Leave apartment', value: 'externalHallway'},
+          {text: 'Close Door', value: 'closeDoor'},
+        ]
+      },
+    ],
 
     ...group({
       externalHallway: [
@@ -1686,16 +1718,32 @@
             if (ctx.state.checkedThermostat) $consoleTemperature.innerHTML = ' — ??˚'
             if (ctx.state.checkedAlarmClock) $consoleTime.innerHTML = ` — ??:??:??`
 
-            setTimeout(() => {
-              setColors('#fff', '#000')
-            }, 2300)
+            if (!ctx.state.leftApartment) {
+              setTimeout(async () => {
+                ctx.state.leftApartment = true
+                document.body.style.transition = '0s'
+                setColors('#ddd', '#000')
+                await waitPromise(50)
+                setColors('#111', '#fff')
+                await waitPromise(100)
+
+
+                setColors('#ddd', '#000')
+                await waitPromise(50)
+                setColors('#333', '#fff')
+
+                await waitPromise(50)
+                setColors('#fff', '#000')
+                document.body.style.transition = '0.7s'
+              }, 2300)
+            }
           },
           text: 'You exit your apartment and enter a hallway',
-          wait: 1800,
+          wait: 2100,
         },
         {
-          text: 'A series of LED lights flicker on and glare overhead',
-          wait: 1800
+          text: ({ctx}) => ctx.state.leftApartment ? '' : 'A series of LED lights flicker on and glare overhead',
+          wait: 2100
         },
         {
           text: 'Pipes jut out from the ceiling and recede into the narrow, white walls'
@@ -1729,7 +1777,7 @@
       handler: ({ur}) => ur,
       actions: [
         { text: 'Back', value: 'externalHallwayBack'},
-        { text: 'Elevator', value: '', qr: { screen: 'appMarket', appMarketPreSearch: 'elevate'}},
+        { text: 'Elevator', value: 'elevator', qr: { screen: 'appMarket', appMarketPreSearch: 'elevate'}},
         { text: 'Phone', value: 'openPhone'},
       ]
     }),
@@ -1737,7 +1785,7 @@
     stairway: [
       {
         text: `You approach the stairway door`,
-        wait: 1500,
+        wait: 1800,
       },
       {
         text: `You read a sticker at eye level: "<strong style="font-size: 1.2em; text-decoration: underline">NO RE-ENTRY</strong>"`,
@@ -1754,29 +1802,26 @@
       enterStairway: {
         before({ ctx }) {
           globalState.location = 'stairway'
-          setColors('#000', '#c1bf9f')
+          setColors('#000', '#939171')
 
           if (tmp.src1 && tmp.src2) {
-            tmp.src1.smoothGain(0.000001, 1)
-            tmp.src2.smoothGain(0.000001, 1)
-
             setTimeout(() => {
               tmp.src1.stop()
               tmp.src2.stop()
-            }, 10000)
+            }, 1500)
           }
 
         },
         text: `You enter the stairway and hear the door slam shut behind you`,
         async follow() {
-          await waitPromise(2000)
+          await waitPromise(2500)
           return 'enterStairway1'
         }
       },
       enterStairway1: {
         text: `The sound echos off the cement walls, spiraling around the staircase in both directions`,
         async follow() {
-          await waitPromise(2000)
+          await waitPromise(2500)
           return 'enterStairway2'
         }
       },
@@ -1868,7 +1913,7 @@
       setColors('#fff', '#000')
 
     } else if (globalState.location === 'stairway') {
-      setColors('#000', '#c1bf9f')
+      setColors('#000', '#939171')
     } else if (globalState.lightsOn) {
       const { light1, light2 } = globalState
       setColors(hsvToRGB(light1), hsvToRGB(light2))
