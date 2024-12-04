@@ -221,6 +221,16 @@ p.preVisible {
   scroll-behavior: smooth;
 }
 
+.blink {
+  animation: Blink 1.5s steps(2, start) infinite;
+}
+
+@keyframes Blink {
+  to {
+    visibility: hidden;
+  }
+}
+
 @keyframes Intro {
   0% {
     max-height: 0px;

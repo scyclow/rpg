@@ -2500,23 +2500,23 @@ createComponent(
           <h4 style="margin-top: 2em; margin-bottom: 0.5em">Education Modules:</h4>
 
           <div>
-            <button id="intro">${educatorModulesCompleted.intro ? 'Review' : 'Start'}</button> <strong>Introduction</strong> (${educatorModulesCompleted.intro ? '<em>Completed!</em>' : '<strong>10 XP</strong>'})
+            <button id="intro">${educatorModulesCompleted.intro ? 'Review' : 'Start'}</button> <strong>Introduction</strong> (${educatorModulesCompleted.intro ? '<em>Completed!</em>' : '<strong>+10 XP</strong>'})
           </div>
 
           <div>
-            <button id="history" ${!educatorModulesCompleted.intro ? 'disabled' : ''}>${educatorModulesCompleted.history ? 'Review' : !educatorModulesCompleted.intro ? 'Locked' : 'Start'}</button> <strong>The History of $</strong> (${!educatorModulesCompleted.intro ? '<strong>Needs 10XP!</strong>' : educatorModulesCompleted.history ? '<em>Completed!</em>' : '<strong>20 XP</strong>'})
+            <button id="history" ${!educatorModulesCompleted.intro ? 'disabled' : ''}>${educatorModulesCompleted.history ? 'Review' : !educatorModulesCompleted.intro ? 'Locked' : 'Start'}</button> <strong>The History of $</strong> (${!educatorModulesCompleted.intro ? '<strong>Needs 10XP!</strong>' : educatorModulesCompleted.history ? '<em>Completed!</em>' : '<strong>+20 XP</strong>'})
           </div>
 
           <div>
-            <button id="system" ${!educatorModulesCompleted.intro ? 'disabled' : ''}>${educatorModulesCompleted.system ? 'Review' : !educatorModulesCompleted.intro ? 'Locked' : 'Start'}</button> <strong>The $ System</strong> (${!educatorModulesCompleted.intro ? '<strong>Needs 10XP!</strong>' : educatorModulesCompleted.system ? '<em>Completed!</em>' : '<strong>20 XP</strong>'})
+            <button id="system" ${!educatorModulesCompleted.intro ? 'disabled' : ''}>${educatorModulesCompleted.system ? 'Review' : !educatorModulesCompleted.intro ? 'Locked' : 'Start'}</button> <strong>The $ System</strong> (${!educatorModulesCompleted.intro ? '<strong>Needs 10XP!</strong>' : educatorModulesCompleted.system ? '<em>Completed!</em>' : '<strong>+20 XP</strong>'})
           </div>
 
           <div>
-            <button id="sptx" ${educatorModulesCompleted.history && educatorModulesCompleted.system ? '' : 'disabled'}>${educatorModulesCompleted.sptx ? 'Review' : educatorModulesCompleted.history && educatorModulesCompleted.system ? 'Start' : 'Locked'}</button> <strong>SPTXs & Payment</strong> (${educatorModulesCompleted.sptx ? '<em>Completed!</em>' : educatorModulesCompleted.history && educatorModulesCompleted.system ? '<strong>40 XP</strong>' : '<strong>Needs 50XP!</strong>'})
+            <button id="sptx" ${educatorModulesCompleted.history && educatorModulesCompleted.system ? '' : 'disabled'}>${educatorModulesCompleted.sptx ? 'Review' : educatorModulesCompleted.history && educatorModulesCompleted.system ? 'Start' : 'Locked'}</button> <strong>SPTXs & Payment</strong> (${educatorModulesCompleted.sptx ? '<em>Completed!</em>' : educatorModulesCompleted.history && educatorModulesCompleted.system ? '<strong>+40 XP</strong>' : '<strong>Needs 50XP!</strong>'})
           </div>
 
           <div>
-            <button id="crypto" ${educatorModulesCompleted.sptx ? '' : 'disabled'}>${educatorModulesCompleted.crypto ? 'Review' : educatorModulesCompleted.sptx ? 'Start' : 'Locked'}</button> <strong>CryptoCurrency</strong> (${educatorModulesCompleted.crypto ? '<em>Completed!</em>' : educatorModulesCompleted.sptx ? '<strong>80 XP</strong>' : '<strong>Needs 90XP!</strong>'})
+            <button id="crypto" ${educatorModulesCompleted.sptx ? '' : 'disabled'}>${educatorModulesCompleted.crypto ? 'Review' : educatorModulesCompleted.sptx ? 'Start' : 'Locked'}</button> <strong>CryptoCurrency</strong> (${educatorModulesCompleted.crypto ? '<em>Completed!</em>' : educatorModulesCompleted.sptx ? '<strong>+80 XP</strong>' : '<strong>Needs 90XP!</strong>'})
           </div>
 
           ${educatorModulesCompleted.intro && educatorModulesCompleted.history && educatorModulesCompleted.system && educatorModulesCompleted.sptx && educatorModulesCompleted.crypto
@@ -3029,13 +3029,13 @@ createComponent(
 
           <div id="p9" class="hidden">
             <h2>The SPTXs & Payment Module: Tutorial</h2>
-            <p>In the following tutorial, you will play the role of Charlie, who wants to send $ from his Currency Exchange account to his PayApp account.</p>
+            <p>In the following tutorial, you will play the role of Charlie, who wants to send $ from his <strong>Currency Xchange</strong> account to his <strong>PayApp</strong> account.</p>
             <button id="sptxNext9">Start Turorial</button>
           </div>
 
           <div id="p10" class="hidden">
             <h2>The SPTXs & Payment Module: Tutorial (1/3)</h2>
-            <p>Let's start in the "Receive" tab on PayApp. This is the address you will send the $ to. <strong>Be sure to copy the Recipient Address before advancing to the next step!</strong></p>
+            <p>Let's start in the "Receive" tab on <strong>PayApp</strong>. This is the address you will send the $ to. *<strong>Be sure to copy the Recipient Address before advancing to the next step!</strong>*</p>
 
             <div style="border: 1px solid; padding: 0.25em">
               <h2>PayApp</h2>
@@ -3053,12 +3053,15 @@ createComponent(
             <div style="margin-top: 0.5em; text-align: center">
               <em style="font-size: 0.75em">NOTE: This is a FAKE ACCOUNT for EDUCATIONAL PURPOSES ONLY. Any REAL $ sent to this account will be lost.</em>
             </div>
+
+            <p>Okay! Now let's switch over to the <strong>Currency Xchange</strong> app and send the $</p>
             <button id="sptxNext10" style="margin-top: 0.5em">Continue</button>
           </div>
 
           <div id="p11" class="hidden">
             <h2>The SPTXs & Payment Module: Tutorial (2/3)</h2>
-            <p>Now, use your PayApp $ Recipient Address from the previous step to generate a SPTX for $10. <strong>Remember not to lose your SPTX!</strong></p>
+            <p>Here we are in the <strong>Currency Xchange</strong> App!</p>
+            <p>Now, use your <strong>PayApp</strong> $ Recipient Address from the previous step to generate a SPTX for $10. <strong>Remember not to lose your SPTX!</strong></p>
 
             <div style="border: 1px solid; padding: 0.25em">
               <h2>Currency Xchange</h2>
@@ -3076,6 +3079,10 @@ createComponent(
                 <input id="sptxInput" placeholder="SPTX" type="number" style="width: 11em"> <button id="exchangeProcessSPTX">PROCESS</button>
                 <h4 id="sptxError3"></h4>
               </div>
+            </div>
+
+            <div style="margin-top: 0.5em; text-align: center">
+              <em style="font-size: 0.75em">NOTE: This is a FAKE ACCOUNT for EDUCATIONAL PURPOSES ONLY. Any REAL $ sent to this account will be lost.</em>
             </div>
 
             <button id="sptxNext11" style="margin-top: 0.5em" disabled>Continue</button>
@@ -3096,6 +3103,10 @@ createComponent(
                 <button id="processSPTX2">Process SPTX</button>
               </div>
               <h5 id="sptxError4"></h5>
+            </div>
+
+            <div style="margin-top: 0.5em; text-align: center">
+              <em style="font-size: 0.75em">NOTE: This is a FAKE ACCOUNT for EDUCATIONAL PURPOSES ONLY. Any REAL $ sent to this account will be lost.</em>
             </div>
 
             <button id="sptxNext12" style="margin-top: 0.5em" disabled>Continue</button>
@@ -3135,7 +3146,7 @@ createComponent(
           }
         }
         ctx.$('#exchangeProcessSPTX').onclick = () => {
-          ctx.$('#sptxError3').innerHTML = `Oops! You're trying to send $ back to your Currency Xchange account! You want to send it to your PayApp account in the next step!`
+          ctx.$('#sptxError3').innerHTML = `Oops! You're trying to send $ back to your Currency Xchange account! Let's process that SPTX in PayApp on the next step!`
         }
 
         ctx.$('#processSPTX2').onclick = () => {
@@ -3262,7 +3273,6 @@ createComponent(
             <button id="cryptoNext7">Next</button>
           </div>
 
-
           <div id="p8" class="hidden">
             <h2>CryptoCurrency: Generating Wealth Part I: Mining</h2>
             <p>As we said before, there are various consensus algorithms that provide rewards for participating in the network's decentralization. The popular <strong>Money Miner</strong> wallet application makes it dead simple to get started mining ₢rypto. Try mining 20 ₢rypto below:</p>
@@ -3289,6 +3299,10 @@ createComponent(
             <h2 style="margin: 0.5em" id="mineMessage"></h2>
 
             <button id="cryptoNext8">Next</button>
+
+            <div style="margin-top: 0.5em; text-align: center">
+              <em style="font-size: 0.75em">NOTE: This is a FAKE ACCOUNT for EDUCATIONAL PURPOSES ONLY. Any REAL $ sent to this account will be lost.</em>
+            </div>
           </div>
 
           <div id="p9" class="hidden">
@@ -3315,7 +3329,12 @@ createComponent(
                 </div>
               </div>
             </div>
+
+
             <button id="cryptoNext9">Next</button>
+            <div style="margin-top: 0.5em; text-align: center">
+              <em style="font-size: 0.75em">NOTE: This is a FAKE ACCOUNT for EDUCATIONAL PURPOSES ONLY. Any REAL $ sent to this account will be lost.</em>
+            </div>
           </div>
 
           <div id="p10" class="hidden">
@@ -3400,6 +3419,10 @@ createComponent(
 
 
             <div style="display: inline-block; padding: 0.25em; border: 1px solid; text-align: center; margin-top: 1em"><strong>Learning module sponsored by: <br>Currency Xchange [PREMIUM]</strong></div>
+
+            <div style="margin-top: 0.5em; text-align: center">
+              <em style="font-size: 0.75em">NOTE: This is a FAKE ACCOUNT for EDUCATIONAL PURPOSES ONLY. Any REAL $ sent to this account will be lost.</em>
+            </div>
           </div>
 
 
@@ -4632,7 +4655,7 @@ createComponent(
         ctx.$('#journalError').innerHTML = 'Logging Dream. Please wait...'
 
         setTimeout(() => {
-          if (wifiAvailable && inInternetLocation) {
+          if (hasInternet) {
             ctx.$('#journalError').innerHTML = 'DREAM PROCESSED SUCCESSFULLY'
             ctx.$('#journalText').value = ''
 
@@ -5999,7 +6022,7 @@ createComponent(
           <div>${jailbrokenApps.toastr ? jbMarkup(globalState.cryptoDevices.toastr, !bluetoothEnabled || !toastrPaired || !inInternetLocation) : ''}</div>
           ${
             bluetoothEnabled
-              ? toastrPaired ? mainInterface : `<button id="pairToaster">Pair Device</button>`
+              ? toastrPaired ? mainInterface : `<button id="pairToaster" style="align-self: center; margin-top: 0.5em">Pair Device</button>`
               : `<h3>Must enable bluetooth permissions in Home/Settings</h3>`
           }
         </div>
