@@ -3,248 +3,91 @@
 <head>
   <meta charset="utf-8">
   <title></title>
+
+  <style type="text/css">
+    button {
+      cursor: pointer;
+    }
+
+
+  </style>
 </head>
 <body>
-  <button onclick="precumSound3()">precum</button>
-  <button onclick="orgasmSound2()">orgasm</button>
-  <input id="content">
+  <button id="buzz">buzz</button>
+  <button id="phoneKey">phoneKey</button>
+  <input id="content" style="width: 300px">
   <main id="main"></main>
 
   <button onclick="window.speechSynthesis.cancel()">CANCEL</button>
 
 </body>
 
-<script type="text/javascript">
-  let voices
+<script type="module">
 
-const getVoices = () => {
-  try {
-    voices = window.speechSynthesis.getVoices()
-    setTimeout(() => {
-      if (!voices.length) getVoices()
-      else {
-        voices.forEach((v, i) => {
-          document.getElementById('main').innerHTML += `
-            <div>${i}<input type="checkbox"></input> <button onclick="speak(${i})">${v.name}</button> ${v.lang} -- ${v.voiceURI}</div>
-          `
-        })
-      }
-    }, 200)
-  } catch(e) {
-    console.log(e)
+  import {say, voices} from './voices.js'
+  import {createSource, MAX_VOLUME} from './audio.js'
+
+
+  const getVoices = async () => {
+    try {
+      (await voices).forEach((v, i) => {
+        document.getElementById('main').innerHTML += `
+          <div>${i}<input type="checkbox"></input> <button onclick="speak(${i})">${v.name}</button> ${v.lang} -- ${v.voiceURI}</div>
+        `
+      })
+
+    } catch(e) {
+      console.log(e)
+    }
   }
-}
-getVoices()
+  getVoices()
 
-document.getElementById('content').value = 'hello, sexy paypig'
+  document.getElementById('content').value = 'hello, you have reached the phone support menu'
 
-function speak(i) {
-  const content = document.getElementById('content').value
-  const utterance = new window.SpeechSynthesisUtterance(content)
-  utterance.volume = 0.88
-  utterance.voice = voices[i]
-  window.speechSynthesis.speak(utterance)
+  window.speak = async function speak(i) {
+    const content = document.getElementById('content').value
+    const _voices = await voices
 
-}
-
-//79
-
-
-const MAX_VOLUME = 0.04
-
-const allSources = []
-function createSource(waveType = 'square') {
-  const AudioContext = window.AudioContext || window.webkitAudioContext
-  const ctx = new AudioContext()
-
-  const source = ctx.createOscillator()
-  const gain = ctx.createGain()
-  const panner = new StereoPannerNode(ctx)
-
-  source.connect(gain)
-  gain.connect(panner)
-  panner.connect(ctx.destination)
-
-  gain.gain.value = 0
-  source.type = waveType
-  source.frequency.value = 3000
-  source.start()
-
-  const smoothFreq = (value, timeInSeconds=0.00001, overridePaused=false) => {
-    source.frequency.exponentialRampToValueAtTime(
-      value,
-      ctx.currentTime + timeInSeconds
-    )
+    say(_voices[i], content)
   }
 
-  const smoothPanner = (value, timeInSeconds=0.00001) => {
-    panner.pan.exponentialRampToValueAtTime(
-      value,
-      ctx.currentTime + timeInSeconds
-    )
+
+
+  const doorSrc1 = createSource('sawtooth', 150)
+  const doorSrc2 = createSource('sine', 300)
+  const doorSrc3 = createSource('sine', 900)
+  const doorSrc4 = createSource('sine', 150)
+
+  const phoneKeySerc1 = createSource('sine', 852)
+  const phoneKeySerc2 = createSource('sine', 1477)
+
+
+  document.getElementById('buzz').onmousedown = () => {
+    const vol = MAX_VOLUME * 0.75
+    doorSrc1?.smoothGain?.(vol)
+    doorSrc2?.smoothGain?.(vol)
+    doorSrc3?.smoothGain?.(vol/3)
+    doorSrc4?.smoothGain?.(vol)
   }
 
-  const smoothGain = (value, timeInSeconds=0.00001) => {
-    gain.gain.setTargetAtTime(
-      Math.min(value, MAX_VOLUME),
-      ctx.currentTime,
-      timeInSeconds
-    )
+  document.getElementById('buzz').onmouseup = () => {
+    doorSrc1?.smoothGain?.(0)
+    doorSrc2?.smoothGain?.(0)
+    doorSrc3?.smoothGain?.(0)
+    doorSrc4?.smoothGain?.(0)
   }
 
-  const src = { source, gain, panner,smoothFreq, smoothGain, smoothPanner, originalSrcType: source.type }
 
-  allSources.push(src)
+  document.getElementById('phoneKey').onmousedown = () => {
+    phoneKeySerc1.smoothGain(MAX_VOLUME)
+    phoneKeySerc2.smoothGain(MAX_VOLUME)
+  }
 
-  return src
-}
+  document.getElementById('phoneKey').onmouseup = () => {
+    phoneKeySerc1.smoothGain(0)
+    phoneKeySerc2.smoothGain(0)
+  }
 
-
-const base = 1.25//0.75 + Math.random() * 1.25
-function playSound() {
-  const s1 = createSource('sine')
-  const s2 = createSource('sine')
-  const s3 = createSource('sine')
-  const s4 = createSource('sine')
-  const s5 = createSource('sine')
-  const s6 = createSource('sine')
-  const s7 = createSource('sine')
-  const s8 = createSource('sine')
-
-  s1.smoothGain(MAX_VOLUME, 0.1)
-  s2.smoothGain(MAX_VOLUME, 0.1)
-  s3.smoothGain(MAX_VOLUME/2, 0.1)
-  s4.smoothGain(MAX_VOLUME/2, 0.1)
-  s5.smoothGain(MAX_VOLUME/2, 0.1)
-  s6.smoothGain(MAX_VOLUME/2, 0.1)
-  s7.smoothGain(MAX_VOLUME/2, 0.1)
-  s8.smoothGain(MAX_VOLUME/2, 0.1)
-
-  s1.smoothFreq(110 * base, 0.1)
-  s2.smoothFreq(220 * base, 0.1)
-  s3.smoothFreq(440 * base, 0.1)
-  s4.smoothFreq(550 * base, 0.1)
-  s5.smoothFreq(660 * base, 0.1)
-  s6.smoothFreq(880 * base, 0.1)
-  s7.smoothFreq((440 * base)-2, 0.1)
-  s8.smoothFreq((550 * base)-2, 0.1)
-
-  setTimeout(() => {
-    s1.smoothFreq(110 * base, 0.5)
-    s2.smoothFreq(220 * base, 0.5)
-    s3.smoothFreq(440 * base, 0.5)
-    s4.smoothFreq(550 * base, 0.5)
-    s5.smoothFreq(660 * base, 0.5)
-    s6.smoothFreq(880 * base, 0.5)
-    s7.smoothFreq((440 * base)-2, 0.5)
-    s8.smoothFreq((550 * base)-2, 0.5)
-
-    s1.smoothGain(MAX_VOLUME/2, 0.25)
-    s2.smoothGain(MAX_VOLUME/2, 0.25)
-    s3.smoothGain(MAX_VOLUME/2, 0.25)
-    s4.smoothGain(MAX_VOLUME/2, 0.25)
-    s5.smoothGain(MAX_VOLUME/2, 0.25)
-    s6.smoothGain(MAX_VOLUME/2, 0.25)
-    s7.smoothGain(MAX_VOLUME/2, 0.25)
-    s8.smoothGain(MAX_VOLUME/2, 0.25)
-
-    setTimeout(() => {
-      s1.smoothGain(0, 2)
-      s2.smoothGain(0, 2)
-      s3.smoothGain(0, 2)
-      s4.smoothGain(0, 2)
-      s5.smoothGain(0, 2)
-      s6.smoothGain(0, 2)
-      s7.smoothGain(0, 2)
-      s8.smoothGain(0, 2)
-    }, 2000)
-
-  }, 500)
-}
-
-function precumSound1() {
-  const s1 = createSource('sine')
-  const s2 = createSource('sine')
-  const s3 = createSource('sine')
-
-  s1.smoothGain(MAX_VOLUME, 0.1)
-  s2.smoothGain(MAX_VOLUME, 0.1)
-  s3.smoothGain(MAX_VOLUME, 0.1)
-
-  s1.smoothFreq(110 * 1.25, 0.1)
-  s2.smoothFreq(220 * 1.25, 0.1)
-  s3.smoothFreq(220 * 1.25 - 0.25, 0.1)
-}
-
-
-function precumSound2() {
-  const s1 = createSource('sine')
-  const s2 = createSource('sine')
-  const s3 = createSource('sine')
-
-
-  s1.smoothFreq(110 * 1.25, 0.1)
-  s2.smoothFreq(220 * 1.25, 0.1)
-  s3.smoothFreq(220 * 1.25 - 0.25, 0.1)
-
-  s1.smoothGain(MAX_VOLUME, 3)
-  s2.smoothGain(MAX_VOLUME, 3)
-  s3.smoothGain(MAX_VOLUME, 3)
-}
-
-
-
-
-
-const source = []
-
-
-function precumSound3(sources) {
-  sources[0] = createSource('sine')
-  sources[1] = createSource('sine')
-  sources[2] = createSource('sine')
-
-  sources.forEach(s => s.smoothFreq(1, 0.1))
-
-  sources[0].smoothFreq(110 * 1.25, 0.1)
-  sources[1].smoothFreq(220 * 1.25, 0.1)
-  sources[2].smoothFreq(220 * 1.25 - 0.25, 0.1)
-
-  sources[0].smoothGain(MAX_VOLUME, 3)
-  sources[1].smoothGain(MAX_VOLUME, 3)
-  sources[2].smoothGain(MAX_VOLUME, 3)
-}
-
-function orgasmSound2(sources) {
-
-  sources[3] = createSource('sine')
-  sources[4] = createSource('sine')
-  sources[5] = createSource('sine')
-  sources[6] = createSource('sine')
-  sources[7] = createSource('sine')
-
-  sources[3].smoothGain(MAX_VOLUME/2, 0.1)
-  sources[4].smoothGain(MAX_VOLUME/2, 0.1)
-  sources[5].smoothGain(MAX_VOLUME/2, 0.1)
-  sources[6].smoothGain(MAX_VOLUME/2, 0.1)
-  sources[7].smoothGain(MAX_VOLUME/2, 0.1)
-
-
-  sources[0].smoothFreq(110 * base, 0.4)
-  sources[1].smoothFreq(220 * base, 0.4)
-  sources[2].smoothFreq(440 * base, 0.4)
-  sources[3].smoothFreq(550 * base, 0.4)
-  sources[4].smoothFreq(660 * base, 0.4)
-  sources[5].smoothFreq(880 * base, 0.4)
-  sources[6].smoothFreq((440 * base)-2, 0.4)
-  sources[7].smoothFreq((550 * base)-2, 0.4)
-
-
-  setTimeout(() => {
-    sources.forEach(s => s.smoothGain(0.0000001, 7))
-
-  }, 1000)
-}
 
 
 </script>
