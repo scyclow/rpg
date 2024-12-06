@@ -305,9 +305,17 @@ export const ispCSNodes = {
   },
 
   // TODO: input router model number
-
   internetOuttageFail: {
-    text: `I don't see an internet outtage in your area. You may need to reboot your router manually. I can walk you through the steps. First, unplug the power chord from the back of your router. When you've unplugged your router, press 1`,
+    text: `I don't see an internet outtage in your area. You may need to reboot your router manually. For instructions on how to reboot your router press 1. If you are experiencing another issue with your account press 2`,
+    handler: options({
+      0: 'representative',
+      1: 'unplugRouter',
+      2: 'issueWithAccount',
+    })
+  },
+
+  unplugRouter: {
+    text: `I can walk you through the steps to reboot your router. First, unplug the power chord from the back of your router. When you've unplugged your router, press 1`,
     handler: options({
       0: 'representative',
       1: 'routerUnplugged',

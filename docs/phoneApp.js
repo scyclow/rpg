@@ -376,7 +376,7 @@ function setCallTime(ctx, phone) {
       const minutesElapsed = Math.floor(totalSecondsElapsed / 60)
 
       $time.innerHTML = `${padZero(minutesElapsed)}:${padZero(secondsElapsed)}`
-    } else {
+    } else if (!phone.live) {
       $time.innerHTML = ``
     }
 
