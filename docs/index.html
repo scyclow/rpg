@@ -859,7 +859,7 @@
     }),
 
     smartLockShift: {
-      text: 'You hear a motor turn, followd by a click',
+      text: 'You hear a motor turn, followed by a click',
       after({ ctx, redirect }) {
         redirect(ctx.lastNode)
       },
@@ -953,6 +953,9 @@
       },
 
       openDoorLocked: {
+        before() {
+          if (globalState.smartLockOpen) return 'openDoorUnlocked'
+        },
         text: `You try turning the doorknob, but it's locked`
       },
 
@@ -986,7 +989,12 @@
           } else {
             $consoleTemperature.innerHTML = ''
           }
-          $consoleTime.innerHTML = ` — ${formatTime(globalState.countdownTimeLeft)}`
+
+          if (primaryStartingCtx.state.checkedAlarmClock) {
+            $consoleTime.innerHTML = ` — ${formatTime(globalState.countdownTimeLeft)}`
+          } else {
+            $consoleTime.innerHTML = ``
+          }
 
           if (globalState.lightsOn) {
             const { light1, light2 } = globalState
@@ -1698,6 +1706,8 @@
           {text: 'Close Door', value: 'closeDoor'},
         ],
         before({ctx}) {
+          if (!globalState.smartLockOpen) return 'openDoorLocked'
+
           if (ctx.state.leftApartment) setColors('#fff', '#000')
           else setColors('#000', '#fff')
 
@@ -1877,9 +1887,9 @@
           qr: {
             screen: 'messageViewer',
             messageViewerMessage: `
-              <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 370px">
-                ${logoSVG(10, '#000')}
-                <h1 style="text-align: center; margin-bottom: 0.25em; margin-top: 0.75em"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h1>
+              <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 420px">
+                ${logoSVG(13, '#000')}
+                <h1 style="text-align: center; margin-bottom: 0.25em; margin-top: 0.5em"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h1>
                 <h2 style="text-align: center">2024</h2>
                 <div style="margin-top: 0.5em" id="completionTime"></div>
                 <button onclick="localStorage.clear(); location.reload()" style="align-self:center; margin-top: 2em">Play Again?</button>
