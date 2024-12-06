@@ -306,11 +306,12 @@ export const ispCSNodes = {
 
   // TODO: input router model number
   internetOuttageFail: {
-    text: `I don't see an internet outtage in your area. You may need to reboot your router manually. For instructions on how to reboot your router press 1. If you are experiencing another issue with your account press 2`,
+    text: `I don't see an internet outtage in your area. You may need to reboot your router manually. For instructions on how to reboot your router manually, press 1. If you are experiencing another issue with your account, press 2. To return to the main menu, press 3.`,
     handler: options({
       0: 'representative',
       1: 'unplugRouter',
       2: 'issueWithAccount',
+      3: 'mainMenu',
     })
   },
 

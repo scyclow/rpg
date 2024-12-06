@@ -1330,14 +1330,15 @@
       unplugRouter: [
         {
           text: `You unplug the router`,
-          after() {
+          after({ctx}) {
+            ctx.state.router.pluggedIn = false
             globalState.routerUnplugged = true
             Object.values(globalState.cryptoDevices).forEach(device => {
               device.active = false
               clearInterval(device.interval)
             })
           },
-          wait: 1000
+          wait: 1200
         },
         {
           text: 'The Power, Internet, and WiFi lights immediately turn off'
@@ -1347,16 +1348,27 @@
       plugInRouter: [
         {
           text: ({ctx}) => `You plug the router back in`,
-          after() {
+          after({ctx}) {
+            ctx.state.router.pluggedIn = true
             globalState.routerUnplugged = false
-            globalState.routerReset = true
+            setTimeout(() => globalState.routerReset = true, 4000)
           },
           wait: 1500,
         },
         {
-          text: `The Power, Internet, and WiFi lights all turn off for one second, turn back on for one second, and blink for three seconds${globalState.routerReset ? ' before returning to their original states' : '. The WiFi light is now on'}`,
+          text: `The Power, Internet, and WiFi lights all turn off for one second, turn back on for one second, and blink for three seconds${globalState.routerReset ? ' before returning to their original states' : ''}`,
+          follow: async () => {
+            if (!globalState.routerReset) {
+              await waitPromise(1500)
+              return 'wifiNowOn'
+            }
+          }
         }
-      ]
+      ],
+
+      wifiNowOn: {
+        text: 'The WiFi light is now on'
+      }
 
     }, {
       handler: ({ur}) => ur,

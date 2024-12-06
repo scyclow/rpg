@@ -282,7 +282,7 @@ createComponent(
     staticClip.volume = 0.2
 
     ctx.listenStart = () => {
-      staticClip.play()
+      if (!globalState.soundMuted) staticClip.play()
       listenSrc1.smoothGain(MAX_VOLUME)
       listenSrc2.smoothGain(MAX_VOLUME)
       listenSrc3.smoothGain(MAX_VOLUME/10)

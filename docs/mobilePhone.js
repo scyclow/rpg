@@ -445,7 +445,8 @@ const state = persist('__MOBILE_STATE', {
       ymWalletConnected: false,
       amountStaked: 0,
       timeStaked: NaN,
-      toastrLoggedIn: true
+      toastrLoggedIn: true,
+      yieldMasterPro: false
     }
   }
 })
@@ -1186,7 +1187,8 @@ createComponent(
       nftSmartFrameConnected,
       ymWalletConnected,
       amountStaked,
-      timeStaked
+      timeStaked,
+      yieldMasterPro
     } = currentUserData
 
     const appsInstalled = _appsInstalled || []
@@ -1268,7 +1270,6 @@ createComponent(
 
         setTimeout(() => {
           if (ctx.__loadingStarted && Date.now() - ctx.__loadingStarted > 10000) {
-            debugger
             ctx.setState({ screen: 'login' })
           }
         }, 11000)
@@ -1288,7 +1289,7 @@ createComponent(
           ${
             Object.keys(userNames).sort().map(u => `
               <tr>
-                <td style="padding-left: 1em; min-width: 7em; max-width: 19em">${userNames[u]}</td>
+                <td style="padding-left: 1em; min-width: 7em; max-width: 19em; word-break: break-word">${userNames[u]}</td>
                 <td><button id="user-${u}" style="margin-bottom: 0em">Login</button></td>
               </tr>
 
@@ -1489,7 +1490,8 @@ createComponent(
               ymWalletConnected: false,
               amountStaked: 0,
               timeStaked: NaN,
-              toastrLoggedIn: false
+              toastrLoggedIn: false,
+              yieldMasterPro: false
             }
           }
         })
@@ -1886,7 +1888,7 @@ createComponent(
 
                   <div id="wifiChoose" class="${wifiNetworkName ? 'hidden' : ''}">
                     <h3 style="margin-top: 0.4em">Network Name:</h3>
-                    <select id="networkName" style="margin: 0.25em 0; color: ${wifiNetworkName ? '#000' : '#777'}; padding: 0.25em 0;">
+                    <select id="networkName" style="margin: 0.25em 0; color: ${wifiNetworkName ? '#000' : '#777'}; padding: 0.25em 0; font-size: 0.85em; max-width: 90%">
                       <option disabled selected value="">Choose Network</option>
                       <option value="Alien Nation">Alien Nation</option>
                       <option value="CapitalC">CapitalC</option>
@@ -6060,7 +6062,9 @@ createComponent(
       }
 
       if (ctx.$('#pairToaster')) ctx.$('#pairToaster').onclick = () => {
-        ctx.setState({ toastrPaired: true })
+        setTimeout(() => {
+          ctx.setState({ toastrPaired: true })
+        }, 300)
       }
 
       ctx.$('#home').onclick = () => {
@@ -6083,7 +6087,7 @@ createComponent(
 
       const nameModule =
         ctx.state.plantName
-          ? `<h3>Plant Name: ${ctx.state.plantName}!</h3>`
+          ? ``
           : `
             <div style="margin-top: 1em">
               <h3>Name your plant!</h3>
@@ -6094,6 +6098,7 @@ createComponent(
 
       const mainContent = planterPaired
         ? `
+          ${ctx.state.plantName ? `<h3>Plant Name: ${ctx.state.plantName}!</h3>` : ''}
           <h3 style="margin: 0.4em 0">Plant Status: <span id="plantStatus">${plantStates[plantStatus]}</span></h3>
           <button id="water" ${globalState.plantWatered ? 'disabled' : ''}>Water</button>
           <h5>Needs: ${needs}</h5>
@@ -6119,10 +6124,14 @@ createComponent(
       `
 
       jbBehavior(ctx, 'planter', 100, () => {
-        if (plantStatus > 0 && globalState.cryptoDevices.planter.totalTime > 10000) {
-
+        if (plantStatus > 0 && globalState.cryptoDevices.planter.totalTime > 10000 && !ctx.state.plantDeadAlert) {
           globalState.plantsDead = true
-          ctx.setState({ plantStatus: 0 })
+          ctx.setState({
+            plantStatus: 0,
+            plantDeadAlert: true
+          })
+
+          ctx.alert('Your plant has died')
         }
       })
 
@@ -7717,7 +7726,7 @@ createComponent(
         ? `
           <div style="">
             <h6 style="word-wrap: break-word; margin-bottom: 0.4em">Connected As: ${moneyMinerCryptoAddr}</h6>
-            <h3>Balance: ₢ ${roundSixDigits(cryptoBalance)}</h3>
+            <h3>Balance: ₢ ${roundSixDigits(cryptoBalance).toFixed(6)}</h3>
             <h3>Amount Staked: ₢ <span id="calcedAmountStaked"></span></h3>
             ${amountStaked
               ? `
@@ -7729,6 +7738,7 @@ createComponent(
                 <h5 id="error"></h5>
               `
             }
+            <div id="proPurchase"></div>
           </div>
         `
         : `
@@ -7755,7 +7765,7 @@ createComponent(
             <h5>SPONSORED CONTENT</h5>
             <div id="sc"><em>Bad with money? Financial Education can be Fun!!!</em></div>
           </div>
-          <h2 style="text-align: center; margin-bottom: 0.25em;"><em>YieldMaster ⇡%</em></h2>
+          <h2 style="text-align: center; margin-bottom: 0.25em;"><em>YieldMaster ${yieldMasterPro ? '<em>PRO</em> ' : ''}⇡%</em></h2>
 
           ${hasInternet ? mainContent : `<h3>Please connect to the internet to view yield options</h3>`}
 
@@ -7799,17 +7809,26 @@ createComponent(
         })
       }
 
-      if (ctx.$('#unstake')) ctx.$('#unstake').onclick = () => {
-        const secondsStaked = timeStaked ? Math.floor((globalState.secondsPassed - timeStaked)) : 0
-        const calculatedAmountStaked = Math.min(
-          Math.max(amountStaked, maxYield),
-          amountStaked * ( (1 + (stakeBps/10000) ) ** secondsStaked )
-        )
+
+      function calcAmountStaked() {
+        const secondsStaked = timeStaked ? Math.floor(globalState.secondsPassed - timeStaked) : 0
+        const naturalAmountStaked = amountStaked * ( (1 + (stakeBps/10000) ) ** secondsStaked )
+        return yieldMasterPro
+            ? naturalAmountStaked
+            : Math.min(
+              Math.max(amountStaked, maxYield),
+              naturalAmountStaked
+            )
+      }
+
+      function unstake() {
+        const calculatedAmountStaked = calcAmountStaked()
+        console.log((cryptoBalances[moneyMinerCryptoAddr] || 0))
 
         ctx.setState({
           cryptoBalances: {
             ...cryptoBalances,
-            [moneyMinerCryptoAddr]: roundSixDigits(cryptoBalance + calculatedAmountStaked)
+            [moneyMinerCryptoAddr]: roundSixDigits((ctx.state.cryptoBalances[moneyMinerCryptoAddr] || 0) + calculatedAmountStaked)
           }
         })
 
@@ -7817,17 +7836,45 @@ createComponent(
           amountStaked: 0,
           timeStaked: NaN,
         })
+
       }
+
+      if (ctx.$('#unstake')) ctx.$('#unstake').onclick = unstake
 
       if (ymWalletConnected) {
         ctx.setInterval(() => {
-          if (!document.hidden) {
-            const secondsStaked = timeStaked ? Math.floor(globalState.secondsPassed - timeStaked) : 0
-            const calculatedAmountStaked = Math.min(
-              Math.max(amountStaked, maxYield),
-              amountStaked * ( (1 + (stakeBps/10000) ) ** secondsStaked )
-            )
-            ctx.$('#calcedAmountStaked').innerHTML = calculatedAmountStaked.toFixed(6) + (calculatedAmountStaked >= maxYield ? ' [YIELD EXHAUSTED]' : '')
+
+          const calculatedAmountStaked = calcAmountStaked()
+
+          ctx.$('#calcedAmountStaked').innerHTML = calculatedAmountStaked.toFixed(6) + (calculatedAmountStaked >= maxYield && !yieldMasterPro ? ' [YIELD EXHAUSTED FOR FREE ACCOUNT. PURCHASHE YIELDMASTER-PRO FOR UNLIMITED YIELD]' : '')
+
+          if (!yieldMasterPro && calculatedAmountStaked >= maxYield) {
+            ctx.$('#proPurchase').innerHTML = `
+              <h3>Purchase Yield Master <em>PRO</em> (Unlimited Yield!)</h3>
+              <button id="purchase" ${cryptoBalance < 22222.22 ? 'disabled' : ''}>Purchase (₢ 22,222.22)</button>
+              <h4 id="purchaseError"></h4>
+            `
+
+            ctx.$('#purchase').onclick = () => {
+
+              if (cryptoBalance >= 22222.22) {
+                ctx.setState({
+                  cryptoBalances: {
+                    ...cryptoBalances,
+                    [moneyMinerCryptoAddr]: roundSixDigits(cryptoBalance - 22222.22)
+                  }
+                })
+
+                ctx.setUserData({
+                  yieldMasterPro: true
+                })
+
+
+                unstake()
+              } else {
+                ctx.$('#purchaseError').innerHTML = 'BLOCKCHAIN ERROR: Not enough ₢ to execute transaction'
+              }
+            }
           }
 
         })
@@ -8250,11 +8297,15 @@ createComponent(
       ctx.$('#checkBalance').onclick = () => {
         const deviceIdentifier = Number(ctx.$('#deviceIdentifier2').value)
         const modelName = ctx.$('#modelName').value.trim()
+        ctx.$('#balance').innerHTML = '...'
         setTimeout(() => {
-          if (!hasInternet) {
+          if (!deviceIdentifier || !modelName) {
+            ctx.$('#balance').innerHTML = 'Please input a valid Device Identifier and Model Name'
+
+          } else if (!hasInternet) {
             ctx.$('#balance').innerHTML = 'Cannot connect to internet'
 
-          } else if (deviceIdentifier === 5879234963378 && modelName === 'UBC-9283') {
+          } else if (deviceIdentifier === 5879234963378 && modelName.toLowerCase() === 'ubc-9283') {
             ctx.$('#balance').innerHTML = `Balance: $${globalState.ispBalance * -1}`
           } else {
             ctx.$('#balance').innerHTML = `Balance: $NaN`
@@ -8442,7 +8493,7 @@ function jbMarkup(device, disabled) {
         <h5 style="display: inline-block; padding: 0.25em; margin: 0.25em 0; background: #333; border: 1px solid">${device.wallet}</h4>
         <h4 style="margin: 0.4em 0">Balance: ₢ <span id="cryptoBalance-${device.wallet}">${device.balance}</span></h4>
         ${disabled
-          ? '<h5 style="text-align:center; padding: 1em">Cannot find device. Please ensure device is "paired" and powered "On"</h5>'
+          ? '<h5 style="text-align:center; padding: 1em; word-break: break-word">Cannot find device. Please ensure device is "paired" and powered "On"</h5>'
           : `
             <button id="enableMining">${device.active ? 'Disable' : 'Enable'} Autominer</button>
           `
@@ -8452,8 +8503,8 @@ function jbMarkup(device, disabled) {
 
       <div style="margin-top: 1em">
         <h4>Send</h4>
-        <input id="cryptoAddr" placeholder="Address" style="width: 15em">
-        <input id="cryptoAmount" placeholder="0.00" type="number" style="width: 15em">
+        <input id="cryptoAddr" placeholder="Address" style="width: 15em; max-width: 100%">
+        <input id="cryptoAmount" placeholder="0.00" type="number" style="width: 15em; max-width: 100%">
         <button id="sendCrypto">Send</button>
         <h5 id="sendError"></h5>
       </div>
