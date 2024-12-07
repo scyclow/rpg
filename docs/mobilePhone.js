@@ -2741,7 +2741,7 @@ createComponent(
 
           <div id="p10" class="hidden">
             <h2>The History of $ Module: Fiat and Inflation</h2>
-            <p>By the 17th century paper money became a worldwide phenomena. However, governments were still constrained in their spending based on how much gold they had in the vault. Eventually, governments realized that they could just print as much paper money as they wanted, unrelated to their supply of gold. This lead to the modern form of fiat currency, culminating in the end of the Bretton Woods system in 1971. While this has made it easier for governments to manage spending and counterbalance market cycles, it's also led to cases of unchecked spending and rampant inflation. In these hyperinflationary periods, the supply of government-issued skyrockets, causing its value to plummet.</p>
+            <p>By the 17th century paper money became a worldwide phenomena. However, governments were still constrained in their spending based on how much gold they had in the vault. Eventually, governments realized that they could just print as much paper money as they wanted, unrelated to their supply of gold. This lead to the modern form of fiat currency, culminating in the end of the Bretton Woods system in 1971. While this has made it easier for governments to manage spending and counterbalance market cycles, it's also led to cases of unchecked spending and rampant inflation. In these hyperinflationary periods, the supply of government-issued currency skyrockets, causing its value to plummet.</p>
             <button id="historyNext10">Next</button>
           </div>
 
@@ -2895,8 +2895,8 @@ createComponent(
             <h2>The Modern $ System Module: Summary</h2>
             <p>In this module we learned:</p>
             <p>1. All about the complexities of the modern $ system.</p>
-            <p>2. How economies of scale help you, the consumder.</p>
-            <p>3. Your place in the modern economiy.</p>
+            <p>2. How economies of scale help you, the consumer.</p>
+            <p>3. Your place in the modern economy.</p>
             <p>4. Why paying off your debts is a moral imperative</p>
             <button id="systemNext7">Next</button>
           </div>
@@ -2980,7 +2980,7 @@ createComponent(
 
           <div id="p2" class="hidden">
             <h2>The SPTXs & Payment Module: An Introduction</h2>
-            <p>So you have $, and you'd like to pay off your debts. Now what? Well, you're in luck! Thankfully, there's a quick and easy way to do exactly that. You don't have to deal with low-level protocols and processes. You just need to follow a simple three-step process, and your payments will be processed in no time with the SPTX protocol! But as simple as it is, many people still have trouble following these three simple steps. But don't wory: This tutorial will train you to be a SPTX wizard in no time, regardless of you level of financial sophistication!</p>
+            <p>So you have $, and you'd like to pay off your debts. Now what? Well, you're in luck! Thankfully, there's a quick and easy way to do exactly that. You don't have to deal with low-level protocols and processes. You just need to follow a simple three-step process, and your payments will be processed in no time with the SPTX protocol! But as simple as it is, many people still have trouble following these three simple steps. But don't wory: This tutorial will train you to be a SPTX wizard in no time, regardless of your level of financial sophistication!</p>
             <button id="sptxNext2">Next</button>
           </div>
 
@@ -3003,7 +3003,7 @@ createComponent(
 
           <div id="p5" class="hidden">
             <h2>The SPTXs & Payment Module: The Three Steps (Receiving)</h2>
-            <p>Let's check in on Bob, who's eagerly awaiting his $10 payment. So what does he do? He follows a three step process of his own! At this point in our example he's already completed step 1 (giving Alice his Recipient Address) <em>and</em> step 2 (receiving an SPTX from Alice) of. Now, all he needs to do to complete step 3 is log into his payment app (also PayApp) and process the SPTX! His balance should update by $10 in no time!</p>
+            <p>Let's check in on Bob, who's eagerly awaiting his $10 payment. So what does he do? He follows a three step process of his own! At this point in our example he's already completed step 1 (giving Alice his Recipient Address) <em>and</em> step 2 (receiving an SPTX from Alice). Now, all he needs to do to complete step 3 is log into his payment app (also PayApp) and process the SPTX! His balance should update by $10 in no time!</p>
             <button id="sptxNext5">Next</button>
           </div>
 
