@@ -130,81 +130,6 @@ class SVG {
 
 const SIZE = 2800
 
-function storeLine(grid, x1, y1, x2, y2, metadata={}) {
-  if (
-    grid[x2][y2].length &&
-    grid[x2][y2][0].x2 === x1 &&
-    grid[x2][y2][0].y2 === y1
-  ) return
-
-  grid[x1][y1].push({ x1, y1, x2, y2, metadata })
-}
-
-
-function drawDivisorLine(grid, GRID_SIZE, xStart, yStart, i) {
-  let x1 = xStart
-  let y1 = yStart
-  let progress = true
-  let originX, originY
-
-  while (progress) {
-    const surroundingPoints = []
-    if (x1 > 0) {
-      surroundingPoints.push(
-        { x: x1-1, y: y1, existing: !!grid[x1-1][y1].length}
-      )
-    }
-    if (x1 < GRID_SIZE) {
-      surroundingPoints.push(
-        { x: x1+1, y: y1, existing: !!grid[x1+1][y1].length}
-      )
-    }
-    if (y1 > 0) {
-      surroundingPoints.push(
-        { x: x1, y: y1-1, existing: !!grid[x1][y1-1].length}
-      )
-    }
-    if (y1 < GRID_SIZE) {
-      surroundingPoints.push(
-        { x: x1, y: y1+1, existing: !!grid[x1][y1+1].length}
-      )
-    }
-
-    const validPoints = surroundingPoints.filter(p => !(p.x === originX && p.y === originY))
-
-    if (validPoints.some(p => !p.existing)) {
-      const {x, y} = sample(validPoints.filter(p => !p.existing))
-
-      storeLine(grid, x1, y1, x, y, {divisor: true, line: i})
-
-      ;([originX, originY] = [x1, y1])
-      ;([x1, y1] = [x, y])
-
-    } else {
-      if (!originX && !originY) return
-
-      const edgePoint = chance(
-
-        ...validPoints.filter(
-          p =>
-            p.x === 0 ||
-            p.x === GRID_SIZE ||
-            p.y === 0 ||
-            p.y === GRID_SIZE
-        )
-      )
-
-
-      const sampledValidPoint = sample(validPoints)
-      const { x, y } = edgePoint || sampledValidPoint
-
-      storeLine(grid, x1, y1, x, y, {end: true, divisor: true, line: i})
-
-      progress = false
-    }
-  }
-}
-
 
 export function drawLabrynth(tokenData, mountTo) {
   let __randomSeed = int(tokenData.hash.slice(50, 58), 16)
@@ -455,6 +380,81 @@ export function drawLabrynth(tokenData, mountTo) {
     )
   }
 
+  function storeLine(grid, x1, y1, x2, y2, metadata={}) {
+    if (
+      grid[x2][y2].length &&
+      grid[x2][y2][0].x2 === x1 &&
+      grid[x2][y2][0].y2 === y1
+    ) return
+
+    grid[x1][y1].push({ x1, y1, x2, y2, metadata })
+  }
+
+
+  function drawDivisorLine(grid, GRID_SIZE, xStart, yStart, i) {
+    let x1 = xStart
+    let y1 = yStart
+    let progress = true
+    let originX, originY
+
+    while (progress) {
+      const surroundingPoints = []
+      if (x1 > 0) {
+        surroundingPoints.push(
+          { x: x1-1, y: y1, existing: !!grid[x1-1][y1].length}
+        )
+      }
+      if (x1 < GRID_SIZE) {
+        surroundingPoints.push(
+          { x: x1+1, y: y1, existing: !!grid[x1+1][y1].length}
+        )
+      }
+      if (y1 > 0) {
+        surroundingPoints.push(
+          { x: x1, y: y1-1, existing: !!grid[x1][y1-1].length}
+        )
+      }
+      if (y1 < GRID_SIZE) {
+        surroundingPoints.push(
+          { x: x1, y: y1+1, existing: !!grid[x1][y1+1].length}
+        )
+      }
+
+      const validPoints = surroundingPoints.filter(p => !(p.x === originX && p.y === originY))
+
+      if (validPoints.some(p => !p.existing)) {
+        const {x, y} = sample(validPoints.filter(p => !p.existing))
+
+        storeLine(grid, x1, y1, x, y, {divisor: true, line: i})
+
+        ;([originX, originY] = [x1, y1])
+        ;([x1, y1] = [x, y])
+
+      } else {
+        if (!originX && !originY) return
+
+        const edgePoint = chance(
+
+          ...validPoints.filter(
+            p =>
+              p.x === 0 ||
+              p.x === GRID_SIZE ||
+              p.y === 0 ||
+              p.y === GRID_SIZE
+          )
+        )
+
+
+        const sampledValidPoint = sample(validPoints)
+        const { x, y } = edgePoint || sampledValidPoint
+
+        storeLine(grid, x1, y1, x, y, {end: true, divisor: true, line: i})
+
+        progress = false
+      }
+    }
+  }
+
 
   const strokeWidthDiff = STROKE_WIDTH_1 - STROKE_WIDTH_2
   if (!HIDE_DIVISOR_LINE) {
@@ -481,105 +481,107 @@ export function drawLabrynth(tokenData, mountTo) {
   svg.mount(mountTo)
 
 
-  let DRAW_MODE
-  let DEBUG_SVG
+  if (!window.SMARTHOME_GAME_VERSION) {
+    let DRAW_MODE
+    let DEBUG_SVG
 
-  window.onkeypress = function(e) {
-    if (e.code === 'Space') {
-      const serializer = new XMLSerializer()
-      const el = DRAW_MODE ? DEBUG_SVG : svg
-      const source = '<?xml version="1.0" standalone="no"?>\r\n' + serializer.serializeToString(el.svg)
-      const a = document.createElement("a")
-      a.href = "data:image/svg+xmlcharset=utf-8,"+encodeURIComponent(source)
-      a.download = `${tokenData.hash}${DRAW_MODE ? '-debug' : ''}.svg`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
+    window.onkeypress = function(e) {
+      if (e.code === 'Space') {
+        const serializer = new XMLSerializer()
+        const el = DRAW_MODE ? DEBUG_SVG : svg
+        const source = '<?xml version="1.0" standalone="no"?>\r\n' + serializer.serializeToString(el.svg)
+        const a = document.createElement("a")
+        a.href = "data:image/svg+xmlcharset=utf-8,"+encodeURIComponent(source)
+        a.download = `${tokenData.hash}${DRAW_MODE ? '-debug' : ''}.svg`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
 
-    } else if (e.code === 'KeyD') {
-      if (DRAW_MODE) {
-        svg.svg.style.display = 'inherit'
-        DEBUG_SVG.svg.remove()
+      } else if (e.code === 'KeyD') {
+        if (DRAW_MODE) {
+          svg.svg.style.display = 'inherit'
+          DEBUG_SVG.svg.remove()
 
-      } else {
-        svg.svg.style.display = 'none'
+        } else {
+          svg.svg.style.display = 'none'
 
-        DEBUG_SVG = new SVG(SIZE + PADDING*2, SIZE + PADDING*2, 'debug-view')
-        DEBUG_SVG.svg.style.background = BG_COLOR
+          DEBUG_SVG = new SVG(SIZE + PADDING*2, SIZE + PADDING*2, 'debug-view')
+          DEBUG_SVG.svg.style.background = BG_COLOR
 
-        times(GRID_SIZE + 1, x => {
-          DEBUG_SVG.drawLine(
-            toCoord(x), toCoord(0), toCoord(x), toCoord(GRID_SIZE),
-            {stroke: DARK_COLOR_SCHEME ? pen.white : pen.black, opacity: 0.2}
-          )
-        })
+          times(GRID_SIZE + 1, x => {
+            DEBUG_SVG.drawLine(
+              toCoord(x), toCoord(0), toCoord(x), toCoord(GRID_SIZE),
+              {stroke: DARK_COLOR_SCHEME ? pen.white : pen.black, opacity: 0.2}
+            )
+          })
 
-        times(GRID_SIZE + 1, y => {
-          DEBUG_SVG.drawLine(
-            toCoord(0), toCoord(y), toCoord(GRID_SIZE), toCoord(y),
-            {stroke: DARK_COLOR_SCHEME ? pen.white : pen.black, opacity: 0.2}
-          )
-        })
+          times(GRID_SIZE + 1, y => {
+            DEBUG_SVG.drawLine(
+              toCoord(0), toCoord(y), toCoord(GRID_SIZE), toCoord(y),
+              {stroke: DARK_COLOR_SCHEME ? pen.white : pen.black, opacity: 0.2}
+            )
+          })
 
 
 
-        DEBUG_SVG.css(`
-          .edge {
-            cursor: pointer;
-          }
-
-          .active-edge .edge {
-            stroke-width: 15 !important;
-          }
-        `)
-
-        times(LINE_COUNT + 1, l => {
           DEBUG_SVG.css(`
-            .line-${l} {
+            .edge {
               cursor: pointer;
             }
-            .active-line-${l} .line-${l} {
-              stroke-width: 25 !important;
+
+            .active-edge .edge {
+              stroke-width: 15 !important;
             }
           `)
-        })
 
-
-        lineList.forEach(l => {
-          let x1 = toCoord(l.x1)
-          let y1 = toCoord(l.y1)
-          let x2 = toCoord(l.x2)
-          let y2 = toCoord(l.y2)
-
-          if (l.metadata.end) {
-            x2 = (x2+x1) / 2
-            y2 = (y2+y1) / 2
-          }
-          const line = DEBUG_SVG.drawLine(
-            x1, y1, x2, y2,
-            {stroke: DIVISOR_STROKE_COLOR, strokeWidth: 10}
-          )
-
-          const className = l.metadata.edge
-            ? 'edge'
-            : `line-${l.metadata.line}`
-
-          line.addEventListener('mouseover', () => {
-            DEBUG_SVG.svg.classList.add('active-' + className)
+          times(LINE_COUNT + 1, l => {
+            DEBUG_SVG.css(`
+              .line-${l} {
+                cursor: pointer;
+              }
+              .active-line-${l} .line-${l} {
+                stroke-width: 25 !important;
+              }
+            `)
           })
 
-          line.addEventListener('mouseout', () => {
-            DEBUG_SVG.svg.classList.remove('active-' + className)
 
+          lineList.forEach(l => {
+            let x1 = toCoord(l.x1)
+            let y1 = toCoord(l.y1)
+            let x2 = toCoord(l.x2)
+            let y2 = toCoord(l.y2)
+
+            if (l.metadata.end) {
+              x2 = (x2+x1) / 2
+              y2 = (y2+y1) / 2
+            }
+            const line = DEBUG_SVG.drawLine(
+              x1, y1, x2, y2,
+              {stroke: DIVISOR_STROKE_COLOR, strokeWidth: 10}
+            )
+
+            const className = l.metadata.edge
+              ? 'edge'
+              : `line-${l.metadata.line}`
+
+            line.addEventListener('mouseover', () => {
+              DEBUG_SVG.svg.classList.add('active-' + className)
+            })
+
+            line.addEventListener('mouseout', () => {
+              DEBUG_SVG.svg.classList.remove('active-' + className)
+
+            })
+
+            line.classList.add(className)
           })
 
-          line.classList.add(className)
-        })
-
-        DEBUG_SVG.mount()
+          DEBUG_SVG.mount()
+        }
+        DRAW_MODE = !DRAW_MODE
       }
-      DRAW_MODE = !DRAW_MODE
-    }
 
+    }
   }
 }

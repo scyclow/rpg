@@ -34,6 +34,7 @@
   import {ls} from './$.js'
 
   window.GAME_VERSION = 12
+  window.SMARTHOME_GAME_VERSION = window.GAME_VERSION
 
   const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
   if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {
@@ -861,6 +862,7 @@
     smartLockShift: {
       text: 'You hear a motor turn, followed by a click',
       after({ ctx, redirect }) {
+        ctx.state.doorEverUnlocked = true
         redirect(ctx.lastNode)
       },
     },
@@ -953,10 +955,21 @@
       },
 
       openDoorLocked: {
-        before() {
-          if (globalState.smartLockOpen) return 'openDoorUnlocked'
+        before({ enqueue }) {
+          if (globalState.smartLockOpen) {
+            enqueue('openDoorUnlocked')
+            return false
+          }
         },
-        text: `You try turning the doorknob, but it's locked`
+        text: `You try turning the doorknob, but it's locked`,
+        follow({ctx}) {
+          if (!ctx.state.doorEverUnlocked) return 'maybeLockAppCanHelp'
+        },
+        wait: 1500
+      },
+
+      maybeLockAppCanHelp: {
+        text: `Maybe the SmartLock app can help`
       },
 
       closeDoor: {
@@ -1705,8 +1718,11 @@
           {text: 'Leave apartment', value: 'externalHallway'},
           {text: 'Close Door', value: 'closeDoor'},
         ],
-        before({ctx}) {
-          if (!globalState.smartLockOpen) return 'openDoorLocked'
+        before({ctx, enqueue}) {
+          if (!globalState.smartLockOpen) {
+            enqueue('openDoorLocked')
+            return false
+          }
 
           if (ctx.state.leftApartment) setColors('#fff', '#000')
           else setColors('#000', '#fff')
@@ -1764,7 +1780,10 @@
 
                 await waitPromise(50)
                 setColors('#fff', '#000')
-                document.body.style.transition = '0.7s'
+
+                setTimeout(() => {
+                  document.body.style.transition = '0.7s'
+                }, 500)
               }, 2300)
             }
           },

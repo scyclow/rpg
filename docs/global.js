@@ -79,7 +79,6 @@ export const globalState = persist('__GLOBAL_STATE', {
 })
 
 
-
 window.globalState = globalState
 
 export const tmp = {}

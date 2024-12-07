@@ -453,6 +453,38 @@ function phoneBehavior(ctx) {
       const hangups = phone.hangups
 
 
+      const vs = await voices
+
+      const defaultVoice = vs.filter(v => v.lang === 'en-US')[0]
+
+      const femaleVoice = (
+        vs.find(v => v.voiceURI.includes('Samantha') && v.lang === 'en-US')
+        || vs.find(v => v.voiceURI.includes('Microsoft Zira') && v.lang === 'en-US')
+        || vs.filter(v => v.lang === 'en-US')[0]
+      )
+
+      const britishVoice = (
+        vs.find(v => v.voiceURI.includes('Daniel') && v.lang === 'en-GB')
+        || vs.find(v => v.voiceURI.includes('Google UK English Male'))
+        || vs.filter(v => v.lang === 'en-US')[0]
+      )
+
+      const derpyVoice = (
+        vs.find(v => v.voiceURI.includes('Aaron') && v.lang === 'en-US')
+        || vs.find(v => v.voiceURI.includes('Microsoft Mark') && v.lang === 'en-US')
+        || vs.filter(v => v.lang === 'en-US')[0]
+      )
+
+
+      const incomprehensibleVoice = (
+        vs.find(v => (
+            v.voiceURI.includes('Reed') && (v.lang === 'fi-FI'|| v.lang === 'de-DE')) || v.voiceURI.includes('Reed')
+        )
+        || vs.find(v => v.voiceURI.includes('Google polski'))
+        || vs[0]
+      )
+
+
       if (dialed.length > 0 && dialed.length < validDigits) {
         ctx.$('#hangup').innerHTML = 'Clear'
       } else {
@@ -494,10 +526,9 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text, action, ...props}, sm) {
-
-
               sm.ctx.history.push(text)
-              if (ctx.state.soundEnabled) say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
+
+              if (ctx.state.soundEnabled) say(femaleVoice, text)
               else {
                 displayTranscript(text)
               }
@@ -541,10 +572,9 @@ function phoneBehavior(ctx) {
           {
             defaultWait: 1000,
             async onUpdate({text}, sm) {
-
               sm.ctx.history.push(text)
-              // TODO different voice
-              if (ctx.state.soundEnabled) say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
+
+              if (ctx.state.soundEnabled) say(femaleVoice, text)
               else {
                 displayTranscript(text)
               }
@@ -575,8 +605,8 @@ function phoneBehavior(ctx) {
               sm.ctx.history.push(text)
               // TODO different voice
               const vs = await voices
-              const voice = vs.find(v => v.voiceURI.includes('Daniel') && v.lang === 'en-GB') || vs.filter(v => v.lang === 'en-US')[0]
-              if (ctx.state.soundEnabled) say(voice, text)
+
+              if (ctx.state.soundEnabled) say(britishVoice, text)
               else {
                 displayTranscript(text)
               }
@@ -614,10 +644,7 @@ function phoneBehavior(ctx) {
                 return
               }
 
-              const vs = await voices
-              const voice = vs.find(v => v.voiceURI.includes('Aaron') && v.lang === 'en-US') || vs.filter(v => v.lang === 'en-US')[0]
-
-              if (ctx.state.soundEnabled) say(voice, text)
+              if (ctx.state.soundEnabled) say(derpyVoice, text)
               else {
                 displayTranscript(text)
               }
@@ -654,16 +681,8 @@ function phoneBehavior(ctx) {
             async onUpdate({text}, sm) {
 
               sm.ctx.history.push(text)
-              // TODO different voice
-              const vs = await voices
-              const voice = vs.find(v => (
-                  v.voiceURI.includes('Reed') && (
-                    v.lang === 'fi-FI'
-                    || v.lang === 'de-DE'
-                  )
-                ) || v.voiceURI.includes('Reed')
-              ) || vs.filter(v => v.lang === 'en-US')[0]
-              say(voice, text)
+
+              say(incomprehensibleVoice, text)
             },
           },
           turboConnectNodes
@@ -691,7 +710,7 @@ function phoneBehavior(ctx) {
               sm.ctx.history.push(text)
               // TODO different voice
               const vs = await voices
-              if (ctx.state.soundEnabled) say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
+              if (ctx.state.soundEnabled) say(defaultVoice, text)
               else {
                 displayTranscript(text)
               }
@@ -722,9 +741,7 @@ function phoneBehavior(ctx) {
             async onUpdate({text}, sm) {
 
               sm.ctx.history.push(text)
-              // TODO different voice
-              const vs = await voices
-              if (ctx.state.soundEnabled) say(await voices.then(vs => vs.filter(v => v.lang === 'en-US')[0]), text)
+              if (ctx.state.soundEnabled) say(defaultVoice, text)
               else {
                 displayTranscript(text)
               }
@@ -796,7 +813,7 @@ function phoneBehavior(ctx) {
           phoneCall.startTone(d)
           await waitPromise(75)
           phoneCall.endTone(d)
-          await waitPromise(25)
+          await waitPromise(35)
         }
       }
 

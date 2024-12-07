@@ -358,7 +358,11 @@ createComponent(
 
 
     setRunInterval(() => {
-      if (globalState.deviceViruses) {
+      if (
+        globalState.deviceViruses
+        && globalState.location !== 'externalHallway'
+        && globalState.location !== 'stairway'
+      ) {
         ctx.$('#scPlaceholder').innerHTML = `
           <div class="sc" style="width: 50%; position: absolute; left: ${Math.random()*48}%; top: ${Math.random()*67}%">
             <h5>SPONSORED CONTENT</h5>

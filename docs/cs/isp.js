@@ -72,52 +72,6 @@ export const ispCSNodes = {
     handler: 'representative',
   },
 
-  //// TODO fix this shit
-
-  // representative: {
-  //   text: 'The current estimated wait time to speak with a representative is N A N hours, N A N minutes, and N A N seconds. Please stay on the line to speak with a representative, or press 1 to return to the main menu.',
-  //   handler: x => {
-  //     if (x.ur === 1) {
-  //       SOURCE1.stop()
-  //       SOURCE2.stop()
-  //       return 'mainMenu'
-  //     } else {
-  //       return 'representative'
-  //     }
-  //   },
-  //   wait: 8000,
-  //   follow: () => {
-  //     SOURCE1 = createSource('sine')
-  //     SOURCE2 = createSource('sine')
-  //     SOURCE1.smoothFreq(300)
-  //     SOURCE1.smoothFreq(600)
-  //     return 'representativeRing'
-  //   }
-  // },
-
-  // representativeRing: {
-  //   before() {
-  //     SOURCE1.smoothGain(MAX_VOLUME)
-  //     SOURCE2.smoothGain(MAX_VOLUME)
-
-  //     setTimeout(() => {
-  //       SOURCE1.smoothGain(0)
-  //       SOURCE2.smoothGain(0)
-  //     }, 80)
-  //   },
-  //   text: '',
-  //   wait: 1000,
-  //   follow: 'representativeRing',
-  //   handler: x => {
-  //     if (x.ur === 1) {
-  //       SOURCE1.stop()
-  //       SOURCE2.stop()
-  //       return 'mainMenu'
-  //     } else {
-  //       return 'representative'
-  //     }
-  //   },
-  // },
 
   newCustomer: {
     text: `You'd like to sign up for N B S service. N B S is the leading internet service provider among customers seeking high quality internet connection. I just need to ask you a few questions before we can get started. Do you currently have an N B S router? If so press 1. Otherwise press 2.`,
@@ -275,7 +229,9 @@ export const ispCSNodes = {
   // TODO mention that account belongs to default
 
   verifyIdentity: {
-    text: () => `Service to this account has been suspended due to an unpaid balance. Service will be restored to this account upon payment of this balance. If you would like to be transferred to our billing department, press 1. To return to the main menu, press star`,
+    text: () => globalState.wifiActive
+      ? `This account is currently active. If you would like to be transferred to our billing department, press 1. To return to the main menu, press star`
+      : `Service to this account has been suspended due to an unpaid balance. Service will be restored to this account upon payment of this balance. If you would like to be transferred to our billing department, press 1. To return to the main menu, press star`,
     handler: options({
       1: 'outstandingBill',
       '*': 'mainMenu'

@@ -7463,6 +7463,7 @@ createComponent(
 
           #prevBuy, #nextBuy, #prevSell, #nextSell {
             cursor: pointer;
+            user-select: none;
           }
         </style>
 

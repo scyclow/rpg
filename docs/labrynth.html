@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="shortcut icon" type="image/x-icon" href="./favicon.svg" id="favicon">
+
+  <title></title>
+
+  <style type="text/css">
+    button {
+      cursor: pointer;
+    }
+
+
+  </style>
+</head>
+<body>
+  <div id="svg"></div>
+
+</body>
+<script src="./utils.js"></script>
+
+<script type="module">
+
+  import {drawLabrynth} from './labrynth.js'
+  import {$} from './$.js'
+
+  drawLabrynth({hash: '0xdb91fa609f587c8fd4dc2ceefef7f77e7c9c1eb89832a32fab6853c7e1aef759'}, $.id('svg'))
+
+
+</script>
+</html>
+
