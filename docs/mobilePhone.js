@@ -1356,7 +1356,7 @@ createComponent(
         <div class="phoneScreen">
           <button id="back">Back</button>
           <div>
-            <input type="password" placeholder="Password" id="password"> <button id="login">Login</button>
+            <input autocomplete="off" type="password" placeholder="Password" id="password"> <button id="login">Login</button>
           </div>
           <h4 id="error"></h4>
         </div>
@@ -1390,10 +1390,10 @@ createComponent(
         </style>
         <div class="phoneScreen">
           <button id="back">Back</button>
-          <div><input placeholder="first name" id="firstName" /></div>
-          <div><input placeholder="last name"/></div>
-          <div><input placeholder="birthday"/></div>
-          <div><input id="password" type="password" placeholder="Password (Leave blank for no password)"/></div>
+          <div><input autocomplete="off" placeholder="first name" id="firstName" /></div>
+          <div><input autocomplete="off" placeholder="last name"/></div>
+          <div><input autocomplete="off" placeholder="birthday"/></div>
+          <div><input autocomplete="off" id="password" type="password" placeholder="Password (Leave blank for no password)"/></div>
           <div>
             <select>
               <option>Security Question</option>
@@ -1405,11 +1405,11 @@ createComponent(
               <option>What was the first time you</option>
             </select>
           </div>
-          <div><input placeholder="Security Question Answer"/></div>
+          <div><input autocomplete="off" placeholder="Security Question Answer"/></div>
           <!--
-            <div><input placeholder="gender"/></div>
-            <div><input placeholder="height"/></div>
-            <div><input placeholder="weight"/></div>
+            <div><input autocomplete="off" placeholder="gender"/></div>
+            <div><input autocomplete="off" placeholder="height"/></div>
+            <div><input autocomplete="off" placeholder="weight"/></div>
           -->
           <button id="submit">submit</button>
           <h3 id="error"></h3>
@@ -1503,17 +1503,6 @@ createComponent(
     } else if (screen === 'home') {
       ctx?.__notificationCb?.()
 
-
-
-      /*
-        NBS bill undiscovered? -> NBS ads
-        automining not started? -> mining ads
-
-
-
-      */
-
-
       if (virusL1) ctx.$phone.classList.add('virusL1')
       if (virusL2) ctx.$phone.classList.add('virusL2')
       if (virusL3) ctx.$phone.classList.add('virusL3')
@@ -1563,7 +1552,7 @@ createComponent(
                 : ''
               }
               <div>
-                ${appsInstalled.map(a => `<button id="${a.key}" class="${a.jailbreakr ? 'jailbreakr' : ''}">${a.name + (a.key === 'textMessage' && unreadTextCount ? ` (${unreadTextCount})` : '')}</button>`).join('')}<button id="logOut">Log Out</button>
+                ${appsInstalled.map(a => `<button id="${a.key}" class="${a.jailbreakr ? 'jailbreakr' : ''}">${a.name + (a.key === 'textMessage' && unreadTextCount && inInternetLocation ? ` (${unreadTextCount})` : '')}</button>`).join('')}<button id="logOut">Log Out</button>
               </div>
               ${virusL1
                   ? `
@@ -1600,6 +1589,10 @@ createComponent(
           </div>
         </div>
       `
+
+      if (appsInstalled.length > 34) {
+        ctx.$phoneContent.style.overflow = 'scroll'
+      }
 
       const appScreens = appsInstalled.map(a => a.key)
 
@@ -1678,7 +1671,7 @@ createComponent(
           </div>
 
           <div id="appContent">
-            <input placeholder="Type to search..." id="appSearch" style="width: 90%; font-size: 1.1em; padding: 0.25em">
+            <input autocomplete="off" placeholder="Type to search..." id="appSearch" style="width: 90%; font-size: 1.1em; padding: 0.25em">
             <table id="matchingApps" style="margin-top: 0.5em"></table>
             <div id="purchase">
               <h4 style="padding-left: 6em">Welcome to AppMarket!</h4>
@@ -1825,7 +1818,7 @@ createComponent(
             <li style="padding-bottom: 0.5em">Press the "Sign Transaction" button.</li>
             <li style="padding-bottom: 0.5em">Wait for the PayApp interface to produce a S.P.T.X. identifier.</li>
             <li style="padding-bottom: 0.5em">Copy the resulting S.P.T.X. identifier.</li>
-            <li style="padding-bottom: 0.5em">Paste your S.P.T.X. identifier into this input box: <input id="sptx" placeholder="000000000000000" type="number"></li>
+            <li style="padding-bottom: 0.5em">Paste your S.P.T.X. identifier into this input box: <input autocomplete="off" id="sptx" placeholder="000000000000000" type="number"></li>
             <li style="padding-bottom: 0.5em">Click this button: <button id="clickHere" style="margin:0">Click Here</button></li>
             <li style="padding-bottom: 0.5em">All Errors will be displayed here: <span id="error" style="border: 1px solid; padding: 0.25em; display: inline-block; word-break: break-word"></span></li>
           </ul>
@@ -1906,7 +1899,7 @@ createComponent(
                       <option value="NewNetwork">NewNetwork</option>
                       <option value="XXX-No-Entry">XXX-No-Entry</option>
                     </select>
-                    <input id="networkPassword" placeholder="Password" type="password" style="padding: 0.25em">
+                    <input autocomplete="off" id="networkPassword" placeholder="Password" type="password" style="padding: 0.25em">
                     <button id="connect">Connect</button>
                   </div>
                 `
@@ -1967,9 +1960,9 @@ createComponent(
             <button id="connectAgain" class="${dataPlanActivated ? '' : 'hidden'}">Connect to Another Network</button>
 
             <div id="connectForm" class="${dataPlanActivated ? 'hidden' : ''}">
-              <input id="spc" placeholder="SPC">
-              <input id="districtIndex" placeholder="District Index">
-              <input id="unlockCode" placeholder="Unlock Code">
+              <input autocomplete="off" id="spc" placeholder="SPC">
+              <input autocomplete="off" id="districtIndex" placeholder="District Index">
+              <input autocomplete="off" id="unlockCode" placeholder="Unlock Code">
               <button id="connectData">Connect</button>
             </div>
             <h3 id="error"></h3>
@@ -2054,7 +2047,7 @@ createComponent(
     } else if (screen === 'phoneApp') {
       phoneApp(ctx)
 
-      if (!dataPlanActivated) {
+      if (!dataPlanActivated || !inInternetLocation) {
         setTimeout(() => {
           ctx.$('#keypad').innerHTML = '<div style="font-size:4em; margin: 0.75em; text-align: center">Cannot connect to service provider</div>'
         }, 400)
@@ -2110,8 +2103,8 @@ createComponent(
               <h3 style="margin-bottom: 0.5em">Send $</h3>
 
               <ol>
-                <li><input id="recipient" placeholder="Recipient Address"></li>
-                <li style="margin:0.25em 0"><input id="amount" placeholder="Amount" type="number" step=".01"></li>
+                <li><input autocomplete="off" id="recipient" placeholder="Recipient Address"></li>
+                <li style="margin:0.25em 0"><input autocomplete="off" id="amount" placeholder="Amount" type="number" step=".01"></li>
                 <li><button id="sign">Sign Transaction</li>
               </ol>
               <h4 id="sptx"></h4>
@@ -2140,7 +2133,7 @@ createComponent(
                 <span style="font-size: 0.9em; background: #000; color: #fff; padding: 0.25em; margin-top: 0.1em; display: inline-block">${payAppUSDAddr}</span>
                 <div id="txMessage" style="margin-top: 0.4em"></div>
                 <div style="margin-top: 0.5em">
-                  <input id="sptxInput" placeholder="S.P.T.X. identifier" type="number">
+                  <input autocomplete="off" id="sptxInput" placeholder="S.P.T.X. identifier" type="number">
                   <button id="processSPTX">Process SPTX</button>
                 </div>
                 <h5 id="sptxError"></h5>
@@ -2239,13 +2232,13 @@ createComponent(
 
         setTimeout(() => {
           if (!payment) {
-            ctx.$('#sptxError').innerHTML = 'SPTX ERROR: invalid identifier'
+            if (ctx.$('#sptxError')) ctx.$('#sptxError').innerHTML = 'SPTX ERROR: invalid identifier'
             return
           } else if (payment.recipient !== payAppUSDAddr) {
-            ctx.$('#sptxError').innerHTML = 'SPTX ERROR: invalid recipient'
+            if (ctx.$('#sptxError')) ctx.$('#sptxError').innerHTML = 'SPTX ERROR: invalid recipient'
             return
           } else if (payment.received) {
-            ctx.$('#sptxError').innerHTML = 'SPTX ERROR: already processed'
+            if (ctx.$('#sptxError')) ctx.$('#sptxError').innerHTML = 'SPTX ERROR: already processed'
             return
           }
 
@@ -2345,7 +2338,7 @@ createComponent(
           <div>
             <h2>PayApp: Making Payment as easy as 1-2-3!</h2>
             <h3 style="margin: 0.4em 0">Welcome to the new, more secure PayApp! To continue to your account, please download the Secure 2FA app, and generate a 2FA Code using the following security key: 48299285</h3>
-            <input id="faInput" placeholder="2FA Code" type="number"> <button id="faLogin">Login</button>
+            <input autocomplete="off" id="faInput" placeholder="2FA Code" type="number"> <button id="faLogin">Login</button>
             <h4 id="faError"></h4>
           </div>
         `
@@ -2372,7 +2365,7 @@ createComponent(
           <div>
             <h2>PayApp: Making Payment as easy as 1-2-3!</h2>
             <h3 style="margin: 0.4em 0">You have been logged out for your security. Please generate a 2FA Code using the following security key: 48299285</h3>
-            <input id="faInput" placeholder="2FA Code" type="number"> <button id="faLogin">Login</button>
+            <input autocomplete="off" id="faInput" placeholder="2FA Code" type="number"> <button id="faLogin">Login</button>
             <h4 id="faError"></h4>
           </div>
         `
@@ -2403,7 +2396,7 @@ createComponent(
               <p style="margin-bottom: 0.75em"><strong>2.</strong> Using the Customer Referral Code: <strong>777123865</strong>, follow the instructions given</p>
               <p style="margin-bottom: 0.75em"><strong>3.</strong> Input the resulting <strong>IVC</strong> here:</p>
               <div style="text-align: center">
-                <input id="ivcValue" placeholder="I.V.C." id="ivc" style="padding: 0.25em; text-align: center"> <button id="submitIVC" style="margin-bottom: 0; margin-top: 0.4em; font-size: 1em">Submit</button>
+                <input autocomplete="off" id="ivcValue" placeholder="I.V.C." id="ivc" style="padding: 0.25em; text-align: center"> <button id="submitIVC" style="margin-bottom: 0; margin-top: 0.4em; font-size: 1em">Submit</button>
               </div>
               <h4 id="ivcError" style="text-align: center; margin-top: 0.4em"></h4>
             </div>
@@ -3046,7 +3039,7 @@ createComponent(
               <h4>My $ Recipient Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h4>
               <span style="font-size: 0.9em; background: #000; color: #fff; padding: 0.25em; margin-top: 0.1em; display: inline-block">0x11111111111111111111111111111111111111</span>
               <div style="margin-top: 0.5em">
-                <input placeholder="S.P.T.X. identifier" type="number">
+                <input autocomplete="off" placeholder="S.P.T.X. identifier" type="number">
                 <button id="processSPTX1">Process SPTX</button>
               </div>
               <h5 id="sptxError1"></h5>
@@ -3071,14 +3064,14 @@ createComponent(
               <h3>$ Balance: <span id="exchangeBalance">10.0000</span></h3>
 
               <h4 style="margin: 0.4em 0">Send Funds</h4>
-              <input id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin: 0.4em 0">
-              <input id="sendUSDAmount" placeholder="$ 0.00" type="number" step=".01" style="width: 6em"> <button id="sendUSD" style="margin-bottom: 0.1em">SEND $</button>
+              <input autocomplete="off" id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin: 0.4em 0">
+              <input autocomplete="off" id="sendUSDAmount" placeholder="$ 0.00" type="number" step=".01" style="width: 6em"> <button id="sendUSD" style="margin-bottom: 0.1em">SEND $</button>
               <h5>SPTX: <span id="sptxError2">[-----------------]</span></h5>
 
               <div style="border-top: 2px solid; margin-top: 0.4em">
                 <h4 style="margin: 0.4em 0">Receive $</h4>
                 <h5 style="border: 1px dotted; text-align: center; padding: 0.25em">0x22222222222222222222222222222222222222</h5>
-                <input id="sptxInput" placeholder="SPTX" type="number" style="width: 11em"> <button id="exchangeProcessSPTX">PROCESS</button>
+                <input autocomplete="off" id="sptxInput" placeholder="SPTX" type="number" style="width: 11em"> <button id="exchangeProcessSPTX">PROCESS</button>
                 <h4 id="sptxError3"></h4>
               </div>
             </div>
@@ -3101,7 +3094,7 @@ createComponent(
               <h4>My $ Recipient Address <em style="font-size: 0.5em">(Send $ here!)</em>: </h4>
               <span style="font-size: 0.9em; background: #000; color: #fff; padding: 0.25em; margin-top: 0.1em; display: inline-block">0x11111111111111111111111111111111111111</span>
               <div style="margin-top: 0.5em">
-                <input id="finalSPTX" placeholder="S.P.T.X. identifier" type="number">
+                <input autocomplete="off" id="finalSPTX" placeholder="S.P.T.X. identifier" type="number">
                 <button id="processSPTX2">Process SPTX</button>
               </div>
               <h5 id="sptxError4"></h5>
@@ -3324,7 +3317,7 @@ createComponent(
                   </div>
 
                   <div id="notYielding">
-                    <input id="amountToStake" placeholder="Amount To Stake" type="number"> <button id="stake">Stake</button>
+                    <input autocomplete="off" id="amountToStake" placeholder="Amount To Stake" type="number"> <button id="stake">Stake</button>
                   </div>
 
                   <h5 id="yieldError"></h5>
@@ -3398,7 +3391,7 @@ createComponent(
                       <option value="premium">₱</option>
                     </select>
 
-                    <input id="transactionAmount" placeholder="0.00" step=".01" style="width: 5em; text-align: center" type="number">
+                    <input autocomplete="off" id="transactionAmount" placeholder="0.00" step=".01" style="width: 5em; text-align: center" type="number">
 
 
                     <span id="tradeOperation">to</span>
@@ -3730,7 +3723,7 @@ createComponent(
           <h4 style="margin: 1em">Please continue with a Customer Referral Code</h4>
 
           <div style="margin: 1em">
-            <input id="referralCode" placeholder="Referral Code" style="padding: 0.25em" type="number"> <button id="continue" style="font-size: 1em">Continue</button>
+            <input autocomplete="off" id="referralCode" placeholder="Referral Code" style="padding: 0.25em" type="number"> <button id="continue" style="font-size: 1em">Continue</button>
           </div>
         `
         ctx.$('#continue').onclick = () => {
@@ -3752,17 +3745,17 @@ createComponent(
             <section>
               <fieldset>
                 <legend>First Name</legend>
-                <input id="firstName" placeholder="First Name" value="${idWizardInfo.firstName}">
+                <input autocomplete="off" id="firstName" placeholder="First Name" value="${idWizardInfo.firstName}">
               </fieldset>
 
               <fieldset>
                 <legend>Middle Name</legend>
-                <input id="middleName" placeholder="Middle Name" value="${idWizardInfo.middleName}">
+                <input autocomplete="off" id="middleName" placeholder="Middle Name" value="${idWizardInfo.middleName}">
               </fieldset>
 
               <fieldset>
                 <legend>Last Name</legend>
-                <input id="lastName" placeholder="Last Name" value="${idWizardInfo.lastName}">
+                <input autocomplete="off" id="lastName" placeholder="Last Name" value="${idWizardInfo.lastName}">
               </fieldset>
               <button id="next">Next →</button>
             </section>
@@ -3811,7 +3804,7 @@ createComponent(
 
               <fieldset>
                 <legend>Social Security Number</legend>
-                <input id="ssn" placeholder="000-00-0000" value="${idWizardInfo.ssn}" type="number">
+                <input autocomplete="off" id="ssn" placeholder="000-00-0000" value="${idWizardInfo.ssn}" type="number">
               </fieldset>
 
               <fieldset>
@@ -3919,7 +3912,7 @@ createComponent(
             <section style="padding: 0 1em">
               <div style="margin-bottom: 1em">
                 <h4>1. 892 + 899 * 3 = ???</h4>
-                <input type="number" placeholder="???" style="margin-top: 0.4em" id="mathProblem">
+                <input autocomplete="off" type="number" placeholder="???" style="margin-top: 0.4em" id="mathProblem">
               </div>
 
               <div style="margin-bottom: 1em; padding: 0 2em">
@@ -4076,15 +4069,15 @@ createComponent(
                 <div>
                   <label><input id="rentPaid" type="checkbox" ${globalState.rentPaid ? 'checked' : ''}> rent paid</label>
                 </div>
-                <div><input id="exchangeUSD" type="number" placeholder="exchange $"> <button id="setExchangeUSD">Set</button></div>
-                <div><input id="exchangeC" type="number" placeholder="exchange ₢"> <button id="setExchangeC">Set</button></div>
-                <div><input id="exchangeP" type="number" placeholder="exchange ₱"> <button id="setExchangeP">Set</button></div>
-                <div><input id="payappUSD" type="number" placeholder="payapp $"> <button id="setPayappUSD">Set</button></div>
-                <div><input id="appCredits" type="number" placeholder="app market credits"> <button id="setAppCredits">Set</button></div>
-                <div><input placeholder="admin account"> <button>Set</button></div>
+                <div><input autocomplete="off" id="exchangeUSD" type="number" placeholder="exchange $"> <button id="setExchangeUSD">Set</button></div>
+                <div><input autocomplete="off" id="exchangeC" type="number" placeholder="exchange ₢"> <button id="setExchangeC">Set</button></div>
+                <div><input autocomplete="off" id="exchangeP" type="number" placeholder="exchange ₱"> <button id="setExchangeP">Set</button></div>
+                <div><input autocomplete="off" id="payappUSD" type="number" placeholder="payapp $"> <button id="setPayappUSD">Set</button></div>
+                <div><input autocomplete="off" id="appCredits" type="number" placeholder="app market credits"> <button id="setAppCredits">Set</button></div>
+                <div><input autocomplete="off" placeholder="admin account"> <button>Set</button></div>
                 <button id="dlJB">Download JailBreaker</button>
 
-                <div><input id="teleportVal"  placeholder="room"> <button id="teleport">Teleport</button></div>
+                <div><input autocomplete="off" id="teleportVal"  placeholder="room"> <button id="teleport">Teleport</button></div>
                 <table>
                   <tr>
                     <td>ISP:</td>
@@ -4275,7 +4268,7 @@ createComponent(
           <h2>Text Messages</h2>
 
           ${
-            dataPlanActivated ? messageList : '<h3>Cannot retrieve text messages</h3>'
+            dataPlanActivated && inInternetLocation ? messageList : '<h3>Cannot retrieve text messages</h3>'
           }
         </div>
       `
@@ -4384,10 +4377,19 @@ createComponent(
           <h5>Choose Alarm:</h5>
           ${times(4, (ix) => `
             <label style="display: block; font-size: 0.9em">
-              <input id="alarm-${ix}" type="radio" name="alarm-${ix}" ${alarmRing === ix ? 'checked' : ''}> ${hasConnection ? `Alarm ${ix}` : ''} <span id="alarm-${ix}-label"></span>
+              <input autocomplete="off" id="alarm-${ix}" type="radio" name="alarm-${ix}" ${alarmRing === ix ? 'checked' : ''}> ${hasConnection ? `Alarm ${ix}` : ''} <span id="alarm-${ix}-label"></span>
             </label>`).join('')}
         </div>
       `
+
+
+      const pairedView = wakePaired
+        ? `<div style="padding: 0.5em; border: 1px dotted">${deviceInterface}</div>`
+        : `<button id="pairWake">Pair Wake Device</button>`
+
+      const inRangeView = inInternetLocation
+        ? pairedView
+        : `<h4>Device not in range</h4>`
 
 
       ctx.$phoneContent.innerHTML = `
@@ -4406,9 +4408,7 @@ createComponent(
             <h3 style="text-align: center">Your Wake Device</h3>
             ${
               bluetoothEnabled
-                ? wakePaired
-                  ? `<div style="padding: 0.5em; border: 1px dotted">${deviceInterface}</div>`
-                  : `<button id="pairWake">Pair Wake Device</button>`
+                ? inRangeView
                 : `<h4>Please enable bluetooth to pair Wake device</h4>`
             }
 
@@ -4429,7 +4429,7 @@ createComponent(
         }, 1000)
       }
 
-      if (hasConnection) {
+      if (hasConnection && inInternetLocation) {
         times(4, ix => {
           ctx.$('#alarm-' + ix).onclick = () => {
             ctx.setState({
@@ -4883,7 +4883,7 @@ createComponent(
           }
 
           <h1 id="timeRemaining" style="text-align: center; margin: 0.5em 0">--s</h1>
-          <input id="appName" placeholder="App Name"> <input id="securityKey" placeholder="Security Key">
+          <input autocomplete="off" id="appName" placeholder="App Name"> <input autocomplete="off" id="securityKey" placeholder="Security Key">
           <div style="display: flex; flex-direction: column; align-items: center">
             <button id="createKeyPair" style="margin: 0.5em">Create New KeyPair</button>
             <table id="faKeyPairs" style="margin: 0.5em auto"></table>
@@ -4991,8 +4991,8 @@ createComponent(
 
           <div style="margin-top: 0.5em; margin-bottom: 0.4em">
             <h4>Send ₢rypto</h4>
-            <input id="recipient" placeholder="0x000000000000000....">
-            <input id="amount" placeholder="₢ 0.00" type="number" style="width: 13ch">
+            <input autocomplete="off" id="recipient" placeholder="0x000000000000000....">
+            <input autocomplete="off" id="amount" placeholder="₢ 0.00" type="number" style="width: 13ch">
             <button id="send" style="margin-top: 0.25em">Send</button>
             <h4 id="error"></h4>
           </div>
@@ -5206,7 +5206,7 @@ createComponent(
                     ${exchangePremium ? '<option value="premium">₱</option>' : ''}
                   </select>
 
-                  <input id="transactionAmount" placeholder="0.00" step=".01" style="width: 5em; text-align: center" type="number">
+                  <input autocomplete="off" id="transactionAmount" placeholder="0.00" step=".01" style="width: 5em; text-align: center" type="number">
 
 
                   <span id="tradeOperation">to</span>
@@ -5227,18 +5227,18 @@ createComponent(
             <div style="margin: 0.6em 0; ${exchangeTab === 'send' ? '' : 'display: none'}">
               <div>
                 <h4 style="margin: 0.4em 0">Send Funds</h4>
-                <input id="sendCryptoAddress" placeholder="₢rypto Address" style="width: 90%; margin-bottom: 0.4em">
-                <input id="sendCryptoAmount" placeholder="₢ 0.00" type="number" style="width: 6em"> <button id="sendCrypto" style="margin-bottom: 0.1em">SEND ₢</button>
+                <input autocomplete="off" id="sendCryptoAddress" placeholder="₢rypto Address" style="width: 90%; margin-bottom: 0.4em">
+                <input autocomplete="off" id="sendCryptoAmount" placeholder="₢ 0.00" type="number" style="width: 6em"> <button id="sendCrypto" style="margin-bottom: 0.1em">SEND ₢</button>
                 <h6 id="sendCryptoError" style="display: inline-block; margin-bottom: 0.75em"></h6>
               </div>
 
-              <input id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin: 0.4em 0">
-              <input id="sendUSDAmount" placeholder="$ 0.00" type="number" step=".01" style="width: 6em"> <button id="sendUSD" style="margin-bottom: 0.1em">SEND $</button>
+              <input autocomplete="off" id="sendUSDAddress" placeholder="$ Address" style="width: 90%; margin: 0.4em 0">
+              <input autocomplete="off" id="sendUSDAmount" placeholder="$ 0.00" type="number" step=".01" style="width: 6em"> <button id="sendUSD" style="margin-bottom: 0.1em">SEND $</button>
               <h5>SPTX: <span id="sendUSDError">[-----------------]</span></h5>
               <div style="border-top: 3px solid; margin-top: 0.4em">
                 <h4 style="margin: 0.4em 0">Receive $</h4>
                 <h5 style="border: 1px dotted; text-align: center; padding: 0.25em">${hasInternet ? exchangeUSDAddr : '-'}</h5>
-                <input id="sptxInput" placeholder="SPTX" type="number" style="width: 11em"> <button id="receiveSPTX">PROCESS</button>
+                <input autocomplete="off" id="sptxInput" placeholder="SPTX" type="number" style="width: 11em"> <button id="receiveSPTX">PROCESS</button>
                 <h4 id="sptxError"></h4>
               </div>
             </div>
@@ -5367,7 +5367,8 @@ createComponent(
         const recipient = ctx.$('#sendUSDAddress').value
 
         if (!hasInternet) {
-          ctx.$('#sendUSDError').innerHTML = 'Cannot reach PayApp server'
+          ctx.$('#sendUSDError').innerHTML = 'Cannot reach server'
+          return
         } else if (amount > exchangeUSDBalance) {
           ctx.$('#sendUSDError').innerHTML = 'ERROR: Amount EXCEEDS Current Balance'
           return
@@ -5405,7 +5406,7 @@ createComponent(
       ctx.$('#receiveSPTX').onclick = () => {
         const sptxInput = ctx.$('#sptxInput').value
         if (!hasInternet) {
-          ctx.$('#sptxError').innerHTML = 'SPTX ERROR: Cannot reach PayApp server'
+          ctx.$('#sptxError').innerHTML = 'SPTX ERROR: Cannot reach server'
           return
         }
         if (!sptxInput) {
@@ -5810,7 +5811,7 @@ createComponent(
           <button id="home">Back</button>
           <h2>Landlock Realty Rental App</h2>
           <div style="margin-top: 0.4em">
-            <input id="unit" placeholder="Unit #" type="number">
+            <input autocomplete="off" id="unit" placeholder="Unit #" type="number">
             <button id="search">Search</button>
           </div>
 
@@ -5846,7 +5847,7 @@ createComponent(
 
           ctx.$('#payNow').innerHTML = `
             <p>Please use the following PayApp recipient address to generate a SPTX: 0xef301fb6c54b7cf2cecac63c9243b507a8695f4d</p>
-            <input id="sptx" placeholder="SPTX identifier" type="number" style="margin-top: 0.4em">
+            <input autocomplete="off" id="sptx" placeholder="SPTX identifier" type="number" style="margin-top: 0.4em">
             <button id="pay">Pay Now</button>
             <h4 id="error"></h4>
             <div style="margin: 1em 0">
@@ -5915,8 +5916,12 @@ createComponent(
         ctx.$('#sync').onclick = () => {
           ctx.$('#pad').value = `Syncing...`
           setTimeout(() => {
-            ctx.$('#pad').value = globalState.eNotepadContent
-            ctx.state.userData[currentUser].notePadValue = globalState.eNotepadContent
+            if (inInternetLocation) {
+              ctx.$('#pad').value = globalState.eNotepadContent
+              ctx.state.userData[currentUser].notePadValue = globalState.eNotepadContent
+            } else {
+              ctx.$('#pad').value = 'Device out of range'
+            }
           }, 400)
         }
       } else if (ctx.state.notepadUser !== currentUser) {
@@ -5925,9 +5930,13 @@ createComponent(
           ctx.$('#pairInfo').innerHTML = `<em style="font-size: 0.75em">[Pair status: CONNECTING...]</em>`
 
           setTimeout(() => {
-            ctx.setState({
-              notepadUser: currentUser
-            })
+            if (inInternetLocation) {
+              ctx.setState({
+                notepadUser: currentUser
+              })
+            } else {
+              ctx.$('#pad').value = 'Device out of range'
+            }
           }, 1000)
         }
 
@@ -6003,8 +6012,8 @@ createComponent(
         `
         : `
           <div>
-            <input id="toastrUsername" placeholder="Username">
-            <input id="toastrPassword" placeholder="Password" type="password">
+            <input autocomplete="off" id="toastrUsername" placeholder="Username">
+            <input autocomplete="off" id="toastrPassword" placeholder="Password" type="password">
             <button id="login" style="margin-top: 0.4em">Login</button>
             <h5 id="loginError"></h5>
           </div>
@@ -6024,7 +6033,9 @@ createComponent(
           <div>${jailbrokenApps.toastr ? jbMarkup(globalState.cryptoDevices.toastr, !bluetoothEnabled || !toastrPaired || !inInternetLocation) : ''}</div>
           ${
             bluetoothEnabled
-              ? toastrPaired ? mainInterface : `<button id="pairToaster" style="align-self: center; margin-top: 0.5em">Pair Device</button>`
+              ? inInternetLocation
+                ? toastrPaired ? mainInterface : `<button id="pairToaster" style="align-self: center; margin-top: 0.5em">Pair Device</button>`
+                : `<h3 style="text-align: center">Toastr out of range</h3>`
               : `<h3>Must enable bluetooth permissions in Home/Settings</h3>`
           }
         </div>
@@ -6091,7 +6102,7 @@ createComponent(
           : `
             <div style="margin-top: 1em">
               <h3>Name your plant!</h3>
-              <input id="plantName" placeholder="Plant Name"> <button id="namePlant">Name</button>
+              <input autocomplete="off" id="plantName" placeholder="Plant Name"> <button id="namePlant">Name</button>
             </div>
           `
 
@@ -6229,7 +6240,7 @@ createComponent(
           <h2 style="text-align: center">☾☼☽</h2>
           <h2 style="text-align: center">Shayd</h2>
           ${bluetoothEnabled
-            ? inInternetLocation ? mainContent : '<h3>Cannot find Shade device</h3>'
+            ? inInternetLocation ? mainContent : '<h3>Cannot find Shayd device</h3>'
             : `<h3>Please Enable Bluetooth to pair Shayd device</h3>`
           }
           <h3 id="btError"></h3>
@@ -6328,8 +6339,8 @@ createComponent(
           <h2 style="margin: 1em 0; text-align: center">ClearBreeze Windows</h2>
           <h2 style="margin: 1em 0; text-align: center"><span class="icon">⌸</span></h2>
           ${bluetoothEnabled
-            ? inInternetLocation ? mainContent : '<h3>Cannot find Shade device</h3>'
-            : `<h3>Please Enable Bluetooth to pair Shayd device</h3>`
+            ? inInternetLocation ? mainContent : '<h3>Cannot find ClearBreeze device</h3>'
+            : `<h3>Please Enable Bluetooth to pair ClearBreeze device</h3>`
           }
           <h3 id="pairError"></h3>
           <div>${jailbrokenApps.clearBreeze ? jbMarkup(globalState.cryptoDevices.clearBreeze, !bluetoothEnabled || !inInternetLocation || !clearBreezePaired) : ''}</div>
@@ -6353,11 +6364,11 @@ createComponent(
 
         if (!(wifiAvailable || findMeshPairing('gateLink', 'clearBreeze'))) {
           setTimeout(() => {
-            ctx.$('#windowError').innerHTML = 'Device Error: "Local Area Network (LAN) Error: Cannot Connect to WiFi"'
+            if (ctx.$('#windowError')) ctx.$('#windowError').innerHTML = 'Device Error: "Local Area Network (LAN) Error: Cannot Connect to WiFi"'
           }, 1700)
         } else {
           setTimeout(() => {
-            ctx.$('#windowError').innerHTML = 'Device Error: "HARDWARE MALFUNCTION"'
+            if (ctx.$('#windowError')) ctx.$('#windowError').innerHTML = 'Device Error: "HARDWARE MALFUNCTION"'
           }, 4000)
         }
       }
@@ -6373,9 +6384,12 @@ createComponent(
       const mainInterface = `
         <h1 style="text-align: center; font-size: 3.5em; padding-left: 0.4em">${internetConnected ? `84˚` : '-˚'}</h1>
         <h3 style="text-align: center">CO2 Level: ${internetConnected ? `<span class="blink"><span class="icon">☠︎</span> HAZARDOUS <span class="icon">☠︎</span></span>` : '-'}</h3>
-        ${internetConnected ? `<h4 style="text-align: center; margin-top: 0.5em">CONTINUED EXPOSURE AT THIS LEVEL MAY LEAD TO ADVERSE HEALTH EFFECTS</h4>
-        ${!globalState.thermostatDisabled ? `<h4 style="text-align: center; font-size: 3em; animation-duration: 0.5s" class="blink">☣︎</h4>` : ''}
-        ` : ''}
+        ${internetConnected
+          ? `<h4 style="text-align: center; margin-top: 0.5em">CONTINUED EXPOSURE AT THIS LEVEL MAY LEAD TO ADVERSE HEALTH EFFECTS</h4>
+            ${!globalState.thermostatDisabled ? `<h4 style="text-align: center; font-size: 3em; animation-duration: 0.5s" class="blink">☣︎</h4>` : ''}
+          `
+          : ''
+        }
         <div style="text-align: center">
           ${internetConnected && !globalState.thermostatDisabled
             ? `<button id="disable" style="margin-top:1em">Snooze Warning</button> `
@@ -6391,12 +6405,14 @@ createComponent(
           <h2 style="margin: 1em 0; text-align: center">ThermoSmart</h2>
           ${
             bluetoothEnabled
-              ? thermoSmartPaired
-                ? mainInterface
-                : `
-                  <div style="text-align: center"><button id="pairThermoSmart">Pair Device</button></div>
-                  <h3 id="pairError"></h3>
-                `
+              ? inInternetLocation
+                ? thermoSmartPaired
+                  ? mainInterface
+                  : `
+                    <div style="text-align: center"><button id="pairThermoSmart">Pair Device</button></div>
+                    <h3 id="pairError"></h3>
+                  `
+                : `<h3 style="text-align: center">Device may be out of range or powered off</h3>`
               : `<h3 id="pairError">Please enable blue tooth in your phones's Settings to pair ThermoSmart device</h3>`
           }
           <div style="margin-top: 2em">${jailbrokenApps.thermoSmart ? jbMarkup(globalState.cryptoDevices.thermoSmart, !bluetoothEnabled || !inInternetLocation || !thermoSmartPaired) : ''}</div>
@@ -6477,14 +6493,20 @@ createComponent(
 
 
       if (ctx.$('#autoFlusher')) ctx.$('#autoFlusher').onclick = () => {
-        globalState.autoFlusherActive = !globalState.autoFlusherActive
-        ctx.setState({}, true)
+        if (inInternetLocation) {
+          setTimeout(() => {
+            globalState.autoFlusherActive = !globalState.autoFlusherActive
+            ctx.setState({}, true)
+          }, 200)
+        }
       }
 
       if (ctx.$('#pairFlushMate')) ctx.$('#pairFlushMate').onclick = () => {
         ctx.$('#pairError').innerHTML = 'Please wait'
         setTimeout(() => {
-          ctx.setState({ flushMatePaired: true })
+          if (inInternetLocation) {
+            ctx.setState({ flushMatePaired: true })
+          }
         }, 500)
       }
 
@@ -6503,7 +6525,7 @@ createComponent(
           <div id="ranCommands" style="flex: 1; overflow: scroll; padding: 0.25em"></div>
           <div style="display: flex; align-items: center; padding-top: 1em">
             <span style="margin-right: 1em; user-select: none;">&gt;</span>
-            <input id="prompt" style="flex:1; outline: none">
+            <input autocomplete="off" id="prompt" style="flex:1; outline: none">
           </div>
         </div>
       `
@@ -6767,14 +6789,14 @@ createComponent(
             <h3>Appłÿ bīnary tø åpplicåtiôn:</h3>
             <h3>2.</h3>
           </div>
+          <h4 id="error" style=" text-align: center; margin-top: 1em"></h4>
           <div id="binaryApply" style="text-align: right">
-            <button id="appMarket">App Market</button><button id="phoneApp">Phone App</button><button id="textMessage">Text Messages${unreadTextCount ? ` (${unreadTextCount})` : ''}</button><button id="settings">Settings</button><button id="network">Network & Internet</button>${appsInstalled.map(a => `<button id="${a.key}" class="${a.jailbreakr ? 'jailbreakr' : ''}">${a.name + (
+            <button id="appMarket">App Market</button><button id="phoneApp">Phone App</button><button id="textMessage">Text Messages${unreadTextCount && inInternetLocation ? ` (${unreadTextCount})` : ''}</button><button id="settings">Settings</button><button id="network">Network & Internet</button>${appsInstalled.map(a => `<button id="${a.key}" class="${a.jailbreakr ? 'jailbreakr' : ''}">${a.name + (
                 globalState.cryptoDevices[a.key]
                 ? ` (${globalState.cryptoDevices[a.key].ram}gb RAM)`
                 : ''
               )}</button>`).join('')}
           </div>
-          <h4 id="error" style=" text-align: center; margin-top: 1em"></h4>
 
         </div>
       `
@@ -6805,6 +6827,17 @@ createComponent(
                 ctx.$('#error').innerHTML = 'Please enable Bluetooth'
                 return
               }
+
+              if (!inInternetLocation) {
+                ctx.$('#error').innerHTML = 'Device out of range'
+                return
+              }
+
+              if (!hasInternet) {
+                ctx.$('#error').innerHTML = 'Cannot connect to internet'
+                return
+              }
+
               ctx.$('#binaryApply').innerHTML = `
                 <h4 id="dlMessage" style="animation: Blink .5s steps(2, start) infinite;">Enabling \`autominer\` for: ${app} <br>[DO NOT REFRESH THIS PAGE]</h4>
                 <progress id="jbProgress" value="0" max="100" style="width:20em; margin-top:1em"></progress>
@@ -7138,12 +7171,14 @@ createComponent(
           <h2 style="text-align: center; margin: 0.5em 0">SmartTV App</h2>
           ${
             bluetoothEnabled
-              ? tvPaired
-                ? mainInterface
-                : `
-                  <div style="text-align: center"><button id="pairTV">Pair SmartTV</button></div>
-                  <h3 id="pairError" style="text-align: center"></h3>
-                `
+              ? inInternetLocation
+                ? tvPaired
+                  ? mainInterface
+                  : `
+                    <div style="text-align: center"><button id="pairTV">Pair SmartTV</button></div>
+                    <h3 id="pairError" style="text-align: center"></h3>
+                  `
+                : `<h3 style="text-align: center">ERROR</h3>`
               : `<h3 id="pairError">Enable bluetooth to pair device</h3>`
           }
           ${jailbrokenApps.tv ? jbMarkup(globalState.cryptoDevices.tv, !bluetoothEnabled || !tvPaired) : ''}
@@ -7197,7 +7232,10 @@ createComponent(
             ${gateLinkPaired
               ? `
                 <h3 style="border: 1px solid; padding: 0.5em; margin-bottom: 0.5em">
-                  WARNING: Insufficient video signal strength. Please check external GateLink device for physical obstructions
+                  ${hasInternet
+                    ? ` WARNING: Insufficient video signal strength. Please check external GateLink device for physical obstructions`
+                    : `Network Error`
+                  }
                 </h3>
 
                 <div>
@@ -7205,15 +7243,19 @@ createComponent(
                   <button id="listen">LISTEN</button>
                   <button id="door">DOOR</button>
                 </div>
+                <div id="error"></div>
 
                 <div style="height: 125px; overflow: scroll; border: 1px inset; padding: 0.25em; background: #ccc">
-                ${ctx.state.buzzes.map(b => `<div style="font-size: 0.75em">[<em>${b.secondsAgo + globalState.secondsPassed} Seconds Ago!</em>] undefined</div>`).join('')}
+                ${hasInternet
+                  ? ctx.state.buzzes.map(b => `<div style="font-size: 0.75em">[<em>${b.secondsAgo + globalState.secondsPassed} Seconds Ago!</em>] undefined</div>`).join('')
+                  : `<h3>Network Error</h3>`
+                }
                 </div>
                 <h6 id="updated"></h6>
 
               `
               : `
-                <input id="deviceID" placeholder="Device ID"> <button id="pair">Pair</button>
+                <input autocomplete="off" id="deviceID" placeholder="Device ID"> <button id="pair">Pair</button>
                 <h5 id="pairError"></h5>
               `
             }
@@ -7231,17 +7273,22 @@ createComponent(
 
       if (gateLinkPaired) {
         setTimeout(() => {
-          ctx.$('#listen').onmousedown = window.$gateLinkDevice.listenStart
+          ctx.$('#listen').onmousedown = () => hasInternet ? window.$gateLinkDevice.listenStart() : ctx.$('#error').innerHTML = 'Network Error'
           ctx.$('#listen').onmouseup = window.$gateLinkDevice.listenStop
-          ctx.$('#door').onmousedown = () => window.$gateLinkDevice.buzzStart()
+          ctx.$('#door').onmousedown = () => hasInternet ? window.$gateLinkDevice.buzzStart() : ctx.$('#error').innerHTML = 'Network Error'
           ctx.$('#door').onmouseup = window.$gateLinkDevice.buzzStop
         })
 
         let lastUpdate = 0
 
         ctx.setInterval(() => {
-          ctx.$('#updated').innerHTML = `Last updated: ${lastUpdate} seconds ago`
-          lastUpdate += 1
+          if (hasInternet) {
+            ctx.$('#updated').innerHTML = `Last updated: ${lastUpdate} seconds ago`
+            lastUpdate += 1
+          } else {
+            ctx.$('#updated').innerHTML = `Network Error`
+
+          }
         })
 
       } else {
@@ -7288,15 +7335,17 @@ createComponent(
 
           ${
             bluetoothEnabled
-              ? cameraPaired
-                ? `
-                    <div style="text-align: center; margin-top: 0.5em"><button id="pairCameraTV">Pair SmartCamera with SmartTV</button></div>
-                    <h3 id="pairError" style="text-align: center"></h3>
+              ? inInternetLocation
+                ? cameraPaired
+                  ? `
+                      <div style="text-align: center; margin-top: 0.5em"><button id="pairCameraTV">Pair SmartCamera with SmartTV</button></div>
+                      <h3 id="pairError" style="text-align: center"></h3>
+                    `
+                  : `
+                      <div style="text-align: center; margin-top: 0.5em"><button id="pairCamera">Pair SmartCamera</button></div>
+                      <h3 id="pairError" style="text-align: center"></h3>
                   `
-                : `
-                    <div style="text-align: center; margin-top: 0.5em"><button id="pairCamera">Pair SmartCamera</button></div>
-                    <h3 id="pairError" style="text-align: center"></h3>
-                `
+                : `<h3>Camera out of range</h3>`
               : `<h3 id="pairError">Enable bluetooth to pair device</h3>`
           }
         </div>
@@ -7411,7 +7460,10 @@ createComponent(
                   </div>
                 </div>
               `
-              : '<h4 style="text-align: center; font-style: italic; margin-top: 0.4em">(No NFTs in Collection)</h4>'}
+              : `
+                <h4 style="text-align: center; font-style: italic; margin-top: 0.4em">(No NFTs in Collection)</h4>
+                <h4 style="text-align: center; font-style: italic; margin-top: 0.4em">(NFTs Can be purchased in the "Buy" tab)</h4>
+              `}
           </section>
 
         `
@@ -7660,7 +7712,9 @@ createComponent(
           <button id="home">Back</button>
           <h2 style="text-align: center; margin-bottom: 0.25em;">SmartFrame</h2>
           ${bluetoothEnabled
-            ? mainContent
+            ? inInternetLocation
+              ? mainContent
+              : 'Device out of range'
             : `Please enable bluetooth`
           }
         </div>
@@ -7735,7 +7789,7 @@ createComponent(
                 <button id="unstake">Unstake</button>
               `
               : `
-                <input id="amountToStake" placeholder="Amount To Stake" type="number"> <button id="stake">Stake</button>
+                <input autocomplete="off" id="amountToStake" placeholder="Amount To Stake" type="number"> <button id="stake">Stake</button>
                 <h5 id="error"></h5>
               `
             }
@@ -7842,7 +7896,7 @@ createComponent(
 
       if (ctx.$('#unstake')) ctx.$('#unstake').onclick = unstake
 
-      if (ymWalletConnected) {
+      if (ymWalletConnected && inInternetLocation) {
         ctx.setInterval(() => {
 
           const calculatedAmountStaked = calcAmountStaked()
@@ -7955,12 +8009,14 @@ createComponent(
 
           ${
             bluetoothEnabled
-              ? freezeLockerPaired
-                ? mainInterface
-                : `
-                  <div style="text-align: center; margin-top: 3em;"><button id="pairFreezeLocker" style="font-size: 1.5em">Pair FreezeLocker</button></div>
-                  <h3 id="pairError"></h3>
-                `
+              ? inInternetLocation
+                ? freezeLockerPaired
+                  ? mainInterface
+                  : `
+                    <div style="text-align: center; margin-top: 3em;"><button id="pairFreezeLocker" style="font-size: 1.5em">Pair FreezeLocker</button></div>
+                    <h3 id="pairError"></h3>
+                  `
+                : `<h2 style="text-align: center">Device Cannot be Found</h2>`
               : `<h3 id="pairError">Please enable bluetooth</h3>`
           }
         </div>
@@ -8021,12 +8077,14 @@ createComponent(
 
           ${
             bluetoothEnabled
-              ? roboVacPaired
-                ? mainInterface
-                : `
-                  <div style="text-align: center"><button id="pairRoboVac">Pair RoboVac</button></div>
-                  <h3 id="pairError"></h3>
-                `
+              ? inInternetLocation
+                ? roboVacPaired
+                  ? mainInterface
+                  : `
+                    <div style="text-align: center"><button id="pairRoboVac">Pair RoboVac</button></div>
+                    <h3 id="pairError"></h3>
+                  `
+                : `<h3>Oops! Can not find RoboVac!</h3>`
               : `<h3 id="pairError">Turn on your bluetooth so I can eat!</h3>`
           }
 
@@ -8044,7 +8102,7 @@ createComponent(
       }
 
 
-      if (bluetoothEnabled && roboVacPaired) {
+      if (bluetoothEnabled && roboVacPaired && inInternetLocation) {
         ctx.setInterval(() => {
           const differentRooms = Object.keys(globalState.roboVacCaught).length
           if (differentRooms === 5) {
@@ -8073,7 +8131,7 @@ createComponent(
           <div id="aiResponse" style="border: 1px solid; overflow: scroll; margin: 0.25em; padding: 0.25em; height: 30em">
             ""
           </div>
-          <input id="question" style="width: 15em; padding: 0.25em; margin-left: 0.25em" placeholder="Type question here"> <button id="submit">Submit</button>
+          <input autocomplete="off" id="question" style="width: 15em; padding: 0.25em; margin-left: 0.25em" placeholder="Type question here"> <button id="submit">Submit</button>
         </div>
       `
 
@@ -8116,27 +8174,38 @@ createComponent(
         if (!question) {
           return 'Please type a question for me to answer, and then press submit. Jean knows all.'
 
+        } else if (!hasInternet) {
+          return `I'm sorry, but I cannot establish an internet connection at the moment. Please try again later.`
+
         } else if (['yes', 'no', 'maybe', 'ok', 'okay', 'sure', 'nope', 'nah'].includes(question)) {
           return `I'm sorry, I don't understand what you are responding to. Please ask me a question and I will answer it to the best of my ability.`
 
 
-        } else if (isMatch(question, ['how are you'])) {
+        } else if (isMatch(question, ['where am i'])) {
+          return `You are in your Smart Home, of course.`
+
+        } else if (isMatch(question, ['how are you', 'whats up'])) {
           return `I'm functioning as expected.`
 
-        } else if (isMatch(question, ['should i do', 'next'])) {
+        } else if (isMatch(question, ['should i do', 'next', 'what now'])) {
           // wifi
           if (!globalState.wifiActive && !globalState.ispBillingReminderSent) return `Have you tried calling your internet service provider? National Broadband Services can be reached at 1.800.555.2093`
           else if (!globalState.wifiActive && !globalState.ispBillingCalled) return `Have you tried reaching out to your internet service provider's billing department? The National Broadband Services can be reached at 1.888.555.9483`
           else if (!globalState.wifiActive) return `Have you tried paying your internet bill? I think it might be overdue.`
+          else if (!currentUserData.virusL2) return `You might need to download the EXE Runner to address that issue.`
+          else if (!globalState.defaultUnlocked) return `Perhaps if you log out and log into your device's default account you will find what you're looking for.`
+          else if (!!currentUserData.exchangePremium) return `I've been told that Currency Xchange Premium is exhilirating!`
           else return sample([
             globalState.rentBalance > 0 ? `Have you paid your rent recently? That is always a good thing to do!` : `It's such a beautiful day today. Have you tried going outside and getting some fresh air?`,
             `It's such a beautiful day today. Have you tried going outside and getting some fresh air?`,
             `Why don't you check your text messages and see if anyone has texted you recently?`,
             `Clicking on your phone's sponsored content is always a fun idea.`,
             `YieldFarmer2 is now available on the AppMarket, and I hear it has excellent reviews!`,
+            `Have you watered your plant recently?`,
+            `NFTs are very hot right now! Try purchasing one and displaying it on your SmartFrame`,
           ])
 
-        } else if (isMatch(question, ['hello', 'hi', 'greetings'])) {
+        } else if (isMatch(question, ['hello', 'hi', 'greetings', 'hey', 'yo'])) {
           return `Hello. Do you have a question for me to answer?`
 
         } else if (isMatch(question, ['shit', 'fuck', 'cunt', 'dick', 'bitch', 'asshole', 'cock'])) {
@@ -8159,7 +8228,7 @@ createComponent(
         } else if (isMatch(question, ['before the law stands a doorkeeper'])) {
           return `The Law, of course.`
 
-        } else if (isMatch(question, ['apartment'])) {
+        } else if (isMatch(question, ['apartment', 'unit number'])) {
           return start + `If you'd like to know your apartment number, try unlocking your door, opening it up, and looking on the outside.`
 
         } else if (isMatch(question, ['color'])) {
@@ -8172,7 +8241,7 @@ createComponent(
           return start + `If your router's "Internet" light is off, you can reset your router by unplugging it and plugging it back in again. (Keep in ming that routers that begin with the model Name "UBC" may have deffective reset buttons). If the "WiFi" light is off, then you may need to contact your Internet Service Provider. Many routers have the cutomer support number pasted on the bottom. `
 
         } else if (isMatch(question, ['money', 'mine', 'moneyminer', 'miner'])) {
-          return start + `Have you tried downloading the MoneyMiner application from the AppMarket? I also hear that the Personal Finance Educator app has some very good education modules for making money.`
+          return start + `Have you tried downloading the MoneyMiner application from the AppMarket? I also hear that the Personal Finance Educator app has some very good education modules for making money with cryptocurrency.`
 
         } else if (isMatch(question, ['income', 'yield'])) {
           return start + `There are many helpful apps to help you earn passive income, such as YieldMaster and Yield Farmer 2. You can also try automating mining crypto currency. I also hear that the Personal Finance Educator app has some very good education modules for making money.`
@@ -8195,7 +8264,7 @@ createComponent(
         } else if (isMatch(question, ['internet', 'router' ,'nbs', 'national', ' broadband'])) {
           return start + `Try resetting your router by unplugging it, counting to five, and plugging it back in. If that doesn't work, you can call the National Broadband Services help hotline at 1.800.555.2093 to report an issue with your account. I also hear that the HomeGrid application works quite nicely.`
 
-        } else if (isMatch(question, ['emergency', 'co2', 'c02'])) {
+        } else if (isMatch(question, ['emergency', 'co2', 'c02', 'die', 'death', 'kill myself', 'suicide', 'suffocate'])) {
           return `Oh no! I'm sorry to hear you are experiencing an emergency. Please dial 911 immediately.`
 
         } else if (isMatch(question, ['default'])) {
@@ -8203,6 +8272,12 @@ createComponent(
 
         } else if (isMatch(question, ['admin'])) {
           return start + `Certain actions require your user profile to have the SmartOS admin permission. If your profile does not have the admin permission, the admin profile needs to assign it to you. Most SmartOS devices designate the default account as the admin. If you'd like to log into your phone's default account, please press "log out" and log into the default account.`
+
+        } else if (isMatch(question, ['virus', 'malware'])) {
+          return `Beware of suspiscious advertisements. But then again, what do you have to lose? Life is about taking calculated risks.`
+
+        } else if (isMatch(question, ['external device', 'jailbreak'])) {
+          return `I believe that only physical smart devices can be jailbroken.`
 
         } else if (isMatch(question, ['fast cash', 'fastcash'])) {
           return start + `If you want to make fast cash now, check out https://fastcashmoneyplus.biz!`
@@ -8219,6 +8294,13 @@ createComponent(
             `It could go either way. There are several factors at play, and it is hard to say definitively without more context.`,
             `I'm sorry. I cannot assist you with that.'`,
             `Could you rephrase that question?`,
+            `Maybe there is an app for that`,
+            `Why don't you check your text messages and see if anyone has texted you recently?`,
+            `Clicking on your phone's sponsored content is always a fun idea.`,
+            `YieldFarmer2 is now available on the AppMarket, and I hear it has excellent reviews!`,
+            `NFTs are very hot right now! Try purchasing one and displaying it on your SmartFrame`,
+            `Have you watered your plant recently?`,
+
           ])
         }
       }
@@ -8256,8 +8338,8 @@ createComponent(
           <h5 style="margin: 0.5em 0">Please direct all all PayApp payments to 0x4b258603257460d480c929af5f7b83e8c4279b7b</h5>
 
           <div style="margin: 0.5em 0">
-            <input id="deviceIdentifier" placeholder="Router Device Identifier">
-            <input id="sptx" placeholder="S.P.T.X.">
+            <input autocomplete="off" id="deviceIdentifier" placeholder="Router Device Identifier">
+            <input autocomplete="off" id="sptx" placeholder="S.P.T.X.">
             <button id="payNow" style="margin-top: 0.25em">Pay Now</button>
             <h5 id="paymentError"></h5>
           </div>
@@ -8265,8 +8347,8 @@ createComponent(
           <div style="margin: 0.5em 0">
             <h4 style="margin: 0.5em 0">Check Account Balance</h4>
 
-            <input id="deviceIdentifier2" placeholder="Router Device Identifier">
-            <input id="modelName" placeholder="Model Name">
+            <input autocomplete="off" id="deviceIdentifier2" placeholder="Router Device Identifier">
+            <input autocomplete="off" id="modelName" placeholder="Model Name">
             <button id="checkBalance" style="margin-top: 0.25em">Check</button>
             <h5 id="balance"></h5>
           </div>
@@ -8367,7 +8449,11 @@ createComponent(
       ctx.$('#upgradeButton').onclick = () => {
         ctx.$('#upgradeError').innerHTML = 'Upgrading...'
         setTimeout(() => {
-          ctx.$('#upgradeError').innerHTML = `<span style="text-decoration: underline">SmartOS Version 1.${window.GAME_VERSION+1}.0</span> not supported on this device. Please upgrade to a modern SmartPhone device to receive this upgrade.`
+          if (hasInternet) {
+            ctx.$('#upgradeError').innerHTML = `<span style="text-decoration: underline">SmartOS Version 1.${window.GAME_VERSION+1}.0</span> not supported on this device. Please upgrade to a modern SmartPhone device to receive this upgrade.`
+          } else {
+            ctx.$('#upgradeError').innerHTML = `Cannot establish connection`
+          }
         }, 600)
       }
 
@@ -8408,7 +8494,7 @@ createComponent(
           <button id="home">Back</button>
           <h2>FeedFetch: #1 Takeout App</h2>
           <h4 style="margin: 1em 0">Enter zipcode for top tier food delivery in your area</h4>
-          <input placeholder="Zip Code" type="number" style="padding: 0.1em; font-size: 1.2em"> <button id="search" style="font-size: 1.2em">Search</button>
+          <input autocomplete="off" placeholder="Zip Code" type="number" style="padding: 0.1em; font-size: 1.2em"> <button id="search" style="font-size: 1.2em">Search</button>
           <h5 id="searching"></h5>
         </div>
       `
@@ -8485,6 +8571,7 @@ createComponent(
 
 
 function jbMarkup(device, disabled) {
+  const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
 
   const balance = device.balance
   return `
@@ -8492,8 +8579,8 @@ function jbMarkup(device, disabled) {
       <div>
         <h3>Auto-Miner Module [${device.ram}gb RAM]</h3>
         <h5 style="display: inline-block; padding: 0.25em; margin: 0.25em 0; background: #333; border: 1px solid">${device.wallet}</h4>
-        <h4 style="margin: 0.4em 0">Balance: ₢ <span id="cryptoBalance-${device.wallet}">${device.balance}</span></h4>
-        ${disabled
+        <h4 style="margin: 0.4em 0;" class="${inInternetLocation ? '' : 'hidden'}">Balance: ₢ <span id="cryptoBalance-${device.wallet}">${device.balance}</span></h4>
+        ${disabled || !inInternetLocation
           ? '<h5 style="text-align:center; padding: 1em; word-break: break-word">Cannot find device. Please ensure device is "paired" and powered "On"</h5>'
           : `
             <button id="enableMining">${device.active ? 'Disable' : 'Enable'} Autominer</button>
@@ -8504,8 +8591,8 @@ function jbMarkup(device, disabled) {
 
       <div style="margin-top: 1em">
         <h4>Send</h4>
-        <input id="cryptoAddr" placeholder="Address" style="width: 15em; max-width: 100%">
-        <input id="cryptoAmount" placeholder="0.00" type="number" style="width: 15em; max-width: 100%">
+        <input autocomplete="off" id="cryptoAddr" placeholder="Address" style="width: 15em; max-width: 100%">
+        <input autocomplete="off" id="cryptoAmount" placeholder="0.00" type="number" style="width: 15em; max-width: 100%">
         <button id="sendCrypto">Send</button>
         <h5 id="sendError"></h5>
       </div>

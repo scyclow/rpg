@@ -340,7 +340,9 @@
       }
 
       if (actions && !deepEquals(actions.map(a => a.value), sm.ctx.currentActions.map(a => a.value))) {
-        const phoneNotifications = $phoneDevice.phoneNotifications()
+        const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
+        const phoneNotifications = inInternetLocation ? $phoneDevice.phoneNotifications() : 0
+
         $.id('nextActions').innerHTML = actions.map(a => `<button id="${a.value}" class="actionButton">${
           a.text + (
             a.text === 'Phone' && phoneNotifications
@@ -1980,11 +1982,13 @@
     //   $consoleTime.innerHTML = ` — ${formatTime(globalState.eventLoopStartTime + (30 * 60 * 1000) - Date.now())}`
     // }
 
-    if (globalState.location === 'externalHallway' || globalState.location === 'stairway') {
-      $consoleTemperature.innerHTML = ' — ??˚'
+    if (ctx.state.checkedThermostat) {
+      if (globalState.location === 'externalHallway' || globalState.location === 'stairway') {
+        $consoleTemperature.innerHTML = ' — ??˚'
 
-    } else if (ctx.state.checkedThermostat) {
-      $consoleTemperature.innerHTML = ctx.state.checkedThermostatTwice ? ' — 84˚ [CO2 LEVEL: HAZARDOUS]' : ' — 99˚'
+      } else {
+        $consoleTemperature.innerHTML = ctx.state.checkedThermostatTwice ? ' — 84˚ [CO2 LEVEL: HAZARDOUS]' : ' — 99˚'
+      }
     }
 
     clearInterval(tmp.eNotePadInterval)
@@ -2024,7 +2028,9 @@
 
     const actions = ctx.currentActions.filter(a => !!a.value) || []
 
-    const phoneNotifications = $phoneDevice.phoneNotifications()
+    const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
+
+    const phoneNotifications = inInternetLocation ? $phoneDevice.phoneNotifications() : 0
     $nextActions.innerHTML = actions.map(a => `<button id="${a.value}" class="actionButton">${
       a.text + (
         a.text === 'Phone' && phoneNotifications
@@ -2054,8 +2060,9 @@
   const createCountdownTimerInterval = () =>  setRunInterval(() => {
 
 
+    let direction = -1
     if (primaryStartingCtx.state.checkedAlarmClock) {
-      globalState.countdownTimeLeft -= 1000
+      globalState.countdownTimeLeft += 1000 * direction
 
       if (globalState.location === 'externalHallway' || globalState.location === 'stairway') {
         $consoleTime.innerHTML = ` — ??:??:??`
