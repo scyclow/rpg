@@ -375,7 +375,7 @@ createComponent(
       }
     }, 300000)
 
-    setRunInterval(() => {
+    setInterval(() => {
       if (globalState.deviceViruses && !document.hidden) {
         ctx.buzzStop()
 

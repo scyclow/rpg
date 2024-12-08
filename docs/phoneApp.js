@@ -370,24 +370,26 @@ function setCallTime(ctx, phone) {
 
 
   ctx.setInterval(() => {
-    if (phone.phoneAnswered) {
-      const totalSecondsElapsed = Math.floor((Date.now() - phone.answerTime) / 1000)
-      const secondsElapsed = totalSecondsElapsed % 60
-      const minutesElapsed = Math.floor(totalSecondsElapsed / 60)
+    if ($time) {
+      if (phone.phoneAnswered) {
+        const totalSecondsElapsed = Math.floor((Date.now() - phone.answerTime) / 1000)
+        const secondsElapsed = totalSecondsElapsed % 60
+        const minutesElapsed = Math.floor(totalSecondsElapsed / 60)
 
-      $time.innerHTML = `${padZero(minutesElapsed)}:${padZero(secondsElapsed)}`
-    } else if (!phone.live) {
-      $time.innerHTML = ``
+        $time.innerHTML = `${padZero(minutesElapsed)}:${padZero(secondsElapsed)}`
+      } else if (!phone.live) {
+        $time.innerHTML = ``
+      }
     }
-
   })
 }
 
+let keypressHandlerSet
 
 function phoneBehavior(ctx) {
   const userData = ctx.state.userData[ctx.state.currentUser]
 
-  if (ctx.state.currentUser === 0 || (userData.previouslyDialed && userData.previouslyDialed.length >= 2)) {
+  if (ctx.state.currentUser === 0 || (userData.previouslyDialed && userData.previouslyDialed.length >= 1)) {
     ctx.$('#previousCalls').classList.remove('hidden')
   }
 
@@ -777,7 +779,7 @@ function phoneBehavior(ctx) {
 
   ctx.$('#keypad').append(...phoneCall.$keypad)
 
-  ctx.$('#hangup').onclick = () => {
+  function hangup() {
     clearTranscripts()
     ctx.$('#dialedNumber').innerHTML = ''
     ctx.$('#menuNumbers').innerHTML = ''
@@ -790,6 +792,40 @@ function phoneBehavior(ctx) {
     window.speechSynthesis.cancel()
     if (PhoneCall.active) PhoneCall.active.hangup()
     // PhoneCall.active.stateMachine.goto('start')
+  }
+
+  ctx.$('#hangup').onclick = hangup
+
+
+  const allKeys = ['0' ,'1' ,'2' ,'3' ,'4' ,'5' ,'6' ,'7' ,'8' ,'9' ,'#', '*']
+
+  if (!keypressHandlerSet) {
+    document.addEventListener('keydown', e => {
+      if (ctx.state.screen === 'phoneApp' && primarySM.ctx.state.isOpen && userData.previouslyDialedUnlocked) {
+        allKeys.forEach(k => {
+          if (String(e.key) === k) phoneCall.startTone(k)
+        })
+      }
+    })
+
+    document.addEventListener('keyup', e => {
+      if (ctx.state.screen === 'phoneApp' && primarySM.ctx.state.isOpen && userData.previouslyDialedUnlocked) {
+        allKeys.forEach(k => {
+          if (String(e.key) === k) phoneCall.endTone(k)
+        })
+      }
+    })
+
+    document.addEventListener('keypress', e => {
+      if (ctx.state.screen === 'phoneApp' && primarySM.ctx.state.isOpen && userData.previouslyDialedUnlocked) {
+        allKeys.forEach(k => {
+          if (String(e.key) === k) phoneCall.pressKey(k)
+        })
+        if (e.key === 'h' || e.key === 'c') hangup()
+      }
+    })
+
+    keypressHandlerSet = true
   }
 
 

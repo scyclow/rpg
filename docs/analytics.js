@@ -184,19 +184,27 @@ function getStateSnapshot() {
 // console.log(getStateSnapshot())
 // }, 100)
 
+let postFailed
 async function post(_body, url) {
   const method = 'POST';
   const headers = { 'Content-Type': 'application/json' }
   const body = JSON.stringify(_body)
 
-  const response = await fetch(
-    url,
-    {
-      headers,
-      body,
-      method
-    }
-  )
+  try {
+    const response = await fetch(
+      url,
+      {
+        headers,
+        body,
+        method
+      }
+    )
 
-  return response.json()
+    return response.json()
+  } catch (e) {
+    if (!postFailed) {
+      postFailed = true
+      console.log('...')
+    }
+  }
 }
