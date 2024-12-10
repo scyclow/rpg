@@ -503,7 +503,7 @@ createComponent(
       }
 
       .a11yMode .phoneScreen {
-        height: 525px;
+        height: 100%;
         overflow: scroll
       }
 
@@ -892,6 +892,14 @@ createComponent(
       @media (min-height: 815px) {
         #phone {
           font-size: 1.171875em;
+        }
+
+        .a11yMode {
+          font-size: 2em;
+        }
+
+        .a11yMode button, .a11yMode input {
+          font-size: 1.2em;
         }
       }
 
