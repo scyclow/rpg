@@ -6,7 +6,7 @@ if (!ls.get('__SESSION_ID')) {
   ls.set('__SESSION_ID', `"S${Math.random().toString().slice(2)}"`)
 }
 
-const ENV = window.location.href.includes('smarthome.steviep.xyz') ? 'prod' : 'dev'
+export const ENV = window.location.href.includes('smarthome.steviep.xyz') ? 'prod' : 'dev'
 const ANALYTICS_URL = {
   dev: `http://127.0.0.1:54321/functions/v1`,
   prod: `https://godxjnuwaujsfqkqghue.supabase.co/functions/v1`
@@ -87,6 +87,7 @@ function getStateSnapshot() {
       totalMined: ms.totalMined,
       exchangePremium: ms.userData?.[1]?.exchangePremium,
       rentBalance: gs.rentBalance,
+      factoryReset: gs.factoryReset,
     },
     IRL_STATE: {
       history: irls?.history?.reverse()?.slice?.(0, 10),

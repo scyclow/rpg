@@ -44,6 +44,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   sentFunTimeText: false,
   jeanTextSent: false,
   wokenUp: false,
+  factoryReset: false,
 
   secondsPassed: 0,
   completionTime: null,

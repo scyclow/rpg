@@ -6,7 +6,7 @@ import {createSource, MAX_VOLUME, SoundSrc} from './audio.js'
 import {marquee} from './marquee.js'
 import {voices, say} from './voices.js'
 import {drawLabrynth} from './labrynth.js'
-import {postSnapshot} from './analytics.js'
+import {postSnapshot, ENV} from './analytics.js'
 
 
 
@@ -581,8 +581,8 @@ createComponent(
       }
 
       #phone {
-        width: 320px;
-        height: 569px;
+        width: 25.4em;
+        height: 45.1em;
         border: 2px solid #000;
         border-radius: 6px;
         display: flex;
@@ -872,12 +872,26 @@ createComponent(
           padding: calc(0.25em);
         }
       }
+
+
       @media (max-height: 595px) {
         #phone {
-          transform: scale(0.75)
+          font-size: 0.75em;
         }
         #phone.screenOnly {
-          transform: scale(1)
+          font-size: 1em;
+        }
+      }
+
+      @media (max-height: 440px) {
+        #phone {
+          font-size: 0.65em;
+        }
+      }
+
+      @media (min-height: 815px) {
+        #phone {
+          font-size: 1.171875em;
         }
       }
 
@@ -1282,7 +1296,7 @@ createComponent(
       ctx.$header.classList.add('hidden')
 
       ctx.$phoneContent.innerHTML = `
-        <div class="phoneScreen">
+        <div class="phoneScreen" style="padding: 1em">
           <h1>SmartOS Login:</h1>
           <h4>USER PROFILES:</h4>
           <table>
@@ -4002,8 +4016,9 @@ createComponent(
       // welcome to the identity wizard
 
     } else if (screen === 'settings') {
-      ctx.$phoneContent.innerHTML = `
+      const sessionId = ls.get('__SESSION_ID').toString()
 
+      ctx.$phoneContent.innerHTML = `
         <style>
           #upgradeButton {
             display: inline-block;
@@ -4040,13 +4055,15 @@ createComponent(
           <div class="deviceData" style="margin-top: 2em">
             <h5>Device ID: 49-222999-716-2580</h5>
             <h5>User: ${userNames[currentUser]}</h5>
-            <h5>Session ID: ${ls.get('__SESSION_ID').toString()}</h5>
+            <h5>Session ID: ${sessionId}</h5>
             <h5 id="versionNumber">SmartOS Version: 1.${window.GAME_VERSION}.1</h5>
             <h5><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h5>
+            <button id="factoryReset" style="margin-top: 0.5em; font-size: 0.75em">Factory Reset</button>
+            <h6 id="factoryResetError"></h6>
           </div>
           ${devMode
             ? `
-              <div style="margin-top: 0.5em; padding: 0.5em; border: 1px solid; height: 215px; overflow: scroll">
+              <div style="margin-top: 0.5em; padding: 0.5em; border: 1px solid; height: 180px; overflow: scroll">
                 <h3>Dev Mode</h3>
                 <div>
                   <label><input id="fastMode" type="checkbox" ${ctx.state.fastMode ? 'checked' : ''}> fast mode</label>
@@ -4105,7 +4122,6 @@ createComponent(
                   </tr>
                 </table>
 
-                <button style="margin-bottom: 3em" onclick="localStorage.clear(); location.reload()">Factory Reset</button>
 
 
               </div>
@@ -4232,6 +4248,30 @@ createComponent(
         }
         ctx.setState({ soundEnabled: !soundEnabled })
         globalState.soundMuted = soundEnabled
+      }
+
+      ctx.$('#factoryReset').onclick = async () => {
+        ctx.$('#factoryResetError').innerHTML = ''
+        const inputSessionId = window.prompt('This action is permanent. If you wish to continue, enter your Session ID:')
+
+        if (inputSessionId === sessionId) {
+          ctx.$('#factoryResetError').innerHTML = '<span class="blink">Resetting Device...</span>'
+          globalState.factoryReset = true
+
+          if (ENV == 'prod') {
+            try {
+              await postSnapshot()
+            } catch (e) {
+              console.error(e)
+            }
+          }
+          setTimeout(() => {
+            localStorage.clear()
+            location.reload()
+          }, 3000)
+        } else if (inputSessionId !== null) {
+          ctx.$('#factoryResetError').innerHTML = 'Error: Invalid Session ID'
+        }
       }
 
       ctx.$('#home').onclick = () => {

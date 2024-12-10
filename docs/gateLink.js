@@ -19,8 +19,9 @@ createComponent(
       }
 
       #screen {
-        width: min(90vw, calc(85vh * 2 / 3));
-        height: min(85vh, calc(90vw * 3 / 2));
+        width: 36.5em;
+        height: 54.8em;
+
         background: linear-gradient(#100, #180404);
         color: #bdb5b5;
 
@@ -154,6 +155,10 @@ createComponent(
         #screen {
           font-size: 0.8em;
         }
+
+        h6 {
+          font-size: 0.6em;
+        }
       }
 
       @media (max-width: 380px) {
@@ -161,6 +166,32 @@ createComponent(
           font-size: 0.6em;
         }
       }
+
+
+      @media (max-height: 700px) {
+        #screen {
+          font-size: 0.8em;
+        }
+      }
+
+      @media (max-height: 570px) {
+        #screen {
+          font-size: 0.62em;
+        }
+      }
+
+      @media (max-height: 440px) {
+        #screen {
+          font-size: 0.55em;
+        }
+      }
+
+      @media (min-height: 890px) {
+        #screen {
+          font-size: 1.17em;
+        }
+      }
+
 
 
     </style>
