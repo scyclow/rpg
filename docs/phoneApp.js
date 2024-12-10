@@ -883,7 +883,7 @@ function phoneBehavior(ctx) {
         <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">View all previous calls!</h4>
         <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">Re-dial numbers!</h4>
         <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">Paste-to-dial!</h4>
-        <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">Only <span class="blink">2</span> Credits!</h4>
+        <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">Only <span class="blink">1</span> Credits!</h4>
 
         <div style="margin-top: 5em; padding: 1em">
           <button id="upgrade">Upgrade</button>
