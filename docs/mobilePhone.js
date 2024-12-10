@@ -433,7 +433,7 @@ const state = persist('__MOBILE_STATE', {
       idvWizardStep: 0,
       idWizardInfo: {},
       yieldFarmerHighScore: 674.2,
-      appCreditBalance: 2,
+      appCreditBalance: 1,
       educatorModulesCompleted: {},
       password: 'password',
       virusL1: true,

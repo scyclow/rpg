@@ -891,7 +891,7 @@ function phoneBehavior(ctx) {
         </div>
       `
 
-      if (userData.appCreditBalance < 2) {
+      if (userData.appCreditBalance < 1) {
         ctx.$('#upgrade').disabled = true
         ctx.$('#upgradeError').innerHTML = `Not Enough Credits. <br>App Market Credits: ${userData.appCreditBalance}`
       } else {
@@ -899,8 +899,8 @@ function phoneBehavior(ctx) {
       }
 
       ctx.$('#upgrade').onclick = () => {
-        if (userData.appCreditBalance >= 2) ctx.setUserData({
-          appCreditBalance: userData.appCreditBalance - 2,
+        if (userData.appCreditBalance >= 1) ctx.setUserData({
+          appCreditBalance: userData.appCreditBalance - 1,
           previouslyDialedUnlocked: true
         })
 
