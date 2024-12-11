@@ -162,7 +162,7 @@ const mmText = {
 }
 const packageText = {
   from: '+7 809 3390 753',
-  value: `United Pakcåge Delvery MsG: "W⍷lcome ◻︎⎅◻︎ y⌾ure Pâck⎀ge ⎙ h⍶s been ◻︎ deLiveRed t⌀ ⇢⇢ <strong>FRONT DOOR</strong> ⇠⇠ <RENDER_ERROR:/home/usr/img/package-d⌽liver83y.jpg> ⎆ pAy deliver fee ⌱ 0xb0b9d337b68a69f5560969c7ab60e711ce83276f"`
+  value: `United Pakcåge Delvery MsG: "W⍷lcome ◻︎⎅◻︎ y⌾ure Pâck⎀ge ⎙ h⍶s been ◻︎ deLiveRed t⌀ ⇢⇢ <strong>FRONT DOOR</strong> ⇠⇠ <RENDER_ERROR:/home/usr/img/package-d⌽liver83y.jpg> ⎆ #948921 pAy deliver fee ⌱ 0xb0b9d337b68a69f5560969c7ab60e711ce83276f"`
 }
 
 const premiumDiscountText = {
@@ -494,11 +494,11 @@ createComponent(
         scrollbar-width: thin;
       }
 
-      .a11yMode {
+      .a11yMode #phoneRender {
         font-size: 1.5em;
       }
 
-      .a11yMode button, .a11yMode input {
+      .a11yMode #phoneRender button, .a11yMode #phoneRender input {
         font-size: 0.9em;
       }
 
@@ -533,6 +533,10 @@ createComponent(
         padding: 0.1em 0.5em;
         user-select: none;
         -webkit-user-select: none;
+      }
+
+      button, input {
+        font-size: 0.86em;
       }
 
       button:disabled {
@@ -585,12 +589,19 @@ createComponent(
         height: 45.1em;
         border: 2px solid #000;
         border-radius: 6px;
-        display: flex;
-        flex-direction: column;
         background: #fff;
         color: #000;
         box-shadow: 0 0 3em #ddd;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #phoneRender {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        height: 100%;
       }
 
       .nightMode {
@@ -653,7 +664,7 @@ createComponent(
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        height: 100%
+        height: 100%;
       }
 
       .phoneScreen {
@@ -881,6 +892,10 @@ createComponent(
         #phone.screenOnly {
           font-size: 1em;
         }
+
+        button, input {
+          font-size: 0.84em;
+        }
       }
 
       @media (max-height: 440px) {
@@ -892,6 +907,10 @@ createComponent(
       @media (min-height: 815px) {
         #phone {
           font-size: 1.171875em;
+        }
+
+        button, input {
+          font-size: 0.85em;
         }
 
         .a11yMode {
@@ -933,21 +952,23 @@ createComponent(
 
     </style>
     <div id="phone">
-      <header id="header">
-        <div id="userName"></div>
-        <div id="internetType">WiFi: <span class="blink">unconnected</span></div>
-      </header>
-      <main id="phoneContent"></main>
+      <div id="phoneRender">
+        <header id="header">
+          <div id="userName"></div>
+          <div id="internetType">WiFi: <span class="blink">unconnected</span></div>
+        </header>
+        <main id="phoneContent"></main>
 
-      <div id="alert" class="hidden">
-        <div style="position: absolute; background: #000; opacity: 0.8; width: 320px; height: 569px;"></div>
-        <section>
-          <h3>SYSTEM ALERT:</h3>
-          <div id="alertText"></div>
-          <div style="display: flex; justify-content: flex-end">
-            <button id="closeAlert">OK</button>
-          </div>
-        </section>
+        <div id="alert" class="hidden">
+          <div style="position: absolute; background: #000; opacity: 0.8; width: 320px; height: 569px;"></div>
+          <section>
+            <h3>SYSTEM ALERT:</h3>
+            <div id="alertText"></div>
+            <div style="display: flex; justify-content: flex-end">
+              <button id="closeAlert">OK</button>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   `,
@@ -3381,7 +3402,7 @@ createComponent(
               <h3>₢ Balance: <span id="cBalance">32.210000</span></h3>
               <h3>₱ Balance: <span id="pBalance">0.000000</span></h3>
 
-              <div style="padding: 0.25em; border: 3px solid;">
+              <div style="padding: 0.25em; border: 0.25em solid;">
                 <h3 style="text-align: center">Exchange Rates (<em>Simulated</em>)</h3>
                 <table style="border: 1px solid; margin: 0.4em auto">
                   <tr>
@@ -4046,32 +4067,35 @@ createComponent(
             color: #fff;
           }
         </style>
-        <div class="phoneScreen">
-          <button id="home">Back</button>
+        <div class="phoneScreen" style="display: flex; flex-direction: column; height: 100%; box-sizing: border-box; padding-bottom: 2em">
           <div>
-            <button id="sound">${soundEnabled ? 'Disable' : 'Enable'} Sound</button> ${soundEnabled ? soundSVG : noSoundSVG}<br>
-            <button id="bluetooth">${bluetoothEnabled ? 'Disable' : 'Enable'} Bluetooth ®</button><h4 id="message" style="display: inline-block; margin-left: 1em"></h4><br>
-            <button id="a11y">${a11yEnabled ? 'Disable' : 'Enable'} A11Y Mode</button><br>
-            <button id="nightMode">${nightModeEnabled ? 'Disable' : 'Enable'} Night Mode</button>
+            <button id="home">Back</button>
             <div>
-              <label style="display: block; font-size: 0.9em"><input id="noDistraction" type="radio" name="distractionMode" ${distractionMode === 1 ? 'checked' : ''}> No-Distraction Mode</label>
-              <label style="display: block; font-size: 0.9em"><input id="deepFocus" type="radio" name="distractionMode" ${distractionMode === 2 ? 'checked' : ''}> Deep Focus Mode</label>
-              <label style="display: block; font-size: 0.9em"><input id="multitask" type="radio" name="distractionMode" ${distractionMode === 0 ? 'checked' : ''}> Multitask Mode</label>
+              <button id="sound">${soundEnabled ? 'Disable' : 'Enable'} Sound</button> ${soundEnabled ? soundSVG : noSoundSVG}<br>
+              <button id="bluetooth">${bluetoothEnabled ? 'Disable' : 'Enable'} Bluetooth ®</button><h4 id="message" style="display: inline-block; margin-left: 1em"></h4><br>
+              <button id="a11y">${a11yEnabled ? 'Disable' : 'Enable'} A11Y Mode</button><br>
+              <button id="nightMode">${nightModeEnabled ? 'Disable' : 'Enable'} Night Mode</button>
+              <div>
+                <label style="display: block; font-size: 0.9em"><input id="noDistraction" type="radio" name="distractionMode" ${distractionMode === 1 ? 'checked' : ''}> No-Distraction Mode</label>
+                <label style="display: block; font-size: 0.9em"><input id="deepFocus" type="radio" name="distractionMode" ${distractionMode === 2 ? 'checked' : ''}> Deep Focus Mode</label>
+                <label style="display: block; font-size: 0.9em"><input id="multitask" type="radio" name="distractionMode" ${distractionMode === 0 ? 'checked' : ''}> Multitask Mode</label>
+              </div>
+            </div>
+
+            <div class="deviceData" style="margin-top: 2em">
+              <h5>Device ID: 49-222999-716-2580</h5>
+              <h5>User: ${userNames[currentUser]}</h5>
+              <h5>Session ID: ${sessionId}</h5>
+              <h5 id="versionNumber">SmartOS Version: 1.${window.GAME_VERSION}.1</h5>
+              <h5><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h5>
+              <button id="factoryReset" style="margin-top: 0.5em; font-size: 0.75em">Factory Reset</button>
+              <h6 id="factoryResetError"></h6>
             </div>
           </div>
 
-          <div class="deviceData" style="margin-top: 2em">
-            <h5>Device ID: 49-222999-716-2580</h5>
-            <h5>User: ${userNames[currentUser]}</h5>
-            <h5>Session ID: ${sessionId}</h5>
-            <h5 id="versionNumber">SmartOS Version: 1.${window.GAME_VERSION}.1</h5>
-            <h5><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h5>
-            <button id="factoryReset" style="margin-top: 0.5em; font-size: 0.75em">Factory Reset</button>
-            <h6 id="factoryResetError"></h6>
-          </div>
           ${devMode
             ? `
-              <div style="margin-top: 0.5em; padding: 0.5em; border: 1px solid; height: 180px; overflow: scroll">
+              <div style="margin-top: 0.5em; padding: 0.5em; border: 1px solid; flex: 1; overflow: scroll">
                 <h3>Dev Mode</h3>
                 <div>
                   <label><input id="fastMode" type="checkbox" ${ctx.state.fastMode ? 'checked' : ''}> fast mode</label>
@@ -6845,6 +6869,7 @@ createComponent(
                 : ''
               )}</button>`).join('')}
           </div>
+          <h4 id="error2" style=" text-align: center; margin-top: 1em"></h4>
 
         </div>
       `
@@ -6861,28 +6886,34 @@ createComponent(
           const ab = ctx.$('#applicationBinary').value.trim()
 
           ctx.$('#error').innerHTML = 'Processing...'
+          ctx.$('#error2').innerHTML = 'Processing...'
           setTimeout(() => {
             if (ab !== applicationBinary) {
               ctx.$('#error').innerHTML = ab ? 'Application Binary B64 Decode Error' : 'Invalid Application Binary'
+              ctx.$('#error2').innerHTML = ab ? 'Application Binary B64 Decode Error' : 'Invalid Application Binary'
               return
             }
 
             if (validJailbreakApps.includes(app)) {
               ctx.$('#error').innerHTML = ''
+              ctx.$('#error2').innerHTML = ''
 
 
               if (!bluetoothEnabled) {
                 ctx.$('#error').innerHTML = 'Please enable Bluetooth'
+                ctx.$('#error2').innerHTML = 'Please enable Bluetooth'
                 return
               }
 
               if (!inInternetLocation) {
                 ctx.$('#error').innerHTML = 'Device out of range'
+                ctx.$('#error2').innerHTML = 'Device out of range'
                 return
               }
 
               if (!hasInternet) {
                 ctx.$('#error').innerHTML = 'Cannot connect to internet'
+                ctx.$('#error2').innerHTML = 'Cannot connect to internet'
                 return
               }
 
@@ -6927,6 +6958,7 @@ createComponent(
                 ctx.$('#applicationBinary').value = ''
                 ctx.$('#dlMessage').innerHTML = ''
                 ctx.$('#error').innerHTML = 'complete'
+                ctx.$('#error2').innerHTML = 'complete'
                 src1.smoothFreq(freq, 0.1)
                 src2.smoothFreq(freq2, 0.1)
                 src1.smoothGain(0, 0.3)
@@ -6946,6 +6978,7 @@ createComponent(
 
             } else {
               ctx.$('#error').innerHTML = 'ERROR: Cannot enable `automine` in application that does not support external device functionality'
+              ctx.$('#error2').innerHTML = 'ERROR: Cannot enable `automine` in application that does not support external device functionality'
             }
           }, 1000)
         }
