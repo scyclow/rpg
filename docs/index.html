@@ -567,15 +567,21 @@
         async follow({ctx}) {
           if (ctx.state.roboVacLocation === 'bedroom') {
             await waitPromise(1500)
-            ctx.state.roboVacLocation = sample(['livingRoom', 'kitchen', 'hallway', 'bathroom'])
-            globalState.roboVacCaught.bedroom = true
             return 'roboVacBedroom'
           }
         }
       },
 
       roboVacBedroom: {
-        text: `The RoboVac exists the room, leaving the floor spotless`
+        text: `The RoboVac sits in the middle of the floor waiting for you`
+
+      },
+      roboVacLeavesBedroom: {
+        before({ctx}) {
+          ctx.state.roboVacLocation = sample(['livingRoom', 'kitchen', 'hallway', 'bathroom'])
+          globalState.roboVacCaught.bedroom = true
+        },
+        text: `The RoboVac exits the room as you walk towards it, leaving the floor spotless`
       },
 
       bedroomAlarm: {
@@ -673,6 +679,8 @@
         { text: 'Bed', value: 'bed'},
         { text: 'Alarm Clock', value: 'bedroomAlarm', qr: { screen: 'appMarket', appMarketPreSearch: 'wake'}},
         { text: 'Window', value: 'bedroomWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'} },
+        ctx.state.roboVacLocation === 'bedroom'? { text: 'RoboVac', value: 'roboVacLeavesBedroom', qr: { screen: 'appMarket', appMarketPreSearch: 'robovac'}} : null,
+
         // { text: 'Lamp', value: 'bedroomLamp', qr: { screen: 'messageViewer', messageViewerMessage: 'Illuminate your home with the Lumin app. Available only in AppMarket!'}},
       ],
       handler: ({ur}) => ur
