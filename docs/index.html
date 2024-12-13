@@ -1498,17 +1498,25 @@
       },
       bathroomSink: [
         {
-          text: 'You wave your hands in front of the sink, but nothing happens',
+          text: () => globalState.wifiActive ? 'You wave your hands in front of the sink' : 'You wave your hands in front of the sink, but nothing happens',
           wait: 1600
 
         },
         {
-          text: 'A small red light blinks at its base'
+          text: () => globalState.wifiActive ? 'A refreshing gush of water comes out of the faucet' : 'A small red light blinks at its base'
         }
       ],
-      shower: {
-        text: 'A showerhead sticks out of the wall with a QR code printed on its side'
-      },
+
+      shower: [
+        {
+          text: () => `${globalState.showerHeatOn ? 'Scalding hot' : 'Frigid'} water shoots out of the showerhead`,
+          wait: 1600
+        },
+        {
+          text: 'Condensation forms around a QR code on its side'
+        }
+      ],
+
       roboVacBathroom: {
         before({ctx}) {
           ctx.state.roboVacLocation = sample(['kitchen', 'livingRoom', 'bedroom', 'hallway'])
@@ -1578,12 +1586,12 @@
       ],
       kitchenSink: [
         {
-          text: 'You wave your hands in front of the sink but nothing happens',
-          wait: 1500
+          text: () => globalState.wifiActive ? 'You wave your hands in front of the sink' : 'You wave your hands in front of the sink but nothing happens',
+          wait: 1600
 
         },
         {
-          text: 'A small red light blinks on its side'
+          text: () => globalState.wifiActive ? 'A refreshing gush of water comes out of the faucet' : 'A small red light blinks at its base'
         }
       ],
 

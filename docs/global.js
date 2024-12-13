@@ -45,6 +45,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   jeanTextSent: false,
   wokenUp: false,
   factoryReset: false,
+  showerHeatOn: false,
 
   secondsPassed: 0,
   completionTime: null,
@@ -70,6 +71,7 @@ export const globalState = persist('__GLOBAL_STATE', {
     gateLink: newCryptoDevice(1),
     smartFrame: newCryptoDevice(1),
     roboVac: newCryptoDevice(1),
+    bathe: newCryptoDevice(0.25),
   },
   light1: {
     h: 0, s: 0, v: 100
@@ -78,6 +80,9 @@ export const globalState = persist('__GLOBAL_STATE', {
     h: 180, s: 0, v: 0
   },
 })
+
+// TODO: take this out at some point
+if (!globalState.cryptoDevices.bathe) globalState.cryptoDevices.bathe = newCryptoDevice(0.25)
 
 
 window.globalState = globalState

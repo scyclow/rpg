@@ -25,7 +25,8 @@ const roundSixDigits = n => Math.floor(n * 1000000) / 1000000
 
 
 const APPS = [
-  { name: 'Bathe', key: 'bathe', size: 128, price: NaN, physical: true },
+  { name: 'AutoSense', key: 'autosense', size: 128, price: 0 },
+  { name: 'Bathe', key: 'bathe', size: 128, price: 0, physical: true },
   { name: 'GateLink', key: 'gateLink', size: 128, price: 0, physical: true },
   { name: 'ClearBreeze', key: 'clearBreeze', size: 128, price: 0, physical: true },
   { name: 'Currency Xchange', key: 'exchange', size: 128, price: 0 },
@@ -336,6 +337,7 @@ const state = persist('__MOBILE_STATE', {
   tvPaired: false,
   gateLinkPaired: false,
   freezeLockerPaired: false,
+  bathePaired: false,
   roboVacPaired: false,
   cameraPaired: false,
   smartFramePaired: false,
@@ -1178,6 +1180,7 @@ createComponent(
       clearBreezePaired,
       flushMatePaired,
       freezeLockerPaired,
+      bathePaired,
       tvPaired,
       smartLockPaired,
       gateLinkPaired,
@@ -6301,6 +6304,8 @@ createComponent(
                 `
                 : ''
             }
+
+            <h5 style="text-align: center; margin-top: 2em; border: 1px solid; padding: 0.5em">Please download the AutoSense App and "pair" the Shayd device to enable the "auto-open" feature</h5>
           </div>
 
         `
@@ -7160,6 +7165,7 @@ createComponent(
               || ([input, output].includes('smartFrame') && !smartFramePaired)
               || ([input, output].includes('flushMate') && !flushMatePaired)
               || ([input, output].includes('freeze') && !freezeLockerPaired)
+              || ([input, output].includes('bathe') && !bathePaired)
               || ([input, output].includes('toastr') && !toastrPaired)
               || ([input, output].includes('roboVac') && !roboVacPaired)
               || ([input, output].includes('wake') && !wakePaired)
@@ -8071,7 +8077,6 @@ createComponent(
       }
 
     } else if (screen === 'freeze') {
-
       const mainInterface = `
         <div style="margin: 1em 0">
           <h1 style="text-align: center">53°F</h1>
@@ -8123,6 +8128,118 @@ createComponent(
         ctx.setState({ screen: 'home' })
       }
 
+    } else if (screen === 'bathe') {
+
+      const mainInterface = `
+        <div style="margin: 1em 0">
+
+          <table>
+            <tr>
+              <td><button disabled>Turn Off</button></td>
+              <td><h5>Cannot adjust Bathe Showerhead state while autosensing capabilities are enabled</h5></td>
+            </tr>
+          </table>
+
+          <div>
+            <button id="turnOffAutosensor">Turn Off Autosensor</button>
+            <h5 id="autosenseError"></h5>
+          </div>
+
+          <div style="margin-top: 1.5em">
+            <h4>Adjust Temperature</h4>
+            <input type="range" min="0" max="1" value="${globalState.showerHeatOn ? 1 : 0}" id="heatAdjust">
+            <span id="temp">${globalState.showerHeatOn ? 'HOT' : 'COLD'}</span>
+          </div>
+
+          <div>
+            ${jailbrokenApps.bathe ? jbMarkup(globalState.cryptoDevices.bathe, !bluetoothEnabled || !bathePaired) : ''}
+          </div>
+        </div>
+      `
+
+
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h1 style="text-align: center; margin-bottom: 0.25em">BATHE</h1>
+          <h2 style="text-align: center">(In Luxury)</h2>
+
+
+          ${
+            bluetoothEnabled
+              ? inInternetLocation
+                ? bathePaired
+                  ? mainInterface
+                  : `
+                    <div style="text-align: center; margin-top: 3em;"><button id="pairBathe" style="font-size: 1.25em">Pair Bathe Showerhead</button></div>
+                    <h3 id="pairError"></h3>
+                  `
+                : `<h2 style="text-align: center">Cannot find device</h2>`
+              : `<h3 id="pairError">Please enable bluetooth to start</h3>`
+          }
+        </div>
+      `
+
+      jbBehavior(ctx, 'bathe', 400, () => {
+        if (!globalState.showerHeatOn) {
+          setTimeout(() => {
+            globalState.showerHeatOn = true
+            ctx.$('#temp').innerHTML = globalState.showerHeatOn ? 'HOT' : 'COLD'
+            ctx.$('#heatAdjust').value = 1
+          }, 400)
+        }
+      })
+
+
+      if (bathePaired && inInternetLocation) {
+        ctx.$('#turnOffAutosensor').onclick = () => {
+          ctx.$('#autosenseError').innerHTML = ''
+          setTimeout(() => {
+            ctx.$('#autosenseError').innerHTML = 'To disable this feature, please download the AutoSense App and "unpair" the Bathe device'
+          }, 750)
+        }
+
+        ctx.$('#heatAdjust').oninput = e => {
+          globalState.showerHeatOn = Number(e.target.value) === 1
+          ctx.$('#temp').innerHTML = globalState.showerHeatOn ? 'HOT' : 'COLD'
+        }
+      }
+
+
+      if (ctx.$('#pairBathe')) ctx.$('#pairBathe').onclick = () => {
+        ctx.$('#pairError').innerHTML = '<span>Please wait</span>'
+        setTimeout(() => {
+          ctx.setState({
+            bathePaired: true
+          })
+
+        }, 2000)
+      }
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+    } else if (screen === 'autosense') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+          <h2>FILE CORRUPTED</h2>
+          <div id="corruptedText" style="margin-top: 2em; word-break: break-word; line-height: 2"></div>
+        </div>
+      `
+
+
+      const chars = '1̷̧̥͇͖̲̦̰̟̳̉̒͒̂̿̋2̸̥̗͓̹͈͆ͅ3̷̤͉͙̊4̶͍̜̜̭̮̪̰̺̖̄̌́̓͐͐̆5̵̧͔͘6̸̳͓̪͕͚͚͔͐̊͗̐7̶̰͓̜͈̙̹͓̯̊̋͌͆8̷̡̛̫̖̖̈́̋̀̔̓̽̑̀9̶͙̝̭͔̑̂̐͜0̸̠͖̦̒͛͛̉͜͝q̵̬̥̰̟̹̹̀̾͊͜ͅw̷̘̐̓͆̈́͌̋͝e̷̤̟̻̤̱̰͂̎r̵͉̼̗̒̒̉̀ţ̵̡̩̜͍̀͝y̴̡̛̜̞̣͚͚͖͈̆͐̈́̌͝u̸̻̫͖̦̺̅͒̄̅͌͘̕͝ĩ̵̛̬͖̙͔̮̯́̀̔̈́̍̅̕ỏ̶̡͍͈͙̫͖͂͛p̶̡͓̳̠̥̞͑̂͜ͅa̴͖͕̺̯̗̍̋̋̔s̵̻͖̔͐͑́̀̂̆͝d̵͇̏̑̾̏̑͠f̶̢̻̤̰̃̄͛͘g̴͍͔̪̟̥̼̼̏͌̍̋̄͜h̶̟̻̩̑̎̈́͋͊͊̊ͅj̶͔̔̿͐́k̷̨̼̮͙̙̋̌̂̍̍́ļ̴̘͔̭̪̀̅́ͅz̵̪̏̑̾͌́͘̕x̵̨̭̯͖̟̏̈́̅̅͊̾͘c̵̤̤̣͍̥̼̞̼̾́̾͝͝͠v̸̪̣̰̖̯̑̑̃͂̈́͝b̵̨͒̌́̈́͒́̈́̐̚n̴͈͎̗͋m̸̧̙̘̥̹̮̊̀̀́̍̏̈́͝!̶̨̥̳͈͗̓̀̓͋̉̇̓ͅ@̶͉̪͎̞̻͈̩͈͈̇̍̃͛̽́͂͝͝#̷̬̦͑̏̒́͌̇͌̐̒$̷̧̘͓͇͚͑̒%̵̲͈͖͈͍̻̰̳͐̽̓̉̊͗͠^̷̲̞͍̞̩̈́̃́͂&̴̨̱̓̓͒*̷̭͎̯̳̰̀̆̒̅͂̑̉̃͝Q̶̡̪̝̺̰̭͆̿̐͗W̶̞͇̑E̶̺̝̺͈͍̹̼͉̝̽̄͛̎̐̂Ȓ̶̛̟̭͙͚̻̝̼̉̚Ť̶͖͎̾̌̋̓͂Y̵͚̼̰͂͆̈̒̿̕͘Ù̴̺̝͔̟͘I̶̤̩̼̯̻̟͐͒̈́̓̕̕Ǫ̸͖̮̬̘͖̏̔̓͋̇̇͜͝P̸͉̳͈̀͌͐̔̈́͆͒Ă̴̙̙͕̆͛S̷̢̭͖̩͇͕̜̟̎̅͛͝D̸̛̛̘͔̖̭͍̓͑̒́̇̃̉ͅF̸̳͙̠̱̙͕͚̬̅̏̑̇̐̉͗G̶̻̈́́̾̀́̔̌̍̉H̸̜̯̣̹̎̂̐̊J̵̟̙̪̦͈̜͆͜ͅK̶̢̖̣̚͘L̴̡͕̗̦̠̈̈́̔́̄͛̎̕͝Z̵̨̢̟͕͇̦̖͎̱̍̋̿͂͝X̷̡̼͓̹͈̱̙̦̣͋̆̒C̶̡̥͖̱̃̀̈́̌͠ͅV̵̱̩̋̄͐̔B̷̻͇͙͚̗̪̓́Ņ̸̡̥̥̩́̾̈́͛͘M̸̡̜̝̪̘͙̐̈̓̀͘'.split('')
+
+
+      ctx.setInterval(() => {
+        ctx.$('#corruptedText').innerHTML = times(rndint(2000, 3000), () => sample(chars)).join('')
+      })
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
     } else if (screen === 'roboVac') {
 
       const mainInterface = `
