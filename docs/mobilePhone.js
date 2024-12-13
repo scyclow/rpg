@@ -1711,16 +1711,22 @@ createComponent(
 
     } else if (screen === 'appMarket') {
       ctx.$phoneContent.innerHTML = `
+        <style>
+          .overflow-scroll {
+            overflow: scroll;
+          }
+
+        </style>
         <div class="phoneScreen">
           <div style="display: flex; align-items: center; ">
             <button id="home">Back</button>
           </div>
 
-          <div id="appContent">
+          <div id="appContent" style="max-height: 41em;">
             <input autocomplete="off" placeholder="Type to search..." id="appSearch" style="width: 90%; font-size: 1.1em; padding: 0.25em">
             <table id="matchingApps" style="margin-top: 0.5em"></table>
             <div id="purchase">
-              <h4 style="padding-left: 6em">Welcome to AppMarket!</h4>
+              <h4 style="text-align: center">Welcome to AppMarket!</h4>
             </div>
             <h3 id="searchError"></h3>
           </div>
@@ -1742,7 +1748,10 @@ createComponent(
           if (!searchTerm) {
             ctx.$('#matchingApps').innerHTML = ''
             ctx.$('#purchase').innerHTML = '<h4 style="padding-left: 6em">Welcome to AppMarket!</h4>'
+            ctx.$('#appContent').classList.remove('overflow-scroll')
             return
+          } else {
+            ctx.$('#appContent').classList.add('overflow-scroll')
           }
 
           ctx.$('#matchingApps').innerHTML = `
@@ -1774,7 +1783,7 @@ createComponent(
 
           if (searchTerm) {
             ctx.$('#purchase').innerHTML = `
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5em; padding-top: 0.5em; border-top: 1px dashed">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5em; padding-top: 0.5em; padding-bottom: 1em; border-top: 1px dashed">
                 <strong>AppCredit Balance: ${appCreditBalance}</strong>
                 <button id="purchaseCredits" style="margin-bottom: 0">Purchase Credits</button>
               </div>

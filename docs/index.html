@@ -1388,7 +1388,7 @@
           wait: 1500,
         },
         {
-          text: `The Power, Internet, and WiFi lights all turn off for one second, turn back on for one second, and blink for three seconds${globalState.routerReset ? ' before returning to their original states' : ''}`,
+          text: `The Power, Internet, and WiFi lights all turn on for one second, turn back off for one second, and blink for three seconds${globalState.routerReset ? ' before returning to their original states' : ''}`,
           follow: async () => {
             if (!globalState.routerReset) {
               await waitPromise(1500)
