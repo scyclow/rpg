@@ -1866,35 +1866,37 @@
       },
     ],
 
+    enterStairway: {
+      before({ ctx }) {
+        globalState.location = 'stairway'
+        setColors('#000', '#939171')
+
+        if (tmp.src1 && tmp.src2) {
+          setTimeout(() => {
+            tmp.src1.stop()
+            tmp.src2.stop()
+          }, 1500)
+        }
+
+      },
+      text: `You enter the stairway and hear the door slam shut behind you`,
+      async follow() {
+        await waitPromise(2500)
+        return 'enterStairway1'
+      },
+      actions: []
+    },
+    enterStairway1: {
+      text: `The sound echos off the cement walls, spiraling around the staircase in both directions`,
+      async follow() {
+        await waitPromise(3500)
+        return 'enterStairway2'
+      },
+      actions: []
+    },
     ...group({
-      enterStairway: {
-        before({ ctx }) {
-          globalState.location = 'stairway'
-          setColors('#000', '#939171')
-
-          if (tmp.src1 && tmp.src2) {
-            setTimeout(() => {
-              tmp.src1.stop()
-              tmp.src2.stop()
-            }, 1500)
-          }
-
-        },
-        text: `You enter the stairway and hear the door slam shut behind you`,
-        async follow() {
-          await waitPromise(2500)
-          return 'enterStairway1'
-        }
-      },
-      enterStairway1: {
-        text: `The sound echos off the cement walls, spiraling around the staircase in both directions`,
-        async follow() {
-          await waitPromise(2500)
-          return 'enterStairway2'
-        }
-      },
       enterStairway2: {
-        text: `You turn around and see a QR code on the door behind you`
+        text: `You turn around and see a QR code on the door behind you`,
       },
       insideStairwayDoorPrimary: {
         text: `You try opening the door, but it's locked`

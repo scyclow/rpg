@@ -1,5 +1,5 @@
 export class StateMachine {
-  constructor(startingCtx, config, nodes, clearQueue=false) {
+  constructor(startingCtx, config, nodes) {
     this.ctx = startingCtx
     this.nodes = nodes
     this.defaultWait = config.defaultWait ?? 1000

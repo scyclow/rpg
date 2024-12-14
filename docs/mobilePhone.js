@@ -3859,7 +3859,7 @@ createComponent(
 
               <fieldset>
                 <legend>Social Security Number</legend>
-                <input autocomplete="off" id="ssn" placeholder="000-00-0000" value="${idWizardInfo.ssn}" type="number">
+                <input autocomplete="off" id="ssn" placeholder="000-00-0000" value="${idWizardInfo.ssn}">
               </fieldset>
 
               <fieldset>
@@ -3960,19 +3960,19 @@ createComponent(
       } else if (idvWizardStep === 4) {
         $wizardContent.innerHTML = `
           <div class="wizardSection">
-            <button id="goBack">Back</button>
+            <button id="goBack" style="margin-bottom: 0">Back</button>
             <h2 style="margin-top: 0">Last Step!</h2>
             <h3>Humanity Verification</h3>
 
             <section style="padding: 0 1em">
               <div style="margin-bottom: 1em">
                 <h4>1. 892 + 899 * 3 = ???</h4>
-                <input autocomplete="off" type="number" placeholder="???" style="margin-top: 0.4em" id="mathProblem">
+                <input autocomplete="off" type="number" placeholder="???" style="margin-top: 0.25em" id="mathProblem">
               </div>
 
               <div style="margin-bottom: 1em; padding: 0 2em">
                 <h4>2. "Before the Law stands a doorkeeper. To this doorkeeper there comes a man from the country and prays admittance to the Law. But the doorkeeper says that he cannot grant admittance at the moment." What is the subject of this passage?</h4>
-                <div style="display: flex; justify-content: center; margin-top: 0.75em">
+                <div style="display: flex; justify-content: center; margin-top: 0.5em">
                   <select>
                     ${['The Law', 'The doorkeeper', 'The man', 'The country', 'The moment'].map(i => `<option value="${i}">${i}</option>`).join('')}
                   </select>
@@ -3981,15 +3981,15 @@ createComponent(
 
               <div style="margin-bottom: 1em; padding: 0 2em">
                 <h4>3. What color was your first car?</h4>
-                <div style="display: flex; justify-content: center; margin-top: 0.25em">
+                <div style="display: flex; justify-content: center">
                   <select>
                     ${['Red', 'Orange', 'Brown', 'Yellow', 'Green', 'Teal', 'Blue', 'Purple', 'White', 'Black', 'Gray',].map(i => `<option value="${i}">${i}</option>`).join('')}
                   </select>
                 </div>
               </div>
 
-              <label style="margin-top: 0.5em"><input type="checkbox" id="confirmation"> I am a Human</label>
-              <button id="next">Complete →</button>
+              <label style="margin-top: 0.25em"><input type="checkbox" id="confirmation"> I am a Human</label>
+              <button id="next" style="margin-top: 0.5em;">Complete →</button>
               <h4 id="humanError"></h4>
             </section>
           </div>
@@ -3997,7 +3997,10 @@ createComponent(
 
         ctx.$('#next').onclick = () => {
           if (Number(ctx.$('#mathProblem').value) !== (892 + 899 * 3) || !ctx.$('#confirmation').checked) {
-            ctx.$('#humanError').innerHTML = 'Please correctly answer all Human Verification questions'
+            ctx.$('#humanError').innerHTML = ''
+            setTimeout(() => {
+              ctx.$('#humanError').innerHTML = 'Please correctly answer all Human Verification questions'
+            }, 100)
             return
           }
 
