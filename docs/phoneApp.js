@@ -789,7 +789,7 @@ function phoneBehavior(ctx) {
         ctx.$('#callTime').innerHTML = ''
       } catch (e) {}
     }, 2000)
-    window.speechSynthesis.cancel()
+    window.speechSynthesis?.cancel?.()
     if (PhoneCall.active) PhoneCall.active.hangup()
     // PhoneCall.active.stateMachine.goto('start')
   }
