@@ -2038,13 +2038,13 @@ createComponent(
         ctx.$('#connectData').onclick = () => {
           ctx.$('#error').innerHTML = '<span class="blink">Connecting...</span>'
 
-          setTimeout(() => {
-            const spc = ctx.$('#spc').value
-            const districtIndex = ctx.$('#districtIndex').value
-            const unlockCode = ctx.$('#unlockCode').value
+          const spc = ctx.$('#spc')?.value
+          const districtIndex = ctx.$('#districtIndex')?.value
+          const unlockCode = ctx.$('#unlockCode')?.value
 
+          setTimeout(() => {
             if (spc === '00010-032991' && districtIndex === 'B47' && unlockCode === 'Qz8!9g97tR$f29') {
-              ctx.$('#error').innerHTML = 'Error: You have successfully signed up for the TurboConnect FREE TRIAL for MOBILE + DATA Plan! You have Infinity hours and 30 minutes of data remaining'
+              if (ctx.$('#error')) ctx.$('#error').innerHTML = 'Error: You have successfully signed up for the TurboConnect FREE TRIAL for MOBILE + DATA Plan! You have Infinity hours and 30 minutes of data remaining'
               setTimeout(() => {
                 ctx.setState({ dataPlanActivated: true })
                 ctx.newText(turboConnectText)
@@ -2081,7 +2081,7 @@ createComponent(
                 }, 500)
 
                 setTimeout(() => {
-                  ctx.$('#error').innerHTML = 'Error: You have successfully signed up for the TurboConnect FREE TRIAL for MOBILE + DATA Plan! You have Infinity hours and 30 minutes of data remaining'
+                  if (ctx.$('#error')) ctx.$('#error').innerHTML = 'Error: You have successfully signed up for the TurboConnect FREE TRIAL for MOBILE + DATA Plan! You have Infinity hours and 30 minutes of data remaining'
                 }, 1000)
               }, 500)
 
@@ -2090,7 +2090,7 @@ createComponent(
               }, 60000)
 
             } else {
-              ctx.$('#error').innerHTML = 'Invalid Credentials: service refused'
+              if (ctx.$('#error')) ctx.$('#error').innerHTML = 'Invalid Credentials: service refused'
 
             }
 
