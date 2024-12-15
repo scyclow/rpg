@@ -213,7 +213,7 @@ const educatorText = {
 
 
 const moneyMinerMessage = `
-  <div style="font-family: sans-serif">
+  <div style="font-family: sans-serif; padding-bottom: 1em">
     <h2>Instructions on how to auto-mine ₢rypto:</h2>
     <p style="margin-top: 0.4em">1. Download the "EXE Runner" application </p>
     <p style="margin-top: 0.4em">2. <strong>IMPORTANT</strong>: Run the following command in "EXE Runner": <code>disable /System/.malware-detection.exe</code></p>
@@ -1813,9 +1813,16 @@ createComponent(
               //   ctx.$('#dlProgress').value += 10
               // }, 270)
 
-              setTimeout(() => {
+              setTimeout( async () => {
                 // clearInterval(interval)
-                if (ctx.$('#appContent')) ctx.$('#appContent').innerHTML = `<h4>Successfully downloaded: ${a.name}!</h4>`
+                if (ctx.$('#appContent')) {
+                  ctx.$('#appContent').innerHTML = `<h4>Successfully downloaded: ${a.name}!</h4>`
+                  await miscAudioSrc.note(440, 60)
+                  await miscAudioSrc.note(554.37, 60)
+                  await miscAudioSrc.note(659.26, 60)
+                  await miscAudioSrc.note(880, 60)
+
+                }
               }, ctx.state.fastMode ? 0 : 2700)
               setTimeout(() => {
                 ctx.setState({
@@ -3859,15 +3866,15 @@ createComponent(
 
               <fieldset>
                 <legend>Social Security Number</legend>
-                <input autocomplete="off" id="ssn" placeholder="000-00-0000" value="${idWizardInfo.ssn}">
+                <input autocomplete="off" id="ssn" placeholder="000-00-0000" value="${idWizardInfo.ssn || ''}">
               </fieldset>
 
               <fieldset>
                 <legend>Legal Address</legend>
                 <textarea id="address" placeholder="123 Main Street, New York, NY 10001, USA" value="${idWizardInfo.address}"></textarea>
               </fieldset>
-              <button id="next">Next →</button>
               <h5 id="step2Error"></h5>
+              <button id="next">Next →</button>
             </section>
           </div>
         `
@@ -5203,7 +5210,7 @@ createComponent(
           }
         </style>
 
-        <div class="phoneScreen" style="flex:1;${exchangePremium ? 'background: #000; color: #fff' : ''}">
+        <div class="phoneScreen" id="phoneScreen" style="flex:1;${exchangePremium ? 'background: #000; color: #fff' : ''}">
           <button id="home">Back</button>
           <h2>Currency Xchange ${exchangePremium ? '[PREMIUM]' : ''}</h2>
           <h4 style="margin: 0.4em 0">Temporary ₢rypto Wallet Address: <div id="tempAddr" style="word-wrap: break-word; border: 1px dotted; padding: 0.2em; margin: 0.2em 0">${calcAddr(currentUser)}</div> (Valid for <span id="timeRemaining"></span> more seconds)</h4>
@@ -5484,6 +5491,7 @@ createComponent(
 
         setTimeout(() => {
           ctx.$('#sendUSDError').innerHTML = `Message: Secure Payment Transaction (S.P.T.X.) identifier: <span style="font-size: 1.25em">${sptx}</span>`
+          ctx.$('#phoneScreen').scrollTop = ctx.$('#phoneScreen').scrollHeight
         }, 500)
 
         ctx.$('#sendUSDAmount').value = ''

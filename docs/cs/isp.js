@@ -218,7 +218,7 @@ export const ispCSNodes = {
 
   routerIdentifierFail: {
     text: `I'm sorry, but I could not find an account associated with your router's device identifier`,
-    follow: 'mainMenu'
+    follow: 'newCustomerRouter'
   },
 
   routerIdentifierSucceed: {
@@ -277,6 +277,13 @@ export const ispCSNodes = {
       0: 'representative',
       1: 'routerUnplugged',
       2: 'issueWithAccount',
+      3: 'mainMenu',
+      4: 'issueWithAccount',
+      5: 'issueWithAccount',
+      6: 'issueWithAccount',
+      7: 'issueWithAccount',
+      8: 'issueWithAccount',
+      9: 'issueWithAccount',
     })
   },
 
@@ -286,6 +293,13 @@ export const ispCSNodes = {
       0: 'representative',
       1: 'routerLightsOff',
       2: 'issueWithAccount',
+      3: 'mainMenu',
+      4: 'issueWithAccount',
+      5: 'issueWithAccount',
+      6: 'issueWithAccount',
+      7: 'issueWithAccount',
+      8: 'issueWithAccount',
+      9: 'issueWithAccount',
     })
   },
 

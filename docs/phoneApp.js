@@ -831,7 +831,7 @@ function phoneBehavior(ctx) {
 
   const renderPrevCalls = () => {
     ctx.$('#previouslyDialedNumbers').innerHTML = `
-      <div style="padding: 1em; padding-bottom: 0"><input id="pasteToDial" placeholder="Paste Number Here" type="number"> <button id="dialPasted">Dial</button></div>
+      <div style="padding: 1em; padding-bottom: 0"><input id="pasteToDial" placeholder="Paste Number Here"> <button id="dialPasted">Dial</button></div>
       <div style="padding: 1em">
         ${[...userData.previouslyDialed].reverse().map((n, i) => `<div>${formatPhoneNumber(n.split(''))} <button id="redial-${i}">Re-Dial</button></div>`).join('')}
       </div>
@@ -844,7 +844,7 @@ function phoneBehavior(ctx) {
         ctx.$('#phoneAppContent').classList.remove('hidden')
         ctx.$('#previousCallsView').classList.add('hidden')
 
-        for (let d of n.split('')) {
+        for (let d of n.trim().replaceAll('-', '').replaceAll('.', '').replaceAll('-', '').split('')) {
           phoneCall.pressKey(d)
           phoneCall.startTone(d)
           await waitPromise(75)

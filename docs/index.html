@@ -737,7 +737,18 @@
       },
 
       roboVacDoor: {
-        text: `The RoboVac repeatedly rams the front door, as if it's trying to escape`
+        text: `The RoboVac repeatedly rams the front door, as if it's trying to escape`,
+        follow: async ({ctx}) => {
+          if (!ctx.state.envelope1PickedUp) {
+            await waitPromise(1500)
+            return 'seeAnotherPaper'
+          }
+        }
+      },
+
+
+      seeAnotherPaper: {
+        text: `You notice something else at the foot of the front door`,
       },
 
       roboVacHallway: {
@@ -860,8 +871,8 @@
         { text: 'Phone', value: 'openPhone'},
         { text: 'Front Door', value: 'frontDoor',  qr: {screen: 'messageViewer', messageViewerMessage: 'Powered by SmartLock Technology<sup>TM</sup> Download the Official App today!'} },
         { text: 'Living Room', value: 'livingRoom'},
-        { text: 'Bathroom', value: 'bathroom'},
         { text: 'Bedroom', value: 'bedroom'},
+        { text: 'Bathroom', value: 'bathroom'},
         { text: 'Camera', value: 'camera', qr: { screen: 'appMarket', appMarketPreSearch: 'SmartPro Security'}},
         { text: 'Thermostat', value: 'thermostat', qr: { screen: 'appMarket', appMarketPreSearch: 'ThermoSmart'} },
         { text: 'Intercom', value: 'intercom', qr: { screen: 'appMarket', appMarketPreSearch: 'GateLink'}},
@@ -922,11 +933,11 @@
       ],
 
       envelopes: {
-        text: `You notice two envelopes at your feet`
+        text: `Two envelopes rest at your feet`
       },
 
       singleEnvelope: {
-        text: `You notice an envelope at your feet`
+        text: `An envelope rests at your feet`
       },
 
       pickupEnvelope1: {
