@@ -2061,7 +2061,7 @@
 
     const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
 
-    const phoneNotifications = inInternetLocation ? $phoneDevice.phoneNotifications() : 0
+    const phoneNotifications = inInternetLocation ? ($phoneDevice?.phoneNotifications?.() || 0) : 0
     $nextActions.innerHTML = actions.map(a => `<button id="${a.value}" class="actionButton">${
       a.text + (
         a.text === 'Phone' && phoneNotifications
