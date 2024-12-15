@@ -1350,7 +1350,7 @@ createComponent(
         </div>
       `
 
-      window.speechSynthesis.cancel()
+      window.speechSynthesis?.cancel?.()
       if (PhoneCall.active) PhoneCall.active.hangup()
 
 
