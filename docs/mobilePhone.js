@@ -4298,7 +4298,7 @@ createComponent(
           window.allSources.forEach(s => s.unmute())
         } else {
           window.allSources.forEach(s => s.mute())
-          window.speechSynthesis.cancel()
+          window.speechSynthesis?.cancel?.()
         }
         ctx.setState({ soundEnabled: !soundEnabled })
         globalState.soundMuted = soundEnabled
