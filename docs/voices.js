@@ -1,6 +1,6 @@
 import {globalState} from './global.js'
 
-window.speechSynthesis.cancel()
+window.speechSynthesis?.cancel?.()
 
 export const voices = new Promise((res, rej) => {
   setTimeout(() => {
