@@ -8,6 +8,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   routerRestartTime: 0,
   location: 'nothing',
   lastGlobalUpdate: Date.now(),
+  lastAction: Date.now(),
   routerReset: false,
   routerUnplugged: false,
   lightsOn: false,

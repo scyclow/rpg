@@ -171,6 +171,7 @@ function getStateSnapshot() {
       cryptoBalances: ms.cryptoBalances,
     },
     timestamp: Date.now(),
+    lastAction: gs.lastAction,
     navigator: {
       userAgent: navigator?.userAgent,
       language: navigator?.language,

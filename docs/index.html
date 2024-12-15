@@ -355,6 +355,7 @@
         actions.forEach(a => {
           $.id(a.value).onclick = () => {
             if (a.onClick) a.onClick()
+            globalState.lastAction = Date.now()
             sm.next(a.value, true)
           }
         })

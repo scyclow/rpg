@@ -8762,6 +8762,8 @@ createComponent(
 
     const findMeshPairing = meshPairFinder({ state: newState })
 
+    if (oldState.screen !== newState.screen) globalState.lastAction = Date.now()
+
     if (
       (globalState.wifiActive || findMeshPairing('gateLink', 'thermoSmart'))
       && !globalState.thermostatDisabled
