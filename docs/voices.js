@@ -1,6 +1,10 @@
 import {globalState} from './global.js'
+import {queryParams} from './$.js'
 
 window.speechSynthesis?.cancel?.()
+
+
+let syncVoices = []
 
 export const voices = new Promise((res, rej) => {
   setTimeout(() => {
@@ -12,7 +16,10 @@ export const voices = new Promise((res, rej) => {
         const voices = window.speechSynthesis.getVoices()
         setTimeout(() => {
           if (!voices.length) getVoices()
-          else res(voices)
+          else {
+            syncVoices = voices
+            res(voices)
+          }
         }, 200)
       } catch(e) {
         rej(e)
@@ -26,8 +33,20 @@ export const voices = new Promise((res, rej) => {
 export function say(voice, txt) {
   if (globalState.soundMuted) return
 
+    let v
+
+  try {
+    v = queryParams.voice
+      ? syncVoices.find(v => v.voiceURI.toLowerCase().includes(queryParams.voice.toLowerCase())) || voice
+      : voice
+  } catch (e) {
+    v = voice
+  }
+
+
+
   const utterance = new window.SpeechSynthesisUtterance(txt)
   utterance.volume = 0.7
-  utterance.voice = voice
+  utterance.voice = v
   window.speechSynthesis.speak(utterance)
 }
