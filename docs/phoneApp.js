@@ -457,24 +457,25 @@ function phoneBehavior(ctx) {
 
       const vs = await voices
 
-      const defaultVoice = vs.filter(v => v.lang === 'en-US')[0]
+      const defaultVoice = vs.find(v => v.lang === 'en-US' || v.lang === 'en_US') || vs[0]
 
       const femaleVoice = (
         vs.find(v => v.voiceURI.includes('Samantha') && v.lang === 'en-US')
         || vs.find(v => v.voiceURI.includes('Microsoft Zira') && v.lang === 'en-US')
-        || vs.filter(v => v.lang === 'en-US')[0]
+        || defaultVoice
       )
 
       const britishVoice = (
         vs.find(v => v.voiceURI.includes('Daniel') && v.lang === 'en-GB')
         || vs.find(v => v.voiceURI.includes('Google UK English Male'))
-        || vs.filter(v => v.lang === 'en-US')[0]
+        || vs.find(v => v.lang === 'en-GB' || v.lang === 'en_GB')
+        || defaultVoice
       )
 
       const derpyVoice = (
         vs.find(v => v.voiceURI.includes('Aaron') && v.lang === 'en-US')
         || vs.find(v => v.voiceURI.includes('Microsoft Mark') && v.lang === 'en-US')
-        || vs.filter(v => v.lang === 'en-US')[0]
+        || defaultVoice
       )
 
 
@@ -483,7 +484,7 @@ function phoneBehavior(ctx) {
             v.voiceURI.includes('Reed') && (v.lang === 'fi-FI'|| v.lang === 'de-DE')) || v.voiceURI.includes('Reed')
         )
         || vs.find(v => v.voiceURI.includes('Google polski'))
-        || vs[0]
+        || defaultVoice
       )
 
 
@@ -879,7 +880,8 @@ function phoneBehavior(ctx) {
 
     } else {
       ctx.$('#previouslyDialedNumbers').innerHTML = `
-        <h2 style="text-align: center; margin: 0.4em 0">Premium Feature Upgrade Available!</h2>
+        <h2 style="text-align: center; margin: 0.75em 0">Premium Feature Upgrade Available!</h2>
+        <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">External keypad support!</h4>
         <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">View all previous calls!</h4>
         <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">Re-dial numbers!</h4>
         <h4 style="font-size: 1em; margin: 0.4em 0; text-align: center">Paste-to-dial!</h4>

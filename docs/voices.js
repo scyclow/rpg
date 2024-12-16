@@ -33,8 +33,7 @@ export const voices = new Promise((res, rej) => {
 export function say(voice, txt) {
   if (globalState.soundMuted) return
 
-    let v
-
+  let v
   try {
     v = queryParams.voice
       ? syncVoices.find(v => v.voiceURI.toLowerCase().includes(queryParams.voice.toLowerCase())) || voice
@@ -42,7 +41,6 @@ export function say(voice, txt) {
   } catch (e) {
     v = voice
   }
-
 
 
   const utterance = new window.SpeechSynthesisUtterance(txt)

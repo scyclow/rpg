@@ -8360,7 +8360,10 @@ createComponent(
 
         if (ctx.state.soundEnabled && voiceActive) {
           const allVoices = await voices
-          const voice = allVoices.find(v => v.voiceURI.includes('Cellos') && v.lang === 'en-US') || allVoices.filter(v => v.lang === 'en-US')[0]
+          const voice = allVoices.find(v => v.voiceURI.includes('Cellos') && v.lang === 'en-US')
+            || allVoices.find(v => v.lang === 'en-US' || v.lang === 'en_US')
+            || allVoices[0]
+
           say(voice, txt)
         }
 
