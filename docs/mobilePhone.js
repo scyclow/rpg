@@ -7536,17 +7536,23 @@ createComponent(
             </div>
 
             <div class="nftView" id="buyView">
-              <h3>#${nftsForSale[buyIx].id}</h3>
-              <div id="nftDisplayBuy"></div>
-              <div style="padding: 0.25em; display: inline-block; border: 1px dotted; margin-top: 0.25em; ">
-                <h5 style="text-align: center"><button style="margin-bottom: 0.25em" id="buyNow" ${cryptoBalance < price(nftsForSale[buyIx].rarity, true) ? 'disabled' : ''}>Buy Now</button> (₢ ${price(nftsForSale[buyIx].rarity, true)})</h5>
-                <h5 style="text-align: center">[Rarity Score: ${nftsForSale[buyIx].rarity.toFixed(2)}]</h5>
-              </div>
+              ${nftsForSale.length
+                ? `
+                  <h3>#${nftsForSale[buyIx].id}</h3>
+                  <div id="nftDisplayBuy"></div>
+                  <div style="padding: 0.25em; display: inline-block; border: 1px dotted; margin-top: 0.25em; ">
+                    <h5 style="text-align: center"><button style="margin-bottom: 0.25em" id="buyNow" ${cryptoBalance < price(nftsForSale[buyIx].rarity, true) ? 'disabled' : ''}>Buy Now</button> (₢ ${price(nftsForSale[buyIx].rarity, true)})</h5>
+                    <h5 style="text-align: center">[Rarity Score: ${nftsForSale[buyIx].rarity.toFixed(2)}]</h5>
+                  </div>
 
-              <div style="display: flex; justify-content: space-between">
-                <div id="prevBuy"><span class="icon" style="padding: 0.5em">←</span> Prev</div>
-                <div id="nextBuy">Next <span class="icon" style="padding: 0.5em">→</span></div>
-              </div>
+                  <div style="display: flex; justify-content: space-between">
+                    <div id="prevBuy"><span class="icon" style="padding: 0.5em">←</span> Prev</div>
+                    <div id="nextBuy">Next <span class="icon" style="padding: 0.5em">→</span></div>
+                  </div>
+
+                `
+                : `<h3>Uncaught TypeError: Cannot read properties of undefined (reading 'id')</h3>`
+              }
             </div>
           </section>
 
@@ -7597,8 +7603,8 @@ createComponent(
             justify-content: center
           }
           #nftDisplayBuy, #nftDisplayCollect {
-            width: 300px;
-            height: 300px;
+            width: 24.2em;
+            height: 24.2em;
             border: 1px solid #000;
           }
 
@@ -7609,8 +7615,8 @@ createComponent(
           }
 
           .txMessage {
-            height: 250px;
-            width: 250px;
+            height: 10em;
+            width: 22em;
             border: 2px solid;
             display: flex;
             justify-content: space-around;

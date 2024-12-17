@@ -677,9 +677,9 @@
       actions: ({ctx}) => [
         { text: 'Phone', value: 'openPhone'},
         { text: 'Hallway', value: 'hallway'},
-        { text: 'Bed', value: 'bed'},
         { text: 'Alarm Clock', value: 'bedroomAlarm', qr: { screen: 'appMarket', appMarketPreSearch: 'wake'}},
         { text: 'Window', value: 'bedroomWindow', qr: { screen: 'appMarket', appMarketPreSearch: 'shayd'} },
+        { text: 'Bed', value: 'bed'},
         ctx.state.roboVacLocation === 'bedroom'? { text: 'RoboVac', value: 'roboVacLeavesBedroom', qr: { screen: 'appMarket', appMarketPreSearch: 'robovac'}} : null,
 
         // { text: 'Lamp', value: 'bedroomLamp', qr: { screen: 'messageViewer', messageViewerMessage: 'Illuminate your home with the Lumin app. Available only in AppMarket!'}},
