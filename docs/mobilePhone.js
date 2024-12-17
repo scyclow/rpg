@@ -1741,6 +1741,9 @@ createComponent(
 
       const clean = txt => txt.replaceAll('<sup>TM</sup>', 'tm').toLowerCase().replaceAll(' ', '').replaceAll(':', '')
 
+      let lastType = 0
+      let lastTypeTimeout
+
       const search = () => {
         if (hasInternet) {
           const searchTerm = clean(appSearch.value)
@@ -1754,32 +1757,42 @@ createComponent(
             ctx.$('#appContent').classList.add('overflow-scroll')
           }
 
-          ctx.$('#matchingApps').innerHTML = `
-            <thead>
-              <tr>
-                <th style="text-align: left">Name</th>
-                <!--<th>Size</th>-->
-                <th>Credits</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              ${searchTerm && APPS
-                .filter(a => clean(a.name).includes(searchTerm))
-                .map(a => `<tr>
-                  <td>${a.name}</td>
-                  <!--<td>${a.size}</td>-->
-                  <td style="text-align: center">${a.price}</td>
-                  <td>${
-                    appsInstalled.some(_a => _a.name === a.name)
-                      ? `Downloaded`
-                      : `<button id="${clean(a.key)}-download" ${isNaN(a.price) || a.price > appCreditBalance || (!wifiConnected && a.outOfNetwork) ? 'disabled' : ''}>Download</button>${!wifiConnected && a.outOfNetwork ? `<h6>(APPPLICATION UNAVAILABLE IN RECIPIENT DATA NETWORK)</h6>` : ''}</td>`
+          ctx.$('#matchingApps').innerHTML = `<h3>Searching...</h3>`
 
-                  }
-                  </tr>`).join('')
-              }
-            </tbody>
-          `
+
+
+          lastType = Date.now()
+
+          setTimeout(() => {
+            if (lastType + 200 > Date.now()) return
+            ctx.$('#matchingApps').innerHTML = `
+              <thead>
+                <tr>
+                  <th style="text-align: left">Name</th>
+                  <!--<th>Size</th>-->
+                  <th>Credits</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${searchTerm && APPS
+                  .filter(a => clean(a.name).includes(searchTerm))
+                  .map(a => `<tr>
+                    <td>${a.name}</td>
+                    <!--<td>${a.size}</td>-->
+                    <td style="text-align: center">${a.price}</td>
+                    <td>${
+                      appsInstalled.some(_a => _a.name === a.name)
+                        ? `Downloaded`
+                        : `<button id="${clean(a.key)}-download" ${isNaN(a.price) || a.price > appCreditBalance || (!wifiConnected && a.outOfNetwork) ? 'disabled' : ''}>Download</button>${!wifiConnected && a.outOfNetwork ? `<h6>(APPPLICATION UNAVAILABLE IN RECIPIENT DATA NETWORK)</h6>` : ''}</td>`
+
+                    }
+                    </tr>`).join('')
+                }
+              </tbody>
+            `
+          }, 200)
+
 
           if (searchTerm) {
             ctx.$('#purchase').innerHTML = `
