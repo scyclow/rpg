@@ -389,11 +389,7 @@ createComponent(
 
 
     setRunInterval(() => {
-      if (
-        globalState.deviceViruses
-        && globalState.location !== 'externalHallway'
-        && globalState.location !== 'stairway'
-      ) {
+      if (globalState.deviceViruses) {
         ctx.$('#scPlaceholder').innerHTML = `
           <div class="sc" style="width: 50%; position: absolute; left: ${Math.random()*48}%; top: ${Math.random()*67}%">
             <h5>SPONSORED CONTENT</h5>
@@ -407,9 +403,14 @@ createComponent(
     }, 300000)
 
     setInterval(() => {
-      if (globalState.deviceViruses && !document.hidden) {
-        ctx.buzzStop()
+      ctx.buzzStop()
 
+      if (
+        globalState.deviceViruses
+        && !document.hidden
+        && globalState.location !== 'externalHallway'
+        && globalState.location !== 'stairway'
+      ) {
         function randBuzz(totalBuzzTime) {
           const buzzTime = Math.random() * 3000
 
@@ -429,7 +430,6 @@ createComponent(
         randBuzz(0)
 
         if (window.primarySM) window.primarySM.enqueue('hearSomethingVirus')
-
       }
     }, 1200000)
 
