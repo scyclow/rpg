@@ -531,8 +531,9 @@ function phoneBehavior(ctx) {
             async onUpdate({text, action, ...props}, sm) {
               sm.ctx.history.push(text)
 
-              if (ctx.state.soundEnabled) say(femaleVoice, text)
-              else {
+              if (ctx.state.soundEnabled && vs.length) {
+                say(femaleVoice, text)
+              } else {
                 displayTranscript(text)
               }
             },
@@ -577,8 +578,9 @@ function phoneBehavior(ctx) {
             async onUpdate({text}, sm) {
               sm.ctx.history.push(text)
 
-              if (ctx.state.soundEnabled) say(femaleVoice, text)
-              else {
+              if (ctx.state.soundEnabled && vs.length) {
+                say(femaleVoice, text)
+              } else {
                 displayTranscript(text)
               }
             },
@@ -609,8 +611,9 @@ function phoneBehavior(ctx) {
               // TODO different voice
               const vs = await voices
 
-              if (ctx.state.soundEnabled) say(britishVoice, text)
-              else {
+              if (ctx.state.soundEnabled && vs.length) {
+                say(britishVoice, text)
+              } else {
                 displayTranscript(text)
               }
             },
@@ -647,8 +650,9 @@ function phoneBehavior(ctx) {
                 return
               }
 
-              if (ctx.state.soundEnabled) say(derpyVoice, text)
-              else {
+              if (ctx.state.soundEnabled && vs.length) {
+                say(derpyVoice, text)
+              } else {
                 displayTranscript(text)
               }
             },
@@ -713,8 +717,9 @@ function phoneBehavior(ctx) {
               sm.ctx.history.push(text)
               // TODO different voice
               const vs = await voices
-              if (ctx.state.soundEnabled) say(defaultVoice, text)
-              else {
+              if (ctx.state.soundEnabled && vs.length) {
+                say(defaultVoice, text)
+              } else {
                 displayTranscript(text)
               }
             },
@@ -744,8 +749,9 @@ function phoneBehavior(ctx) {
             async onUpdate({text}, sm) {
 
               sm.ctx.history.push(text)
-              if (ctx.state.soundEnabled) say(defaultVoice, text)
-              else {
+              if (ctx.state.soundEnabled && vs.length) {
+                say(defaultVoice, text)
+              } else {
                 displayTranscript(text)
               }
             },
