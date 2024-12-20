@@ -5695,7 +5695,7 @@ createComponent(
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
               <div>
                 <h5>Your High Score: <span id="highScore">${existingHighScore.toFixed(2)}</span></h5>
-                <h5>Global Score: <span id="globalHighScore">${ctx.state.yieldFarmerGlobalHighScore.toFixed(2)}</span></h5>
+                <h5>Global Score: <span id="globalHighScore">${ctx.state.yieldFarmerGlobalHighScore?.toFixed?.(2) || 'NaN'}</span></h5>
               </div>
               <button id="gotoAbout" style="margin-bottom:0">About</button>
             </div>
