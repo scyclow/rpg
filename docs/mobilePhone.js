@@ -8719,7 +8719,7 @@ createComponent(
           </style>
 
           <button id="home">Back</button>
-          <h2>FeedFetch: #1 Takeout App</h2>
+          <h2>FoodFetch: #1 Takeout App</h2>
           <h4 style="margin: 1em 0">Enter zipcode for top tier food delivery in your area</h4>
           <input autocomplete="off" placeholder="Zip Code" type="number" style="padding: 0.1em; font-size: 1.2em"> <button id="search" style="font-size: 1.2em">Search</button>
           <h5 id="searching"></h5>
