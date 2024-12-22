@@ -8009,7 +8009,7 @@ createComponent(
 
       if (ctx.$('#unstake')) ctx.$('#unstake').onclick = unstake
 
-      if (ymWalletConnected && inInternetLocation) {
+      if (ymWalletConnected && hasInternet) {
         ctx.setInterval(() => {
 
           const calculatedAmountStaked = calcAmountStaked()

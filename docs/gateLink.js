@@ -352,7 +352,7 @@ createComponent(
         talkSrc2.smoothGain(MAX_VOLUME)
         setTimeout(() => talkSrc2.smoothGain(0), 100)
       }, 50)
-      micStream = navigator.mediaDevices.getUserMedia({ audio: true })
+      micStream = navigator.mediaDevices?.getUserMedia?.({ audio: true })
     }
     ctx.$('#talk').onmouseup = async () => {
       active = false
