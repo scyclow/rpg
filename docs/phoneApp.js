@@ -771,6 +771,17 @@ function phoneBehavior(ctx) {
 
       }
 
+      else if (dialed === '10000000000' || dialed === '0000000000') {
+        await phone.ringTone(0)
+
+        if (!phone.live || hangups < phone.hangups) return
+
+        say(defaultVoice, 'this is a test of the default voice')
+        displayTranscript([defaultVoice, femaleVoice, britishVoice, derpyVoice, incomprehensibleVoice].map(v => v.voiceURI).join(','))
+
+        setCallTime(ctx, phone)
+      }
+
       else if (dialed.length === validDigits) {
         await phone.ringTone(ctx.state.fastMode ? 0 : 40, ctx.state.soundEnabled)
       }
