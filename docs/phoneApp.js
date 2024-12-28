@@ -433,15 +433,6 @@ function phoneBehavior(ctx) {
     }, 1000)
   }
 
-  function displayTranscript(txt) {
-    if (!txt) return
-
-    ctx.$('#phoneAppInfo').classList.add('silentMode')
-    if (!transcriptTimeout) startInterval()
-
-    wordQueue += ' ' + txt.replaceAll('.,', '.')
-  }
-
 
   const phoneCall = PhoneCall.active || new PhoneCall(
     async (phone, key) => {
@@ -498,6 +489,18 @@ function phoneBehavior(ctx) {
 
       ctx.$('#menuNumbers').innerHTML = phone.dialed.slice(validDigits).join('')
       // else  ctx.$('#menuNumbers').innerHTML = phone.dialed.slice(validDigits).join('')
+
+
+
+      function displayTranscript(txt) {
+        if (!txt || !phone.live) return
+
+        ctx.$('#phoneAppInfo').classList.add('silentMode')
+        if (!transcriptTimeout) startInterval()
+
+        wordQueue += ' ' + txt.replaceAll('.,', '.')
+      }
+
 
 
       window.speechSynthesis.cancel()
