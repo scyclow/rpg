@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SmartHome [Load]</title>
+  <style type="text/css">
+    button {
+      cursor: pointer;
+    }
+
+    textarea {
+      width: 500px;
+      height: 400px;
+    }
+  </style>
+</head>
+<body>
+
+  <div style="margin-bottom: 0.5em;">
+    <button id="load">Load</button>
+    <strong id="message" style="font-family: sans-serif;"></strong>
+  </div>
+  <textarea id="saveFile"></textarea>
+
+</body>
+
+<script type="text/javascript">
+  document.getElementById('load').onclick = () => {
+    const data = JSON.parse(decodeURI(atob(document.getElementById('saveFile').value)))
+    console.log(data)
+
+
+    localStorage.setItem('__GAME_VERSION', JSON.stringify(data.__GAME_VERSION))
+    localStorage.setItem('__GLOBAL_STATE', JSON.stringify(data.__GLOBAL_STATE))
+    localStorage.setItem('__INTERCOM_STATE', JSON.stringify(data.__INTERCOM_STATE))
+    localStorage.setItem('__MOBILE_STATE', JSON.stringify(data.__MOBILE_STATE))
+    localStorage.setItem('__PRIMARY_SM_CTX', JSON.stringify(data.__PRIMARY_SM_CTX))
+    localStorage.setItem('__SESSION_ID', JSON.stringify(data.__SESSION_ID))
+    localStorage.setItem('__TV_STATE', JSON.stringify(data.__TV_STATE))
+    localStorage.setItem('__YIELD_FARMER_2', JSON.stringify(data.__YIELD_FARMER_2))
+
+    // console.log(data)
+    document.getElementById('message').innerHTML = 'Loaded'
+  }
+
+</script>
+</html>

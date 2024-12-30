@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SmartHome [Save]</title>
+
+  <style type="text/css">
+    button {
+      cursor: pointer;
+    }
+
+    #saveFile {
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+<body>
+
+  <div style="margin-bottom: 0.5em;">
+    <button id="copy">Copy</button>
+    <strong id="message" style="font-family: sans-serif;"></strong>
+
+  </div>
+  <code id="saveFile"></code>
+
+</body>
+
+<script type="text/javascript">
+
+
+
+  document.getElementById('copy').onclick = () => {
+    navigator.clipboard.writeText(encodeState())
+    document.getElementById('message').innerHTML = 'Copied'
+  }
+
+
+  function encodeState() {
+
+    return btoa(encodeURI(JSON.stringify({
+      __GAME_VERSION: localStorage.getItem('__GAME_VERSION'),
+      __GLOBAL_STATE: localStorage.getItem('__GLOBAL_STATE'),
+      __INTERCOM_STATE: localStorage.getItem('__INTERCOM_STATE'),
+      __MOBILE_STATE: localStorage.getItem('__MOBILE_STATE'),
+      __PRIMARY_SM_CTX: localStorage.getItem('__PRIMARY_SM_CTX'),
+      __SESSION_ID: localStorage.getItem('__SESSION_ID'),
+      __TV_STATE: localStorage.getItem('__TV_STATE'),
+      __YIELD_FARMER_2: localStorage.getItem('__YIELD_FARMER_2'),
+    })))
+  }
+  document.getElementById('saveFile').innerText = encodeState()
+</script>
+</html>
