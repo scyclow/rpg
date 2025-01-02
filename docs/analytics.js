@@ -25,25 +25,25 @@ export function setupAnalytics() {
       }
     }, 30000)
 
-    window.addEventListener('error', async (e) => {
-      console.log('Logging Error:')
-      console.log(e)
-      try {
-        console.log(e.message)
-        const res = await post({
-          session_id: ls.get('__SESSION_ID').toString(),
-          error: {
-            filename: e.filename,
-            lineno: e.lineno,
-            colno: e.colno,
-            message: e.message ?? e?.error?.message,
-          }
-        }, `${ANALYTICS_URL[ENV]}/errors`)
-      } catch (_e) {
-        console.log('DID NOT LOG ERROR')
-        console.log(_e)
-      }
-    })
+    // window.addEventListener('error', async (e) => {
+    //   console.log('Logging Error:')
+    //   console.log(e)
+    //   try {
+    //     console.log(e.message)
+    //     const res = await post({
+    //       session_id: ls.get('__SESSION_ID').toString(),
+    //       error: {
+    //         filename: e.filename,
+    //         lineno: e.lineno,
+    //         colno: e.colno,
+    //         message: e.message ?? e?.error?.message,
+    //       }
+    //     }, `${ANALYTICS_URL[ENV]}/errors`)
+    //   } catch (_e) {
+    //     console.log('DID NOT LOG ERROR')
+    //     console.log(_e)
+    //   }
+    // })
   }
 }
 
