@@ -3087,7 +3087,7 @@ createComponent(
           <div id="p9" class="hidden">
             <h2>The SPTXs & Payment Module: Tutorial</h2>
             <p>In the following tutorial, you will play the role of Charlie, who wants to send $ from his <strong>Currency Xchange</strong> account to his <strong>PayApp</strong> account.</p>
-            <button id="sptxNext9">Start Turorial</button>
+            <button id="sptxNext9">Start Tutorial</button>
           </div>
 
           <div id="p10" class="hidden">
