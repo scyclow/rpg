@@ -41,7 +41,6 @@
 
 
   <link rel="stylesheet" type="text/css" href="./styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js"></script>
 </head>
 <body>
 
@@ -2161,6 +2160,29 @@
   }
 
   // Hide Farcaster frame splash screen
-  frame.sdk.actions.ready();
+  function sendFrameReadyMessage() {
+
+    const generateMessageId = () => {
+      return Array(4)
+        .fill(0)
+        .map(() => Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(16))
+        .join('-');
+    }
+
+    const message = {
+      id: generateMessageId(),
+      type: "APPLY",
+      path: ["ready"],
+      argumentList: [{}]
+    };
+
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify(message));
+    } else {
+      window.parent.postMessage(message, "*");
+    }
+  }
+
+  sendFrameReadyMessage();
 </script>
 </html>
