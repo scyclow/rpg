@@ -24,9 +24,24 @@
   <meta property="og:title" content="SmartHome">
   <meta property="og:site_name" content="SmartHome">
   <meta property="og:description" content="SmartHome: An Adventure Game">
+  <meta name="fc:frame" content='{
+    "version": "next",
+    "imageUrl": "https://smarthome.steviep.xyz/frame.png",
+    "button":{
+      "title": "Play",
+      "action": {
+        "type": "launch_frame",
+        "name": "SmartHome",
+        "url": "https://smarthome.steviep.xyz",
+        "splashImageUrl": "https://smarthome.steviep.xyz/splash.png",
+        "splashBackgroundColor": "#19120B"
+      }
+    }
+  }' />
 
 
   <link rel="stylesheet" type="text/css" href="./styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@farcaster/frame-sdk/dist/index.min.js"></script>
 </head>
 <body>
 
@@ -2145,5 +2160,7 @@
     primarySM.next('')
   }
 
+  // Hide Farcaster frame splash screen
+  frame.sdk.actions.ready();
 </script>
 </html>
