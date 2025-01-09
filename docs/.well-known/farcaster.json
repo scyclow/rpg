@@ -6,10 +6,10 @@
   },
   "frame": {
     "version": "1",
-    "name": "SmartHome: An Adventure Game",
-    "iconUrl": "https://smarthome.steviep.xyz/logo.png",
+    "name": "SmartHome",
+    "iconUrl": "https://smarthome.steviep.xyz/splash.png",
     "homeUrl": "https://smarthome.steviep.xyz",
-    "imageUrl": "https://smarthome.steviep.xyz/SmartHome.png",
+    "imageUrl": "https://smarthome.steviep.xyz/frame.png",
     "buttonTitle": "Play",
     "splashImageUrl": "https://smarthome.steviep.xyz/splash.png",
     "splashBackgroundColor": "#19120B"

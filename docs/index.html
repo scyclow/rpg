@@ -24,6 +24,20 @@
   <meta property="og:title" content="SmartHome">
   <meta property="og:site_name" content="SmartHome">
   <meta property="og:description" content="SmartHome: An Adventure Game">
+  <meta name="fc:frame" content='{
+    "version": "next",
+    "imageUrl": "https://smarthome.steviep.xyz/frame.png",
+    "button":{
+      "title": "Play",
+      "action": {
+        "type": "launch_frame",
+        "name": "SmartHome",
+        "url": "https://smarthome.steviep.xyz",
+        "splashImageUrl": "https://smarthome.steviep.xyz/splash.png",
+        "splashBackgroundColor": "#19120B"
+      }
+    }
+  }' />
 
 
   <link rel="stylesheet" type="text/css" href="./styles.css">
@@ -2145,5 +2159,30 @@
     primarySM.next('')
   }
 
+  // Hide Farcaster frame splash screen
+  function sendFrameReadyMessage() {
+
+    const generateMessageId = () => {
+      return Array(4)
+        .fill(0)
+        .map(() => Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(16))
+        .join('-');
+    }
+
+    const message = {
+      id: generateMessageId(),
+      type: "APPLY",
+      path: ["ready"],
+      argumentList: [{}]
+    };
+
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify(message));
+    } else {
+      window.parent.postMessage(message, "*");
+    }
+  }
+
+  sendFrameReadyMessage();
 </script>
 </html>
