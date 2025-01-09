@@ -1,0 +1,17 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjE1MDQ5LCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4NmMxMkUxOEQ2YjY2NDg5YWZFRUMzMmQ1YjhBMGUyOTQ5N0UwNEEwYSJ9",
+    "payload": "eyJkb21haW4iOiJzbWFydGhvbWUuc3RldmllcC54eXoifQ",
+    "signature": "MHgwYzQyM2E4YjBmMWJkZTgzZDZmZTc0ZjJiODg0YmY2ZDVmOGY2NzU5NzE1YTg5Y2Q4ZDBjYjE2NDMxZjdjN2E5NmU5ZDk3NWJlOTY1YjcwNmRlNjcwMDJhZTVlZDljNjQ2ZTBkNWI4MDJjOGIxNTU0ODBkODFiNmMxOTNlYjk1MzFi"
+  },
+  "frame": {
+    "version": "1",
+    "name": "SmartHome: An Adventure Game",
+    "iconUrl": "https://smarthome.steviep.xyz/logo.png",
+    "homeUrl": "https://smarthome.steviep.xyz",
+    "imageUrl": "https://smarthome.steviep.xyz/SmartHome.png",
+    "buttonTitle": "Play",
+    "splashImageUrl": "https://smarthome.steviep.xyz/splash.png",
+    "splashBackgroundColor": "#19120B"
+  }
+}
