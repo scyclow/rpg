@@ -6,6 +6,8 @@ import {createSource, MAX_VOLUME, SoundSrc} from './audio.js'
 import {marquee} from './marquee.js'
 import {voices, say} from './voices.js'
 import {drawLabrynth} from './labrynth.js'
+import {flightMap} from './stairwayGame.js'
+
 import {postSnapshot, ENV} from './analytics.js'
 
 
@@ -49,6 +51,7 @@ const APPS = [
   { name: 'NFT Marketplace', key: 'nftMarketPlace', size: 128, price: 0 },
   { name: 'NotePad', key: 'notePad', size: 128, price: 0 },
   { name: 'PayApp', key: 'payApp', size: 128, price: 0 },
+  { name: 'PrivacyPlus VPN', key: 'privacyPlusVPN', size: 128, price: 1 },
   { name: 'QR Scanner', key: 'qrScanner', size: 128, price: 0 },
   { name: 'RoboVac Tracker', key: 'roboVac', size: 128, price: 0, physical: true },
   { name: 'Secure 2FA', key: 'secure2fa', size: 128, price: 0 },
@@ -384,6 +387,7 @@ const state = persist('__MOBILE_STATE', {
   currentNFTDisplay: undefined,
   exchangePremiumDiscounted: false,
   exchangeTextSent: false,
+  currentDistrict: 'B',
   userData: {
     0: {
       createdAt: 0,
@@ -421,6 +425,7 @@ const state = persist('__MOBILE_STATE', {
         ...times(196, () => ({...sample([billingText1, billingText2, billingText3, billingText4, mmText, packageText, tripleText, funTimeText, premiumText]), read: false})),
         {...billingText4, read: false}
       ],
+      qrsScanned: {RoboVac:true, Window:true, Toaster:true, Refrigerator:true, 'SmartPlanter<sup>TM</sup>':true, Lamp:true, 'Front Door':true, Thermostat:true, Toilet:true},
       keyPairs: [],
       previouslyDialed: [],
       previouslyDialedUnlocked: false,
@@ -1200,6 +1205,7 @@ createComponent(
       exchangePremiumDiscounted,
       exchangeTextSent,
       enableHotspotHGInput,
+      currentDistrict
     } = ctx.state
 
     if (nightModeEnabled) {
@@ -1509,6 +1515,7 @@ createComponent(
                 { name: 'Settings', key: 'settings' },
                 { name: 'Network & Internet', key: 'network' },
               ],
+              qrsScanned: {},
               textMessages: [],
               keyPairs: [],
               previouslyDialed: [],
@@ -1766,17 +1773,21 @@ createComponent(
             <tbody>
               ${searchTerm && APPS
                 .filter(a => clean(a.name).includes(searchTerm))
-                .map(a => `<tr>
-                  <td>${a.name}</td>
-                  <!--<td>${a.size}</td>-->
-                  <td style="text-align: center">${a.price}</td>
-                  <td>${
-                    appsInstalled.some(_a => _a.name === a.name)
-                      ? `Downloaded`
-                      : `<button id="${clean(a.key)}-download" ${isNaN(a.price) || a.price > appCreditBalance || (!wifiConnected && a.outOfNetwork) ? 'disabled' : ''}>Download</button>${!wifiConnected && a.outOfNetwork ? `<h6>(APPPLICATION UNAVAILABLE IN RECIPIENT DATA NETWORK)</h6>` : ''}</td>`
+                .map(a => {
+                  const outOfNetwork = !wifiConnected && a.outOfNetwork && !['C', 'D'].includes(currentDistrict)
+                  return `
+                    <tr>
+                      <td>${a.name}</td>
+                      <!--<td>${a.size}</td>-->
+                      <td style="text-align: center">${a.price}</td>
+                      <td>${
+                        appsInstalled.some(_a => _a.name === a.name)
+                          ? `Downloaded`
+                          : `<button id="${clean(a.key)}-download" ${isNaN(a.price) || a.price > appCreditBalance || (outOfNetwork) ? 'disabled' : ''}>Download</button>${outOfNetwork ? `<h6>(APPPLICATION UNAVAILABLE IN RECIPIENT DATA NETWORK)</h6>` : ''}</td>`
 
-                  }
-                  </tr>`).join('')
+                    }
+                    </tr>`
+                }).join('')
               }
             </tbody>
           `
@@ -1935,7 +1946,7 @@ createComponent(
           <div class="phoneScreen">
             <button id="home">Back</button>
             <button id="data">Switch to Data</button>
-            <h3 style="margin-bottom: 0.5em">Current Network: ${wifiNetworkName || 'null'}</h3>
+            <h3 style="margin-bottom: 0.5em">Current Network: ${wifiNetworkName && inInternetLocation ? wifiNetworkName : 'null'}</h3>
             ${
               bluetoothEnabled
                 ? `
@@ -1944,22 +1955,28 @@ createComponent(
                   <div id="wifiChoose" class="${wifiNetworkName ? 'hidden' : ''}">
                     <h3 style="margin-top: 0.4em">Network Name:</h3>
                     <select id="networkName" style="margin: 0.25em 0; color: ${wifiNetworkName ? '#000' : '#777'}; padding: 0.25em 0; font-size: 0.85em; max-width: 90%">
-                      <option disabled selected value="">Choose Network</option>
-                      <option value="Alien Nation">Alien Nation</option>
-                      <option value="CapitalC">CapitalC</option>
-                      <option value="ClickToAddNetwork">ClickToAddNetwork</option>
-                      <!-- i feel like i need to unlock this experience
-                        <option value="Dial19996663333ForAFunTime">Dial19996667777ForAFunTime</option>
-                      -->
-                      <option value="ElectricLadyLand" ${inInternetLocation && wifiNetworkName === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
-                      <option value="Free-WiFi">Free-WiFi</option>
-                      <option value="HellInACellPhone98">HellInACellPhone98</option>
-                      ${(globalState.routerReset || globalState.wifiActive) && !globalState.routerUnplugged ? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetworkName === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
-                      <option value="ISP-Default-89s22D">ISP-Default-89s22D</option>
-                      <option value="LandlockRealtyLLC-5G">LandlockRealtyLLC-5G</option>
-                      <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
-                      <option value="NewNetwork">NewNetwork</option>
-                      <option value="XXX-No-Entry">XXX-No-Entry</option>
+                      ${inInternetLocation
+                        ? `
+                          <option disabled selected value="">Choose Network</option>
+                          <option value="Alien Nation">Alien Nation</option>
+                          <option value="CapitalC">CapitalC</option>
+                          <option value="ClickToAddNetwork">ClickToAddNetwork</option>
+                          <!-- i feel like i need to unlock this experience
+                            <option value="Dial19996663333ForAFunTime">Dial19996667777ForAFunTime</option>
+                          -->
+                          <option value="ElectricLadyLand" ${inInternetLocation && wifiNetworkName === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
+                          <option value="Free-WiFi">Free-WiFi</option>
+                          <option value="HellInACellPhone98">HellInACellPhone98</option>
+                          ${(globalState.routerReset || globalState.wifiActive) && !globalState.routerUnplugged ? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetworkName === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
+                          <option value="ISP-Default-89s22D">ISP-Default-89s22D</option>
+                          <option value="LandlockRealtyLLC-5G">LandlockRealtyLLC-5G</option>
+                          <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
+                          <option value="NewNetwork">NewNetwork</option>
+                          <option value="XXX-No-Entry">XXX-No-Entry</option>
+                        `
+
+                        : '<option disabled selected value="">Choose Network</option><option disabled value="">Cannot Locate Network</option>'
+                      }
                     </select>
                     <input autocomplete="off" id="networkPassword" placeholder="Password" type="password" style="padding: 0.25em">
                     <button id="connect">Connect</button>
@@ -4409,22 +4426,32 @@ createComponent(
       }
 
     } else if (screen === 'qrScanner') {
-      const availableActions = ctx.state.availableActions.filter(a => !['standUpBed', 'openPhone', 'closePhone', 'hallway', 'hallwayShower', 'externalHallway', 'livingRoom', 'bathroom', 'bedroom', 'hallwayCurrent', 'kitchen', 'livingRoomCurrent', 'resetRouter', 'checkWifiPower', 'frontDoorListen', 'pickupEnvelopes', 'reenterApartment', 'externalHallwayBack', 'bottomRouter', 'unplugRouter', 'router', 'turnOnTV', 'turnOffTV', 'openDoorUnlocked', 'openDoorLocked'].includes(a.value))
+      const availableActions = ctx.state.availableActions.filter(a => !['standUpBed', 'openPhone', 'closePhone', 'hallway', 'hallwayShower', 'externalHallway', 'livingRoom', 'bathroom', 'bedroom', 'hallwayCurrent', 'kitchen', 'livingRoomCurrent', 'resetRouter', 'checkWifiPower', 'frontDoorListen', 'pickupEnvelopes', 'reenterApartment', 'externalHallwayBack', 'bottomRouter', 'unplugRouter', 'router', 'turnOnTV', 'turnOffTV', 'openDoorUnlocked', 'openDoorLocked', 'enterStairway', 'pickupEnvelope1', 'pickupEnvelope2', 'stairsDown'].includes(a.value))
 
-      const objects = availableActions.map(a => `<button id="qr-${a.value}" style="margin-right: 0.25em">${a.text}</button>`).join('')
+      const objects = availableActions.map(a => `<button id="qr-${a.value}" style="margin-right: 0.25em">${a.text.replace(' (up)', '')}</button>`).join('')
+
+      const totalQRsScanned = currentUserData.qrsScanned != null ? Object.keys(currentUserData.qrsScanned).length : 'ERROR'
+
       ctx.$phoneContent.innerHTML = `
-        <div class="phoneScreen">
-          <button id="home">Back</button>
-          <h2>QR SCANNER</h2>
-          <div style="padding: 0.5em">${availableActions.length ? objects : '...'}</div>
-          <h4 id="error"></h4>
+        <div class="phoneScreen" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 1em">
+          <div>
+            <button id="home">Back</button>
+            <h2>QR SCANNER</h2>
+            <div style="padding: 0.5em">${availableActions.length ? objects : '...'}</div>
+            <h4 id="error"></h4>
+          </div>
+
+          <h4>QRs scanned: ${totalQRsScanned}</h4>
         </div>
       `
 
       availableActions.forEach(a => {
         ctx.$('#qr-'+a.value).onclick = () => {
 
-          if (a.qr) {
+          const ignoreQR = a.value === 'insideStairwayDoorPrimary' && window.primarySM.ctx.state.stairwayLevel !== 0
+          const {stairwayLevel} = window.primarySM.ctx.state
+
+          if (a.qr && !ignoreQR) {
             if (a.qr.screen === 'messageViewer' && messageViewerNotDownloaded) {
               ctx.$('#error').innerHTML = 'Please download the Message Viewer app from the AppMarket to view this message'
             } else {
@@ -4436,9 +4463,39 @@ createComponent(
                   console.log(e)
                 }
               }
+
+              ctx.setUserData({
+                qrsScanned: {
+                  ...(currentUserData.qrsScanned || {}),
+                  [a.text]: true
+
+                }
+              })
               ctx.setState(a.qr)
               if (a.value === 'insideStairwayDoorPrimary' && globalState.completionTime) {
                 ctx.$('#completionTime').innerHTML = formatTime(globalState.completionTime)
+              }
+
+              if (a.value === 'stairsUp' || a.value === 'stairsDown') {
+                let messageViewerMessage
+                if (flightMap.lastFlight === stairwayLevel) {
+                  messageViewerMessage = `Scan the QR code on the door behind you`
+
+                } else {
+                  const nextFlight = flightMap[stairwayLevel]
+                  messageViewerMessage = `
+                    <div>Current Flight: ${stairwayLevel}</div>
+                    <div>${nextFlight ? `Go to flight: ${nextFlight}` : ''}</div>
+                  `
+
+                }
+
+
+                ctx.setState({
+                  ...a.qr,
+                  messageViewerMessage
+                })
+
               }
             }
           } else {
@@ -4449,6 +4506,95 @@ createComponent(
 
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
+      }
+
+    } else if (screen === 'privacyPlusVPN') {
+      ctx.$phoneContent.innerHTML = `
+        <div class="phoneScreen">
+          <button id="home">Back</button>
+
+          <div id="vpnApp">
+            <h2 style="text-align: center; font-family: sans-serif">PrivacyPlus VPN</h2>
+
+            <h3 style="font-family: sans-serif; text-align: center; margin-top: 0.25em">Active Region: ${hasInternet ? currentDistrict || 'B' : 'NaN'}</h3>
+
+            <div style="display: flex; flex-direction: column; align-items: center; font-family: sans-serif"">
+              <div style="margin: auto; margin-top: 1em;" >
+                <p style="text-decoration: underline">SELECT REGION:</p>
+
+                <div style="margin-top: 0.25em">
+                  ${hasInternet
+                    ? `
+                      <label style="display: block; font-size: 0.9em"><input id="regionA" type="radio" name="selectRegion" ${currentDistrict === 'A' ? 'checked' : ''}> A</label>
+                      <label style="display: block; font-size: 0.9em"><input id="regionB" type="radio" name="selectRegion" ${currentDistrict === 'B' || !currentDistrict ? 'checked' : ''}> B</label>
+                      <label style="display: block; font-size: 0.9em"><input id="regionC" type="radio" name="selectRegion" ${currentDistrict === 'C' ? 'checked' : ''}> C</label>
+                      <label style="display: block; font-size: 0.9em"><input id="regionD" type="radio" name="selectRegion" ${currentDistrict === 'D' ? 'checked' : ''}> D</label>
+                      <label style="display: block; font-size: 0.9em"><input id="regionE" type="radio" name="selectRegion" ${currentDistrict === 'E' ? 'checked' : ''}> E</label>
+                      <label style="display: block; font-size: 0.9em"><input id="regionF" type="radio" name="selectRegion" ${currentDistrict === 'F' ? 'checked' : ''}> F</label>
+                    `
+                    : '<div>Cannot retrieve region data</div><div>Error Code: #492791</div>'
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+      `
+
+      ctx.$('#home').onclick = () => {
+        ctx.setState({ screen: 'home' })
+      }
+
+
+      ctx.$('#regionA').onclick = () => {
+        ctx.$('#vpnApp').innerHTML = 'Selecting region please wait'
+        setTimeout(() => {
+          ctx.setState({
+            currentDistrict: 'A',
+          })
+        }, rndint(800, 3000))
+      }
+      ctx.$('#regionB').onclick = () => {
+        ctx.$('#vpnApp').innerHTML = 'Selecting region please wait'
+        setTimeout(() => {
+          ctx.setState({
+            currentDistrict: 'B',
+          })
+        }, rndint(800, 3000))
+      }
+      ctx.$('#regionC').onclick = () => {
+        ctx.$('#vpnApp').innerHTML = 'Selecting region please wait'
+        setTimeout(() => {
+          ctx.setState({
+            currentDistrict: 'C',
+          })
+        }, rndint(800, 3000))
+      }
+      ctx.$('#regionD').onclick = () => {
+        ctx.$('#vpnApp').innerHTML = 'Selecting region please wait'
+        setTimeout(() => {
+          ctx.setState({
+            currentDistrict: 'D',
+          })
+        }, rndint(800, 3000))
+      }
+      ctx.$('#regionE').onclick = () => {
+        ctx.$('#vpnApp').innerHTML = 'Selecting region please wait'
+        setTimeout(() => {
+          ctx.setState({
+            currentDistrict: 'E',
+          })
+        }, rndint(800, 3000))
+      }
+
+      ctx.$('#regionF').onclick = () => {
+        ctx.$('#vpnApp').innerHTML = 'Selecting region please wait'
+        setTimeout(() => {
+          ctx.$('#vpnApp').innerHTML = '<strong>This region is unavailable</strong>'
+
+        }, rndint(800, 3000))
       }
 
     } else if (screen === 'wake') {
@@ -8266,6 +8412,7 @@ createComponent(
       ctx.$('#home').onclick = () => {
         ctx.setState({ screen: 'home' })
       }
+
     } else if (screen === 'roboVac') {
 
       const mainInterface = `
@@ -8934,3 +9081,6 @@ function jbBehavior(ctx, deviceName, speed, cb=noop, persistCb=noop, onTransferE
 
   return turnOff
 }
+
+
+

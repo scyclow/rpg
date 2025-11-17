@@ -30,7 +30,7 @@ export const voices = new Promise((res, rej) => {
 })
 
 
-export function say(voice, txt) {
+export function say(voice, txt, args={}) {
   if (globalState.soundMuted) return
 
   let v
@@ -44,7 +44,8 @@ export function say(voice, txt) {
 
 
   const utterance = new window.SpeechSynthesisUtterance(txt)
-  utterance.volume = 0.7
+  utterance.volume = args.volume || 0.7
+  utterance.rate = args.rate || 0.7
   utterance.voice = v
   window.speechSynthesis.speak(utterance)
 }

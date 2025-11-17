@@ -3,3 +3,4 @@ NOTES
 .env*
 .branches
 .temp
+node_modules

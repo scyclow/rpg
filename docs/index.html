@@ -139,6 +139,8 @@
   import {globalState, setColors, tmp} from './global.js'
   import {createSource, MAX_VOLUME, SoundSrc} from './audio.js'
   import {funTimeText} from './mobilePhone.js'
+  import {flightMap} from './stairwayGame.js'
+
   import {setupAnalytics} from './analytics.js'
 
   setupAnalytics()
@@ -1892,6 +1894,33 @@
       },
     ],
 
+    stairwayReturn: {
+      before({ctx}) {
+        globalState.location = 'externalHallway'
+        document.body.style.transition = '0.7s'
+        setColors('#ddd', '#000')
+        try {
+          if (!tmp.src1 || tmp.src1.isStopped) {
+            tmp.src1 = createSource('sine', 100)
+            tmp.src2 = createSource('sine', 100.1)
+
+            tmp.src1.smoothGain(MAX_VOLUME * 1.25, 1.5)
+            tmp.src2.smoothGain(MAX_VOLUME * 1.25, 1.5)
+          }
+        } catch (e) {
+          console.log(e)
+        }
+
+      },
+      text: 'You exit the stairway',
+      handler: ({ur}) => ur,
+      actions: [
+        { text: 'Back', value: 'externalHallwayBack'},
+        { text: 'Enter Stairway', value: 'enterStairway'},
+        { text: 'Phone', value: 'openPhone'},
+      ]
+    },
+
     enterStairway: {
       before({ ctx }) {
         globalState.location = 'stairway'
@@ -1927,46 +1956,104 @@
       insideStairwayDoorPrimary: {
         text: `You try opening the door, but it's locked`
       },
+      insideStairwayDoorPrimary2: {
+        text: `You try opening the door, but it's locked`
+      },
+
+      stairwayUnlock: {
+        after({ctx}) {
+          ctx.state.stairwayDoorUnlocked = true
+        },
+        text({ctx}) {
+          return `You hear the sound of a door unlock ${flightMap.lastFlight < 0 ? 'above' : 'below'} you`
+        }
+      },
+
+
 
       stairsUp: {
         before({ctx}) {
           ctx.state.stairwayLevel += 1
         },
-        text: `You walk up a flight of stairs`
+        text: `You walk up a flight of stairs`,
+        wait: 100
       },
 
       stairsDown: {
         before({ctx}) {
           ctx.state.stairwayLevel -= 1
         },
-        text: `You walk down a flight of stairs`
+        text: `You walk down a flight of stairs`,
+        wait: 100
       },
 
     }, {
       handler: ({ur}) => ur,
       actions: ({ctx}) => {
         return [
-        {
-          text: 'Door',
-          value: 'insideStairwayDoorPrimary',
-          // qr: ctx.state.stairwayLevel === 0
-          qr: {
-            screen: 'messageViewer',
-            messageViewerMessage: `
-              <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 420px">
-                ${logoSVG(13, '#000')}
-                <h1 style="text-align: center; margin-bottom: 0.25em; margin-top: 0.5em"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h1>
-                <h2 style="text-align: center">2024</h2>
-                <div style="margin-top: 0.5em" id="completionTime"></div>
-                <button onclick="localStorage.clear(); location.reload()" style="align-self:center; margin-top: 2em">Play Again?</button>
-              </div>
-            `
-          }
-        },
-        { text: 'Stairs (up)', value: 'stairsUp', },
-        { text: 'Stairs (down)', value: 'stairsDown', },
-        { text: 'Phone', value: 'openPhone'},
-      ]}
+
+          ctx.state.stairwayLevel === flightMap.lastFlight ?
+            {
+              text: 'Door',
+              value: 'insideStairwayDoorPrimary2',
+              qr: {
+                screen: 'messageViewer',
+                messageViewerMessage: `
+                  <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 420px">
+                    <button onclick="window.primarySM.goto('stairwayUnlock')" style="align-self:center; margin-top: 2em">Unlock Door</button>
+                  </div>
+                `
+              }
+            }
+
+          : ctx.state.stairwayDoorUnlocked && ctx.state.stairwayLevel === 0 ?
+            {
+              text: 'Door',
+              value: 'stairwayReturn',
+              qr: {
+                screen: 'messageViewer',
+                messageViewerMessage: `
+                  <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 420px">
+                    ${logoSVG(13, '#000')}
+                    <h1 style="text-align: center; margin-bottom: 0.25em; margin-top: 0.5em"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h1>
+                    <h2 style="text-align: center">2024</h2>
+                    <div style="margin-top: 0.5em" id="completionTime"></div>
+                    <button onclick="localStorage.clear(); location.reload()" style="align-self:center; margin-top: 2em">Play Again?</button>
+                  </div>
+                `
+              }
+            }
+
+            : {
+              text: 'Door',
+              value: 'insideStairwayDoorPrimary',
+              qr: {
+                screen: 'messageViewer',
+                messageViewerMessage: `
+                  <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 420px">
+                    ${logoSVG(13, '#000')}
+                    <h1 style="text-align: center; margin-bottom: 0.25em; margin-top: 0.5em"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h1>
+                    <h2 style="text-align: center">2024</h2>
+                    <div style="margin-top: 0.5em" id="completionTime"></div>
+                    <button onclick="localStorage.clear(); location.reload()" style="align-self:center; margin-top: 2em">Play Again?</button>
+                  </div>
+                `
+              }
+            },
+          {
+            text: 'Stairs (up)',
+            value: 'stairsUp',
+            qr: {
+              screen: 'messageViewer',
+            }
+          },
+          {
+            text: 'Stairs (down)',
+            value: 'stairsDown',
+          },
+          { text: 'Phone', value: 'openPhone'},
+        ]
+      }
     }),
 
   }

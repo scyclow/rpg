@@ -721,7 +721,7 @@ function phoneBehavior(ctx) {
               // TODO different voice
               const vs = await voices
               if (ctx.state.soundEnabled && vs.length) {
-                say(defaultVoice, text)
+                say(defaultVoice, text, {rate: 0.87})
               } else {
                 displayTranscript(text)
               }

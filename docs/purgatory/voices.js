@@ -24,5 +24,6 @@ export function say(voice, txt) {
   const utterance = new window.SpeechSynthesisUtterance(txt)
   utterance.volume = 0.88
   utterance.voice = voice
+  utterance.rate = 0.9
   window.speechSynthesis.speak(utterance)
 }
