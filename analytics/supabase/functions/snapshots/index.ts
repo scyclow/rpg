@@ -25,7 +25,7 @@ serve(async (req, connInfo) => {
   }
 
   try {
-    const { id, snapshot } = await req.json()
+    const { id, snapshot, application } = await req.json()
     const supabase = createClient(
       config.SUPABASE_URL,
       config.SUPABASE_SERVICE_ROLE_KEY
@@ -35,6 +35,7 @@ serve(async (req, connInfo) => {
       .from('sessions')
       .upsert({
         id,
+        application,
         snapshot: {
           ...snapshot,
           hostname: connInfo.localAddr.hostname

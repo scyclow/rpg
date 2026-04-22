@@ -50,6 +50,7 @@ export function setupAnalytics() {
 export async function postSnapshot() {
   return post({
     id: ls.get('__SESSION_ID').toString(),
+    application: 'smarthome',
     snapshot: getStateSnapshot()
   }, `${ANALYTICS_URL[ENV]}/snapshots`)
 }
