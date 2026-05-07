@@ -54,6 +54,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   defaultUnlocked: false,
   pauseCurrency: false,
   checkedAlarmClock: false,
+  mazeLightswitchOn: false,
   countdownTimeLeft: 1780000, // 00:29:32
   countdownIntervalTime: 900,
   roboVacCaught: {},

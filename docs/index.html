@@ -140,6 +140,7 @@
   import {createSource, MAX_VOLUME, SoundSrc} from './audio.js'
   import {funTimeText} from './mobilePhone.js'
   import {flightMap} from './stairwayGame.js'
+  import {logoSVG, mazeMapA, mazeMapB, mazeMapC, mazeMapD, mazeMapE} from './svgs.js'
 
   import {setupAnalytics} from './analytics.js'
 
@@ -298,33 +299,37 @@
       wokenUp: false,
       leftBed: false,
       hallwayVisited: false,
+      accessCodeString: '',
+      accessCodeUnlocked: false,
     }
 
   }))
 
 
-  const logoSVG = (size, color) => `
-  <svg width="${size}em" height="${size}em" viewBox="0 0 1085 1116" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M35.29 1080H1065C1070.52 1080 1075 1075.52 1075 1070V373.784C1075 370.536 1073.42 367.49 1070.77 365.616L570.09 11.9293C566.734 9.55853 562.27 9.48198 558.834 11.7363L19.5137 365.643C16.6967 367.491 15 370.634 15 374.003V949.557C15 955.08 19.4772 959.557 25 959.557H951.868C957.391 959.557 961.868 955.08 961.868 949.557V434.196C961.868 430.896 960.24 427.809 957.517 425.944L570.025 160.686C566.696 158.407 562.324 158.351 558.938 160.545L149.295 425.967C146.451 427.81 144.733 430.969 144.733 434.359V831.846C144.733 837.369 149.21 841.846 154.733 841.846H834.432C839.954 841.846 844.432 837.369 844.432 831.846V487.882C844.432 484.471 842.693 481.296 839.82 479.458L569.805 306.759C566.577 304.695 562.454 304.656 559.189 306.659L277.394 479.481C274.429 481.299 272.622 484.527 272.622 488.005V718.615C272.622 724.138 277.099 728.615 282.622 728.615H718.84C724.363 728.615 728.84 724.138 728.84 718.615V536.64C728.84 533.184 727.055 529.973 724.12 528.148L569.627 432.093C566.489 430.142 562.531 430.081 559.333 431.933L393.2 528.193C390.114 529.981 388.213 533.278 388.213 536.846V620.489C388.213 626.011 392.691 630.489 398.213 630.489H564.528" stroke="${color}" stroke-width="20" stroke-linecap="round"/>
-  <circle cx="37.5" cy="1078.5" r="37" fill="${color}" stroke="${color}"/>
-  <circle cx="560.5" cy="628.5" r="37" fill="${color}" stroke="${color}"/>
-  </svg>
-  `
-
-
   $.id('landingLogo').innerHTML = logoSVG(10, 'var(--primary-color)')
 
 
-  const niceLocation = {
-    bed: 'Bedroom',
-    bedroom: 'Bedroom',
-    externalHallway: '???',
-    stairway: '???',
-    hallway: 'Hallway',
-    livingRoom: 'Living Room',
-    kitchen: 'Kitchen',
-    bathroom: 'Bathroom',
-    nothing: ''
+
+  function setConsoleLocation() {
+    const niceLocation = {
+      bed: 'Bedroom',
+      bedroom: 'Bedroom',
+      externalHallway: '???',
+      stairway: '???',
+      maze: '¿¿¿',
+      hallway: 'Hallway',
+      livingRoom: 'Living Room',
+      kitchen: 'Kitchen',
+      bathroom: 'Bathroom',
+      nothing: ''
+    }
+
+    if (globalState.location.includes('maze-')) {
+      $consoleLocation.innerHTML = '¿¿¿ - ' + globalState.location.replace('maze-', '')
+
+    } else {
+      $consoleLocation.innerHTML = niceLocation[globalState.location]
+    }
   }
 
   const primaryConfig = {
@@ -350,7 +355,7 @@
       }
 
 
-      $consoleLocation.innerHTML = niceLocation[globalState.location]
+      setConsoleLocation()
 
       if (actions instanceof Function) {
         actions = (await sm.evaluate(actions)).filter(a => !!a)
@@ -439,7 +444,7 @@
       {
         before() {
           globalState.location = 'bed'
-          $consoleLocation.innerHTML = niceLocation[globalState.location]
+          setConsoleLocation()
         },
         text: 'Your first conscious thought is to reach for your phone',
         follow: 'bedFresh'
@@ -1916,7 +1921,7 @@
       handler: ({ur}) => ur,
       actions: [
         { text: 'Back', value: 'externalHallwayBack'},
-        { text: 'Enter Stairway', value: 'enterStairway'},
+        { text: 'Enter Stairway', value: 'enterStairwayPlain'},
         { text: 'Phone', value: 'openPhone'},
       ]
     },
@@ -1932,7 +1937,6 @@
             tmp.src2.stop()
           }, 1500)
         }
-
       },
       text: `You enter the stairway and hear the door slam shut behind you`,
       async follow() {
@@ -1949,6 +1953,7 @@
       },
       actions: []
     },
+
     ...group({
       enterStairway2: {
         text: `You turn around and see a QR code on the door behind you`,
@@ -1956,8 +1961,23 @@
       insideStairwayDoorPrimary: {
         text: `You try opening the door, but it's locked`
       },
-      insideStairwayDoorPrimary2: {
-        text: `You try opening the door, but it's locked`
+      standInStairway: {
+        text: ``
+      },
+
+      enterStairwayPlain: {
+        before({ ctx }) {
+          globalState.location = 'stairway'
+          setColors('#000', '#939171')
+
+          if (tmp.src1 && tmp.src2) {
+            setTimeout(() => {
+              tmp.src1.stop()
+              tmp.src2.stop()
+            }, 1500)
+          }
+        },
+        text: 'You enter the stairway'
       },
 
       stairwayUnlock: {
@@ -1990,56 +2010,37 @@
     }, {
       handler: ({ur}) => ur,
       actions: ({ctx}) => {
+
+        let doorValue
+
+        if (ctx.state.stairwayLevel === flightMap.lastFlight) {
+          doorValue = 'accessDoorView'
+
+        } else if (ctx.state.stairwayDoorUnlocked && ctx.state.stairwayLevel === 0) {
+          doorValue = 'stairwayReturn'
+
+        } else {
+          doorValue = 'insideStairwayDoorPrimary'
+
+        }
+
         return [
-
-          ctx.state.stairwayLevel === flightMap.lastFlight ?
-            {
-              text: 'Door',
-              value: 'insideStairwayDoorPrimary2',
-              qr: {
-                screen: 'messageViewer',
-                messageViewerMessage: `
-                  <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 420px">
-                    <button onclick="window.primarySM.goto('stairwayUnlock')" style="align-self:center; margin-top: 2em">Unlock Door</button>
-                  </div>
-                `
-              }
+          {
+            text: 'Door',
+            value: doorValue,
+            qr: {
+              screen: 'messageViewer',
+              messageViewerMessage: `
+                <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 420px">
+                  ${logoSVG(13, '#000')}
+                  <h1 style="text-align: center; margin-bottom: 0.25em; margin-top: 0.5em"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h1>
+                  <h2 style="text-align: center">2024</h2>
+                  <div style="margin-top: 0.5em" id="completionTime"></div>
+                  <button onclick="localStorage.clear(); location.reload()" style="align-self:center; margin-top: 2em">Play Again?</button>
+                </div>
+              `
             }
-
-          : ctx.state.stairwayDoorUnlocked && ctx.state.stairwayLevel === 0 ?
-            {
-              text: 'Door',
-              value: 'stairwayReturn',
-              qr: {
-                screen: 'messageViewer',
-                messageViewerMessage: `
-                  <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 420px">
-                    ${logoSVG(13, '#000')}
-                    <h1 style="text-align: center; margin-bottom: 0.25em; margin-top: 0.5em"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h1>
-                    <h2 style="text-align: center">2024</h2>
-                    <div style="margin-top: 0.5em" id="completionTime"></div>
-                    <button onclick="localStorage.clear(); location.reload()" style="align-self:center; margin-top: 2em">Play Again?</button>
-                  </div>
-                `
-              }
-            }
-
-            : {
-              text: 'Door',
-              value: 'insideStairwayDoorPrimary',
-              qr: {
-                screen: 'messageViewer',
-                messageViewerMessage: `
-                  <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 420px">
-                    ${logoSVG(13, '#000')}
-                    <h1 style="text-align: center; margin-bottom: 0.25em; margin-top: 0.5em"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h1>
-                    <h2 style="text-align: center">2024</h2>
-                    <div style="margin-top: 0.5em" id="completionTime"></div>
-                    <button onclick="localStorage.clear(); location.reload()" style="align-self:center; margin-top: 2em">Play Again?</button>
-                  </div>
-                `
-              }
-            },
+          },
           {
             text: 'Stairs (up)',
             value: 'stairsUp',
@@ -2056,8 +2057,301 @@
       }
     }),
 
+
+    ...group({
+      accessDoorView: {
+        text: 'You stare at a keypad'
+      },
+      pressAccessButtonNumber: {
+        text({ur, ctx}) {
+          return `You press ${ctx.state.accessCodeString.at(-1)}`
+        },
+        wait: 100
+      },
+      pressAccessButtonClear: {
+        text: 'You press the CLEAR button'
+      },
+      pressAccessButtonEnter: {
+        text: 'You press the ENTER button',
+        async follow({ctx}) {
+          if (ctx.state.accessCodeString === '9388038190' && !ctx.state.accessCodeUnlocked) {
+            ctx.state.accessCodeUnlocked = true
+            await waitPromise(1000)
+            return 'accessCodeClick'
+          } else if (ctx.state.accessCodeString !== '9388038190') {
+            ctx.state.accessCodeUnlocked = false
+          }
+        },
+      },
+      pressAccessButtonOpen: {
+        text: 'You press the OPEN button',
+        async follow({ctx, enqueue}) {
+          if (ctx.state.accessCodeUnlocked) {
+            await waitPromise(1000)
+            return 'darkHallway'
+          }
+        }
+
+      },
+
+      accessCodeClick: {
+        text: 'You hear a click'
+      }
+    }, {
+      handler: ({ur, ctx}) => {
+        if (ur.includes('pressAccessButtonNumber')) {
+          ctx.state.accessCodeString = (ctx.state.accessCodeString || '') + ur.split('-')[1]
+          return 'pressAccessButtonNumber'
+        } else if (ur === 'pressAccessButtonClear') {
+          ctx.state.accessCodeString = ''
+          return 'pressAccessButtonClear'
+        } else {
+          return ur
+        }
+      },
+      actions: [
+        { text: '00', value: 'pressAccessButtonNumber-0'},
+        { text: '01', value: 'pressAccessButtonNumber-1'},
+        { text: '02', value: 'pressAccessButtonNumber-2'},
+        { text: '03', value: 'pressAccessButtonNumber-3'},
+        { text: '04', value: 'pressAccessButtonNumber-4'},
+        { text: '05', value: 'pressAccessButtonNumber-5'},
+        { text: '06', value: 'pressAccessButtonNumber-6'},
+        { text: '07', value: 'pressAccessButtonNumber-7'},
+        { text: '08', value: 'pressAccessButtonNumber-8'},
+        { text: '09', value: 'pressAccessButtonNumber-9'},
+        { text: 'ENTER', value: 'pressAccessButtonEnter'},
+        { text: 'CLEAR', value: 'pressAccessButtonClear'},
+        { text: 'OPEN', value: 'pressAccessButtonOpen'},
+        { text: 'EXIT', value: 'standInStairway'},
+      ]
+    }),
+
+    darkHallway: {
+      text: 'The door opens and you enter a dark hallway',
+      handler: ({ur}) => ur,
+      actions: [
+        { text: 'Continue', value: 'darkHallwayContinue'},
+        { text: 'Go Back', value: 'enterStairwayPlain'},
+        { text: 'Phone', value: 'openPhone'},
+      ]
+    },
+
+    darkHallwayContinue: [
+      {
+        before() {
+          globalState.location = 'maze'
+        },
+        text: 'You continue forward',
+        wait: 2000,
+        actions: []
+      },
+      {
+        text: 'The door closes behind you',
+        wait: 2000,
+      },
+      {
+        text: 'You notice a light switch to your left',
+        actions: [
+          { text: 'Light Switch', value: 'lightswitchOn'},
+          { text: 'Phone', value: 'openPhone'},
+        ]
+      },
+    ],
+
+    ...group({
+      lightswitchOn: [
+        {
+          after({ctx}) {
+            globalState.mazeLightswitchOn = true
+            setTimeout(() => setColors('#988a64', '#000'), 500)
+          },
+          text: 'You turn the light on and look around',
+          wait: 2500
+        },
+        {
+          text: 'The windowless room is completely empty',
+          wait: 2500
+        },
+        {
+          text: 'A door in front of you says "<strong>A1</strong>"'
+        },
+      ],
+
+      lightswitchOff: {
+        text: 'You flick the light switch, but nothing happens'
+      },
+
+      mazeStairway: {
+        text: `You try the stairway door, but it's locked`
+      },
+
+      'maze-A0': {
+        text: 'You return to A0'
+      }
+
+    }, {
+
+      actions: ({ctx}) => [
+        { text: 'A1', value: 'maze-A1'},
+        { text: 'Stairway', value: 'mazeStairway'},
+        { text: 'Light Switch', value: 'lightswitchOff'},
+        { text: 'Phone', value: 'openPhone'},
+      ],
+      handler: ({ur}) => ur
+    }),
+
+    ...mazeNodes(),
+
+    ...group({
+      'maze-EXIT': {
+        text: 'You enter the room marked <strong>EXIT</strong>'
+      },
+      mazeElevatorClosed: [
+        { text: 'The elevator is closed', wait: 2000 },
+        { text: 'You don\'t see a button', wait: 2000 },
+      ]
+
+    }, {
+
+      actions: ({ctx}) => [
+        { text: 'E14', value: 'maze-E14'},
+        { text: 'Elevator', value: 'mazeElevatorClosed'},
+        { text: 'Computer', value: 'openMazeComputer'},
+        { text: 'Phone', value: 'openPhone'},
+      ]
+    })
+
+
   }
 
+
+
+
+  function mazeNodes() {
+    const mazeMap = {
+      'A1': ['A3', 'A2', 'A0'],
+      'A2': ['A1', 'A10'],
+      'A3': ['A6', 'A4', 'A1'],
+      'A4': ['A20', 'A16', 'A3'],
+      'A5': ['A20', 'A17'],
+      'A6': ['A3', 'A13'],
+      'A7': ['A14', 'A25', 'A12'],
+      'A8': ['A17', 'A19'],
+      'A9': ['A10'],
+      'A10': ['A17', 'A9', 'A2'],
+      'A11': ['A13'],
+      'A12': ['A24', 'A14', 'A7'],
+      'A13': ['A6', 'A11', 'A15'],
+      'A14': ['A12', 'A25', 'A7', 'A23', 'A18'],
+      'A15': ['A13', 'B1'],
+      'A16': ['A4'],
+      'A17': ['A5', 'A22', 'A8', 'A10'],
+      'A18': ['A14', 'A22'],
+      'A19': ['A8', 'A22'],
+      'A20': ['A4', 'A5', 'A21', 'A24'],
+      'A21': ['A20'],
+      'A22': ['A17', 'A19', 'A18'],
+      'A23': ['A14'],
+      'A24': ['A20', 'B4', 'A12'],
+      'A25': ['A14', 'A12', 'A7'],
+
+      'B1': ['A15', 'B3', 'B2'],
+      'B2': ['B1', 'B4'],
+      'B3': ['B1', 'C1', 'D1'],
+      'B4': ['A24', 'B5', 'B2'],
+      'B5': ['B4'],
+
+      'C1': ['B3'],
+
+      'D1': ['D4', 'D3', 'D2', 'B3'],
+      'D2': ['D6', 'D1'],
+      'D3': ['D6', 'D1'],
+      'D4': ['D8', 'D7', 'D1'],
+      'D5': ['D6'],
+      'D6': ['D3', 'D5', 'D2'],
+      'D7': ['D9', 'D4', 'D8'],
+      'D8': ['E1', 'D7', 'D4'],
+      'D9': ['D7'],
+
+      'E1': ['E3', 'E2', 'D8'],
+      'E2': ['E1'],
+      'E3': ['E4', 'E1'],
+      'E4': ['E5', 'E3', 'E6', 'E7'],
+      'E5': ['E4'],
+      'E6': ['E4'],
+      'E7': ['E4', 'E17'],
+      'E8': ['E16', 'E11'],
+      'E9': ['E17', 'E14', 'E16'],
+      'E10': ['E15', 'E12', 'E16'],
+      'E11': ['E13', 'E15', 'E8'],
+      'E12': ['E10'],
+      'E13': ['E11', 'E15'],
+      'E14': ['E9', 'EXIT'],
+      'E15': ['E11', 'E13', 'E10'],
+      'E16': ['E9', 'E8', 'E10'],
+      'E17': ['E7', 'E9'],
+    }
+
+    const mapRooms = {
+      A23: mazeMapA,
+      B5: mazeMapB,
+      C1: mazeMapC,
+      D9: mazeMapD,
+      E12: mazeMapE,
+    }
+
+    return Object.keys(mazeMap).reduce((allNodes, key) => {
+      const children = mazeMap[key]
+
+      const isMapRoom = Object.keys(mapRooms).includes(key)
+
+      const mainText = `You enter a room with ${children.length} door${children.length > 1 ? 's' : ''}, marked: ${
+        children.length === 1 ? `<strong>${children[0]}</strong>`
+        : children.length === 2 ? `<strong>${children[0]}</strong> and <strong>${children[1]}</strong>`
+        : children.map((c, i) => (i === children.length - 1 ? 'and ' : '') + `<strong>${c}</strong>` + (i === children.length - 1 ? '' : ', ')).join('')
+      }` + (isMapRoom ? ', and what appears to be a map' : '')
+
+      const actions = [
+        ...children.map(c => ({
+          text: c,
+          value: `maze-${c}`
+        })),
+        isMapRoom ? { text: 'Map', value: key + '-map'} : null,
+        { text: 'Phone', value: 'openPhone'},
+      ].filter(x => !!x)
+
+      const handler = ({ur}) => ur
+
+
+      if (isMapRoom) {
+        allNodes[`${key}-map`] = {
+          handler,
+          actions,
+          text() {
+            return `<div style="text-align: center; margin: 1em auto">${mapRooms[key](17, 'var(--primary-color)', 'border: 2px solid; padding: 1em')}</div>`
+
+          }
+        }
+      }
+
+      return {
+        ...allNodes,
+        [`maze-${key}`]: {
+          text: mainText,
+          handler,
+          before: () => {
+            globalState.location = `maze-${key}`
+            setConsoleLocation()
+          },
+          actions,
+        }
+      }
+    }, {})
+  }
+
+
+console.log(mazeNodes())
   window.primarySM = new StateMachine(primaryStartingCtx, primaryConfig, primaryNodes)
 
 
@@ -2087,9 +2381,14 @@
       primarySM.goto('bedFresh.1')
     }
     if (primarySM.ctx.currentNode === 'bedFresh') primarySM.goto('bedFresh.1')
+
+    if (
+      primarySM.ctx.currentNode === 'darkHallwayContinue.0' ||
+      primarySM.ctx.currentNode === 'darkHallwayContinue.1'
+    ) setTimeout(() => primarySM.enqueue('darkHallwayContinue.2'), 1000)
+
     const $content = $.id('mainConsoleContent')
     const $nextActions = $.id('nextActions')
-
 
 
     if (globalState.location === 'externalHallway') {
@@ -2097,6 +2396,12 @@
 
     } else if (globalState.location === 'stairway') {
       setColors('#000', '#939171')
+    } else if (globalState.location.includes('maze')) {
+      if (globalState.mazeLightswitchOn) {
+        setColors('#988a64', '#000')
+      } else {
+        setColors('#000', '#939171')
+      }
     } else if (globalState.lightsOn) {
       const { light1, light2 } = globalState
       setColors(hsvToRGB(light1), hsvToRGB(light2))
@@ -2108,7 +2413,7 @@
     $phoneModal.setBgMode(globalState.modelBgMode)
 
 
-    $consoleLocation.innerHTML = niceLocation[globalState.location]
+    setConsoleLocation()
 
     // if (ctx.state.checkedAlarmClock) {
     //   $consoleTime.innerHTML = ` — ${formatTime(globalState.eventLoopStartTime + (30 * 60 * 1000) - Date.now())}`

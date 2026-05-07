@@ -4,6 +4,8 @@ export const flightMap = persist('__STAIRWAY_GAME', {
   lastFlight: null
 })
 
+window.__stairwayGame = flightMap
+
 
 if (flightMap.lastFlight === null) {
   let currentFlight = 0

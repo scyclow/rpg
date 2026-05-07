@@ -4479,7 +4479,7 @@ createComponent(
               if (a.value === 'stairsUp' || a.value === 'stairsDown') {
                 let messageViewerMessage
                 if (flightMap.lastFlight === stairwayLevel) {
-                  messageViewerMessage = `Scan the QR code on the door behind you`
+                  messageViewerMessage = `Access Code: 9388038190`
 
                 } else {
                   const nextFlight = flightMap[stairwayLevel]
