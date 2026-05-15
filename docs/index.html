@@ -117,6 +117,10 @@
     <trapped-modal id="smartFrameModal" blur="true">
       <smart-frame id="smartFrameDevice" slot="content"></smart-frame>
     </trapped-modal>
+
+    <trapped-modal id="mazeComputerModal" blur="true">
+      <maze-computer id="mazeComputerDevice" slot="content"></maze-computer>
+    </trapped-modal>
   </main>
 
 </body>
@@ -129,6 +133,7 @@
 <script type="module" src="./smartTV.js"></script>
 <script type="module" src="./gateLink.js"></script>
 <script type="module" src="./smartFrame.js"></script>
+<script type="module" src="./mazeComputer.js"></script>
 
 
 
@@ -153,11 +158,13 @@
   const $gateLinkModal = $.id('gateLinkModal')
   const $tvModal = $.id('tvModal')
   const $smartFrameModal = $.id('smartFrameModal')
+  const $mazeComputerModal = $.id('mazeComputerModal')
 
   const $phoneDevice = $.id('phoneDevice')
   const $tvDevice = $.id('tvDevice')
   const $smartFrameDevice = $.id('smartFrameDevice')
   const $gateLinkDevice = $.id('gateLinkDevice')
+  const $mazeComputerDevice = $.id('mazeComputerDevice')
   const $consoleLocation = $.id('consoleLocation')
   const $consoleTime = $.id('consoleTime')
   const $consoleTemperature = $.id('consoleTemperature')
@@ -2210,7 +2217,28 @@
       mazeElevatorClosed: [
         { text: 'The elevator is closed', wait: 2000 },
         { text: 'You don\'t see a button', wait: 2000 },
-      ]
+      ],
+      openMazeComputer: {
+        before({ enqueue }) {
+          $mazeComputerModal.open()
+          $mazeComputerModal.onClose(() => {
+            $mazeComputerDevice.turnOff()
+            enqueue('closeMazeComputer')
+          })
+        },
+        text: 'You turn on the computer',
+      },
+      closeMazeComputer: {
+        text: 'You turn off the computer',
+        wait: 1000,
+        follow() {
+          if ($mazeComputerDevice.state.loggedIn) return
+          return 'mazeComputerNote'
+        }
+      },
+      mazeComputerNote: {
+        text: 'You notice a piece of paper taped to the monitor: <div style="border: 1px solid; padding: 0.5em; display: inline-block; font-size: 0.75em;">username: username <br>password: password</div>',
+      }
 
     }, {
 
@@ -2219,7 +2247,8 @@
         { text: 'Elevator', value: 'mazeElevatorClosed'},
         { text: 'Computer', value: 'openMazeComputer'},
         { text: 'Phone', value: 'openPhone'},
-      ]
+      ],
+      handler: ({ur}) => ur
     })
 
 

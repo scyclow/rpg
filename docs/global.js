@@ -1,5 +1,5 @@
 import {persist} from './persist.js'
-import {setFavicon} from './$.js'
+import {setFavicon, ls} from './$.js'
 
 
 export const globalState = persist('__GLOBAL_STATE', {
@@ -53,11 +53,13 @@ export const globalState = persist('__GLOBAL_STATE', {
   deviceViruses: false,
   defaultUnlocked: false,
   pauseCurrency: false,
+  devInInternetLocation: false,
   checkedAlarmClock: false,
   mazeLightswitchOn: false,
   countdownTimeLeft: 1780000, // 00:29:32
   countdownIntervalTime: 900,
   roboVacCaught: {},
+  yieldFarmerGlobalHighScore: 19011.44,
   cryptoDevices: {
     freeze: newCryptoDevice(32),
     planter: newCryptoDevice(8),
@@ -85,6 +87,18 @@ export const globalState = persist('__GLOBAL_STATE', {
 
 // TODO: take this out at some point
 if (!globalState.cryptoDevices.bathe) globalState.cryptoDevices.bathe = newCryptoDevice(0.25)
+
+// migration: yieldFarmerGlobalHighScore moved from phone state to global state
+if (globalState.yieldFarmerGlobalHighScore === undefined) {
+  const mobileState = ls.get('__MOBILE_STATE')
+  if (mobileState && mobileState.yieldFarmerGlobalHighScore !== undefined) {
+    globalState.yieldFarmerGlobalHighScore = mobileState.yieldFarmerGlobalHighScore
+    delete mobileState.yieldFarmerGlobalHighScore
+    ls.set('__MOBILE_STATE', JSON.stringify(mobileState))
+  } else {
+    globalState.yieldFarmerGlobalHighScore = 19011.44
+  }
+}
 
 
 window.globalState = globalState

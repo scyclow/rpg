@@ -377,7 +377,6 @@ const state = persist('__MOBILE_STATE', {
   usdBalances: {},
   cryptoBalances: {},
   premiumCryptoBalances: {},
-  yieldFarmerGlobalHighScore: 19011.44,
   appMarketPPC: 0.11,
   nftsForSale: generateNFTsForSale(40),
   nftBuyIx: 0,
@@ -1253,7 +1252,7 @@ createComponent(
 
 
 
-    const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
+    const inInternetLocation = globalState.devInInternetLocation || (globalState.location !== 'externalHallway' && globalState.location !== 'stairway' && !globalState.location.includes('maze'))
     const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged
     const wifiHotSpotConnected = findMeshPairing('gateLink', 'hotSpot') && ctx.state.bluetoothEnabled
     const wifiConnected = internet === 'wifi' && (wifiNetwork || wifiHotSpotConnected) && inInternetLocation
@@ -3513,7 +3512,11 @@ createComponent(
         `
 
         ctx.$('#scContainer').onclick = () => {
-          ctx.setState({ screen: 'messageViewer', messageViewerMessage: moneyMinerMessage })
+          if (messageViewerNotDownloaded) {
+            ctx.alert('Please download the Message Viewer app from the AppMarket to view this message')
+          } else {
+            ctx.setState({ screen: 'messageViewer', messageViewerMessage: moneyMinerMessage })
+          }
         }
 
         let cryptoBalance = 0
@@ -4157,6 +4160,9 @@ createComponent(
                 <div>
                   <label><input id="rentPaid" type="checkbox" ${globalState.rentPaid ? 'checked' : ''}> rent paid</label>
                 </div>
+                <div>
+                  <label><input id="devInInternetLocation" type="checkbox" ${globalState.devInInternetLocation ? 'checked' : ''}> force inInternetLocation</label>
+                </div>
                 <div><input autocomplete="off" id="exchangeUSD" type="number" placeholder="exchange $"> <button id="setExchangeUSD">Set</button></div>
                 <div><input autocomplete="off" id="exchangeC" type="number" placeholder="exchange ₢"> <button id="setExchangeC">Set</button></div>
                 <div><input autocomplete="off" id="exchangeP" type="number" placeholder="exchange ₱"> <button id="setExchangeP">Set</button></div>
@@ -4247,6 +4253,10 @@ createComponent(
 
         ctx.$('#rentPaid').onclick = () => {
           globalState.rentBalance = ctx.$('#rentPaid').checked ? 0 : 6437.98
+        }
+
+        ctx.$('#devInInternetLocation').onclick = () => {
+          globalState.devInInternetLocation = ctx.$('#devInInternetLocation').checked
         }
 
         ctx.$('#setExchangeUSD').onclick = () => {
@@ -5841,7 +5851,7 @@ createComponent(
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
               <div>
                 <h5>Your High Score: <span id="highScore">${existingHighScore.toFixed(2)}</span></h5>
-                <h5>Global Score: <span id="globalHighScore">${ctx.state.yieldFarmerGlobalHighScore?.toFixed?.(2) || 'NaN'}</span></h5>
+                <h5>Global Score: <span id="globalHighScore">${globalState.yieldFarmerGlobalHighScore?.toFixed?.(2) || 'NaN'}</span></h5>
               </div>
               <button id="gotoAbout" style="margin-bottom:0">About</button>
             </div>
@@ -5902,8 +5912,8 @@ createComponent(
           ctx.$('#highScore').innerHTML = currentScore.toFixed(2)
         }
 
-        if (currentScore > ctx.state.yieldFarmerGlobalHighScore) {
-          ctx.state.yieldFarmerGlobalHighScore = currentScore
+        if (currentScore > globalState.yieldFarmerGlobalHighScore) {
+          globalState.yieldFarmerGlobalHighScore = currentScore
           ctx.$('#globalHighScore').innerHTML = currentScore.toFixed(2)
         }
       }

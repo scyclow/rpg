@@ -692,7 +692,11 @@ function phoneBehavior(ctx) {
 
               sm.ctx.history.push(text)
 
-              say(incomprehensibleVoice, text)
+              if (ctx.state.soundEnabled && vs.length) {
+                say(incomprehensibleVoice, text)
+              } else {
+                displayTranscript(text)
+              }
             },
           },
           turboConnectNodes
