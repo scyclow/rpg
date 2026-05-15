@@ -50,6 +50,7 @@ export const globalState = persist('__GLOBAL_STATE', {
 
   secondsPassed: 0,
   completionTime: null,
+  elevatorCompletionTime: null,
   deviceViruses: false,
   defaultUnlocked: false,
   pauseCurrency: false,

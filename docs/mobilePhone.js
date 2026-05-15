@@ -387,6 +387,7 @@ const state = persist('__MOBILE_STATE', {
   exchangePremiumDiscounted: false,
   exchangeTextSent: false,
   currentDistrict: 'B',
+  elevatorArrived: false,
   userData: {
     0: {
       createdAt: 0,
@@ -1253,7 +1254,8 @@ createComponent(
 
     const inMazeLocation = globalState.location.includes('maze')
 
-    const inInternetLocation = globalState.devInInternetLocation || (globalState.location !== 'externalHallway' && globalState.location !== 'stairway' && !inMazeLocation)
+
+    const inInternetLocation = globalState.devInInternetLocation || (globalState.location !== 'externalHallway' && globalState.location !== 'stairway' && globalState.location !== 'elevator' && !inMazeLocation)
     const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged
     const wifiHotSpotConnected = findMeshPairing('gateLink', 'hotSpot') && ctx.state.bluetoothEnabled
     const landlockRealtyConnected = inMazeLocation && internet === 'wifi' && wifiNetwork === 'LandlockRealtyLLC-5G'
@@ -4143,7 +4145,7 @@ createComponent(
               <h5>Device ID: 49-222999-716-2580</h5>
               <h5>User: ${userNames[currentUser]}</h5>
               <h5>Session ID: ${sessionId}</h5>
-              <h5 id="versionNumber">SmartOS Version: 1.${window.GAME_VERSION}.1</h5>
+              <h5 id="versionNumber">SmartOS Version: 1.${window.GAME_VERSION}.${window.GAME_MINOR_VERSION}</h5>
               <h5><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h5>
               <button id="factoryReset" style="margin-top: 0.5em; font-size: 0.75em">Factory Reset</button>
               <h6 id="factoryResetError"></h6>
@@ -6811,7 +6813,7 @@ createComponent(
               <h4>Active UserID: <span id="activeUserID">${currentUser}</span></h4>
               <h4>Admin Access: <span id="adminAccess">${Number(currentUser) === Number(rootUser) ? 'Granted' : 'Denied'}</span></h4>
               <h4>Device ID: 49-222999-716-2580</h4>
-              <h4>OS: SmartOS 1.${window.GAME_VERSION}.1</h4>
+              <h4>OS: SmartOS 1.${window.GAME_VERSION}.${window.GAME_MINOR_VERSION}</h4>
               <br>
               <br>
             `]})
@@ -7658,7 +7660,12 @@ createComponent(
           ${
             bluetoothEnabled
               ? inMazeLocation && hasInternet
-                ? `<h3 id="pairError">Elevate placeholder (maze)</h3>`
+                ? `
+                  <div style="text-align: center; margin-top: 1em">
+                    <button id="callElevator" style="font-size: 1.1em" ${ctx.state.elevatorArrived ? 'disabled' : ''}>Call</button>
+                    <h3 id="callStatus" style="margin-top: 1em; min-height: 1.2em">${ctx.state.elevatorArrived ? 'Elevator has arrived at your floor.' : ''}</h3>
+                  </div>
+                `
                 : hasInternet
                   ? `<h3 id="pairError">No Elevate devices found within range</h3>`
                   : `<h3 id="pairError">Error: cannot connect to internet</h3>`
@@ -7667,12 +7674,13 @@ createComponent(
         </div>
       `
 
-      if (ctx.$('#pairCamera')) ctx.$('#pairCamera').onclick = () => {
-        ctx.$('#pairError').innerHTML = '<span>Please wait while device pairs</span>'
+      if (ctx.$('#callElevator')) ctx.$('#callElevator').onclick = () => {
+        ctx.$('#callElevator').disabled = true
+        ctx.$('#callStatus').innerHTML = '<span class="blink">Waiting</span>'
         setTimeout(() => {
-          ctx.$('#pairError').innerHTML = 'ERROR: Device incompatible with SmartPro Security Camera Viewer App v3.1354.221 Please attempt connection with a valid SmartPro Security Camera device [1953903]'
-
-        }, 7000)
+          window.primarySM.enqueue('mazeElevatorOpen')
+          ctx.setState({ elevatorArrived: true })
+        }, 10000)
       }
 
       ctx.$('#home').onclick = () => {
@@ -8840,7 +8848,7 @@ createComponent(
       ctx.$phoneContent.innerHTML = `
         <div class="phoneScreen">
           <button id="home">Back</button>
-          <h3 style="margin-bottom: 0.5em">Current OS: 1.${window.GAME_VERSION}.1</h3>
+          <h3 style="margin-bottom: 0.5em">Current OS: 1.${window.GAME_VERSION}.${window.GAME_MINOR_VERSION}</h3>
           <h4 style="margin-bottom: 0.5em">Upgrade Available! (1.${window.GAME_VERSION+1}.0) </h4>
           <button id="upgradeButton">Upgrade</button>
           <h5 id="upgradeError" style="margin-top: 0.5em"></h5>
@@ -8915,7 +8923,7 @@ createComponent(
           <h2 style="text-align: center; margin: 0.25em 0"><em>HotSpot <span class="icon">♨︎</span></em></h2>
           <h4 style="margin-top: 2em; margin-bottom: 0.5em; text-align: center;">Turn this device into a WiFi broadcast hub</h4>
           <div style="text-align: center;"><button disabled="true">Enable</button></div>
-          <h6>Feature unavailable on SmartOS 1.${window.GAME_VERSION}.1 please upgrade this device to enable this feature</h6>
+          <h6>Feature unavailable on SmartOS 1.${window.GAME_VERSION}.${window.GAME_MINOR_VERSION} please upgrade this device to enable this feature</h6>
 
           <h4 style="margin-top: 2em; margin-bottom: 0.5em; text-align: center;">Turn this device into a HomeGrid WiFi input node</h4>
           <div style="text-align: center;"><button id="enableHotspotHGInput">${enableHotspotHGInput ? 'Disable' : 'Enable'}</button></div>

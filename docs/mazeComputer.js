@@ -23,19 +23,8 @@ TODO
 
 - a desktop with a few apps:
   - achievements page (TODO)
-  - network and internet
-    - access LandlockRealtyLLC-5G, reset network password
   - some app, maybe currency exchange, with a bunch of crypto
-  - web browser that can only go to steviep websites (bookmark bar)
 
-
-- elevator says to download app
-- you get stuck in elevator
-  - go to sleep
-    - display time
-    - wake up in elevator
-    - wake up in bed
-    - start over
 
 */
 
@@ -196,6 +185,14 @@ createComponent(
         cursor: nw-resize;
       }
 
+      #clock {
+        margin-left: auto;
+        padding: 0 1em;
+        color: #000;
+        align-self: center;
+        font-size: 0.95em;
+      }
+
       #desktopExit:hover {
         background: #fff;
         color: #000;
@@ -259,6 +256,7 @@ createComponent(
   },
   ctx => {
     clearInterval(ctx.interval)
+    clearInterval(ctx.clockInterval)
     const screen = ctx.state.screen
     const $content = ctx.$('#content')
 
@@ -324,6 +322,7 @@ createComponent(
           <div class="grid">${cells}</div>
           <div class="bottomBar">
             <button id="desktopExit">EXIT</button>
+            <div id="clock"></div>
           </div>
           ${ctx.state.openApp ? `
             <div class="appModal">
@@ -333,6 +332,14 @@ createComponent(
           ` : ''}
         </div>
       `
+
+      const updateClock = () => {
+        if (ctx.$('#clock')) {
+          ctx.$('#clock').innerHTML = window.formatTime(globalState.secondsPassed * 1000)
+        }
+      }
+      updateClock()
+      ctx.clockInterval = setInterval(updateClock, 1000)
 
       ctx.qsa('.app').forEach(el => {
         el.onclick = () => ctx.setState({ openApp: el.dataset.app })

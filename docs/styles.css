@@ -176,6 +176,23 @@ p {
   transition: 500ms;
 }
 
+#elevatorEndScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  padding: 1.5em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+
+  background: #fff;
+  color: #000;
+  transition: 500ms;
+}
+
 #landingLogo {
   transition: 0.3s;
 }
@@ -201,7 +218,7 @@ p {
 
 
 
-#intro, #wakeUpAgain {
+#intro, #wakeUpAgain, #wakeUpInElevator, #wakeUpInBed, #startOver {
   z-index: 1;
   position: relative;
 }
@@ -283,6 +300,12 @@ p.preVisible {
     padding: 2em;
     justify-content: center;
     align-items: flex-start;
+  }
+
+  #elevatorEndScreen {
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 5em;
   }
 
   #notepadActions {

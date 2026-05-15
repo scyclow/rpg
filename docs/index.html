@@ -48,6 +48,7 @@
   import {ls} from './$.js'
 
   window.GAME_VERSION = 12
+  window.GAME_MINOR_VERSION = 2
   window.SMARTHOME_GAME_VERSION = window.GAME_VERSION
 
   const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
@@ -97,6 +98,14 @@
           <h3 style="font-weight: normal; font-size: 0.9em; margin-top: 0.1em;">[An Adventure Game]</h3>
           <h4 style="font-weight: normal; font-size: 0.75em; margin-top: 0.1em; display: flex; justify-content: space-evenly; width: 100%;"><a id="steviep" href="https://steviep.xyz" target="_blank">steviep.xyz</a></h4>
         </div>
+      </div>
+
+      <div id="elevatorEndScreen" class="hidden invisible" style="background: #000">
+        <div style="display: flex; align-items: center; flex-direction: column;">
+          <span id="elevatorEndLogo"></span>
+          <div style="margin-top: 0.5em" id="elevatorCompletionTime"></div>
+        </div>
+        <h3 style="position: absolute; bottom: 1em; left: 1em"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h3>
       </div>
 
     </section>
@@ -324,6 +333,7 @@
       externalHallway: '???',
       stairway: '???',
       maze: '¿¿¿',
+      elevator: '',
       hallway: 'Hallway',
       livingRoom: 'Living Room',
       kitchen: 'Kitchen',
@@ -476,10 +486,18 @@
         before({ctx}) {
           $.id('phoneModal').classList.remove('hidden')
           $.id('sleepModal').classList.add('invisible')
-          $.id('wakeUpAgain').classList.add('invisible')
+          if ($.id('wakeUpAgain')) $.id('wakeUpAgain').classList.add('invisible')
+          if ($.id('elevatorEndScreen')) {
+            $.id('elevatorEndScreen').classList.add('hidden')
+            $.id('elevatorEndScreen').classList.remove('invisible')
+          }
+
           setTimeout(() => {
             $.id('sleepModal').classList.add('hidden')
           }, 550)
+          setColors('var(--dark-color)', 'var(--light-color)')
+          globalState.location = 'bed'
+          setConsoleLocation()
         },
         text: 'You wake up',
 
@@ -2148,6 +2166,8 @@
       {
         before() {
           globalState.location = 'maze'
+          $consoleTemperature.innerHTML = ''
+          $consoleTime.innerHTML = ''
         },
         text: 'You continue forward',
         wait: 2000,
@@ -2212,7 +2232,16 @@
 
     ...group({
       'maze-EXIT': {
+        before() {
+          globalState.location = 'maze-EXIT'
+        },
         text: 'You enter the room marked <strong>EXIT</strong>'
+      },
+      mazeElevatorOpen: {
+        before({ctx}) {
+          ctx.state.mazeElevatorDoorsOpen = true
+        },
+        text: 'The elevator doors open'
       },
       mazeElevatorClosed: [
         { text: 'The elevator is closed', wait: 2000 },
@@ -2244,13 +2273,131 @@
 
       actions: ({ctx}) => [
         { text: 'E14', value: 'maze-E14'},
-        { text: 'Elevator', value: 'mazeElevatorClosed'},
+        { text: 'Elevator', value: ctx.state.mazeElevatorDoorsOpen ? 'enterElevator1' : 'mazeElevatorClosed'},
         { text: 'Computer', value: 'openMazeComputer'},
         { text: 'Phone', value: 'openPhone'},
       ],
       handler: ({ur}) => ur
-    })
+    }),
 
+    enterElevator1: {
+      before({ ctx }) {
+        globalState.location = 'elevator'
+        setColors('#fff', '#000')
+
+        // if (tmp.src1 && tmp.src2) {
+        //   setTimeout(() => {
+        //     tmp.src1.stop()
+        //     tmp.src2.stop()
+        //   }, 1500)
+        // }
+      },
+      text: `You step into the elevator`,
+      async follow() {
+        await waitPromise(2500)
+        return 'enterElevator2'
+      },
+      actions: []
+    },
+
+    enterElevator2: {
+      text: 'The doors close behind you',
+      async follow() {
+        await waitPromise(2000)
+        tmp.src1 = createSource('sine', 70)
+        tmp.src2 = createSource('sine', 73)
+
+        tmp.src1.smoothGain(MAX_VOLUME, 0.5)
+        tmp.src2.smoothGain(MAX_VOLUME, 0.5)
+
+        tmp.src1.smoothFreq(140, 2)
+        tmp.src2.smoothFreq(143, 2)
+
+        await waitPromise(1000)
+        return 'enterElevator3'
+      },
+    },
+
+    enterElevator3: {
+      text: 'You feel yourself slowly falling',
+      async follow() {
+        setTimeout(() => {
+          tmp.src1.smoothFreq(130, 2)
+          tmp.src2.smoothFreq(133, 2)
+        }, 14000)
+        await waitPromise(16000)
+        return 'enterElevator4'
+      }
+    },
+
+    enterElevator4: {
+      before() {
+        setTimeout(() => {
+          tmp.src1.smoothFreq(70, 4)
+          tmp.src2.smoothFreq(70, 4)
+          setColors('#000', '#999')
+        })
+
+        setTimeout(() => {
+          tmp.src1.stop()
+          tmp.src2.stop()
+        }, 8000)
+      },
+      text: 'The elevator slows to a halt',
+      async follow() {
+        await waitPromise(4000)
+        return 'enterElevator5'
+      }
+    },
+    enterElevator5: {
+      text: 'You sit in darkness',
+      handler: ({ur}) => ur,
+      actions: [
+        { text: 'Sleep', value: 'sleepElevator'},
+        { text: 'Phone', value: 'openPhone'},
+      ]
+    },
+
+    sleepElevator: {
+      before() {
+        if (!globalState.elevatorCompletionTime) {
+          globalState.elevatorCompletionTime = globalState.secondsPassed * 1000
+        }
+        $.id('phoneModal').classList.add('hidden')
+        $.id('elevatorEndLogo').innerHTML = logoSVG(13, 'var(--primary-color)')
+        $.id('elevatorCompletionTime').innerHTML = formatTime(globalState.elevatorCompletionTime)
+        $.id('elevatorEndScreen').classList.remove('hidden')
+        setTimeout(() => $.id('elevatorEndScreen').classList.remove('invisible'), 25)
+      },
+      text: 'You go to sleep',
+      handler: ({ur}) => ur,
+      actions: [
+        { text: 'Wake up in elevator', value: 'wakeUpInElevator' },
+        { text: 'Wake up in bed', value: 'wakeUpAgain' },
+        { text: 'Start over', value: 'startOver' },
+      ],
+    },
+
+    wakeUpInElevator: {
+      before() {
+        $.id('elevatorEndScreen').classList.add('invisible')
+        setTimeout(() => $.id('elevatorEndScreen').classList.add('hidden'), 550)
+      },
+      text: 'You wake up',
+      handler: ({ur}) => ur,
+      actions: [
+        { text: 'Sleep', value: 'sleepElevator' },
+        { text: 'Phone', value: 'openPhone' },
+      ],
+    },
+
+    startOver: {
+      before() {
+        localStorage.clear()
+        location.reload()
+      },
+      text: 'Starting over...',
+    }
 
   }
 
@@ -2380,7 +2527,6 @@
   }
 
 
-console.log(mazeNodes())
   window.primarySM = new StateMachine(primaryStartingCtx, primaryConfig, primaryNodes)
 
 
@@ -2452,6 +2598,9 @@ console.log(mazeNodes())
       if (globalState.location === 'externalHallway' || globalState.location === 'stairway') {
         $consoleTemperature.innerHTML = ' — ??˚'
 
+      } else if (globalState.location === 'elevator' || globalState.location.includes('maze')) {
+        $consoleTemperature.innerHTML = ''
+
       } else {
         $consoleTemperature.innerHTML = ctx.state.checkedThermostatTwice ? ' — 84˚ [CO2 LEVEL: HAZARDOUS]' : ' — 99˚'
       }
@@ -2488,6 +2637,20 @@ console.log(mazeNodes())
 
     if (ctx.state.isOpen) {
       sm.goto('closePhone')
+    }
+
+    if (ctx.currentKey === 'sleepElevator') {
+      $.id('elevatorEndLogo').innerHTML = logoSVG(13, 'var(--primary-color)')
+      $.id('elevatorCompletionTime').innerHTML = formatTime(globalState.elevatorCompletionTime || globalState.secondsPassed * 1000)
+      $.id('elevatorEndScreen').classList.remove('hidden')
+      $.id('elevatorEndScreen').classList.remove('invisible')
+    }
+
+    if (['enterElevator1', 'enterElevator2', 'enterElevator3', 'enterElevator4'].includes(ctx.currentKey)) {
+      sm.goto('enterElevator5')
+      setColors('#000', '#999')
+    } else if (['enterElevator5', 'sleepElevator', 'wakeUpInElevator'].includes(ctx.currentKey)) {
+      setColors('#000', '#999')
     }
 
     $content.innerHTML = ctx.history.filter(t => t).map(t => `<p>${t}</p>`).reverse().join('')
@@ -2532,6 +2695,9 @@ console.log(mazeNodes())
 
       if (globalState.location === 'externalHallway' || globalState.location === 'stairway') {
         $consoleTime.innerHTML = ` — ??:??:??`
+
+      } else if (globalState.location === 'elevator' || globalState.location.includes('maze')) {
+        $consoleTime.innerHTML = ``
 
       } else {
         $consoleTime.innerHTML = ` — ${formatTime(globalState.countdownTimeLeft)}`
