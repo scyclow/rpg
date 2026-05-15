@@ -1,6 +1,6 @@
 import {createComponent} from './$.js'
 import {persist} from './persist.js'
-import {globalState} from './global.js'
+import {globalState, rndAddr} from './global.js'
 
 
 const state = persist('__MAZE_COMPUTER_STATE', {
@@ -10,21 +10,32 @@ const state = persist('__MAZE_COMPUTER_STATE', {
   loggedIn: false,
   openApp: '',
   yieldFarmerHighScore: 0,
+  payAppUSDAddr: rndAddr(),
+  payAppUSDBalance: 6437.98,
 })
+
+if (state.payAppUSDAddr === undefined) state.payAppUSDAddr = rndAddr()
+if (state.payAppUSDBalance === undefined) state.payAppUSDBalance = 6437.98
 
 /*
 TODO
 
 
 - a desktop with a few apps:
-  - achievements page
+  - achievements page (TODO)
   - network and internet
     - access LandlockRealtyLLC-5G, reset network password
-  - payapp with $ on it
   - some app, maybe currency exchange, with a bunch of crypto
+  - web browser that can only go to steviep websites (bookmark bar)
 
 
 - elevator says to download app
+- you get stuck in elevator
+  - go to sleep
+    - display time
+    - wake up in elevator
+    - wake up in bed
+    - start over
 
 */
 
@@ -65,11 +76,11 @@ createComponent(
         padding: 0.4em 0.6em;
         font-size: 1em;
         width: 16em;
-        cursor: nw-resize;
       }
 
-      input:focus {
+      input:focus, input, select, button {
         outline: none;
+        cursor: nw-resize;
       }
 
       button {
@@ -77,7 +88,6 @@ createComponent(
         color: #fff;
         border: 1px solid #fff;
         padding: 0.5em 1.5em;
-        cursor: nw-resize;
         font-size: 1em;
       }
 
@@ -219,6 +229,11 @@ createComponent(
         color: #000;
       }
 
+      ::selection {
+        background: #fff;
+        color: #000;
+      }
+
     </style>
 
     <div id="screen">
@@ -291,7 +306,7 @@ createComponent(
         </div>
       `
     } else if (screen === 'desktop') {
-      const apps = ['yieldFarmer2.exe', 'Network', 'screen3']
+      const apps = ['yieldFarmer2.exe', 'Network', 'payApp.exe', 'Web Browser']
       const cells = Array.from({ length: 16 }, (_, i) => {
         const app = apps[i]
         return app
@@ -500,6 +515,202 @@ createComponent(
         ctx.$('#gotoMain').onclick = () => {
           ctx.$('#about').classList.add('hidden')
           ctx.$('#main').classList.remove('hidden')
+        }
+
+      } else if (ctx.state.openApp === 'payApp.exe') {
+        const renderBalance = () => {
+          ctx.$('#balance').innerHTML = ctx.state.payAppUSDBalance.toFixed(2)
+        }
+
+        ctx.$('#appModalContent').innerHTML = `
+          <style>
+            #payApp input { margin: 0.25em 0; }
+            #payApp .module { margin-top: 1em; padding-top: 1em; border-top: 1px dashed #fff; }
+            #payApp .addrChip { font-size: 0.9em; padding: 0.25em; margin-top: 0.1em; display: inline-block; word-break: break-all }
+          </style>
+          <div id="payApp">
+            <h2 style="margin-bottom: 0.25em">PayApp</h2>
+            <h3 style="margin: 1em 0; text-align: center">Balance: $<span id="balance"></span></h3>
+
+            <h3 style="text-align: center; margin: 0.25em 0">I want to: <select id="payAction" style="font-size: 1.1em">
+              <option value="receive">Receive $</option>
+              <option value="send">Send $</option>
+            </select></h3>
+
+            <div id="sendModule" class="module hidden">
+              <h3 style="margin-bottom: 0.5em; text-align: center">Send $</h3>
+              <div style="width: 320px; margin: auto">
+                <ol>
+                  <li><input autocomplete="off" id="recipient" placeholder="Recipient Address"></li>
+                  <li><input autocomplete="off" id="amount" placeholder="Amount" type="number" step=".01"></li>
+                  <li><button id="sign">Sign Transaction</button></li>
+                </ol>
+                <h4 id="sptx"></h4>
+              </div>
+
+            </div>
+
+            <div id="receiveModule" class="module hidden">
+              <h3 style="margin-bottom: 0.5em; text-align: center">Receive $</h3>
+              <div style="width: 320px; margin: auto">
+                <h4>My $ Recipient Address:</h4>
+                <span class="addrChip">${ctx.state.payAppUSDAddr}</span>
+                <div style="margin-top: 0.5em">
+                  <input autocomplete="off" id="sptxInput" placeholder="S.P.T.X. identifier" type="number">
+                  <button id="processSPTX">Process SPTX</button>
+                </div>
+                <h5 id="sptxError"></h5>
+              </div>
+            </div>
+          </div>
+        `
+
+        renderBalance()
+
+        const renderPage = () => {
+          const val = ctx.$('#payAction').value
+          ctx.$('#sendModule').classList.toggle('hidden', val !== 'send')
+          ctx.$('#receiveModule').classList.toggle('hidden', val !== 'receive')
+        }
+        renderPage()
+        ctx.$('#payAction').onchange = renderPage
+
+        ctx.$('#sign').onclick = () => {
+          const $sptx = ctx.$('#sptx')
+          $sptx.innerHTML = ''
+          const amount = Number(ctx.$('#amount').value)
+          const recipient = ctx.$('#recipient').value.toLowerCase().trim()
+
+          if (!recipient) {
+            $sptx.innerHTML = 'Please input a valid $ Recipient Address'
+            return
+          }
+          if (amount <= 0 || !amount) {
+            $sptx.innerHTML = 'Please input a value greater than 0'
+            return
+          }
+          if (amount > ctx.state.payAppUSDBalance) {
+            $sptx.innerHTML = 'INSUFFICIENT BALANCE'
+            return
+          }
+
+          const sptx = Math.floor(Math.random() * 100000000000000000)
+          globalState.payments[sptx] = {
+            sptx,
+            sender: ctx.state.payAppUSDAddr,
+            recipient,
+            amount,
+            timestamp: Date.now(),
+            received: false,
+          }
+
+          const newBalance = ctx.state.payAppUSDBalance - amount
+          ctx.state.payAppUSDBalance = newBalance
+          state.payAppUSDBalance = newBalance
+          renderBalance()
+
+          setTimeout(() => {
+            $sptx.innerHTML = `Secure Payment Transaction (S.P.T.X.) identifier: ${sptx}`
+          }, 2000)
+        }
+
+        ctx.$('#processSPTX').onclick = () => {
+          const $err = ctx.$('#sptxError')
+          const sptxInput = ctx.$('#sptxInput').value
+          if (!sptxInput) {
+            $err.innerHTML = 'SPTX ERROR: empty'
+            return
+          }
+          $err.innerHTML = 'processing [do not reload page]'
+
+          setTimeout(() => {
+            const payment = globalState.payments[sptxInput]
+            if (!payment) {
+              $err.innerHTML = 'SPTX ERROR: invalid identifier'
+              return
+            }
+            if (payment.recipient !== ctx.state.payAppUSDAddr) {
+              $err.innerHTML = 'SPTX ERROR: invalid recipient'
+              return
+            }
+            if (payment.received) {
+              $err.innerHTML = 'SPTX ERROR: already processed'
+              return
+            }
+
+            payment.received = true
+            const newBalance = ctx.state.payAppUSDBalance + payment.amount
+            ctx.state.payAppUSDBalance = newBalance
+            state.payAppUSDBalance = newBalance
+            renderBalance()
+            $err.innerHTML = 'success'
+          }, 2000)
+        }
+
+      } else if (ctx.state.openApp === 'Web Browser') {
+        const bookmarks = {
+          'News': 'http://fakebullshit.news/',
+          'Finance': 'https://fastcashmoneyplus.biz/',
+          'Dating': 'https://0ms.co/sexydating/',
+          'Social': 'https://friendworld.social',
+          'Shopping': 'https://ronamerch.co/',
+          'XXX': 'https://finsexy.com',
+          'Church': 'https://steviep.xyz/jesus/',
+          'Taxes': 'https://cryptotaxspecialist.0ms.co/',
+          'steviep.xyz': 'https://steviep.xyz/',
+        }
+
+        ctx.$('#appModalContent').innerHTML = `
+
+          <div id="bookmarksBar" style="padding-top: 0 3em 0.4em 0; border-bottom: 1px solid #fff; margin-bottom: 0.4em">
+            <h5 style="font-size: 0.75em">BOOKMARKS</h5>
+            ${Object.entries(bookmarks).map(([name, url]) => `<button data-url="${url}" style="border: none; padding: 0.25em; margin-right: 0.75em"><span style="display: inline-block; transform: translateY(-2px);">⌖</span> ${name}</button>`).join('')}
+          </div>
+          <iframe id="browserIframe" style="flex: 1; border: none; background: #fff; width: 100%" src=""></iframe>
+        `
+
+        ctx.qsa('#bookmarksBar button').forEach(btn => {
+          btn.onclick = () => {
+            ctx.$('#browserIframe').src = btn.dataset.url
+          }
+        })
+
+      } else if (ctx.state.openApp === 'Network') {
+        ctx.$('#appModalContent').innerHTML = `
+          <div style="padding: 1em">
+            <h3 style="text-align: left">Current Network: LandlockRealtyLLC-5G</h3>
+            <h3 style="text-align: left">Current Password: <span id="currentPassword">${times(globalState.landlockRealtyPassword.length, () => '◼︎').join('')}</span></h3>
+            <h4 style="margin-top: 1.5em; text-align: left">Reset Password:</h4>
+            <div style="margin-top: 0.5em">
+              <input autocomplete="off" id="newPassword" type="text">
+              <button id="resetPassword">Reset</button>
+            </div>
+            <h5 id="resetError" style="min-height: 1.2em; margin-top: 0.75em"></h5>
+          </div>
+        `
+
+        ctx.$('#resetPassword').onclick = () => {
+          const $err = ctx.$('#resetError')
+          const pwd = ctx.$('#newPassword').value
+          if (pwd === '') {
+            $err.innerHTML = 'PASSWORD CANNOT BE BLANK'
+            return
+          }
+          if (pwd.includes(' ')) {
+            $err.innerHTML = 'PASSWORD CONTAINS INVALID CHARACTER(S)'
+            return
+          }
+          $err.innerHTML = '<span class="blink">RESETTING...</span>'
+          ctx.$('#resetPassword').disabled = true
+          ctx.$('#newPassword').disabled = true
+          setTimeout(() => {
+            globalState.landlockRealtyPassword = pwd
+            ctx.$('#newPassword').value = ''
+            if (ctx.$('#resetError')) ctx.$('#resetError').innerHTML = 'PASSWORD RESET'
+            if (ctx.$('#resetPassword')) ctx.$('#resetPassword').disabled = false
+            if (ctx.$('#newPassword')) ctx.$('#newPassword').disabled = false
+            if (ctx.$('#currentPassword')) ctx.$('#currentPassword').innerHTML = times(globalState.landlockRealtyPassword.length, () => '◼︎').join('')
+          }, 5000)
         }
 
       } else if (ctx.state.openApp) {

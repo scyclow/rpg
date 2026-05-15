@@ -56,6 +56,7 @@ export const globalState = persist('__GLOBAL_STATE', {
   devInInternetLocation: false,
   checkedAlarmClock: false,
   mazeLightswitchOn: false,
+  landlockRealtyPassword: 'LandlockRealtyLLC-5G',
   countdownTimeLeft: 1780000, // 00:29:32
   countdownIntervalTime: 900,
   roboVacCaught: {},
@@ -87,6 +88,7 @@ export const globalState = persist('__GLOBAL_STATE', {
 
 // TODO: take this out at some point
 if (!globalState.cryptoDevices.bathe) globalState.cryptoDevices.bathe = newCryptoDevice(0.25)
+if (globalState.landlockRealtyPassword === undefined) globalState.landlockRealtyPassword = 'LandlockRealtyLLC-5G'
 
 // migration: yieldFarmerGlobalHighScore moved from phone state to global state
 if (globalState.yieldFarmerGlobalHighScore === undefined) {

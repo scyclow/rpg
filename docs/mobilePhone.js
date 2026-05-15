@@ -1251,13 +1251,15 @@ createComponent(
     const findMeshPairing = meshPairFinder(ctx)
 
 
+    const inMazeLocation = globalState.location.includes('maze')
 
-    const inInternetLocation = globalState.devInInternetLocation || (globalState.location !== 'externalHallway' && globalState.location !== 'stairway' && !globalState.location.includes('maze'))
+    const inInternetLocation = globalState.devInInternetLocation || (globalState.location !== 'externalHallway' && globalState.location !== 'stairway' && !inMazeLocation)
     const wifiAvailable = globalState.wifiActive && !globalState.routerUnplugged
     const wifiHotSpotConnected = findMeshPairing('gateLink', 'hotSpot') && ctx.state.bluetoothEnabled
+    const landlockRealtyConnected = inMazeLocation && internet === 'wifi' && wifiNetwork === 'LandlockRealtyLLC-5G'
     const wifiConnected = internet === 'wifi' && (wifiNetwork || wifiHotSpotConnected) && inInternetLocation
     const dataConnected = internet === 'data' && dataPlanActivated && inInternetLocation
-    const hasInternet = dataConnected || wifiConnected
+    const hasInternet = dataConnected || wifiConnected || landlockRealtyConnected
 
 
     if (currentUser !== null && dataPlanActivated && globalState.wifiActive && !textMessages.some(m => m.from === '+7 809 3390 753')) {
@@ -1945,7 +1947,7 @@ createComponent(
           <div class="phoneScreen">
             <button id="home">Back</button>
             <button id="data">Switch to Data</button>
-            <h3 style="margin-bottom: 0.5em">Current Network: ${wifiNetworkName && inInternetLocation ? wifiNetworkName : 'null'}</h3>
+            <h3 style="margin-bottom: 0.5em">Current Network: ${wifiNetworkName && (inInternetLocation || landlockRealtyConnected) ? wifiNetworkName : 'null'}</h3>
             ${
               bluetoothEnabled
                 ? `
@@ -1954,27 +1956,39 @@ createComponent(
                   <div id="wifiChoose" class="${wifiNetworkName ? 'hidden' : ''}">
                     <h3 style="margin-top: 0.4em">Network Name:</h3>
                     <select id="networkName" style="margin: 0.25em 0; color: ${wifiNetworkName ? '#000' : '#777'}; padding: 0.25em 0; font-size: 0.85em; max-width: 90%">
-                      ${inInternetLocation
+                      ${globalState.location.includes('maze')
                         ? `
                           <option disabled selected value="">Choose Network</option>
-                          <option value="Alien Nation">Alien Nation</option>
-                          <option value="CapitalC">CapitalC</option>
-                          <option value="ClickToAddNetwork">ClickToAddNetwork</option>
-                          <!-- i feel like i need to unlock this experience
-                            <option value="Dial19996663333ForAFunTime">Dial19996667777ForAFunTime</option>
-                          -->
-                          <option value="ElectricLadyLand" ${inInternetLocation && wifiNetworkName === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
+                          <option value="ClickToAddNetwork2">ClickToAddNetwork2</option>
+                          <option value="ClickToAddNetwork3">ClickToAddNetwork3</option>
+                          <option value="ClickToAddNetwork4">ClickToAddNetwork4</option>
                           <option value="Free-WiFi">Free-WiFi</option>
                           <option value="HellInACellPhone98">HellInACellPhone98</option>
-                          ${(globalState.routerReset || globalState.wifiActive) && !globalState.routerUnplugged ? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetworkName === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
-                          <option value="ISP-Default-89s22D">ISP-Default-89s22D</option>
-                          <option value="LandlockRealtyLLC-5G">LandlockRealtyLLC-5G</option>
-                          <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
+                          <option value="ISP-Default-J8sj32_r">ISP-Default-J8sj32_r</option>
+                          <option value="ISP-Default-PqJJ90e31d5">ISP-Default-PqJJ90e31d5</option>
+                          <option value="LandlockRealtyLLC-5G" ${wifiNetworkName === 'LandlockRealtyLLC-5G' ? 'selected' : ''}>LandlockRealtyLLC-5G</option>
                           <option value="NewNetwork">NewNetwork</option>
-                          <option value="XXX-No-Entry">XXX-No-Entry</option>
                         `
-
-                        : '<option disabled selected value="">Choose Network</option><option disabled value="">Cannot Locate Network</option>'
+                        : inInternetLocation
+                          ? `
+                            <option disabled selected value="">Choose Network</option>
+                            <option value="Alien Nation">Alien Nation</option>
+                            <option value="CapitalC">CapitalC</option>
+                            <option value="ClickToAddNetwork">ClickToAddNetwork</option>
+                            <!-- i feel like i need to unlock this experience
+                              <option value="Dial19996663333ForAFunTime">Dial19996667777ForAFunTime</option>
+                            -->
+                            <option value="ElectricLadyLand" ${inInternetLocation && wifiNetworkName === 'ElectricLadyLand' ? 'selected' : ''}>ElectricLadyLand</option>
+                            <option value="Free-WiFi">Free-WiFi</option>
+                            <option value="HellInACellPhone98">HellInACellPhone98</option>
+                            ${(globalState.routerReset || globalState.wifiActive) && !globalState.routerUnplugged ? `<option value="InpatientRehabilitationServices" ${inInternetLocation && wifiNetworkName === 'InpatientRehabilitationServices' ? 'selected' : ''}>InpatientRehabilitationServices</option>` : ''}
+                            <option value="ISP-Default-89s22D">ISP-Default-89s22D</option>
+                            <option value="LandlockRealtyLLC-5G" ${wifiNetworkName === 'LandlockRealtyLLC-5G' ? 'selected' : ''}>LandlockRealtyLLC-5G</option>
+                            <option value="MyWiFi-9238d9">MyWiFi-9238d9</option>
+                            <option value="NewNetwork">NewNetwork</option>
+                            <option value="XXX-No-Entry">XXX-No-Entry</option>
+                          `
+                          : '<option disabled selected value="">Choose Network</option><option disabled value="">Cannot Locate Network</option>'
                       }
                     </select>
                     <input autocomplete="off" id="networkPassword" placeholder="Password" type="password" style="padding: 0.25em">
@@ -2004,10 +2018,11 @@ createComponent(
           if (
             (networkName === 'InpatientRehabilitationServices' && networkPassword === 'StompLookAndListen948921')
             || (networkName === 'ElectricLadyLand' && networkPassword === 'CrosstownTraffic007')
+            || (networkName === 'LandlockRealtyLLC-5G' && networkPassword === globalState.landlockRealtyPassword)
           ) {
 
             setTimeout(() => {
-              if (globalState.wifiActive || networkName === 'ElectricLadyLand') {
+              if (globalState.wifiActive || networkName === 'ElectricLadyLand' || networkName === 'LandlockRealtyLLC-5G') {
                 ctx.$('#error').innerHTML = 'Success!'
                 setTimeout(() => {
                   ctx.setState({ wifiNetwork: networkName })
@@ -7642,9 +7657,11 @@ createComponent(
 
           ${
             bluetoothEnabled
-              ? hasInternet
-                ? `<h3 id="pairError">No Elevate devices found within range</h3>`
-                : `<h3 id="pairError">Error: cannot connect to internet</h3>`
+              ? inMazeLocation && hasInternet
+                ? `<h3 id="pairError">Elevate placeholder (maze)</h3>`
+                : hasInternet
+                  ? `<h3 id="pairError">No Elevate devices found within range</h3>`
+                  : `<h3 id="pairError">Error: cannot connect to internet</h3>`
               : `<h3 id="pairError">Please enable bluetooth to pair with Elevator</h3>`
           }
         </div>
