@@ -1,5 +1,6 @@
 import {CTX} from '../stateMachine.js'
 import {globalState} from '../global.js'
+import {achievement} from '../achievements.js'
 
 
 export const ssoCTX = new CTX({
@@ -330,6 +331,7 @@ export const ssoNodes = {
 
         ctx.phoneUserData[ctx.state.recoveringPasswordFor].password = password
 
+        achievement('resetPhonePwd', true)
         return 'resetPasswordSuccess'
       } catch (e) {
         return 'resetPasswordError'

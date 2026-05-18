@@ -1,6 +1,7 @@
 import {$, createComponent} from './$.js'
 import {persist} from './persist.js'
 import {createSource, MAX_VOLUME} from './audio.js'
+import {achievement} from './achievements.js'
 
 
 tmp.lastClick = 0
@@ -468,6 +469,7 @@ createComponent(
       }
 
     } else if (screen === 'phoneCast') {
+      achievement('phoneCast', true)
       const {phoneCastScreens} = ctx.state
       setProp('--bg-color', '#fff')
 

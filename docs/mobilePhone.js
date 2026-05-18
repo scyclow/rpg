@@ -7,6 +7,7 @@ import {marquee} from './marquee.js'
 import {voices, say} from './voices.js'
 import {drawLabrynth} from './labrynth.js'
 import {flightMap} from './stairwayGame.js'
+import {clearLocalStorage, completeGame, achievement} from './achievements.js'
 
 import {postSnapshot, ENV} from './analytics.js'
 
@@ -1839,17 +1840,22 @@ createComponent(
                 }
               }, ctx.state.fastMode ? 0 : 2700)
               setTimeout(() => {
+                const newAppsInstalled = [...appsInstalled, a]
                 ctx.setState({
                   appMarketPreSearch: '',
                   userData: {
                     ...userData,
                     [currentUser]: {
                       ...userData[currentUser],
-                      appsInstalled: [...appsInstalled, a],
+                      appsInstalled: newAppsInstalled,
                       appCreditBalance: appCreditBalance - a.price
                     }
                   }
                 })
+
+                if (APPS.every(app => newAppsInstalled.some(installed => installed.key === app.key))) {
+                  achievement('downloadApps', true)
+                }
 
                 if (a.key === 'exchange' && dataPlanActivated) {
                   ctx.newText(premiumText)
@@ -3793,6 +3799,7 @@ createComponent(
           ctx.setUserData({
             educatorModulesCompleted: { ...educatorModulesCompleted, crypto: true}
           })
+          achievement('finEducator', true)
         }
 
       }
@@ -4364,7 +4371,7 @@ createComponent(
             }
           }
           setTimeout(() => {
-            localStorage.clear()
+            clearLocalStorage()
             location.reload()
           }, 3000)
         } else if (inputSessionId !== null) {
@@ -4413,6 +4420,10 @@ createComponent(
 
       textMessages.forEach((m, ix) => {
         if (ctx.$(`#tm-${ix}`)) ctx.$(`#tm-${ix}`).onclick = () => {
+          const newTextMessages = textMessages.map((_m, _ix) => _ix === ix
+            ? { ..._m, read: true }
+            : _m
+          )
           ctx.setState({
             activeTextMessage: ix,
             screen: 'textMessageIndividual',
@@ -4420,17 +4431,14 @@ createComponent(
               ...userData,
               [currentUser]: {
                 ...currentUserData,
-                textMessages: textMessages.map((_m, _ix) => _ix === ix
-                  ? {
-                    ..._m,
-                    read: true
-                  }
-                  : _m
-                )
-
+                textMessages: newTextMessages
               }
             }
           })
+
+          if (Number(currentUser) === 0 && newTextMessages.every(tm => tm.read)) {
+            achievement('inboxZero', true)
+          }
         }
       })
 
@@ -4453,7 +4461,7 @@ createComponent(
       }
 
     } else if (screen === 'qrScanner') {
-      const availableActions = ctx.state.availableActions.filter(a => !['standUpBed', 'openPhone', 'closePhone', 'hallway', 'hallwayShower', 'externalHallway', 'livingRoom', 'bathroom', 'bedroom', 'hallwayCurrent', 'kitchen', 'livingRoomCurrent', 'resetRouter', 'checkWifiPower', 'frontDoorListen', 'pickupEnvelopes', 'reenterApartment', 'externalHallwayBack', 'bottomRouter', 'unplugRouter', 'router', 'turnOnTV', 'turnOffTV', 'openDoorUnlocked', 'openDoorLocked', 'enterStairway', 'pickupEnvelope1', 'pickupEnvelope2', 'stairsDown'].includes(a.value))
+      const availableActions = ctx.state.availableActions.filter(a => !['standUpBed', 'openPhone', 'closePhone', 'hallway', 'hallwayShower', 'externalHallway', 'livingRoom', 'bathroom', 'bedroom', 'hallwayCurrent', 'kitchen', 'livingRoomCurrent', 'resetRouter', 'checkWifiPower', 'frontDoorListen', 'pickupEnvelopes', 'reenterApartment', 'externalHallwayBack', 'bottomRouter', 'unplugRouter', 'router', 'turnOnTV', 'turnOffTV', 'openDoorUnlocked', 'openDoorLocked', 'enterStairway', 'pickupEnvelope1', 'pickupEnvelope2', 'stairsDown'].includes(a.value) && !a.value.includes('maze'))
 
       const objects = availableActions.map(a => `<button id="qr-${a.value}" style="margin-right: 0.25em">${a.text.replace(' (up)', '')}</button>`).join('')
 
@@ -4484,6 +4492,7 @@ createComponent(
             } else {
               if (a.value === 'insideStairwayDoorPrimary' && !globalState.completionTime) {
                 globalState.completionTime = globalState.secondsPassed * 1000
+                completeGame('escapeStairway', globalState.completionTime)
                 try {
                   postSnapshot().catch(console.log)
                 } catch (e) {
@@ -4491,13 +4500,16 @@ createComponent(
                 }
               }
 
-              ctx.setUserData({
-                qrsScanned: {
+              if (a.value !== 'stairsUp' && a.value !== 'stairsDown') {
+                const newQRsScanned = {
                   ...(currentUserData.qrsScanned || {}),
                   [a.text]: true
-
                 }
-              })
+                ctx.setUserData({
+                  qrsScanned: newQRsScanned
+                })
+                if (Object.keys(newQRsScanned).length >= 17) achievement('scanQRCodes', true)
+              }
               ctx.setState(a.qr)
               if (a.value === 'insideStairwayDoorPrimary' && globalState.completionTime) {
                 ctx.$('#completionTime').innerHTML = formatTime(globalState.completionTime)
@@ -4927,6 +4939,7 @@ createComponent(
           if (hasInternet) {
             ctx.$('#journalError').innerHTML = 'DREAM PROCESSED SUCCESSFULLY'
             ctx.$('#journalText').value = ''
+            achievement('dreamJournal', true)
 
           } else {
             ctx.$('#journalError').innerHTML = 'ERROR: CANNOT CONNECT TO SERVER'
@@ -5074,6 +5087,7 @@ createComponent(
 
       if (ctx.$('#offOn')) ctx.$('#offOn').onclick = () => {
         globalState.lightsOn = !lampOn
+        if (globalState.lightsOn) achievement('lightsOn', true)
         ctx.setState({ lampOn: !lampOn })
         changeLight()
 
@@ -5150,7 +5164,7 @@ createComponent(
           }
 
           <h1 id="timeRemaining" style="text-align: center; margin: 0.5em 0">--s</h1>
-          <input autocomplete="off" id="appName" placeholder="App Name"> <input autocomplete="off" id="securityKey" placeholder="Security Key">
+          <input autocomplete="off" id="appName" placeholder="App Name"> <input autocomplete="off" id="securityKey" type="number" placeholder="Security Key">
           <div style="display: flex; flex-direction: column; align-items: center">
             <button id="createKeyPair" style="margin: 0.5em">Create New KeyPair</button>
             <table id="faKeyPairs" style="margin: 0.5em auto"></table>
@@ -5188,12 +5202,17 @@ createComponent(
 
         if (!securityKey) return
 
+        const uniqueKeypairs = new Set(keyPairs.map(({securityKey}) => securityKey))
+        uniqueKeypairs.add(securityKey)
+
         ctx.setUserData({
           keyPairs: [
             ...keyPairs,
             { appName, securityKey }
           ]
         })
+
+        if (uniqueKeypairs.size >= 10) achievement('twoFACodes', true)
       }
 
       ctx.$('#home').onclick = () => {
@@ -5933,6 +5952,8 @@ createComponent(
           globalState.yieldFarmerGlobalHighScore = currentScore
           ctx.$('#globalHighScore').innerHTML = currentScore.toFixed(2)
         }
+
+        if (currentScore === Infinity) achievement('beatYieldFarmer', true)
       }
 
       ctx.$('#mineCrypto').onclick = () => {
@@ -6052,6 +6073,7 @@ createComponent(
 
           } else if (globalState.rentBalance <= 0) {
             globalState.smartLockOpen = !globalState.smartLockOpen
+            if (globalState.smartLockOpen) achievement('openFrontDoor', true)
             ctx.setState({}, true)
             window.primarySM.enqueue('smartLockShift')
 
@@ -6332,6 +6354,7 @@ createComponent(
             ctx.setUserData({
               toastrLoggedIn: true
             })
+            achievement('toastrLogin', true)
 
           } else {
             ctx.$('#login').disabled = false
@@ -6423,6 +6446,9 @@ createComponent(
           } else {
             globalState.plantWatered = true
             ctx.setState({}, true)
+          }
+          if (globalState.shaydOpen && !globalState.plantsDead) {
+            achievement('plantHappy', true)
           }
         }, 1000)
       }
@@ -6574,6 +6600,9 @@ createComponent(
               plantStatus: ctx.state.plantStatus + 1
             }
             ctx.setState(stateUpdate, true)
+            if (globalState.plantWatered && !globalState.plantsDead) {
+              achievement('plantHappy', true)
+            }
           } else if (globalState.shaydOpen) {
             globalState.shaydOpen = false
             stateUpdate = ctx.state.plantStatus === 0 ? {} : {
@@ -6893,6 +6922,7 @@ createComponent(
             let sudo
             if (fn === 'sudo') {
               sudo = true
+              achievement('hacker', true)
               fn = args.shift()
             }
 
@@ -6999,6 +7029,7 @@ createComponent(
                           }
                         }
                       }
+                      achievement('scanViruses', true)
                     } else if (url === 'qd://0ms.co/tjn/jailbreakx-0_13_1.mal') {
                       if (!userData[locationUserId].appsInstalled.map(a => a.key).includes('jailbreakr')) {
                         behavior = {
@@ -7014,6 +7045,10 @@ createComponent(
                             }
                           }
                         }
+                        const usersWithJailbreakr = Object.values(behavior.userData).filter(u =>
+                          u.appsInstalled?.some(a => a.key === 'jailbreak')
+                        ).length
+                        if (usersWithJailbreakr >= 5) achievement('jailbreakr', true)
                       }
                     }
                     setTimeout(() => {
@@ -7220,14 +7255,14 @@ createComponent(
       const inputNodes = `
         <select id="inputNodes" required>
           <option disabled selected value=''>Input Node</option>
-          ${inputNodeList.map(a => `<option value="${a.key}">${a.name}</option>`).join('')}
+          ${inputNodeList.map(a => `<option value="${a.key}">${a.name.toLowerCase().includes('robovac') ? 'RoboVac' : a.name}</option>`).join('')}
         </select>
       `
 
       const outputNodes = `
         <select id="outputNodes" required>
           <option disabled selected value=''>Output Node</option>
-          ${outputNodeList.map(a => `<option value="${a.key}">${a.name}</option>`).join('')}
+          ${outputNodeList.map(a => `<option value="${a.key}">${a.name.toLowerCase().includes('robovac') ? 'RoboVac' : a.name}</option>`).join('')}
         </select>
       `
 
@@ -7368,12 +7403,19 @@ createComponent(
 
             if (!DEVICE_RANGES[output].includes(input)) return ctx.$('#connectionError').innerHTML = `Input node out of range`
 
+            const newPairings = {
+              ...ctx.state.meshNetworkPairings,
+              [output]: ctx.state.meshNetworkPairings[output] ? [...ctx.state.meshNetworkPairings[output], input] : [input]
+            }
             ctx.setState({
-              meshNetworkPairings: {
-                ...ctx.state.meshNetworkPairings,
-                [output]: ctx.state.meshNetworkPairings[output] ? [...ctx.state.meshNetworkPairings[output], input] : [input]
-              }
+              meshNetworkPairings: newPairings
             })
+
+            const meshCheck = meshPairFinder({ state: { ...ctx.state, meshNetworkPairings: newPairings } })
+            const meshTargets = ['lock', 'lumin', 'clearBreeze', 'planter', 'smartFrame', 'bathe', 'toastr', 'roboVac', 'wake']
+            if (meshTargets.every(t => meshCheck('gateLink', t))) {
+              achievement('meshNetwork', true)
+            }
           }, 500)
 
         }
@@ -8038,6 +8080,7 @@ createComponent(
       nftCollection.forEach(nft => {
         if (ctx.$(`#display-${nft.id}`)) ctx.$(`#display-${nft.id}`).onclick = () => {
           globalState.castingNFT = nft.hash
+          achievement('displayNFT', true)
           ctx.setState({ currentNFTDisplay: nft.id})
         }
       })
@@ -8172,7 +8215,6 @@ createComponent(
 
       function unstake() {
         const calculatedAmountStaked = calcAmountStaked()
-        console.log((cryptoBalances[moneyMinerCryptoAddr] || 0))
 
         ctx.setState({
           cryptoBalances: {
@@ -8186,6 +8228,7 @@ createComponent(
           timeStaked: NaN,
         })
 
+        if (calculatedAmountStaked > 0) achievement('yieldMaster', true)
       }
 
       if (ctx.$('#unstake')) ctx.$('#unstake').onclick = unstake
@@ -8836,6 +8879,7 @@ createComponent(
               ctx.$('#paymentError').innerHTML = `Payment Recieved.`
             }
 
+            achievement('payNBS', true)
           }
         }, 3000)
       }

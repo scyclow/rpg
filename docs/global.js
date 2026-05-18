@@ -1,5 +1,6 @@
 import {persist} from './persist.js'
 import {setFavicon, ls} from './$.js'
+import {achievement} from './achievements.js'
 
 
 export const globalState = persist('__GLOBAL_STATE', {
@@ -146,6 +147,10 @@ export function setMiningInterval(device, amount, ms) {
       device.balance += amount * 2 * Math.random()
     }
   }, ms)
+
+  if (Object.values(globalState.cryptoDevices).every(d => d.activated)) {
+    achievement('mineEverywhere', true)
+  }
 }
 
 export function clearMiningInterval(device) {

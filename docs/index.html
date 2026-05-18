@@ -46,6 +46,7 @@
 
 <script type="module">
   import {ls} from './$.js'
+  import {clearLocalStorage} from './achievements.js'
 
   window.GAME_VERSION = 12
   window.GAME_MINOR_VERSION = 2
@@ -53,7 +54,7 @@
 
   const LAST_PLAYED_GAME_VERSION = ls.get('__GAME_VERSION')
   if (LAST_PLAYED_GAME_VERSION !== GAME_VERSION) {
-    localStorage.clear()
+    clearLocalStorage()
   }
   ls.set('__GAME_VERSION', GAME_VERSION)
 
@@ -155,6 +156,7 @@
   import {funTimeText} from './mobilePhone.js'
   import {flightMap} from './stairwayGame.js'
   import {logoSVG, mazeMapA, mazeMapB, mazeMapC, mazeMapD, mazeMapE} from './svgs.js'
+  import {clearLocalStorage, completeGame, achievement, achievements} from './achievements.js'
 
   import {setupAnalytics} from './analytics.js'
 
@@ -378,8 +380,10 @@
         actions = (await sm.evaluate(actions)).filter(a => !!a)
       }
 
+      const inInternetLocation = globalState.devInInternetLocation || (globalState.location !== 'externalHallway' && globalState.location !== 'stairway' && globalState.location !== 'elevator' && !globalState.location.includes('maze'))
+
+
       if (actions && !deepEquals(actions.map(a => a.value), sm.ctx.currentActions.map(a => a.value))) {
-        const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
         const phoneNotifications = inInternetLocation ? $phoneDevice.phoneNotifications() : 0
 
         $.id('nextActions').innerHTML = actions.map(a => `<button id="${a.value}" class="actionButton">${
@@ -403,7 +407,7 @@
       }
 
       $phoneDevice.onNotification(() => {
-        const notifications = $phoneDevice.phoneNotifications()
+        const notifications = inInternetLocation && $phoneDevice.phoneNotifications()
           ? ` (${$phoneDevice.phoneNotifications()})`
           : ''
         const phoneButton = $.id(`openPhone`)
@@ -444,8 +448,11 @@
 
     backToSleep: {
       before() {
+        globalState.location = 'bed'
+        achievement('sleepy', true)
         $.id('phoneModal').classList.add('hidden')
         $.id('sleepModal').classList.remove('hidden')
+
         setTimeout(() => {
           $.id('sleepModal').classList.remove('invisible')
         }, 25)
@@ -627,6 +634,7 @@
         before({ctx}) {
           ctx.state.roboVacLocation = sample(['livingRoom', 'kitchen', 'hallway', 'bathroom'])
           globalState.roboVacCaught.bedroom = true
+          if (Object.keys(globalState.roboVacCaught).length >= 5) achievement('roboVacRooms', true)
         },
         text: `The RoboVac exits the room as you walk towards it, leaving the floor spotless`
       },
@@ -801,6 +809,7 @@
         before({ctx}) {
           ctx.state.roboVacLocation = sample(['livingRoom', 'kitchen', 'bedroom', 'bathroom'])
           globalState.roboVacCaught.hallway = true
+          if (Object.keys(globalState.roboVacCaught).length >= 5) achievement('roboVacRooms', true)
         },
         text: `You approach the RoboVac, but it moves to a different room`
 
@@ -1177,6 +1186,7 @@
       roboVacLivingRoom: {
         before({ctx}) {
           globalState.roboVacCaught.livingRoom = true
+          if (Object.keys(globalState.roboVacCaught).length >= 5) achievement('roboVacRooms', true)
 
           if (!ctx.state.envelope1PickedUp) {
             ctx.state.roboVacLocation = 'hallway'
@@ -1502,6 +1512,7 @@
       flush: {
         before({ctx}) {
           ctx.state.urine = false
+          achievement('flushToilet', true)
         },
         text: 'The toilet detects your presence and promptly flushes',
         async follow({ctx}) {
@@ -1531,6 +1542,9 @@
       },
 
       toilet: {
+        before() {
+          if (globalState.autoFlusherActive) achievement('flushToilet', true)
+        },
         text({ctx}) {
           if (!globalState.autoFlusherActive && !ctx.state.urine) {
             return `You use the toilet, but the auto-flusher does not activate`
@@ -1579,7 +1593,7 @@
         before({ctx}) {
           ctx.state.roboVacLocation = sample(['kitchen', 'livingRoom', 'bedroom', 'hallway'])
           globalState.roboVacCaught.bathroom = true
-
+          if (Object.keys(globalState.roboVacCaught).length >= 5) achievement('roboVacRooms', true)
         },
         text: 'Sensing your presence, the RoboVac moves to a different room',
       }
@@ -1753,6 +1767,7 @@
             //e, eb, e, eb, e, b, d, c, a (e, a+)
 
             globalState.roboVacCaught.kitchen = true
+            if (Object.keys(globalState.roboVacCaught).length >= 5) achievement('roboVacRooms', true)
 
 
             if (!ctx.state.routerChecked) {
@@ -1964,17 +1979,17 @@
         }
       },
       text: `You enter the stairway and hear the door slam shut behind you`,
-      async follow() {
+      async follow({enqueue}) {
         await waitPromise(2500)
-        return 'enterStairway1'
+        enqueue('enterStairway1')
       },
       actions: []
     },
     enterStairway1: {
       text: `The sound echos off the cement walls, spiraling around the staircase in both directions`,
-      async follow() {
+      async follow({enqueue}) {
         await waitPromise(3500)
-        return 'enterStairway2'
+        enqueue('enterStairway2')
       },
       actions: []
     },
@@ -2061,7 +2076,7 @@
                   <h1 style="text-align: center; margin-bottom: 0.25em; margin-top: 0.5em"><a href="https://steviep.xyz" target="_blank">steviep.xyz</a></h1>
                   <h2 style="text-align: center">2024</h2>
                   <div style="margin-top: 0.5em" id="completionTime"></div>
-                  <button onclick="localStorage.clear(); location.reload()" style="align-self:center; margin-top: 2em">Play Again?</button>
+                  <button onclick="clearLocalStorage(); location.reload()" style="align-self:center; margin-top: 2em">Play Again?</button>
                 </div>
               `
             }
@@ -2293,16 +2308,16 @@
         // }
       },
       text: `You step into the elevator`,
-      async follow() {
+      async follow({enqueue}) {
         await waitPromise(2500)
-        return 'enterElevator2'
+        enqueue('enterElevator2')
       },
       actions: []
     },
 
     enterElevator2: {
       text: 'The doors close behind you',
-      async follow() {
+      async follow({enqueue}) {
         await waitPromise(2000)
         tmp.src1 = createSource('sine', 70)
         tmp.src2 = createSource('sine', 73)
@@ -2314,39 +2329,39 @@
         tmp.src2.smoothFreq(143, 2)
 
         await waitPromise(1000)
-        return 'enterElevator3'
+        enqueue('enterElevator3')
       },
     },
 
     enterElevator3: {
       text: 'You feel yourself slowly falling',
-      async follow() {
+      async follow({enqueue}) {
         setTimeout(() => {
-          tmp.src1.smoothFreq(130, 2)
-          tmp.src2.smoothFreq(133, 2)
+          tmp.src1?.smoothFreq(130, 2)
+          tmp.src2?.smoothFreq(133, 2)
         }, 14000)
         await waitPromise(16000)
-        return 'enterElevator4'
+        enqueue('enterElevator4')
       }
     },
 
     enterElevator4: {
       before() {
         setTimeout(() => {
-          tmp.src1.smoothFreq(70, 4)
-          tmp.src2.smoothFreq(70, 4)
+          tmp.src1?.smoothFreq(70, 4)
+          tmp.src2?.smoothFreq(70, 4)
           setColors('#000', '#999')
         })
 
         setTimeout(() => {
-          tmp.src1.stop()
-          tmp.src2.stop()
+          tmp.src1?.stop()
+          tmp.src2?.stop()
         }, 8000)
       },
       text: 'The elevator slows to a halt',
-      async follow() {
+      async follow({enqueue}) {
         await waitPromise(4000)
-        return 'enterElevator5'
+        enqueue('enterElevator5')
       }
     },
     enterElevator5: {
@@ -2362,6 +2377,7 @@
       before() {
         if (!globalState.elevatorCompletionTime) {
           globalState.elevatorCompletionTime = globalState.secondsPassed * 1000
+          completeGame('escapeMaze', globalState.elevatorCompletionTime)
         }
         $.id('phoneModal').classList.add('hidden')
         $.id('elevatorEndLogo').innerHTML = logoSVG(13, 'var(--primary-color)')
@@ -2393,7 +2409,7 @@
 
     startOver: {
       before() {
-        localStorage.clear()
+        clearLocalStorage()
         location.reload()
       },
       text: 'Starting over...',
@@ -2516,9 +2532,16 @@
         [`maze-${key}`]: {
           text: mainText,
           handler,
-          before: () => {
+          before: ({ctx}) => {
             globalState.location = `maze-${key}`
             setConsoleLocation()
+            if (!ctx.state.visitedMazeRooms) ctx.state.visitedMazeRooms = {}
+
+            ctx.state.visitedMazeRooms[key] = true
+
+            if (Object.keys(ctx.state.visitedMazeRooms).length >= Object.keys(mazeMap).length) {
+              achievement('visitMazeRooms', true)
+            }
           },
           actions,
         }
@@ -2657,7 +2680,7 @@
 
     const actions = ctx.currentActions.filter(a => !!a.value) || []
 
-    const inInternetLocation = globalState.location !== 'externalHallway' && globalState.location !== 'stairway'
+    const inInternetLocation = globalState.devInInternetLocation || (globalState.location !== 'externalHallway' && globalState.location !== 'stairway' && globalState.location !== 'elevator' && !globalState.location.includes('maze'))
 
     const phoneNotifications = inInternetLocation ? ($phoneDevice?.phoneNotifications?.() || 0) : 0
     $nextActions.innerHTML = actions.map(a => `<button id="${a.value}" class="actionButton">${

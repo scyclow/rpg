@@ -1,6 +1,7 @@
 import {createComponent} from './$.js'
 import {persist} from './persist.js'
 import {globalState, rndAddr} from './global.js'
+import {achievements, achievement} from './achievements.js'
 
 
 const state = persist('__MAZE_COMPUTER_STATE', {
@@ -17,16 +18,6 @@ const state = persist('__MAZE_COMPUTER_STATE', {
 if (state.payAppUSDAddr === undefined) state.payAppUSDAddr = rndAddr()
 if (state.payAppUSDBalance === undefined) state.payAppUSDBalance = 6437.98
 
-/*
-TODO
-
-
-- a desktop with a few apps:
-  - achievements page (TODO)
-  - some app, maybe currency exchange, with a bunch of crypto
-
-
-*/
 
 createComponent(
   'maze-computer',
@@ -65,6 +56,8 @@ createComponent(
         padding: 0.4em 0.6em;
         font-size: 1em;
         width: 16em;
+        max-width: 100%;
+        box-sizing: border-box;
       }
 
       input:focus, input, select, button {
@@ -101,6 +94,14 @@ createComponent(
         flex-direction: column;
         align-items: center;
         gap: 0.6em;
+        max-width: 100%;
+      }
+
+      .loginBox {
+        border: 1px solid #fff;
+        padding: 1.5em 2em;
+        max-width: 100%;
+        box-sizing: border-box;
       }
 
       #error {
@@ -137,7 +138,10 @@ createComponent(
         flex: 1;
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        grid-template-rows: repeat(4, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        gap: 1em;
+        padding: 1em;
+        padding-top: 3em
       }
 
       .cell {
@@ -166,6 +170,7 @@ createComponent(
 
       .appLabel {
         font-size: 0.9em;
+        text-align: center
       }
 
       .bottomBar {
@@ -231,6 +236,22 @@ createComponent(
         color: #000;
       }
 
+      @media (max-width: 440px) {
+        .loginBox {
+          padding: 1em 1.25em;
+        }
+
+        .grid {
+          grid-template-columns: repeat(3, 1fr);
+          padding-top: 1em;
+        }
+
+        .cell {
+          align-items: flex-start;
+          padding-top: 0.5em;
+        }
+      }
+
     </style>
 
     <div id="screen">
@@ -263,7 +284,7 @@ createComponent(
     if (screen === 'login') {
       $content.innerHTML = `
         <div class="computerScreen">
-          <div style="border: 1px solid; padding: 1.5em 2em">
+          <div class="loginBox">
             <h5 style="margin-bottom: 0.25em;">USERNAME</h5>
             <input autocomplete="off" id="username">
             <h5 style="margin-top: 1em; margin-bottom: 0.25em">PASSWORD</h5>
@@ -304,22 +325,21 @@ createComponent(
         </div>
       `
     } else if (screen === 'desktop') {
-      const apps = ['yieldFarmer2.exe', 'Network', 'payApp.exe', 'Web Browser']
-      const cells = Array.from({ length: 16 }, (_, i) => {
-        const app = apps[i]
-        return app
-          ? `<div class="cell">
-              <div class="app" data-app="${app}">
-                <div class="appIcon"></div>
-                <div class="appLabel">${app}</div>
-              </div>
-            </div>`
-          : `<div class="cell"></div>`
-      }).join('')
+      const apps = ['Network', 'Web Browser', 'TODO', 'yieldFarmer2.exe',  'payApp.exe']
+      const cells = apps.map((app, i) => `
+        <div class="cell">
+          <div class="app" data-app="${app}">
+            <div class="appIcon"></div>
+            <div class="appLabel">${app}</div>
+          </div>
+        </div>
+      `).join('')
 
       $content.innerHTML = `
         <div class="desktop">
-          <div class="grid">${cells}</div>
+          <div style="flex: 1">
+            <div class="grid">${cells}</div>
+          </div>
           <div class="bottomBar">
             <button id="desktopExit">EXIT</button>
             <div id="clock"></div>
@@ -456,6 +476,8 @@ createComponent(
             globalState.yieldFarmerGlobalHighScore = currentScore
             ctx.$('#globalHighScore').innerHTML = currentScore.toFixed(2)
           }
+
+          if (currentScore === Infinity) achievement('beatYieldFarmer', true)
         }
 
         ctx.$('#mineCrypto').onclick = () => {
@@ -719,6 +741,39 @@ createComponent(
             if (ctx.$('#currentPassword')) ctx.$('#currentPassword').innerHTML = times(globalState.landlockRealtyPassword.length, () => '◼︎').join('')
           }, 5000)
         }
+
+      } else if (ctx.state.openApp === 'TODO') {
+
+        const formatBestTime = ms => {
+          if (ms == null) return '--:--:--'
+          const pad = (x, n=2) => String(Math.floor(x)).padStart(n, '0')
+          const hours = ms / 3600000
+          const minutes = 60 * (hours % 1)
+          const seconds = 60 * (minutes % 1)
+          return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+        }
+
+        const timedKeys = ['escapeStairway', 'escapeMaze', 'allAchievements']
+
+        ctx.$('#appModalContent').innerHTML = `
+          <div style="padding: 2.5em 4em; overflow: auto">
+            <h2 style="margin-bottom: 0.5em">TODO</h2>
+            <ul style="list-style: none; padding: 0;">
+              ${Object.values(achievements).map(a => `
+                <li style="margin: 0.4em 0; line-height: 1.3;">
+                  ${a.status ? '[X]' : '[ ]'}
+                  <span> ${a.description}</span>
+                </li>
+              `).join('')}
+            </ul>
+            <div style="margin-top: 1em; padding-top: 0.5em; border-top: 1px dashed #fff;">
+              <h3 style="text-align: center">Best Times</h3>
+              ${timedKeys.map(k => `
+                <div style="margin: 0.25em 0;">${achievements[k].description}: <strong>${formatBestTime(achievements[k].bestTime)}</strong></div>
+              `).join('')}
+            </div>
+          </div>
+        `
 
       } else if (ctx.state.openApp) {
         ctx.$('#appModalContent').innerHTML = ctx.state.openApp

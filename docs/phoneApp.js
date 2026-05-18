@@ -9,6 +9,7 @@ import {ssoNodes, ssoCTX} from './cs/sso.js'
 import {hellNodes} from './cs/hell.js'
 import {emergencyNodes} from './cs/emergency.js'
 import {jeanText} from './mobilePhone.js'
+import {achievement} from './achievements.js'
 
 
 export class PhoneCall {
@@ -713,15 +714,26 @@ function phoneBehavior(ctx) {
 
         if (!phone.live || hangups < phone.hangups) return
 
+        const hellNodeKeys = Object.keys(hellNodes).filter(k => k !== 'incorrectCode')
+
         const stateMachine = new StateMachine(
           new CTX({
             currentNode: 'start',
+            visitedHellNodes: {},
           }),
           {
             defaultWait: 1000,
-            async onUpdate({text}, sm) {
+            async onUpdate({text}, sm, nodeKey) {
 
               sm.ctx.history.push(text)
+
+              if (nodeKey && nodeKey !== 'incorrectCode') {
+                sm.ctx.visitedHellNodes[nodeKey] = true
+                if (hellNodeKeys.every(k => sm.ctx.visitedHellNodes[k])) {
+                  achievement('funTime', true)
+                }
+              }
+
               // TODO different voice
               const vs = await voices
               if (ctx.state.soundEnabled && vs.length) {
@@ -925,10 +937,13 @@ function phoneBehavior(ctx) {
       }
 
       ctx.$('#upgrade').onclick = () => {
-        if (userData.appCreditBalance >= 1) ctx.setUserData({
-          appCreditBalance: userData.appCreditBalance - 1,
-          previouslyDialedUnlocked: true
-        })
+        if (userData.appCreditBalance >= 1) {
+          ctx.setUserData({
+            appCreditBalance: userData.appCreditBalance - 1,
+            previouslyDialedUnlocked: true
+          })
+          achievement('premiumPhone', true)
+        }
 
         setTimeout(() => {
           ctx.$('#phoneAppContent').classList.add('hidden')

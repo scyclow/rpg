@@ -9,12 +9,12 @@ window.__stairwayGame = flightMap
 
 if (flightMap.lastFlight === null) {
   let currentFlight = 0
-  times(20, i => {
+  times(10, i => {
     const nextFlight = selectFlight()
     flightMap[currentFlight] = nextFlight
     currentFlight = nextFlight
 
-    if (i === 19) flightMap.lastFlight = nextFlight
+    if (i === 9) flightMap.lastFlight = nextFlight
 
   })
 }
