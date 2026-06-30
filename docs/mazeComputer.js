@@ -753,7 +753,7 @@ createComponent(
           return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
         }
 
-        const timedKeys = ['escapeStairway', 'escapeMaze', 'allAchievements']
+        const timedKeys = ['escapeStairway', 'escapeMaze']
 
         ctx.$('#appModalContent').innerHTML = `
           <div style="padding: 2.5em 4em; overflow: auto">
