@@ -2374,11 +2374,12 @@
     },
 
     sleepElevator: {
-      before() {
+      before({ctx}) {
         if (!globalState.elevatorCompletionTime) {
           globalState.elevatorCompletionTime = globalState.secondsPassed * 1000
           completeGame('escapeMaze', globalState.elevatorCompletionTime)
         }
+        ctx.state.isOpen = false
         $.id('phoneModal').classList.add('hidden')
         $.id('elevatorEndLogo').innerHTML = logoSVG(13, 'var(--primary-color)')
         $.id('elevatorCompletionTime').innerHTML = formatTime(globalState.elevatorCompletionTime)
@@ -2594,6 +2595,8 @@
 
     } else if (globalState.location === 'stairway') {
       setColors('#000', '#939171')
+    } else if (globalState.location === 'elevator') {
+      setColors('#000', '#999')
     } else if (globalState.location.includes('maze')) {
       if (globalState.mazeLightswitchOn) {
         setColors('#988a64', '#000')
